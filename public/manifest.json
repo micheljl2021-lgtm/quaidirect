@@ -1,0 +1,26 @@
+{
+  "name": "QuaiDirect - Vente directe de poisson",
+  "short_name": "QuaiDirect",
+  "description": "Achetez du poisson frais directement auprès des marins-pêcheurs",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0C4A6E",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["food", "shopping", "lifestyle"],
+  "lang": "fr-FR"
+}
