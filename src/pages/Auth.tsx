@@ -136,10 +136,10 @@ const Auth = () => {
         <div className="text-center text-sm text-muted-foreground">
           <p>Comptes de test disponibles :</p>
           <p className="mt-1">
-            <strong>Pêcheur :</strong> pecheur@quaidirect.fr<br />
-            <strong>Premium :</strong> premium@quaidirect.fr<br />
-            <strong>Admin :</strong> admin@quaidirect.fr<br />
-            <span className="text-xs">(mot de passe : voir migration)</span>
+            <strong>Pêcheur :</strong> manonroubaud83@gmail.com<br />
+            <strong>Premium :</strong> micheljl2012@gmail.com<br />
+            <strong>Admin :</strong> micheljl2021@gmail.com<br />
+            <span className="text-xs">(connexion par code OTP)</span>
           </p>
         </div>
       </div>
