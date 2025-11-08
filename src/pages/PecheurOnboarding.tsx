@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -63,15 +63,19 @@ const PecheurOnboarding = () => {
     setLoading(true);
     try {
       // Récupérer le port par défaut (Hyères)
-      const { data: ports } = await supabase
-        .from('ports' as any)
+      const { data: port, error: portError } = await supabase
+        .from('ports')
         .select('id')
         .eq('name', 'Port Saint-Pierre - Hyères')
-        .maybeSingle();
+        .maybeSingle() as { data: { id: string } | null; error: any };
+
+      if (portError) {
+        console.error('Error fetching port:', portError);
+      }
 
       // Créer le profil pêcheur
       const { error } = await supabase
-        .from('fishermen' as any)
+        .from('fishermen')
         .insert({
           user_id: user.id,
           siret: siret || null,
@@ -79,9 +83,9 @@ const PecheurOnboarding = () => {
           boat_name: boatName,
           immat_navire: immat,
           photo: photo || null,
-          home_port_id: ports && ports.id ? ports.id : null,
-          verified_at: null, // En attente de validation admin
-        } as any);
+          home_port_id: port?.id || null,
+          verified_at: null,
+        }) as { error: any };
 
       if (error) throw error;
 

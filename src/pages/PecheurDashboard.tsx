@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
@@ -40,25 +40,34 @@ const PecheurDashboard = () => {
 
   const fetchDrops = async () => {
     try {
-      const { data: fisherman } = await supabase
-        .from('fishermen' as any)
+      const { data: fisherman, error: fishermanError } = await supabase
+        .from('fishermen')
         .select('id')
         .eq('user_id', user?.id)
-        .maybeSingle();
+        .maybeSingle() as { data: { id: string } | null; error: any };
 
-      if (fisherman && fisherman.id) {
+      if (fishermanError) {
+        console.error('Error fetching fisherman:', fishermanError);
+        setLoading(false);
+        return;
+      }
+
+      if (fisherman?.id) {
         const { data, error } = await supabase
-          .from('drops' as any)
+          .from('drops')
           .select(`
             *,
             port:ports(*),
             offers(*)
           `)
           .eq('fisherman_id', fisherman.id)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false }) as { data: any[] | null; error: any };
 
-        if (error) throw error;
-        setDrops(data || []);
+        if (error) {
+          console.error('Error fetching drops:', error);
+        } else {
+          setDrops(data || []);
+        }
       }
     } catch (error) {
       console.error('Error fetching drops:', error);

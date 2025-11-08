@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase-client';
 import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
@@ -60,22 +60,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchUserRole = async (userId: string) => {
     try {
       // Fetch role
-      const { data: roleData } = await supabase
-        .from('user_roles' as any)
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
         .select('role')
         .eq('user_id', userId)
-        .maybeSingle();
+        .maybeSingle() as { data: { role: string } | null; error: any };
       
+      if (roleError) {
+        console.error('Error fetching role:', roleError);
+        return;
+      }
+
       setUserRole(roleData?.role || null);
 
       // Check if verified fisherman
-      if (roleData && roleData.role === 'fisherman') {
-        const { data: fishermanData } = await supabase
-          .from('fishermen' as any)
+      if (roleData?.role === 'fisherman') {
+        const { data: fishermanData, error: fishermanError } = await supabase
+          .from('fishermen')
           .select('verified_at')
           .eq('user_id', userId)
-          .maybeSingle();
+          .maybeSingle() as { data: { verified_at: string | null } | null; error: any };
         
+        if (fishermanError) {
+          console.error('Error fetching fisherman:', fishermanError);
+          return;
+        }
+
         setIsVerifiedFisherman(fishermanData ? !!fishermanData.verified_at : false);
       } else {
         setIsVerifiedFisherman(false);
