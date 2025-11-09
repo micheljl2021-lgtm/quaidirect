@@ -75,7 +75,26 @@ const Auth = () => {
     setLoading(true);
     try {
       await signInWithPassword(email, password);
-      navigate('/');
+      
+      // Get user role and redirect to appropriate dashboard
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: roles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
+        
+        if (roles && roles.length > 0) {
+          const userRoles = roles.map(r => r.role);
+          if (userRoles.includes('fisherman') || userRoles.includes('admin')) {
+            navigate('/pecheur/dashboard');
+          } else {
+            navigate('/dashboard/user');
+          }
+        } else {
+          navigate('/dashboard/user');
+        }
+      }
     } catch (error) {
       console.error('Error:', error);
     } finally {

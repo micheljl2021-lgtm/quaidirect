@@ -15,6 +15,7 @@ import Recettes from "./pages/Recettes";
 import RecetteDetail from "./pages/RecetteDetail";
 import Forfaits from "./pages/Forfaits";
 import DropsTest from "./pages/DropsTest";
+import UserDashboard from "./pages/UserDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/recettes/:id" element={<RecetteDetail />} />
           <Route path="/forfaits" element={<Forfaits />} />
           <Route path="/drops-test" element={<DropsTest />} />
+            <Route path="/dashboard/user" element={<UserDashboard />} />
             <Route path="/compte" element={<Compte />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/pecheur/onboarding" element={<PecheurOnboarding />} />
