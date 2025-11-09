@@ -141,10 +141,12 @@ const Landing = () => {
             Prix justes, traçabilité totale, zéro intermédiaire.
           </p>
           <div className="flex flex-wrap justify-center gap-4 pt-4">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/20">
-              <Shield className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">100% traçable</span>
-            </div>
+            <Link to="/demo-tracabilite">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/20 hover:bg-primary/10 transition-colors cursor-pointer">
+                <Shield className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">100% traçable</span>
+              </div>
+            </Link>
             <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/20">
               <Users className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium">Circuit ultra-court</span>
@@ -153,6 +155,14 @@ const Landing = () => {
               <Anchor className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium">Pêche responsable</span>
             </div>
+          </div>
+          <div className="pt-4">
+            <Link to="/demo-tracabilite">
+              <Button variant="outline" size="lg" className="gap-2">
+                <Shield className="h-5 w-5" />
+                Voir la démo traçabilité
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
