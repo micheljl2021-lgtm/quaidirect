@@ -26,29 +26,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Vérifier d'abord si c'est un utilisateur de test (BETA)
-    const testUserId = localStorage.getItem('test_user_id');
-    const testEmail = localStorage.getItem('test_user_email');
-    const testRolesStr = localStorage.getItem('test_user_roles');
-    
-    if (testUserId && testEmail && testRolesStr) {
-      const roles = JSON.parse(testRolesStr);
-      
-      // Créer un faux user pour les tests
-      const fakeUser = {
-        id: testUserId,
-        email: testEmail,
-        role: 'authenticated',
-      } as User;
-      
-      setUser(fakeUser);
-      // Prendre le rôle principal (le dernier dans la liste)
-      setUserRole(roles[roles.length - 1]);
-      setIsVerifiedFisherman(roles.includes('fisherman'));
-      setLoading(false);
-      return;
-    }
-
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -193,23 +170,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
-      // Vérifier si c'est un compte test
-      const testEmail = localStorage.getItem('test_user_email');
-      if (testEmail) {
-        localStorage.removeItem('test_user_id');
-        localStorage.removeItem('test_user_email');
-        localStorage.removeItem('test_user_roles');
-        setUser(null);
-        setUserRole(null);
-        setIsVerifiedFisherman(false);
-        
-        toast({
-          title: 'Déconnexion',
-          description: 'À bientôt !',
-        });
-        return;
-      }
-
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
