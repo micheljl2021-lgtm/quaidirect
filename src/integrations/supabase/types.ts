@@ -14,16 +14,651 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audits: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          record_id: string
+          table_name: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id: string
+          table_name: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string
+          table_name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      drops: {
+        Row: {
+          created_at: string
+          eta_at: string
+          fisherman_id: string
+          id: string
+          is_premium: boolean
+          landed_at: string | null
+          latitude: number | null
+          longitude: number | null
+          notes: string | null
+          port_id: string
+          public_visible_at: string | null
+          status: Database["public"]["Enums"]["drop_status"]
+          updated_at: string
+          visible_at: string
+        }
+        Insert: {
+          created_at?: string
+          eta_at: string
+          fisherman_id: string
+          id?: string
+          is_premium?: boolean
+          landed_at?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          notes?: string | null
+          port_id: string
+          public_visible_at?: string | null
+          status?: Database["public"]["Enums"]["drop_status"]
+          updated_at?: string
+          visible_at?: string
+        }
+        Update: {
+          created_at?: string
+          eta_at?: string
+          fisherman_id?: string
+          id?: string
+          is_premium?: boolean
+          landed_at?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          notes?: string | null
+          port_id?: string
+          public_visible_at?: string | null
+          status?: Database["public"]["Enums"]["drop_status"]
+          updated_at?: string
+          visible_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drops_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drops_port_id_fkey"
+            columns: ["port_id"]
+            isOneToOne: false
+            referencedRelation: "ports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fishermen: {
+        Row: {
+          bio: string | null
+          boat_name: string
+          boat_registration: string
+          created_at: string
+          id: string
+          license_number: string | null
+          phone: string | null
+          photo_url: string | null
+          siret: string
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          bio?: string | null
+          boat_name: string
+          boat_registration: string
+          created_at?: string
+          id?: string
+          license_number?: string | null
+          phone?: string | null
+          photo_url?: string | null
+          siret: string
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          bio?: string | null
+          boat_name?: string
+          boat_registration?: string
+          created_at?: string
+          id?: string
+          license_number?: string | null
+          phone?: string | null
+          photo_url?: string | null
+          siret?: string
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
+      follow_ports: {
+        Row: {
+          created_at: string
+          id: string
+          port_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          port_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          port_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follow_ports_port_id_fkey"
+            columns: ["port_id"]
+            isOneToOne: false
+            referencedRelation: "ports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      follow_species: {
+        Row: {
+          created_at: string
+          id: string
+          species_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          species_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          species_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follow_species_species_id_fkey"
+            columns: ["species_id"]
+            isOneToOne: false
+            referencedRelation: "species"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          data: Json | null
+          id: string
+          message: string
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          message: string
+          read_at?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          message?: string
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications_queue: {
+        Row: {
+          audience: string
+          created_at: string
+          drop_id: string
+          id: string
+          scheduled_at: string
+          sent_at: string | null
+        }
+        Insert: {
+          audience: string
+          created_at?: string
+          drop_id: string
+          id?: string
+          scheduled_at: string
+          sent_at?: string | null
+        }
+        Update: {
+          audience?: string
+          created_at?: string
+          drop_id?: string
+          id?: string
+          scheduled_at?: string
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_queue_drop_id_fkey"
+            columns: ["drop_id"]
+            isOneToOne: false
+            referencedRelation: "drops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offers: {
+        Row: {
+          available_units: number
+          created_at: string
+          description: string | null
+          drop_id: string
+          id: string
+          photo_url: string | null
+          species_id: string
+          title: string
+          total_units: number
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          available_units: number
+          created_at?: string
+          description?: string | null
+          drop_id: string
+          id?: string
+          photo_url?: string | null
+          species_id: string
+          title: string
+          total_units: number
+          unit_price: number
+          updated_at?: string
+        }
+        Update: {
+          available_units?: number
+          created_at?: string
+          description?: string | null
+          drop_id?: string
+          id?: string
+          photo_url?: string | null
+          species_id?: string
+          title?: string
+          total_units?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offers_drop_id_fkey"
+            columns: ["drop_id"]
+            isOneToOne: false
+            referencedRelation: "drops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offers_species_id_fkey"
+            columns: ["species_id"]
+            isOneToOne: false
+            referencedRelation: "species"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ports: {
+        Row: {
+          city: string
+          created_at: string
+          id: string
+          latitude: number
+          longitude: number
+          name: string
+          postal_code: string | null
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          id?: string
+          latitude: number
+          longitude: number
+          name: string
+          postal_code?: string | null
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          id?: string
+          latitude?: number
+          longitude?: number
+          name?: string
+          postal_code?: string | null
+        }
+        Relationships: []
+      }
+      premium_subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          status: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          phone: string | null
+          postal_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          postal_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          postal_code?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reservations: {
+        Row: {
+          cancelled_at: string | null
+          confirmed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          offer_id: string
+          quantity: number
+          status: Database["public"]["Enums"]["reservation_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          offer_id: string
+          quantity: number
+          status?: Database["public"]["Enums"]["reservation_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          offer_id?: string
+          quantity?: number
+          status?: Database["public"]["Enums"]["reservation_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservations_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales: {
+        Row: {
+          buyer_id: string | null
+          completed_at: string | null
+          created_at: string
+          fisherman_id: string
+          id: string
+          notes: string | null
+          offer_id: string
+          quantity: number
+          refunded_at: string | null
+          reservation_id: string | null
+          status: Database["public"]["Enums"]["sale_status"]
+          total_price: number
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          buyer_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          fisherman_id: string
+          id?: string
+          notes?: string | null
+          offer_id: string
+          quantity: number
+          refunded_at?: string | null
+          reservation_id?: string | null
+          status?: Database["public"]["Enums"]["sale_status"]
+          total_price: number
+          unit_price: number
+          updated_at?: string
+        }
+        Update: {
+          buyer_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          fisherman_id?: string
+          id?: string
+          notes?: string | null
+          offer_id?: string
+          quantity?: number
+          refunded_at?: string | null
+          reservation_id?: string | null
+          status?: Database["public"]["Enums"]["sale_status"]
+          total_price?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      species: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          scientific_name: string | null
+          season_end: number | null
+          season_start: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          scientific_name?: string | null
+          season_end?: number | null
+          season_start?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          scientific_name?: string | null
+          season_end?: number | null
+          season_start?: number | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user" | "premium" | "fisherman"
+      drop_status: "scheduled" | "landed" | "cancelled"
+      reservation_status: "pending" | "confirmed" | "cancelled" | "completed"
+      sale_status: "pending" | "completed" | "refunded"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +785,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user", "premium", "fisherman"],
+      drop_status: ["scheduled", "landed", "cancelled"],
+      reservation_status: ["pending", "confirmed", "cancelled", "completed"],
+      sale_status: ["pending", "completed", "refunded"],
+    },
   },
 } as const
