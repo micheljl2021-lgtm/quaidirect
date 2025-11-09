@@ -28,7 +28,6 @@ const PecheurDashboard = () => {
     }
 
     if (userRole === 'fisherman' && !isVerifiedFisherman) {
-      // Pêcheur non vérifié
       setLoading(false);
       return;
     }
@@ -37,6 +36,30 @@ const PecheurDashboard = () => {
       fetchDrops();
     }
   }, [user, userRole, isVerifiedFisherman, navigate]);
+
+  // Set up realtime subscription for drops
+  useEffect(() => {
+    if (!user || !isVerifiedFisherman) return;
+
+    const channel = supabase
+      .channel('fisherman-drops-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'drops',
+        },
+        () => {
+          fetchDrops();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, isVerifiedFisherman]);
 
   const fetchDrops = async () => {
     try {
@@ -130,10 +153,10 @@ const PecheurDashboard = () => {
         </div>
 
         {/* Stats rapides */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="pb-3">
-              <CardDescription>Arrivages aujourd'hui</CardDescription>
+              <CardDescription>Aujourd'hui</CardDescription>
               <CardTitle className="text-3xl">
                 {drops.filter(d => {
                   const today = new Date().toDateString();
@@ -145,9 +168,18 @@ const PecheurDashboard = () => {
 
           <Card>
             <CardHeader className="pb-3">
-              <CardDescription>Arrivages programmés</CardDescription>
+              <CardDescription>Programmés</CardDescription>
               <CardTitle className="text-3xl">
                 {drops.filter(d => d.status === 'scheduled').length}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardDescription>Total offres</CardDescription>
+              <CardTitle className="text-3xl">
+                {drops.reduce((sum, d) => sum + (d.offers?.length || 0), 0)}
               </CardTitle>
             </CardHeader>
           </Card>

@@ -11,6 +11,7 @@ import Compte from "./pages/Compte";
 import Auth from "./pages/Auth";
 import PecheurOnboarding from "./pages/PecheurOnboarding";
 import PecheurDashboard from "./pages/PecheurDashboard";
+import CreateDrop from "./pages/CreateDrop";
 import Recettes from "./pages/Recettes";
 import RecetteDetail from "./pages/RecetteDetail";
 import Forfaits from "./pages/Forfaits";
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/pecheur/onboarding" element={<PecheurOnboarding />} />
             <Route path="/pecheur/dashboard" element={<PecheurDashboard />} />
+            <Route path="/pecheur/nouveau-drop" element={<CreateDrop />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
