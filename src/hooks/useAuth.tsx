@@ -10,6 +10,7 @@ interface AuthContextType {
   userRole: string | null;
   isVerifiedFisherman: boolean;
   signIn: (email: string) => Promise<void>;
+  signInWithPassword: (email: string, password: string) => Promise<void>;
   verifyOtp: (email: string, token: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -120,6 +121,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const signInWithPassword = async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Connexion réussie',
+        description: 'Vous êtes maintenant connecté.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Erreur de connexion',
+        description: error.message,
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  };
+
   const verifyOtp = async (email: string, token: string) => {
     try {
       const { error } = await supabase.auth.verifyOtp({
@@ -169,7 +193,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading, 
       userRole,
       isVerifiedFisherman,
-      signIn, 
+      signIn,
+      signInWithPassword,
       verifyOtp, 
       signOut 
     }}>
