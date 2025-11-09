@@ -194,7 +194,7 @@ const CreateArrivage = () => {
       
       <div className="container px-4 py-8 max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
+          <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 rounded-lg bg-primary/10">
               <Anchor className="h-6 w-6 text-primary" />
@@ -204,7 +204,7 @@ const CreateArrivage = () => {
             </h1>
           </div>
           <p className="text-lg text-muted-foreground">
-            Annoncez votre prochain arrivage au port
+            Annoncez quand votre pêche sera disponible à la vente
           </p>
         </div>
 
@@ -214,10 +214,10 @@ const CreateArrivage = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MapPin className="h-5 w-5" />
-                Informations de l'arrivage
+                Informations de disponibilité
               </CardTitle>
               <CardDescription>
-                Détails du débarquement
+                Indiquez quand votre pêche sera prête à la vente (généralement 5-7h après votre retour au port)
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -243,7 +243,7 @@ const CreateArrivage = () => {
                 <div className="space-y-2">
                   <Label htmlFor="eta-date" className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
-                    Date d'arrivée *
+                    Date de disponibilité *
                   </Label>
                   <Input
                     id="eta-date"
@@ -257,7 +257,7 @@ const CreateArrivage = () => {
                 <div className="space-y-2">
                   <Label htmlFor="eta-time" className="flex items-center gap-2">
                     <Clock className="h-4 w-4" />
-                    Heure d'arrivée *
+                    Heure de disponibilité *
                   </Label>
                   <Input
                     id="eta-time"
@@ -290,7 +290,7 @@ const CreateArrivage = () => {
                 <Label htmlFor="notes">Notes (optionnel)</Label>
                 <Textarea
                   id="notes"
-                  placeholder="Informations supplémentaires sur la pêche..."
+                  placeholder="Ex: Pêché cette nuit, poisson trié et prêt dès 7h..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={3}
