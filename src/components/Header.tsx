@@ -39,8 +39,8 @@ const Header = () => {
           <Link to="/carte" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Carte des arrivages
           </Link>
-          <Link to="/drops-test" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-            Drops (BETA)
+          <Link to="/arrivages" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            Arrivages
           </Link>
           <Link to="/recettes" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Recettes
@@ -148,11 +148,11 @@ const Header = () => {
                 Carte des arrivages
               </Link>
               <Link 
-                to="/drops-test" 
+                to="/arrivages" 
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Drops (BETA)
+                Arrivages
               </Link>
               <Link 
                 to="/recettes" 

@@ -1,96 +1,91 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
-import DropCard from "@/components/DropCard";
+import ArrivageCard from "@/components/ArrivageCard";
+import InteractiveMap from "@/components/InteractiveMap";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 import { Filter, Search, MapPin } from "lucide-react";
-
-// Mock data
-const mockDrops = [
-  {
-    id: "1",
-    species: "Bar de ligne",
-    scientificName: "Dicentrarchus labrax",
-    port: "Port-en-Bessin",
-    eta: new Date(Date.now() + 2 * 60 * 60 * 1000),
-    pricePerPiece: 12.50,
-    quantity: 25,
-    isPremium: true,
-    fisherman: {
-      name: "Jean Leblanc",
-      boat: "L'Espérance"
-    }
-  },
-  {
-    id: "2",
-    species: "Sole",
-    scientificName: "Solea solea",
-    port: "Grandcamp-Maisy",
-    eta: new Date(Date.now() + 4 * 60 * 60 * 1000),
-    pricePerPiece: 18.00,
-    quantity: 15,
-    isPremium: false,
-    fisherman: {
-      name: "Pierre Martin",
-      boat: "Vent de mer"
-    }
-  },
-  {
-    id: "3",
-    species: "Lieu jaune",
-    scientificName: "Pollachius pollachius",
-    port: "Port-en-Bessin",
-    eta: new Date(Date.now() + 1 * 60 * 60 * 1000),
-    pricePerPiece: 8.50,
-    quantity: 40,
-    isPremium: true,
-    fisherman: {
-      name: "Jacques Durand",
-      boat: "La Mouette"
-    }
-  },
-  {
-    id: "4",
-    species: "Saint-Pierre",
-    scientificName: "Zeus faber",
-    port: "Courseulles-sur-Mer",
-    eta: new Date(Date.now() + 3 * 60 * 60 * 1000),
-    pricePerPiece: 15.00,
-    quantity: 12,
-    isPremium: false,
-    fisherman: {
-      name: "Michel Rousseau",
-      boat: "Le Corsaire"
-    }
-  },
-  {
-    id: "5",
-    species: "Turbot",
-    scientificName: "Scophthalmus maximus",
-    port: "Grandcamp-Maisy",
-    eta: new Date(Date.now() + 5 * 60 * 60 * 1000),
-    pricePerPiece: 25.00,
-    quantity: 8,
-    isPremium: true,
-    fisherman: {
-      name: "François Dubois",
-      boat: "L'Horizon"
-    }
-  }
-];
-
-const ports = ["Port-en-Bessin", "Grandcamp-Maisy", "Courseulles-sur-Mer"];
 
 const Carte = () => {
   const [selectedPort, setSelectedPort] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredDrops = mockDrops.filter(drop => {
-    const matchesPort = !selectedPort || drop.port === selectedPort;
+  // Fetch real ports from database
+  const { data: ports } = useQuery({
+    queryKey: ['ports'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ports')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch real arrivages from database
+  const { data: arrivages } = useQuery({
+    queryKey: ['arrivages-map'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('drops')
+        .select(`
+          id,
+          eta_at,
+          is_premium,
+          ports (
+            id,
+            name,
+            city
+          ),
+          offers (
+            unit_price,
+            available_units,
+            species (
+              name,
+              scientific_name
+            )
+          ),
+          fishermen (
+            boat_name
+          )
+        `)
+        .eq('status', 'scheduled')
+        .order('eta_at', { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: 30000,
+  });
+
+  // Transform to match ArrivageCard props
+  const transformedArrivages = arrivages?.map(arrivage => ({
+    id: arrivage.id,
+    species: arrivage.offers[0]?.species?.name || 'Poisson',
+    scientificName: arrivage.offers[0]?.species?.scientific_name || '',
+    port: `${arrivage.ports?.name}`,
+    eta: new Date(arrivage.eta_at),
+    pricePerPiece: arrivage.offers[0]?.unit_price || 0,
+    quantity: arrivage.offers[0]?.available_units || 0,
+    isPremium: arrivage.is_premium,
+    fisherman: {
+      name: arrivage.fishermen?.boat_name || 'Pêcheur',
+      boat: arrivage.fishermen?.boat_name || ''
+    }
+  })) || [];
+
+  const filteredArrivages = transformedArrivages.filter(arrivage => {
+    const matchesPort = !selectedPort || arrivage.port.includes(
+      ports?.find(p => p.id === selectedPort)?.name || ''
+    );
     const matchesSearch = !searchQuery || 
-      drop.species.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      drop.port.toLowerCase().includes(searchQuery.toLowerCase());
+      arrivage.species.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      arrivage.port.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesPort && matchesSearch;
   });
 
@@ -106,7 +101,7 @@ const Carte = () => {
               Arrivages du jour
             </h1>
             <p className="text-lg text-muted-foreground">
-              {filteredDrops.length} arrivages disponibles
+              {filteredArrivages.length} arrivages disponibles
             </p>
           </div>
 
@@ -136,37 +131,37 @@ const Carte = () => {
             >
               Tous les ports
             </Badge>
-            {ports.map(port => (
+            {ports?.map(port => (
               <Badge
-                key={port}
-                variant={selectedPort === port ? "default" : "outline"}
+                key={port.id}
+                variant={selectedPort === port.id ? "default" : "outline"}
                 className="cursor-pointer gap-1"
-                onClick={() => setSelectedPort(port)}
+                onClick={() => setSelectedPort(port.id)}
               >
                 <MapPin className="h-3 w-3" />
-                {port}
+                {port.name}
               </Badge>
             ))}
           </div>
         </div>
 
-        {/* Map placeholder */}
-        <div className="mb-8 aspect-video md:aspect-[21/9] rounded-xl border-2 border-dashed border-border bg-muted/30 flex items-center justify-center">
-          <div className="text-center space-y-2">
-            <MapPin className="h-12 w-12 text-muted-foreground/50 mx-auto" />
-            <p className="text-muted-foreground">Carte interactive MapLibre</p>
-            <p className="text-sm text-muted-foreground/70">À venir dans la prochaine version</p>
-          </div>
+        {/* Interactive Map */}
+        <div className="mb-8 aspect-video md:aspect-[21/9]">
+          <InteractiveMap 
+            ports={ports || []}
+            selectedPortId={selectedPort}
+            onPortClick={setSelectedPort}
+          />
         </div>
 
-        {/* Drops grid */}
+        {/* Arrivages grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredDrops.map(drop => (
-            <DropCard key={drop.id} {...drop} />
+          {filteredArrivages.map(arrivage => (
+            <ArrivageCard key={arrivage.id} {...arrivage} />
           ))}
         </div>
 
-        {filteredDrops.length === 0 && (
+        {filteredArrivages.length === 0 && (
           <div className="text-center py-16">
             <p className="text-lg text-muted-foreground">
               Aucun arrivage ne correspond à votre recherche

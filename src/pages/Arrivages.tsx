@@ -30,7 +30,7 @@ interface Drop {
   }>;
 }
 
-const DropsTest = () => {
+const Arrivages = () => {
   const { user, userRole } = useAuth();
   const { toast } = useToast();
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -153,14 +153,14 @@ const DropsTest = () => {
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-foreground">Débarquements à venir</h1>
+          <h1 className="text-3xl font-bold text-foreground">Arrivages à venir</h1>
           <p className="text-muted-foreground">
             {userRole === 'premium' ? (
               <span className="flex items-center gap-2">
-                ⭐ <strong>Accès Premium</strong> : Vous voyez les débarquements 30 min avant tout le monde
+                ⭐ <strong>Accès Premium</strong> : Vous voyez les arrivages 30 min avant tout le monde
               </span>
             ) : (
-              'Découvrez les prochains débarquements de poisson frais'
+              'Découvrez les prochains arrivages de poisson frais'
             )}
           </p>
         </div>
@@ -193,7 +193,7 @@ const DropsTest = () => {
         {isLoading && (
           <div className="text-center py-12">
             <Clock className="h-12 w-12 mx-auto text-muted-foreground/50 animate-pulse mb-4" />
-            <p className="text-muted-foreground">Chargement des débarquements...</p>
+            <p className="text-muted-foreground">Chargement des arrivages...</p>
           </div>
         )}
 
@@ -202,7 +202,7 @@ const DropsTest = () => {
           <Card className="border-destructive/50 bg-destructive/5">
             <CardContent className="pt-6">
               <p className="text-destructive text-center">
-                Erreur lors du chargement des débarquements. Veuillez réessayer.
+                Erreur lors du chargement des arrivages. Veuillez réessayer.
               </p>
             </CardContent>
           </Card>
@@ -214,7 +214,7 @@ const DropsTest = () => {
             <CardContent className="pt-6 text-center py-12">
               <Fish className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
               <p className="text-muted-foreground">
-                Aucun débarquement prévu pour le moment.
+                Aucun arrivage prévu pour le moment.
               </p>
               <p className="text-sm text-muted-foreground mt-2">
                 Revenez plus tard ou activez les notifications pour être alerté !
@@ -281,7 +281,7 @@ const DropsTest = () => {
                       <div className="text-center py-6">
                         <Fish className="h-12 w-12 mx-auto text-muted-foreground/50 mb-2" />
                         <p className="text-sm text-muted-foreground">
-                          Aucune offre disponible pour ce débarquement
+                          Aucune offre disponible pour ce arrivage
                         </p>
                       </div>
                     )}
@@ -296,4 +296,4 @@ const DropsTest = () => {
   );
 };
 
-export default DropsTest;
+export default Arrivages;

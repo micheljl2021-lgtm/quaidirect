@@ -4,7 +4,7 @@ import { Crown, MapPin, Clock, Euro } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 
-interface DropCardProps {
+interface ArrivageCardProps {
   id: string;
   species: string;
   scientificName: string;
@@ -20,7 +20,7 @@ interface DropCardProps {
   };
 }
 
-const DropCard = ({ 
+const ArrivageCard = ({ 
   species, 
   scientificName,
   port, 
@@ -30,7 +30,7 @@ const DropCard = ({
   isPremium,
   imageUrl,
   fisherman
-}: DropCardProps) => {
+}: ArrivageCardProps) => {
   const timeToEta = formatDistanceToNow(eta, { addSuffix: true, locale: fr });
   
   return (
@@ -103,4 +103,4 @@ const DropCard = ({
   );
 };
 
-export default DropCard;
+export default ArrivageCard;

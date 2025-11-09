@@ -145,10 +145,10 @@ const PecheurDashboard = () => {
           <Button 
             size="lg" 
             className="gap-2"
-            onClick={() => navigate('/pecheur/nouveau-drop')}
+            onClick={() => navigate('/pecheur/nouvel-arrivage')}
           >
             <Plus className="h-5 w-5" />
-            Nouveau drop
+            Nouvel arrivage
           </Button>
         </div>
 
@@ -214,9 +214,9 @@ const PecheurDashboard = () => {
                     Créez votre premier drop pour commencer à vendre
                   </p>
                 </div>
-                <Button onClick={() => navigate('/pecheur/nouveau-drop')}>
+                <Button onClick={() => navigate('/pecheur/nouvel-arrivage')}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Créer un drop
+                  Créer un arrivage
                 </Button>
               </div>
             ) : (

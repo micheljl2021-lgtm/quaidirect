@@ -165,7 +165,7 @@ const PremiumDashboard = () => {
         },
         (payload) => {
           toast({
-            title: '🎣 Nouveau drop disponible !',
+            title: '🎣 Nouvel arrivage disponible !',
             description: 'Un nouvel arrivage vient d\'être annoncé',
           });
           refetch();
@@ -304,7 +304,7 @@ const PremiumDashboard = () => {
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <Fish className="h-5 w-5 text-primary" />
-                <CardDescription>Drops disponibles</CardDescription>
+                <CardDescription>Arrivages disponibles</CardDescription>
               </div>
               <CardTitle className="text-3xl">
                 {drops?.length || 0}
@@ -354,7 +354,7 @@ const PremiumDashboard = () => {
                     {premiumDrops.length} accès exclusif{premiumDrops.length > 1 ? 's' : ''} disponible{premiumDrops.length > 1 ? 's' : ''} !
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    Vous avez accès à ces drops avant leur ouverture au public. Réservez maintenant pour garantir votre poisson !
+                    Vous avez accès à ces arrivages avant leur ouverture au public. Réservez maintenant pour garantir votre poisson !
                   </p>
                 </div>
               </div>
@@ -512,7 +512,7 @@ const PremiumDashboard = () => {
                   Aucun arrivage disponible pour le moment.
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Vous serez notifié dès qu'un nouveau drop sera disponible !
+                  Vous serez notifié dès qu'un nouvel arrivage sera disponible !
                 </p>
               </CardContent>
             </Card>

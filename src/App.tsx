@@ -11,11 +11,11 @@ import Compte from "./pages/Compte";
 import Auth from "./pages/Auth";
 import PecheurOnboarding from "./pages/PecheurOnboarding";
 import PecheurDashboard from "./pages/PecheurDashboard";
-import CreateDrop from "./pages/CreateDrop";
+import CreateArrivage from "./pages/CreateArrivage";
 import Recettes from "./pages/Recettes";
 import RecetteDetail from "./pages/RecetteDetail";
 import Forfaits from "./pages/Forfaits";
-import DropsTest from "./pages/DropsTest";
+import Arrivages from "./pages/Arrivages";
 import UserDashboard from "./pages/UserDashboard";
 import PremiumDashboard from "./pages/PremiumDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -37,7 +37,7 @@ const App = () => (
           <Route path="/recettes" element={<Recettes />} />
           <Route path="/recettes/:id" element={<RecetteDetail />} />
           <Route path="/forfaits" element={<Forfaits />} />
-          <Route path="/drops-test" element={<DropsTest />} />
+          <Route path="/arrivages" element={<Arrivages />} />
             <Route path="/dashboard/user" element={<UserDashboard />} />
             <Route path="/dashboard/premium" element={<PremiumDashboard />} />
             <Route path="/dashboard/admin" element={<AdminDashboard />} />
@@ -45,7 +45,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/pecheur/onboarding" element={<PecheurOnboarding />} />
             <Route path="/pecheur/dashboard" element={<PecheurDashboard />} />
-            <Route path="/pecheur/nouveau-drop" element={<CreateDrop />} />
+            <Route path="/pecheur/nouvel-arrivage" element={<CreateArrivage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

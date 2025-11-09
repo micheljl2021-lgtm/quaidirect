@@ -205,8 +205,8 @@ const UserDashboard = () => {
             <h2 className="text-2xl font-bold text-foreground">
               Arrivages disponibles
             </h2>
-            <Button variant="outline" onClick={() => navigate('/drops-test')}>
-              Voir tous les drops
+            <Button variant="outline" onClick={() => navigate('/arrivages')}>
+              Voir tous les arrivages
             </Button>
           </div>
 
@@ -270,7 +270,7 @@ const UserDashboard = () => {
                             <Button 
                               variant="outline" 
                               className="w-full"
-                              onClick={() => navigate('/drops-test')}
+                              onClick={() => navigate('/arrivages')}
                             >
                               Voir les détails
                             </Button>

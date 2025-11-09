@@ -193,7 +193,7 @@ const AdminDashboard = () => {
 
       toast({
         title: '✅ Pêcheur vérifié',
-        description: 'Le pêcheur peut maintenant créer des drops',
+        description: 'Le pêcheur peut maintenant créer des arrivages',
       });
 
       refetchPending();
@@ -294,7 +294,7 @@ const AdminDashboard = () => {
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <MapPin className="h-5 w-5 text-primary" />
-                <CardDescription>Drops créés</CardDescription>
+                <CardDescription>Arrivages créés</CardDescription>
               </div>
               <CardTitle className="text-3xl">
                 {stats?.drops || 0}
@@ -333,7 +333,7 @@ const AdminDashboard = () => {
             </TabsTrigger>
             <TabsTrigger value="drops" className="gap-2">
               <MapPin className="h-4 w-4" />
-              Drops
+              Arrivages
             </TabsTrigger>
           </TabsList>
 
@@ -466,13 +466,13 @@ const AdminDashboard = () => {
             </Card>
           </TabsContent>
 
-          {/* Drops Tab */}
+          {/* Arrivages Tab */}
           <TabsContent value="drops" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Drops récents</CardTitle>
+                <CardTitle>Arrivages récents</CardTitle>
                 <CardDescription>
-                  Les 50 derniers drops créés sur la plateforme
+                  Les 50 derniers arrivages créés sur la plateforme
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -512,7 +512,7 @@ const AdminDashboard = () => {
                 ) : (
                   <div className="text-center py-12">
                     <MapPin className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-                    <p className="text-muted-foreground">Aucun drop trouvé</p>
+                    <p className="text-muted-foreground">Aucun arrivage trouvé</p>
                   </div>
                 )}
               </CardContent>

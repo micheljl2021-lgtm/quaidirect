@@ -22,7 +22,7 @@ interface Offer {
   totalUnits: string;
 }
 
-const CreateDrop = () => {
+const CreateArrivage = () => {
   const { user, userRole, isVerifiedFisherman } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -135,8 +135,8 @@ const CreateDrop = () => {
       const visibleAt = new Date(etaAt.getTime() - (isPremium ? 2 : 1) * 60 * 60 * 1000); // 2h before for premium, 1h for regular
       const publicVisibleAt = isPremium ? new Date(visibleAt.getTime() + 30 * 60 * 1000) : null; // 30 min after visible_at
 
-      // Create drop
-      const { data: drop, error: dropError } = await supabase
+      // Create arrivage
+      const { data: arrivage, error: arrivageError } = await supabase
         .from('drops')
         .insert({
           fisherman_id: fisherman.id,
@@ -151,11 +151,11 @@ const CreateDrop = () => {
         .select()
         .single();
 
-      if (dropError) throw dropError;
+      if (arrivageError) throw arrivageError;
 
       // Create offers
       const offersToInsert = validOffers.map(offer => ({
-        drop_id: drop.id,
+        drop_id: arrivage.id,
         species_id: offer.speciesId,
         title: offer.title,
         description: offer.description || null,
@@ -171,16 +171,16 @@ const CreateDrop = () => {
       if (offersError) throw offersError;
 
       toast({
-        title: '✅ Drop créé !',
+        title: '✅ Arrivage créé !',
         description: 'Votre arrivage a été publié avec succès',
       });
 
       navigate('/pecheur/dashboard');
     } catch (error: any) {
-      console.error('Error creating drop:', error);
+      console.error('Error creating arrivage:', error);
       toast({
         title: 'Erreur',
-        description: error.message || 'Impossible de créer le drop',
+        description: error.message || 'Impossible de créer l\'arrivage',
         variant: 'destructive',
       });
     } finally {
@@ -200,7 +200,7 @@ const CreateDrop = () => {
               <Anchor className="h-6 w-6 text-primary" />
             </div>
             <h1 className="text-4xl font-bold text-foreground">
-              Nouveau drop
+              Nouvel arrivage
             </h1>
           </div>
           <p className="text-lg text-muted-foreground">
@@ -209,7 +209,7 @@ const CreateDrop = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Drop Information */}
+          {/* Arrivage Information */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -268,11 +268,11 @@ const CreateDrop = () => {
                 </div>
               </div>
 
-              {/* Premium Drop */}
+              {/* Premium Arrivage */}
               <div className="flex items-center justify-between p-4 rounded-lg border">
                 <div className="space-y-0.5">
                   <Label htmlFor="premium" className="text-base font-medium">
-                    Drop Premium
+                    Arrivage Premium
                   </Label>
                   <p className="text-sm text-muted-foreground">
                     Visible 30 min avant pour les membres Premium
@@ -422,7 +422,7 @@ const CreateDrop = () => {
               className="flex-1"
               disabled={loading}
             >
-              {loading ? 'Création...' : 'Créer le drop'}
+              {loading ? 'Création...' : 'Créer l\'arrivage'}
             </Button>
           </div>
         </form>
@@ -431,4 +431,4 @@ const CreateDrop = () => {
   );
 };
 
-export default CreateDrop;
+export default CreateArrivage;
