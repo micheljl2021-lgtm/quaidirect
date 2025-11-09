@@ -26,6 +26,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Vérifier d'abord si c'est un utilisateur de test (BETA)
+    const testEmail = localStorage.getItem('test_user_email');
+    const testRole = localStorage.getItem('test_user_role');
+    
+    if (testEmail && testRole) {
+      // Créer un faux user pour les tests
+      const fakeUser = {
+        id: testEmail,
+        email: testEmail,
+        role: 'authenticated',
+      } as User;
+      
+      setUser(fakeUser);
+      setUserRole(testRole);
+      setIsVerifiedFisherman(testRole === 'fisherman');
+      setLoading(false);
+      return;
+    }
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -170,6 +189,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
+      // Vérifier si c'est un compte test
+      const testEmail = localStorage.getItem('test_user_email');
+      if (testEmail) {
+        localStorage.removeItem('test_user_email');
+        localStorage.removeItem('test_user_role');
+        setUser(null);
+        setUserRole(null);
+        setIsVerifiedFisherman(false);
+        
+        toast({
+          title: 'Déconnexion',
+          description: 'À bientôt !',
+        });
+        return;
+      }
+
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       

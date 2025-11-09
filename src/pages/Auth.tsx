@@ -26,10 +26,18 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      // Si c'est un email de test, connexion automatique
+      // Si c'est un email de test, connexion automatique SANS backend
       if (TEST_EMAILS.includes(email.toLowerCase())) {
-        await signInWithPassword(email, 'test123');
-        navigate('/');
+        // Simuler une connexion réussie
+        localStorage.setItem('test_user_email', email);
+        localStorage.setItem('test_user_role', 
+          email === 'test@pecheur.fr' ? 'fisherman' :
+          email === 'test@premium.fr' ? 'premium' : 'admin'
+        );
+        setTimeout(() => {
+          navigate('/');
+          window.location.reload();
+        }, 500);
       } else {
         await signIn(email);
         setStep('otp');
