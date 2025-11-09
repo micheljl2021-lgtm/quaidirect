@@ -14,6 +14,7 @@ import PecheurDashboard from "./pages/PecheurDashboard";
 import Recettes from "./pages/Recettes";
 import RecetteDetail from "./pages/RecetteDetail";
 import Forfaits from "./pages/Forfaits";
+import DropsTest from "./pages/DropsTest";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,9 +30,10 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             <Route path="/carte" element={<Carte />} />
             <Route path="/premium" element={<Premium />} />
-            <Route path="/recettes" element={<Recettes />} />
-            <Route path="/recettes/:id" element={<RecetteDetail />} />
-            <Route path="/forfaits" element={<Forfaits />} />
+          <Route path="/recettes" element={<Recettes />} />
+          <Route path="/recettes/:id" element={<RecetteDetail />} />
+          <Route path="/forfaits" element={<Forfaits />} />
+          <Route path="/drops-test" element={<DropsTest />} />
             <Route path="/compte" element={<Compte />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/pecheur/onboarding" element={<PecheurOnboarding />} />
