@@ -51,9 +51,15 @@ const Header = () => {
           <Link to="/premium" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Premium
           </Link>
-          {(userRole === 'user' || userRole === 'premium') && (
+          {userRole === 'user' && (
             <Link to="/dashboard/user" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Mon dashboard
+            </Link>
+          )}
+          {userRole === 'premium' && (
+            <Link to="/dashboard/premium" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+              <Crown className="h-4 w-4" />
+              Dashboard Premium
             </Link>
           )}
           {userRole === 'fisherman' && (
@@ -163,13 +169,23 @@ const Header = () => {
               >
                 Premium
               </Link>
-              {(userRole === 'user' || userRole === 'premium') && (
+              {userRole === 'user' && (
                 <Link 
                   to="/dashboard/user" 
                   className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Mon dashboard
+                </Link>
+              )}
+              {userRole === 'premium' && (
+                <Link 
+                  to="/dashboard/premium" 
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <Crown className="h-4 w-4" />
+                  Dashboard Premium
                 </Link>
               )}
               {userRole === 'fisherman' && (

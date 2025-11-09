@@ -88,6 +88,8 @@ const Auth = () => {
           const userRoles = roles.map(r => r.role);
           if (userRoles.includes('fisherman') || userRoles.includes('admin')) {
             navigate('/pecheur/dashboard');
+          } else if (userRoles.includes('premium')) {
+            navigate('/dashboard/premium');
           } else {
             navigate('/dashboard/user');
           }
