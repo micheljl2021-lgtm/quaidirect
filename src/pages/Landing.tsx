@@ -3,8 +3,62 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Crown, MapPin, Clock, Shield, Users, Anchor } from "lucide-react";
 import Header from "@/components/Header";
+import ArrivageCard from "@/components/ArrivageCard";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Landing = () => {
+  // Fetch latest arrivages for preview
+  const { data: latestArrivages } = useQuery({
+    queryKey: ['latest-arrivages'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('drops')
+        .select(`
+          id,
+          eta_at,
+          sale_start_time,
+          is_premium,
+          ports (
+            id,
+            name,
+            city
+          ),
+          offers (
+            unit_price,
+            available_units,
+            species (
+              name,
+              scientific_name
+            )
+          ),
+          fishermen (
+            boat_name
+          )
+        `)
+        .eq('status', 'scheduled')
+        .order('eta_at', { ascending: true })
+        .limit(3);
+
+      if (error) throw error;
+      
+      return data?.map(arrivage => ({
+        id: arrivage.id,
+        species: arrivage.offers[0]?.species?.name || 'Poisson',
+        scientificName: arrivage.offers[0]?.species?.scientific_name || '',
+        port: `${arrivage.ports?.name}`,
+        eta: new Date(arrivage.eta_at),
+        saleStartTime: arrivage.sale_start_time ? new Date(arrivage.sale_start_time) : undefined,
+        pricePerPiece: arrivage.offers[0]?.unit_price || 0,
+        quantity: arrivage.offers[0]?.available_units || 0,
+        isPremium: arrivage.is_premium,
+        fisherman: {
+          name: arrivage.fishermen?.boat_name || 'Pêcheur',
+          boat: arrivage.fishermen?.boat_name || ''
+        }
+      })) || [];
+    },
+  });
   return (
     <div className="min-h-screen bg-gradient-sky">
       <Header />
@@ -129,6 +183,37 @@ const Landing = () => {
           </div>
         </div>
       </section>
+
+      {/* Latest Arrivages Preview */}
+      {latestArrivages && latestArrivages.length > 0 && (
+        <section className="container px-4 py-16 border-t border-border">
+          <div className="mx-auto max-w-6xl">
+            <div className="text-center space-y-4 mb-12">
+              <h2 className="text-4xl font-bold text-foreground">
+                Arrivages du jour
+              </h2>
+              <p className="text-lg text-muted-foreground">
+                Découvrez les derniers arrivages de poisson frais
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              {latestArrivages.map(arrivage => (
+                <ArrivageCard key={arrivage.id} {...arrivage} />
+              ))}
+            </div>
+
+            <div className="text-center">
+              <Link to="/carte">
+                <Button size="lg" variant="outline" className="gap-2">
+                  <MapPin className="h-5 w-5" />
+                  Voir tous les arrivages
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Solidarity Section */}
       <section className="container px-4 py-16 border-t border-border">
