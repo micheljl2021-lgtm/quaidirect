@@ -27,20 +27,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Vérifier d'abord si c'est un utilisateur de test (BETA)
+    const testUserId = localStorage.getItem('test_user_id');
     const testEmail = localStorage.getItem('test_user_email');
-    const testRole = localStorage.getItem('test_user_role');
+    const testRolesStr = localStorage.getItem('test_user_roles');
     
-    if (testEmail && testRole) {
+    if (testUserId && testEmail && testRolesStr) {
+      const roles = JSON.parse(testRolesStr);
+      
       // Créer un faux user pour les tests
       const fakeUser = {
-        id: testEmail,
+        id: testUserId,
         email: testEmail,
         role: 'authenticated',
       } as User;
       
       setUser(fakeUser);
-      setUserRole(testRole);
-      setIsVerifiedFisherman(testRole === 'fisherman');
+      // Prendre le rôle principal (le dernier dans la liste)
+      setUserRole(roles[roles.length - 1]);
+      setIsVerifiedFisherman(roles.includes('fisherman'));
       setLoading(false);
       return;
     }
@@ -192,8 +196,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Vérifier si c'est un compte test
       const testEmail = localStorage.getItem('test_user_email');
       if (testEmail) {
+        localStorage.removeItem('test_user_id');
         localStorage.removeItem('test_user_email');
-        localStorage.removeItem('test_user_role');
+        localStorage.removeItem('test_user_roles');
         setUser(null);
         setUserRole(null);
         setIsVerifiedFisherman(false);

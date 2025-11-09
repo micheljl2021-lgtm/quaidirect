@@ -28,12 +28,17 @@ const Auth = () => {
     try {
       // Si c'est un email de test, connexion automatique SANS backend
       if (TEST_EMAILS.includes(email.toLowerCase())) {
-        // Simuler une connexion réussie
+        // Simuler une connexion réussie avec les bons rôles
+        const fakeUserId = email === 'test@pecheur.fr' ? 'pecheur-test-id' :
+                          email === 'test@premium.fr' ? 'premium-test-id' : 'admin-test-id';
+        
+        const roles = email === 'test@pecheur.fr' ? ['user', 'fisherman'] :
+                     email === 'test@premium.fr' ? ['user', 'premium'] : ['user', 'admin'];
+        
+        localStorage.setItem('test_user_id', fakeUserId);
         localStorage.setItem('test_user_email', email);
-        localStorage.setItem('test_user_role', 
-          email === 'test@pecheur.fr' ? 'fisherman' :
-          email === 'test@premium.fr' ? 'premium' : 'admin'
-        );
+        localStorage.setItem('test_user_roles', JSON.stringify(roles));
+        
         setTimeout(() => {
           navigate('/');
           window.location.reload();
