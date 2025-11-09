@@ -341,6 +341,57 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          cancel_at: string | null
+          canceled_at: string | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan: string
+          started_at: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          trial_end: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at?: string | null
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan: string
+          started_at?: string
+          status: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_end?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at?: string | null
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan?: string
+          started_at?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_end?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ports: {
         Row: {
           city: string
@@ -677,11 +728,14 @@ export type Database = {
           buyer_id: string | null
           completed_at: string | null
           created_at: string
+          final_weight_kg: number | null
           fisherman_id: string
           id: string
           notes: string | null
           offer_id: string
+          paid_method: string | null
           quantity: number
+          receipt_pdf_url: string | null
           refunded_at: string | null
           reservation_id: string | null
           status: Database["public"]["Enums"]["sale_status"]
@@ -693,11 +747,14 @@ export type Database = {
           buyer_id?: string | null
           completed_at?: string | null
           created_at?: string
+          final_weight_kg?: number | null
           fisherman_id: string
           id?: string
           notes?: string | null
           offer_id: string
+          paid_method?: string | null
           quantity: number
+          receipt_pdf_url?: string | null
           refunded_at?: string | null
           reservation_id?: string | null
           status?: Database["public"]["Enums"]["sale_status"]
@@ -709,11 +766,14 @@ export type Database = {
           buyer_id?: string | null
           completed_at?: string | null
           created_at?: string
+          final_weight_kg?: number | null
           fisherman_id?: string
           id?: string
           notes?: string | null
           offer_id?: string
+          paid_method?: string | null
           quantity?: number
+          receipt_pdf_url?: string | null
           refunded_at?: string | null
           reservation_id?: string | null
           status?: Database["public"]["Enums"]["sale_status"]
