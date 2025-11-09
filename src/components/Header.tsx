@@ -39,6 +39,12 @@ const Header = () => {
           <Link to="/carte" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Carte des arrivages
           </Link>
+          <Link to="/recettes" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            Recettes
+          </Link>
+          <Link to="/forfaits" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            Forfaits
+          </Link>
           <Link to="/premium" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Premium
           </Link>
@@ -120,6 +126,20 @@ const Header = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Carte des arrivages
+              </Link>
+              <Link 
+                to="/recettes" 
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Recettes
+              </Link>
+              <Link 
+                to="/forfaits" 
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Forfaits
               </Link>
               <Link 
                 to="/premium" 

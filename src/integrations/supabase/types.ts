@@ -470,6 +470,161 @@ export type Database = {
         }
         Relationships: []
       }
+      recipe_ingredients: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          order_index: number | null
+          quantity: string
+          recipe_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          order_index?: number | null
+          quantity: string
+          recipe_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          order_index?: number | null
+          quantity?: string
+          recipe_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_ingredients_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_species: {
+        Row: {
+          created_at: string
+          id: string
+          is_primary: boolean | null
+          quantity: string | null
+          recipe_id: string
+          species_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          quantity?: string | null
+          recipe_id: string
+          species_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          quantity?: string | null
+          recipe_id?: string
+          species_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_species_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_species_species_id_fkey"
+            columns: ["species_id"]
+            isOneToOne: false
+            referencedRelation: "species"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipes: {
+        Row: {
+          cooking_time: number | null
+          created_at: string
+          description: string | null
+          difficulty: string | null
+          id: string
+          image_url: string | null
+          instructions: Json | null
+          preparation_time: number | null
+          servings: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cooking_time?: number | null
+          created_at?: string
+          description?: string | null
+          difficulty?: string | null
+          id?: string
+          image_url?: string | null
+          instructions?: Json | null
+          preparation_time?: number | null
+          servings?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cooking_time?: number | null
+          created_at?: string
+          description?: string | null
+          difficulty?: string | null
+          id?: string
+          image_url?: string | null
+          instructions?: Json | null
+          preparation_time?: number | null
+          servings?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          bonus_amount: number | null
+          bonus_claimed: boolean | null
+          claimed_at: string | null
+          created_at: string
+          id: string
+          referred_id: string
+          referred_type: string
+          referrer_id: string
+          referrer_type: string
+        }
+        Insert: {
+          bonus_amount?: number | null
+          bonus_claimed?: boolean | null
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          referred_id: string
+          referred_type: string
+          referrer_id: string
+          referrer_type: string
+        }
+        Update: {
+          bonus_amount?: number | null
+          bonus_claimed?: boolean | null
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          referred_id?: string
+          referred_type?: string
+          referrer_id?: string
+          referrer_type?: string
+        }
+        Relationships: []
+      }
       reservations: {
         Row: {
           cancelled_at: string | null
@@ -619,6 +774,86 @@ export type Database = {
           season_start?: number | null
         }
         Relationships: []
+      }
+      subscription_packages: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration_days: number
+          fish_quota: number
+          id: string
+          is_active: boolean | null
+          name: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration_days?: number
+          fish_quota: number
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration_days?: number
+          fish_quota?: number
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_package_subscriptions: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          package_id: string
+          remaining_quota: number
+          start_date: string
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          package_id: string
+          remaining_quota: number
+          start_date?: string
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          package_id?: string
+          remaining_quota?: number
+          start_date?: string
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_package_subscriptions_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_packages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
