@@ -60,22 +60,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserRole = async (userId: string) => {
     try {
-      // Fetch role
-      const { data: roleData, error: roleError } = await supabase
+      // Fetch all roles for the user
+      const { data: rolesData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', userId)
-        .maybeSingle() as { data: { role: string } | null; error: any };
+        .eq('user_id', userId);
       
       if (roleError) {
-        console.error('Error fetching role:', roleError);
+        console.error('Error fetching roles:', roleError);
         return;
       }
 
-      setUserRole(roleData?.role || null);
+      // Priority order: admin > fisherman > premium > user
+      const roles = rolesData?.map(r => r.role) || [];
+      let primaryRole = null;
+      
+      if (roles.includes('admin')) {
+        primaryRole = 'admin';
+      } else if (roles.includes('fisherman')) {
+        primaryRole = 'fisherman';
+      } else if (roles.includes('premium')) {
+        primaryRole = 'premium';
+      } else if (roles.includes('user')) {
+        primaryRole = 'user';
+      }
+
+      setUserRole(primaryRole);
 
       // Check if verified fisherman
-      if (roleData?.role === 'fisherman') {
+      if (roles.includes('fisherman')) {
         const { data: fishermanData, error: fishermanError } = await supabase
           .from('fishermen')
           .select('verified_at')
