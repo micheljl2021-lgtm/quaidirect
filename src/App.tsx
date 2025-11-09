@@ -19,7 +19,6 @@ import Arrivages from "./pages/Arrivages";
 import UserDashboard from "./pages/UserDashboard";
 import PremiumDashboard from "./pages/PremiumDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-import DemoTracabilite from "./pages/DemoTracabilite";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,7 +34,6 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             <Route path="/carte" element={<Carte />} />
             <Route path="/premium" element={<PremiumPaywall />} />
-            <Route path="/demo-tracabilite" element={<DemoTracabilite />} />
           <Route path="/recettes" element={<Recettes />} />
           <Route path="/recettes/:id" element={<RecetteDetail />} />
           <Route path="/forfaits" element={<Forfaits />} />

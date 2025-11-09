@@ -12,7 +12,6 @@ interface Drop {
   id: string;
   port_id: string;
   eta_at: string;
-  sale_start_time: string | null;
   visible_at: string;
   public_visible_at: string | null;
   is_premium: boolean;
@@ -55,7 +54,6 @@ const Arrivages = () => {
           id,
           port_id,
           eta_at,
-          sale_start_time,
           visible_at,
           public_visible_at,
           is_premium,
@@ -229,8 +227,6 @@ const Arrivages = () => {
         <div className="space-y-4">
           {drops?.map((drop) => {
             const etaDate = new Date(drop.eta_at);
-            const saleDate = drop.sale_start_time ? new Date(drop.sale_start_time) : null;
-            const displayDate = saleDate || etaDate;
             const portName = `${drop.ports.name}, ${drop.ports.city}`;
             
             return (
@@ -243,22 +239,9 @@ const Arrivages = () => {
                         {portName}
                       </CardTitle>
                       <CardDescription>
-                        {saleDate ? (
-                          <>
-                            Retrait à partir de : {displayDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                            {' · '}
-                            {displayDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
-                            <span className="block text-xs text-muted-foreground/70 mt-1">
-                              (Débarqué le {etaDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} à {etaDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })})
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            Arrivée prévue : {displayDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                            {' · '}
-                            {displayDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
-                          </>
-                        )}
+                        Arrivée prévue : {etaDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                        {' · '}
+                        {etaDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
                       </CardDescription>
                     </div>
                     {getAccessBadge(drop)}
@@ -281,23 +264,18 @@ const Arrivages = () => {
                                 </div>
                               </div>
                               <div className="text-right">
-                                <p className="font-bold text-lg">~{offer.unit_price}€</p>
-                                <p className="text-xs text-muted-foreground">/ pièce*</p>
+                                <p className="font-bold text-lg">{offer.unit_price}€</p>
+                                <p className="text-xs text-muted-foreground">l'unité</p>
                               </div>
                             </div>
                           ))}
                         </div>
-                        <div className="space-y-2">
-                          <Button 
-                            className="w-full" 
-                            onClick={() => drop.offers[0] && handleReserve(drop.offers[0].id)}
-                          >
-                            {userRole === 'premium' ? 'Pré-réserver ma pièce' : 'Réserver ma pièce'}
-                          </Button>
-                          <p className="text-xs text-muted-foreground text-center">
-                            * Prix indicatif, ajusté après pesée réglementaire au retrait
-                          </p>
-                        </div>
+                        <Button 
+                          className="w-full" 
+                          onClick={() => drop.offers[0] && handleReserve(drop.offers[0].id)}
+                        >
+                          {userRole === 'premium' ? 'Pré-réserver' : 'Réserver'}
+                        </Button>
                       </>
                     ) : (
                       <div className="text-center py-6">

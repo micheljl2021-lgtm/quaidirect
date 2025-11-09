@@ -36,7 +36,6 @@ const Carte = () => {
         .select(`
           id,
           eta_at,
-          sale_start_time,
           is_premium,
           ports (
             id,
@@ -71,7 +70,6 @@ const Carte = () => {
     scientificName: arrivage.offers[0]?.species?.scientific_name || '',
     port: `${arrivage.ports?.name}`,
     eta: new Date(arrivage.eta_at),
-    saleStartTime: arrivage.sale_start_time ? new Date(arrivage.sale_start_time) : undefined,
     pricePerPiece: arrivage.offers[0]?.unit_price || 0,
     quantity: arrivage.offers[0]?.available_units || 0,
     isPremium: arrivage.is_premium,

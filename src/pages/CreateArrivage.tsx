@@ -32,8 +32,6 @@ const CreateArrivage = () => {
   const [portId, setPortId] = useState('');
   const [etaDate, setEtaDate] = useState('');
   const [etaTime, setEtaTime] = useState('');
-  const [saleDate, setSaleDate] = useState('');
-  const [saleTime, setSaleTime] = useState('');
   const [isPremium, setIsPremium] = useState(false);
   const [notes, setNotes] = useState('');
   const [offers, setOffers] = useState<Offer[]>([
@@ -102,7 +100,7 @@ const CreateArrivage = () => {
 
     try {
       // Validation
-      if (!portId || !etaDate || !etaTime || !saleDate || !saleTime) {
+      if (!portId || !etaDate || !etaTime) {
         toast({
           title: 'Erreur',
           description: 'Veuillez remplir tous les champs obligatoires',
@@ -132,11 +130,9 @@ const CreateArrivage = () => {
 
       if (fishermanError) throw fishermanError;
 
-      // Create ETA datetime (heure de débarquement)
+      // Create ETA datetime
       const etaAt = new Date(`${etaDate}T${etaTime}`);
-      // Create sale start time (heure de mise en vente)
-      const saleStartTime = new Date(`${saleDate}T${saleTime}`);
-      const visibleAt = new Date(saleStartTime.getTime() - (isPremium ? 2 : 1) * 60 * 60 * 1000); // 2h before for premium, 1h for regular
+      const visibleAt = new Date(etaAt.getTime() - (isPremium ? 2 : 1) * 60 * 60 * 1000); // 2h before for premium, 1h for regular
       const publicVisibleAt = isPremium ? new Date(visibleAt.getTime() + 30 * 60 * 1000) : null; // 30 min after visible_at
 
       // Create arrivage
@@ -146,7 +142,6 @@ const CreateArrivage = () => {
           fisherman_id: fisherman.id,
           port_id: portId,
           eta_at: etaAt.toISOString(),
-          sale_start_time: saleStartTime.toISOString(),
           visible_at: visibleAt.toISOString(),
           public_visible_at: publicVisibleAt?.toISOString(),
           is_premium: isPremium,
@@ -222,10 +217,10 @@ const CreateArrivage = () => {
                 Informations de disponibilité
               </CardTitle>
               <CardDescription>
-                Séparez l'heure de débarquement et l'heure de mise en vente (vente directe réglementaire)
+                Indiquez quand votre pêche sera prête à la vente (généralement 5-7h après votre retour au port)
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4">
               {/* Port */}
               <div className="space-y-2">
                 <Label htmlFor="port">Port d'arrivée *</Label>
@@ -243,70 +238,34 @@ const CreateArrivage = () => {
                 </Select>
               </div>
 
-              {/* ETA (Débarquement) */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Anchor className="h-4 w-4 text-muted-foreground" />
-                  <Label className="text-base font-medium">Heure de débarquement</Label>
+              {/* ETA Date & Time */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="eta-date" className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Date de disponibilité *
+                  </Label>
+                  <Input
+                    id="eta-date"
+                    type="date"
+                    value={etaDate}
+                    onChange={(e) => setEtaDate(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                  />
                 </div>
-                <div className="grid grid-cols-2 gap-4 pl-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="eta-date">Date *</Label>
-                    <Input
-                      id="eta-date"
-                      type="date"
-                      value={etaDate}
-                      onChange={(e) => setEtaDate(e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
-                    />
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="eta-time">Heure *</Label>
-                    <Input
-                      id="eta-time"
-                      type="time"
-                      value={etaTime}
-                      onChange={(e) => setEtaTime(e.target.value)}
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="eta-time" className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Heure de disponibilité *
+                  </Label>
+                  <Input
+                    id="eta-time"
+                    type="time"
+                    value={etaTime}
+                    onChange={(e) => setEtaTime(e.target.value)}
+                  />
                 </div>
-                <p className="text-xs text-muted-foreground pl-6">
-                  Ex: Retour au port à 2h00 du matin
-                </p>
-              </div>
-
-              {/* Sale Start Time (Mise en vente) */}
-              <div className="space-y-3 p-4 rounded-lg bg-primary/5 border border-primary/20">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-primary" />
-                  <Label className="text-base font-medium">Heure de mise en vente</Label>
-                </div>
-                <div className="grid grid-cols-2 gap-4 pl-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="sale-date">Date *</Label>
-                    <Input
-                      id="sale-date"
-                      type="date"
-                      value={saleDate}
-                      onChange={(e) => setSaleDate(e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="sale-time">Heure *</Label>
-                    <Input
-                      id="sale-time"
-                      type="time"
-                      value={saleTime}
-                      onChange={(e) => setSaleTime(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground pl-6">
-                  Ex: Vente à partir de 8h00 (les clients viendront à cette heure)
-                </p>
               </div>
 
               {/* Premium Arrivage */}
@@ -419,7 +378,7 @@ const CreateArrivage = () => {
                     {/* Price & Quantity */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Prix indicatif à la pièce (€) *</Label>
+                        <Label>Prix unitaire (€) *</Label>
                         <Input
                           type="number"
                           step="0.01"
@@ -428,13 +387,10 @@ const CreateArrivage = () => {
                           value={offer.unitPrice}
                           onChange={(e) => updateOffer(index, 'unitPrice', e.target.value)}
                         />
-                        <p className="text-xs text-muted-foreground">
-                          Prix ajusté après pesée au moment du retrait
-                        </p>
                       </div>
 
                       <div className="space-y-2">
-                        <Label>Nombre de pièces *</Label>
+                        <Label>Quantité totale *</Label>
                         <Input
                           type="number"
                           min="1"
@@ -442,9 +398,6 @@ const CreateArrivage = () => {
                           value={offer.totalUnits}
                           onChange={(e) => updateOffer(index, 'totalUnits', e.target.value)}
                         />
-                        <p className="text-xs text-muted-foreground">
-                          Poissons disponibles
-                        </p>
                       </div>
                     </div>
                   </CardContent>

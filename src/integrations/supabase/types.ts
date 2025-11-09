@@ -60,7 +60,6 @@ export type Database = {
           notes: string | null
           port_id: string
           public_visible_at: string | null
-          sale_start_time: string | null
           status: Database["public"]["Enums"]["drop_status"]
           updated_at: string
           visible_at: string
@@ -77,7 +76,6 @@ export type Database = {
           notes?: string | null
           port_id: string
           public_visible_at?: string | null
-          sale_start_time?: string | null
           status?: Database["public"]["Enums"]["drop_status"]
           updated_at?: string
           visible_at?: string
@@ -94,7 +92,6 @@ export type Database = {
           notes?: string | null
           port_id?: string
           public_visible_at?: string | null
-          sale_start_time?: string | null
           status?: Database["public"]["Enums"]["drop_status"]
           updated_at?: string
           visible_at?: string
@@ -294,9 +291,7 @@ export type Database = {
           description: string | null
           drop_id: string
           id: string
-          indicative_weight_kg: number | null
           photo_url: string | null
-          price_type: string | null
           species_id: string
           title: string
           total_units: number
@@ -309,9 +304,7 @@ export type Database = {
           description?: string | null
           drop_id: string
           id?: string
-          indicative_weight_kg?: number | null
           photo_url?: string | null
-          price_type?: string | null
           species_id: string
           title: string
           total_units: number
@@ -324,9 +317,7 @@ export type Database = {
           description?: string | null
           drop_id?: string
           id?: string
-          indicative_weight_kg?: number | null
           photo_url?: string | null
-          price_type?: string | null
           species_id?: string
           title?: string
           total_units?: number
@@ -818,10 +809,7 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
-          fao_zone: string | null
-          fishing_gear: string | null
           id: string
-          min_size_cm: number | null
           name: string
           scientific_name: string | null
           season_end: number | null
@@ -830,10 +818,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
-          fao_zone?: string | null
-          fishing_gear?: string | null
           id?: string
-          min_size_cm?: number | null
           name: string
           scientific_name?: string | null
           season_end?: number | null
@@ -842,10 +827,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
-          fao_zone?: string | null
-          fishing_gear?: string | null
           id?: string
-          min_size_cm?: number | null
           name?: string
           scientific_name?: string | null
           season_end?: number | null
