@@ -310,15 +310,14 @@ const Auth = () => {
         </Card>
 
         <div className="text-center text-sm text-muted-foreground space-y-2">
-          <p className="font-medium">Comptes de test BETA</p>
+          <p className="font-medium">🚀 Comptes de test prêts à l'emploi</p>
           <div className="p-4 rounded-lg bg-muted/50 text-left space-y-1">
             <p><strong>Pêcheur :</strong> test@pecheur.fr / pecheur123</p>
             <p><strong>Premium :</strong> test@premium.fr / premium123</p>
             <p><strong>Admin :</strong> test@admin.fr / admin123</p>
           </div>
-          <p className="text-xs">
-            Ces comptes doivent d'abord être créés via l'inscription.<br />
-            Utilisez les mots de passe ci-dessus lors de l'inscription.
+          <p className="text-xs text-green-600 font-medium">
+            ✓ Connexion directe activée - Aucune confirmation d'email requise
           </p>
         </div>
       </div>
