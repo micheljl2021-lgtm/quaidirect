@@ -10,6 +10,7 @@ interface ArrivageCardProps {
   scientificName: string;
   port: string;
   eta: Date;
+  saleStartTime?: Date;
   pricePerPiece: number;
   quantity: number;
   isPremium?: boolean;
@@ -24,14 +25,16 @@ const ArrivageCard = ({
   species, 
   scientificName,
   port, 
-  eta, 
+  eta,
+  saleStartTime,
   pricePerPiece, 
   quantity,
   isPremium,
   imageUrl,
   fisherman
 }: ArrivageCardProps) => {
-  const timeToEta = formatDistanceToNow(eta, { addSuffix: true, locale: fr });
+  const displayTime = saleStartTime || eta;
+  const timeToSale = formatDistanceToNow(displayTime, { addSuffix: true, locale: fr });
   
   return (
     <Card className="group overflow-hidden hover:shadow-ocean transition-all duration-300 cursor-pointer">
@@ -75,7 +78,9 @@ const ArrivageCard = ({
           
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-primary" />
-            <span className="text-muted-foreground">{timeToEta}</span>
+            <span className="text-muted-foreground text-xs">
+              {saleStartTime ? `Retrait ${timeToSale}` : `Arrivée ${timeToSale}`}
+            </span>
           </div>
         </div>
 
@@ -83,19 +88,22 @@ const ArrivageCard = ({
         <div className="flex items-center justify-between pt-2 border-t border-border">
           <div className="flex items-center gap-1">
             <Euro className="h-4 w-4 text-accent" />
-            <span className="font-bold text-foreground">{pricePerPiece.toFixed(2)}</span>
-            <span className="text-xs text-muted-foreground">/ pièce</span>
+            <span className="font-bold text-foreground">~{pricePerPiece.toFixed(2)}</span>
+            <span className="text-xs text-muted-foreground">/ pièce*</span>
           </div>
           
           <span className="text-sm text-muted-foreground">
-            ~{quantity} pièces
+            {quantity} pièce{quantity > 1 ? 's' : ''}
           </span>
         </div>
 
-        {/* Fisherman */}
-        <div className="pt-2 border-t border-border">
+        {/* Fisherman & Note */}
+        <div className="pt-2 border-t border-border space-y-1">
           <p className="text-xs text-muted-foreground">
             {fisherman.name} • {fisherman.boat}
+          </p>
+          <p className="text-[10px] text-muted-foreground/70 italic">
+            * Prix indicatif, ajusté après pesée réglementaire au retrait
           </p>
         </div>
       </CardContent>

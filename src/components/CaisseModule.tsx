@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, CreditCard, Banknote, Loader2, Shield, Anchor, Fish } from "lucide-react";
+import { CheckCircle, CreditCard, Banknote, Loader2, Shield, Anchor, Fish, Clock } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Reservation {
@@ -22,8 +22,12 @@ interface Reservation {
     species: {
       name: string;
       scientific_name: string;
+      fao_zone: string | null;
+      min_size_cm: number | null;
+      fishing_gear: string | null;
     };
     drop: {
+      eta_at: string;
       port: {
         name: string;
         city: string;
@@ -85,9 +89,10 @@ export default function CaisseModule() {
             id,
             title,
             unit_price,
-            species:species(name, scientific_name),
+            species:species(name, scientific_name, fao_zone, min_size_cm, fishing_gear),
             drop:drops!inner(
               fisherman_id,
+              eta_at,
               port:ports(name, city),
               fisherman:fishermen(boat_name, boat_registration)
             )
@@ -211,16 +216,13 @@ export default function CaisseModule() {
           const data = formData[reservation.id] || { finalWeight: '', finalPrice: '', paidMethod: 'cash' };
           const estimatedTotal = (parseFloat(data.finalWeight || '0') * parseFloat(data.finalPrice || '0')).toFixed(2);
           
-          // Calculate label data
-          const currentDate = new Date().toLocaleDateString('fr-FR', { 
-            day: '2-digit', 
-            month: '2-digit', 
-            year: 'numeric' 
-          });
-          const lotNumber = `${currentDate.replace(/\//g, '')}-${reservation.offer.drop.fisherman.boat_registration.replace(/\s/g, '')}`;
-          const faoZone = "27.VIIIa"; // Zone FAO Atlantique - à enrichir depuis la base
-          const minSize = 42; // Taille mini réglementaire - à enrichir depuis la base
-          const currentSize = parseFloat(data.finalWeight) * 30; // Estimation taille basée sur poids (à ajuster)
+          // Calculate label data from species and drop info
+          const landingDate = new Date(reservation.offer.drop.eta_at);
+          const lotNumber = `${landingDate.toISOString().split('T')[0].replace(/-/g, '')}-${reservation.offer.drop.fisherman.boat_registration.replace(/\s/g, '')}`;
+          const faoZone = reservation.offer.species.fao_zone || "27.VIIIa";
+          const minSize = reservation.offer.species.min_size_cm || 42;
+          const fishingGear = reservation.offer.species.fishing_gear || "Ligne";
+          const currentSize = parseFloat(data.finalWeight) * 30; // Estimation taille basée sur poids (à ajuster selon espèce)
 
           return (
             <Card key={reservation.id}>
@@ -306,53 +308,48 @@ export default function CaisseModule() {
                   </div>
                   </div>
 
-                  {/* Right: Label Preview */}
+                  {/* Right: Note de vente preview */}
                   <div className="space-y-3">
                     <h3 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
                       <Shield className="h-4 w-4 text-primary" />
-                      Aperçu étiquette réglementaire
+                      Note de vente (balance homologuée)
                     </h3>
                     <Card className="border-2 border-primary/20 bg-primary/5">
                       <CardContent className="pt-4 space-y-3">
+                        {/* Header - Regulatory mention */}
+                        <div className="text-center pb-2 border-b">
+                          <p className="text-xs font-bold text-foreground">NOTE DE VENTE - VENTE DIRECTE</p>
+                          <p className="text-[10px] text-muted-foreground">Vente directe producteur (max 100kg/débarquement)</p>
+                        </div>
+
                         {/* Species Info */}
                         <div className="space-y-1">
                           <h4 className="font-bold text-foreground">{reservation.offer.species.name}</h4>
                           <p className="text-xs italic text-muted-foreground">{reservation.offer.species.scientific_name || 'N/A'}</p>
                         </div>
 
-                        {/* Key Details */}
+                        {/* Weighing Details */}
                         <div className="grid grid-cols-2 gap-2 py-2 border-y text-xs">
                           <div>
-                            <p className="text-muted-foreground">Poids</p>
+                            <p className="text-muted-foreground">Poids (balance homologuée)</p>
                             <p className="font-semibold">{data.finalWeight || '-'} kg</p>
                           </div>
                           <div>
                             <p className="text-muted-foreground">Prix/kg</p>
                             <p className="font-semibold">{data.finalPrice || '-'} €</p>
                           </div>
+                          <div className="col-span-2 pt-2 border-t">
+                            <p className="text-muted-foreground">Total TTC</p>
+                            <p className="font-bold text-lg text-foreground">{estimatedTotal} €</p>
+                          </div>
                         </div>
 
-                        {/* Size Compliance */}
-                        {data.finalWeight && (
-                          <div className={`p-2 rounded text-xs ${
-                            currentSize >= minSize 
-                              ? 'bg-green-500/10 border border-green-500/20 text-green-700 dark:text-green-400' 
-                              : 'bg-red-500/10 border border-red-500/20 text-red-700 dark:text-red-400'
-                          }`}>
-                            <p className="font-medium">
-                              {currentSize >= minSize 
-                                ? `✓ Taille: ${currentSize.toFixed(0)}cm (min: ${minSize}cm)`
-                                : `✗ Taille: ${currentSize.toFixed(0)}cm < ${minSize}cm requis`}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Traceability */}
+                        {/* Traceability - Full details */}
                         <div className="space-y-2 pt-2 text-xs">
                           <div className="flex items-start gap-2">
                             <Shield className="h-3 w-3 text-primary mt-0.5 flex-shrink-0" />
                             <div className="flex-1">
-                              <p className="text-muted-foreground">N° de lot</p>
+                              <p className="text-muted-foreground">N° de lot traçable</p>
                               <p className="font-mono font-medium text-foreground">{lotNumber}</p>
                             </div>
                           </div>
@@ -360,30 +357,68 @@ export default function CaisseModule() {
                           <div className="flex items-start gap-2">
                             <Fish className="h-3 w-3 text-primary mt-0.5 flex-shrink-0" />
                             <div className="flex-1">
-                              <p className="text-muted-foreground">Zone FAO</p>
-                              <p className="font-medium text-foreground">{faoZone} - {reservation.offer.drop.port.city}</p>
+                              <p className="text-muted-foreground">Zone de capture FAO</p>
+                              <p className="font-medium text-foreground">{faoZone}</p>
                             </div>
                           </div>
 
                           <div className="flex items-start gap-2">
                             <Anchor className="h-3 w-3 text-primary mt-0.5 flex-shrink-0" />
                             <div className="flex-1">
-                              <p className="text-muted-foreground">Navire</p>
+                              <p className="text-muted-foreground">Navire / Immatriculation</p>
                               <p className="font-medium text-foreground">
-                                {reservation.offer.drop.fisherman.boat_name} - {reservation.offer.drop.fisherman.boat_registration}
+                                {reservation.offer.drop.fisherman.boat_name}
+                              </p>
+                              <p className="font-mono text-[10px]">{reservation.offer.drop.fisherman.boat_registration}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2">
+                            <Fish className="h-3 w-3 text-primary mt-0.5 flex-shrink-0" />
+                            <div className="flex-1">
+                              <p className="text-muted-foreground">Engin de pêche</p>
+                              <p className="font-medium text-foreground">{fishingGear}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2">
+                            <Clock className="h-3 w-3 text-primary mt-0.5 flex-shrink-0" />
+                            <div className="flex-1">
+                              <p className="text-muted-foreground">Date de débarquement</p>
+                              <p className="font-medium text-foreground">
+                                {landingDate.toLocaleDateString('fr-FR', { 
+                                  day: '2-digit', 
+                                  month: '2-digit', 
+                                  year: 'numeric' 
+                                })}
                               </p>
                             </div>
                           </div>
                         </div>
 
-                        {/* Footer */}
+                        {/* Footer - Regulatory */}
                         <div className="pt-2 border-t">
                           <p className="text-[10px] text-muted-foreground leading-tight">
-                            Conforme CE 1379/2013 et CE 1169/2011. Produit frais à conserver entre 0°C et +4°C.
+                            Conforme règlement CE 1379/2013 (étiquetage) et CE 1169/2011 (information consommateur).
+                            Pesée effectuée sur balance homologuée. Produit frais à conserver entre 0°C et +4°C. 
+                            Vente directe dans un rayon de 50km.
                           </p>
                         </div>
                       </CardContent>
                     </Card>
+
+                    {/* Consumer Label Preview (simplified) */}
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-semibold text-muted-foreground">Étiquette consommateur (simplifiée)</h4>
+                      <Card className="border bg-background">
+                        <CardContent className="pt-3 space-y-2 text-xs">
+                          <p className="font-bold">{reservation.offer.species.name}</p>
+                          <p className="italic text-muted-foreground">{reservation.offer.species.scientific_name}</p>
+                          <p>Zone: {faoZone}</p>
+                          <p>Engin: {fishingGear}</p>
+                        </CardContent>
+                      </Card>
+                    </div>
                   </div>
                 </div>
 
