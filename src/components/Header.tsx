@@ -63,7 +63,7 @@ const Header = () => {
             </Link>
           )}
           {userRole === 'fisherman' && (
-            <Link to="/pecheur/dashboard" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/dashboard/pecheur" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Dashboard pêcheur
             </Link>
           )}
@@ -196,7 +196,7 @@ const Header = () => {
               )}
               {userRole === 'fisherman' && (
                 <Link 
-                  to="/pecheur/dashboard" 
+                  to="/dashboard/pecheur" 
                   className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >

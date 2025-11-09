@@ -43,10 +43,10 @@ const App = () => (
             <Route path="/dashboard/user" element={<UserDashboard />} />
             <Route path="/dashboard/premium" element={<PremiumDashboard />} />
             <Route path="/dashboard/admin" element={<AdminDashboard />} />
+            <Route path="/dashboard/pecheur" element={<PecheurDashboard />} />
             <Route path="/compte" element={<Compte />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/pecheur/onboarding" element={<PecheurOnboarding />} />
-            <Route path="/pecheur/dashboard" element={<PecheurDashboard />} />
             <Route path="/pecheur/nouvel-arrivage" element={<CreateArrivage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

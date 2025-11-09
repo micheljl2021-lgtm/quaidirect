@@ -89,7 +89,7 @@ const Auth = () => {
           if (userRoles.includes('admin')) {
             navigate('/dashboard/admin');
           } else if (userRoles.includes('fisherman')) {
-            navigate('/pecheur/dashboard');
+            navigate('/dashboard/pecheur');
           } else if (userRoles.includes('premium')) {
             navigate('/dashboard/premium');
           } else {

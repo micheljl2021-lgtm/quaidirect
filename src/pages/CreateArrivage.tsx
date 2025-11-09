@@ -47,7 +47,7 @@ const CreateArrivage = () => {
     }
 
     if (!isVerifiedFisherman) {
-      navigate('/pecheur/dashboard');
+      navigate('/dashboard/pecheur');
       return;
     }
   }, [user, isVerifiedFisherman, navigate]);
@@ -180,7 +180,7 @@ const CreateArrivage = () => {
         description: 'Votre arrivage a été publié avec succès',
       });
 
-      navigate('/pecheur/dashboard');
+      navigate('/dashboard/pecheur');
     } catch (error: any) {
       console.error('Error creating arrivage:', error);
       toast({
@@ -459,7 +459,7 @@ const CreateArrivage = () => {
               type="button"
               variant="outline"
               className="flex-1"
-              onClick={() => navigate('/pecheur/dashboard')}
+              onClick={() => navigate('/dashboard/pecheur')}
               disabled={loading}
             >
               Annuler
