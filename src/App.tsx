@@ -18,6 +18,7 @@ import Forfaits from "./pages/Forfaits";
 import DropsTest from "./pages/DropsTest";
 import UserDashboard from "./pages/UserDashboard";
 import PremiumDashboard from "./pages/PremiumDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
           <Route path="/drops-test" element={<DropsTest />} />
             <Route path="/dashboard/user" element={<UserDashboard />} />
             <Route path="/dashboard/premium" element={<PremiumDashboard />} />
+            <Route path="/dashboard/admin" element={<AdminDashboard />} />
             <Route path="/compte" element={<Compte />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/pecheur/onboarding" element={<PecheurOnboarding />} />

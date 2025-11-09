@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Crown, User, MapPin, Menu, X } from "lucide-react";
+import { Crown, User, MapPin, Menu, X, Shield } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,6 +65,12 @@ const Header = () => {
           {userRole === 'fisherman' && (
             <Link to="/pecheur/dashboard" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Dashboard pêcheur
+            </Link>
+          )}
+          {userRole === 'admin' && (
+            <Link to="/dashboard/admin" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+              <Shield className="h-4 w-4" />
+              Dashboard Admin
             </Link>
           )}
         </nav>
@@ -195,6 +201,16 @@ const Header = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Dashboard pêcheur
+                </Link>
+              )}
+              {userRole === 'admin' && (
+                <Link 
+                  to="/dashboard/admin" 
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <Shield className="h-4 w-4" />
+                  Dashboard Admin
                 </Link>
               )}
               
