@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import Landing from "./pages/Landing";
 import Carte from "./pages/Carte";
-import Premium from "./pages/Premium";
+import PremiumPaywall from "./pages/PremiumPaywall";
 import Compte from "./pages/Compte";
 import Auth from "./pages/Auth";
 import PecheurOnboarding from "./pages/PecheurOnboarding";
@@ -33,7 +33,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/carte" element={<Carte />} />
-            <Route path="/premium" element={<Premium />} />
+            <Route path="/premium" element={<PremiumPaywall />} />
           <Route path="/recettes" element={<Recettes />} />
           <Route path="/recettes/:id" element={<RecetteDetail />} />
           <Route path="/forfaits" element={<Forfaits />} />
