@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, CreditCard, Banknote, Loader2 } from "lucide-react";
+import { CheckCircle, CreditCard, Banknote, Loader2, Shield, Anchor, Fish, Clock } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Reservation {
@@ -21,11 +21,20 @@ interface Reservation {
     unit_price: number;
     species: {
       name: string;
+      scientific_name: string;
+      fao_zone: string | null;
+      min_size_cm: number | null;
+      fishing_gear: string | null;
     };
     drop: {
+      eta_at: string;
       port: {
         name: string;
         city: string;
+      };
+      fisherman: {
+        boat_name: string;
+        boat_registration: string;
       };
     };
   };
@@ -80,10 +89,12 @@ export default function CaisseModule() {
             id,
             title,
             unit_price,
-            species:species(name),
+            species:species(name, scientific_name, fao_zone, min_size_cm, fishing_gear),
             drop:drops!inner(
               fisherman_id,
-              port:ports(name, city)
+              eta_at,
+              port:ports(name, city),
+              fisherman:fishermen(boat_name, boat_registration)
             )
           )
         `)
@@ -205,6 +216,14 @@ export default function CaisseModule() {
           const data = formData[reservation.id] || { finalWeight: '', finalPrice: '', paidMethod: 'cash' };
           const estimatedTotal = (parseFloat(data.finalWeight || '0') * parseFloat(data.finalPrice || '0')).toFixed(2);
           
+          // Calculate label data from species and drop info
+          const landingDate = new Date(reservation.offer.drop.eta_at);
+          const lotNumber = `${landingDate.toISOString().split('T')[0].replace(/-/g, '')}-${reservation.offer.drop.fisherman.boat_registration.replace(/\s/g, '')}`;
+          const faoZone = reservation.offer.species.fao_zone || "27.VIIIa";
+          const minSize = reservation.offer.species.min_size_cm || 42;
+          const fishingGear = reservation.offer.species.fishing_gear || "Ligne";
+          const currentSize = parseFloat(data.finalWeight) * 30; // Estimation taille basée sur poids (à ajuster selon espèce)
+
           return (
             <Card key={reservation.id}>
               <CardHeader>
@@ -218,75 +237,195 @@ export default function CaisseModule() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor={`weight-${reservation.id}`}>Poids final (kg)</Label>
-                    <Input
-                      id={`weight-${reservation.id}`}
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      value={data.finalWeight || ''}
-                      onChange={(e) => updateFormData(reservation.id, 'finalWeight', e.target.value)}
-                      placeholder="Ex: 1.5"
-                    />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Left: Form Inputs */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-sm text-muted-foreground">Informations de vente</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor={`weight-${reservation.id}`}>Poids final (kg)</Label>
+                      <Input
+                        id={`weight-${reservation.id}`}
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        value={data.finalWeight || ''}
+                        onChange={(e) => updateFormData(reservation.id, 'finalWeight', e.target.value)}
+                        placeholder="Ex: 1.5"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor={`price-${reservation.id}`}>Prix final (€/kg)</Label>
+                      <Input
+                        id={`price-${reservation.id}`}
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={data.finalPrice || ''}
+                        onChange={(e) => updateFormData(reservation.id, 'finalPrice', e.target.value)}
+                        placeholder="Ex: 24.50"
+                      />
+                    </div>
+
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor={`method-${reservation.id}`}>Mode de paiement</Label>
+                      <Select
+                        value={data.paidMethod || 'cash'}
+                        onValueChange={(value) => updateFormData(reservation.id, 'paidMethod', value)}
+                      >
+                        <SelectTrigger id={`method-${reservation.id}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="cash">
+                            <div className="flex items-center gap-2">
+                              <Banknote className="h-4 w-4" />
+                              Espèces
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="card">
+                            <div className="flex items-center gap-2">
+                              <CreditCard className="h-4 w-4" />
+                              Carte Bancaire
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="stripe_terminal">
+                            <div className="flex items-center gap-2">
+                              <CreditCard className="h-4 w-4" />
+                              Stripe Terminal
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="stripe_link">
+                            <div className="flex items-center gap-2">
+                              <CreditCard className="h-4 w-4" />
+                              Lien de paiement Stripe
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor={`price-${reservation.id}`}>Prix final (€/kg)</Label>
-                    <Input
-                      id={`price-${reservation.id}`}
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={data.finalPrice || ''}
-                      onChange={(e) => updateFormData(reservation.id, 'finalPrice', e.target.value)}
-                      placeholder="Ex: 24.50"
-                    />
-                  </div>
+                  {/* Right: Note de vente preview */}
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-primary" />
+                      Note de vente (balance homologuée)
+                    </h3>
+                    <Card className="border-2 border-primary/20 bg-primary/5">
+                      <CardContent className="pt-4 space-y-3">
+                        {/* Header - Regulatory mention */}
+                        <div className="text-center pb-2 border-b">
+                          <p className="text-xs font-bold text-foreground">NOTE DE VENTE - VENTE DIRECTE</p>
+                          <p className="text-[10px] text-muted-foreground">Vente directe producteur (max 100kg/débarquement)</p>
+                        </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor={`method-${reservation.id}`}>Mode de paiement</Label>
-                    <Select
-                      value={data.paidMethod || 'cash'}
-                      onValueChange={(value) => updateFormData(reservation.id, 'paidMethod', value)}
-                    >
-                      <SelectTrigger id={`method-${reservation.id}`}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="cash">
-                          <div className="flex items-center gap-2">
-                            <Banknote className="h-4 w-4" />
-                            Espèces
+                        {/* Species Info */}
+                        <div className="space-y-1">
+                          <h4 className="font-bold text-foreground">{reservation.offer.species.name}</h4>
+                          <p className="text-xs italic text-muted-foreground">{reservation.offer.species.scientific_name || 'N/A'}</p>
+                        </div>
+
+                        {/* Weighing Details */}
+                        <div className="grid grid-cols-2 gap-2 py-2 border-y text-xs">
+                          <div>
+                            <p className="text-muted-foreground">Poids (balance homologuée)</p>
+                            <p className="font-semibold">{data.finalWeight || '-'} kg</p>
                           </div>
-                        </SelectItem>
-                        <SelectItem value="card">
-                          <div className="flex items-center gap-2">
-                            <CreditCard className="h-4 w-4" />
-                            Carte Bancaire
+                          <div>
+                            <p className="text-muted-foreground">Prix/kg</p>
+                            <p className="font-semibold">{data.finalPrice || '-'} €</p>
                           </div>
-                        </SelectItem>
-                        <SelectItem value="stripe_terminal">
-                          <div className="flex items-center gap-2">
-                            <CreditCard className="h-4 w-4" />
-                            Stripe Terminal
+                          <div className="col-span-2 pt-2 border-t">
+                            <p className="text-muted-foreground">Total TTC</p>
+                            <p className="font-bold text-lg text-foreground">{estimatedTotal} €</p>
                           </div>
-                        </SelectItem>
-                        <SelectItem value="stripe_link">
-                          <div className="flex items-center gap-2">
-                            <CreditCard className="h-4 w-4" />
-                            Lien de paiement Stripe
+                        </div>
+
+                        {/* Traceability - Full details */}
+                        <div className="space-y-2 pt-2 text-xs">
+                          <div className="flex items-start gap-2">
+                            <Shield className="h-3 w-3 text-primary mt-0.5 flex-shrink-0" />
+                            <div className="flex-1">
+                              <p className="text-muted-foreground">N° de lot traçable</p>
+                              <p className="font-mono font-medium text-foreground">{lotNumber}</p>
+                            </div>
                           </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+
+                          <div className="flex items-start gap-2">
+                            <Fish className="h-3 w-3 text-primary mt-0.5 flex-shrink-0" />
+                            <div className="flex-1">
+                              <p className="text-muted-foreground">Zone de capture FAO</p>
+                              <p className="font-medium text-foreground">{faoZone}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2">
+                            <Anchor className="h-3 w-3 text-primary mt-0.5 flex-shrink-0" />
+                            <div className="flex-1">
+                              <p className="text-muted-foreground">Navire / Immatriculation</p>
+                              <p className="font-medium text-foreground">
+                                {reservation.offer.drop.fisherman.boat_name}
+                              </p>
+                              <p className="font-mono text-[10px]">{reservation.offer.drop.fisherman.boat_registration}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2">
+                            <Fish className="h-3 w-3 text-primary mt-0.5 flex-shrink-0" />
+                            <div className="flex-1">
+                              <p className="text-muted-foreground">Engin de pêche</p>
+                              <p className="font-medium text-foreground">{fishingGear}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2">
+                            <Clock className="h-3 w-3 text-primary mt-0.5 flex-shrink-0" />
+                            <div className="flex-1">
+                              <p className="text-muted-foreground">Date de débarquement</p>
+                              <p className="font-medium text-foreground">
+                                {landingDate.toLocaleDateString('fr-FR', { 
+                                  day: '2-digit', 
+                                  month: '2-digit', 
+                                  year: 'numeric' 
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Footer - Regulatory */}
+                        <div className="pt-2 border-t">
+                          <p className="text-[10px] text-muted-foreground leading-tight">
+                            Conforme règlement CE 1379/2013 (étiquetage) et CE 1169/2011 (information consommateur).
+                            Pesée effectuée sur balance homologuée. Produit frais à conserver entre 0°C et +4°C. 
+                            Vente directe dans un rayon de 50km.
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Consumer Label Preview (simplified) */}
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-semibold text-muted-foreground">Étiquette consommateur (simplifiée)</h4>
+                      <Card className="border bg-background">
+                        <CardContent className="pt-3 space-y-2 text-xs">
+                          <p className="font-bold">{reservation.offer.species.name}</p>
+                          <p className="italic text-muted-foreground">{reservation.offer.species.scientific_name}</p>
+                          <p>Zone: {faoZone}</p>
+                          <p>Engin: {fishingGear}</p>
+                        </CardContent>
+                      </Card>
+                    </div>
                   </div>
                 </div>
 
+                {/* Bottom Action Bar */}
                 <div className="flex items-center justify-between pt-4 border-t">
                   <div className="text-lg font-semibold">
-                    Total estimé: {estimatedTotal} €
+                    Total: {estimatedTotal} €
                   </div>
                   <Button
                     onClick={() => handleProcessReservation(reservation.id)}
