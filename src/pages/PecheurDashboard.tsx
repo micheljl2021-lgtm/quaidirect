@@ -4,9 +4,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase-client';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
+import CaisseModule from '@/components/CaisseModule';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Anchor, AlertCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Anchor, AlertCircle, ShoppingCart } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const PecheurDashboard = () => {
@@ -194,66 +196,86 @@ const PecheurDashboard = () => {
           </Card>
         </div>
 
-        {/* Liste des drops */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Mes arrivages</CardTitle>
-            <CardDescription>
-              Historique de vos annonces
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {drops.length === 0 ? (
-              <div className="text-center py-12 space-y-4">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted">
-                  <Anchor className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <div className="space-y-2">
-                  <p className="text-lg font-medium">Aucun arrivage</p>
-                  <p className="text-sm text-muted-foreground">
-                    Créez votre premier drop pour commencer à vendre
-                  </p>
-                </div>
-                <Button onClick={() => navigate('/pecheur/nouvel-arrivage')}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Créer un arrivage
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {drops.map(drop => (
-                  <div 
-                    key={drop.id}
-                    className="p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                    onClick={() => navigate(`/drop/${drop.id}`)}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-medium">{drop.port?.name}</h3>
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            drop.status === 'scheduled' ? 'bg-blue-100 text-blue-700' :
-                            drop.status === 'landed' ? 'bg-green-100 text-green-700' :
-                            drop.status === 'cancelled' ? 'bg-red-100 text-red-700' :
-                            'bg-gray-100 text-gray-700'
-                          }`}>
-                            {drop.status}
-                          </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          ETA : {new Date(drop.eta_at).toLocaleString('fr-FR')}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {drop.offers?.length || 0} offre(s)
-                        </p>
-                      </div>
+        {/* Onglets */}
+        <Tabs defaultValue="arrivages" className="space-y-6">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+            <TabsTrigger value="arrivages" className="gap-2">
+              <Anchor className="h-4 w-4" />
+              Mes arrivages
+            </TabsTrigger>
+            <TabsTrigger value="caisse" className="gap-2">
+              <ShoppingCart className="h-4 w-4" />
+              Caisse au port
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="arrivages" className="space-y-6">
+            {/* Liste des drops */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Mes arrivages</CardTitle>
+                <CardDescription>
+                  Historique de vos annonces
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {drops.length === 0 ? (
+                  <div className="text-center py-12 space-y-4">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted">
+                      <Anchor className="h-8 w-8 text-muted-foreground" />
                     </div>
+                    <div className="space-y-2">
+                      <p className="text-lg font-medium">Aucun arrivage</p>
+                      <p className="text-sm text-muted-foreground">
+                        Créez votre premier drop pour commencer à vendre
+                      </p>
+                    </div>
+                    <Button onClick={() => navigate('/pecheur/nouvel-arrivage')}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Créer un arrivage
+                    </Button>
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {drops.map(drop => (
+                      <div 
+                        key={drop.id}
+                        className="p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                        onClick={() => navigate(`/drop/${drop.id}`)}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-medium">{drop.port?.name}</h3>
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                drop.status === 'scheduled' ? 'bg-blue-100 text-blue-700' :
+                                drop.status === 'landed' ? 'bg-green-100 text-green-700' :
+                                drop.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                                'bg-gray-100 text-gray-700'
+                              }`}>
+                                {drop.status}
+                              </span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              ETA : {new Date(drop.eta_at).toLocaleString('fr-FR')}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {drop.offers?.length || 0} offre(s)
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="caisse">
+            <CaisseModule />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
