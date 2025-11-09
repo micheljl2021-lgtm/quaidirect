@@ -183,20 +183,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
-      toast({
-        title: 'Déconnexion',
-        description: 'À bientôt !',
-      });
-    } catch (error: any) {
-      toast({
-        title: 'Erreur',
-        description: error.message,
-        variant: 'destructive',
-      });
+      // Force local logout - always clears localStorage even if session doesn't exist on server
+      await supabase.auth.signOut({ scope: 'local' });
+    } catch (error) {
+      // Ignore errors - we'll clean up locally anyway
+      console.log('Logout error (ignored):', error);
     }
+    
+    // Always reset local state, regardless of API response
+    setSession(null);
+    setUser(null);
+    setUserRole(null);
+    setIsVerifiedFisherman(false);
+    
+    toast({
+      title: 'Déconnexion',
+      description: 'À bientôt !',
+    });
   };
 
   return (
