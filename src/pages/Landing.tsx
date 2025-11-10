@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import ArrivageCard from "@/components/ArrivageCard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import logoVilleHyeres from "@/assets/logo-ville-hyeres.png";
 
 const Landing = () => {
   // Fetch latest arrivages for preview
@@ -92,6 +93,14 @@ const Landing = () => {
                 Devenir Premium
               </Button>
             </Link>
+          </div>
+
+          <div className="mt-8 flex justify-center">
+            <img 
+              src={logoVilleHyeres} 
+              alt="Ville d'Hyères Les Palmiers" 
+              className="h-16 opacity-80"
+            />
           </div>
         </div>
       </section>
