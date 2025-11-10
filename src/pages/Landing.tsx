@@ -215,6 +215,76 @@ const Landing = () => {
         </section>
       )}
 
+      {/* Testimonials Section */}
+      <section className="container px-4 py-16 border-t border-border bg-muted/30">
+        <div className="mx-auto max-w-6xl">
+          <div className="text-center space-y-4 mb-12">
+            <h2 className="text-4xl font-bold text-foreground">
+              Ils nous font confiance
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              Découvrez les témoignages de nos marins-pêcheurs partenaires
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="bg-card">
+              <CardContent className="pt-6 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Anchor className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-foreground">Jean-Michel Coste</h3>
+                    <p className="text-sm text-muted-foreground">Le Mistral - Hyères</p>
+                  </div>
+                </div>
+                <p className="text-muted-foreground italic">
+                  "Enfin une plateforme qui valorise notre travail ! Plus de galère avec les intermédiaires, 
+                  je vends direct aux clients qui apprécient la qualité de ma pêche."
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card">
+              <CardContent className="pt-6 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Anchor className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-foreground">Antoine Ferracci</h3>
+                    <p className="text-sm text-muted-foreground">L'Écume - Toulon</p>
+                  </div>
+                </div>
+                <p className="text-muted-foreground italic">
+                  "Le système de pré-réservation a changé ma vie. Plus de stress à l'arrivée au port, 
+                  je sais déjà ce qui est vendu. Mes revenus ont augmenté de 30%."
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card">
+              <CardContent className="pt-6 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Anchor className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-foreground">Marc Bianco</h3>
+                    <p className="text-sm text-muted-foreground">La Perle - Six-Fours</p>
+                  </div>
+                </div>
+                <p className="text-muted-foreground italic">
+                  "Simple et efficace. Mes clients me suivent et connaissent mes horaires d'arrivée. 
+                  C'est exactement ce dont on avait besoin pour digitaliser notre métier."
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* Solidarity Section */}
       <section className="container px-4 py-16 border-t border-border">
         <div className="mx-auto max-w-3xl text-center space-y-6">
