@@ -7,6 +7,7 @@ import ArrivageCard from "@/components/ArrivageCard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import logoVilleHyeres from "@/assets/logo-ville-hyeres.png";
+import logoPortHyeres from "@/assets/logo-port-hyeres.png";
 
 const Landing = () => {
   // Fetch latest arrivages for preview
@@ -95,10 +96,15 @@ const Landing = () => {
             </Link>
           </div>
 
-          <div className="mt-8 flex justify-center">
+          <div className="mt-8 flex justify-center items-center gap-8">
             <img 
               src={logoVilleHyeres} 
               alt="Ville d'Hyères Les Palmiers" 
+              className="h-16 opacity-80"
+            />
+            <img 
+              src={logoPortHyeres} 
+              alt="Port de Hyères" 
               className="h-16 opacity-80"
             />
           </div>
