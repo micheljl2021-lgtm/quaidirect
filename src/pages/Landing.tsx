@@ -252,6 +252,19 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* Partnership Section */}
+      <section className="container px-4 py-12 border-t border-border">
+        <div className="mx-auto max-w-4xl">
+          <Card className="bg-gradient-ocean/5 border-primary/20">
+            <CardContent className="pt-8 pb-8">
+              <p className="text-center text-lg text-foreground leading-relaxed italic">
+                « En partenariat avec la Ville de Hyères les Palmiers et le Port de Hyères, notre plateforme engage le développement local et maritime : circuits courts, pêche durable, et numérique au service des pêcheurs de la rade. »
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t border-border bg-card mt-16">
         <div className="container px-4 py-8">
