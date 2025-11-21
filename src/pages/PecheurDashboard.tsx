@@ -260,7 +260,9 @@ const PecheurDashboard = () => {
                               ETA : {new Date(drop.eta_at).toLocaleString('fr-FR')}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              {drop.offers?.length || 0} offre(s)
+                              {drop.offers?.length > 0 
+                                ? `${drop.offers.length} offre(s)` 
+                                : 'Présence au port (sans offres détaillées)'}
                             </p>
                           </div>
                         </div>
