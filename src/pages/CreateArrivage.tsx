@@ -36,9 +36,7 @@ const CreateArrivage = () => {
   const [saleTime, setSaleTime] = useState('');
   const [isPremium, setIsPremium] = useState(false);
   const [notes, setNotes] = useState('');
-  const [offers, setOffers] = useState<Offer[]>([
-    { speciesId: '', title: '', description: '', unitPrice: '', totalUnits: '' }
-  ]);
+  const [offers, setOffers] = useState<Offer[]>([]);
 
   useEffect(() => {
     if (!user) {
@@ -85,9 +83,7 @@ const CreateArrivage = () => {
   };
 
   const removeOffer = (index: number) => {
-    if (offers.length > 1) {
-      setOffers(offers.filter((_, i) => i !== index));
-    }
+    setOffers(offers.filter((_, i) => i !== index));
   };
 
   const updateOffer = (index: number, field: keyof Offer, value: string) => {
@@ -113,15 +109,6 @@ const CreateArrivage = () => {
       }
 
       const validOffers = offers.filter(o => o.speciesId && o.title && o.unitPrice && o.totalUnits);
-      if (validOffers.length === 0) {
-        toast({
-          title: 'Erreur',
-          description: 'Veuillez ajouter au moins une offre complète',
-          variant: 'destructive',
-        });
-        setLoading(false);
-        return;
-      }
 
       // Get fisherman ID
       const { data: fisherman, error: fishermanError } = await supabase
@@ -158,26 +145,30 @@ const CreateArrivage = () => {
 
       if (arrivageError) throw arrivageError;
 
-      // Create offers
-      const offersToInsert = validOffers.map(offer => ({
-        drop_id: arrivage.id,
-        species_id: offer.speciesId,
-        title: offer.title,
-        description: offer.description || null,
-        unit_price: parseFloat(offer.unitPrice),
-        total_units: parseInt(offer.totalUnits),
-        available_units: parseInt(offer.totalUnits),
-      }));
+      // Create offers (only if there are valid offers)
+      if (validOffers.length > 0) {
+        const offersToInsert = validOffers.map(offer => ({
+          drop_id: arrivage.id,
+          species_id: offer.speciesId,
+          title: offer.title,
+          description: offer.description || null,
+          unit_price: parseFloat(offer.unitPrice),
+          total_units: parseInt(offer.totalUnits),
+          available_units: parseInt(offer.totalUnits),
+        }));
 
-      const { error: offersError } = await supabase
-        .from('offers')
-        .insert(offersToInsert);
+        const { error: offersError } = await supabase
+          .from('offers')
+          .insert(offersToInsert);
 
-      if (offersError) throw offersError;
+        if (offersError) throw offersError;
+      }
 
       toast({
         title: '✅ Arrivage créé !',
-        description: 'Votre arrivage a été publié avec succès',
+        description: validOffers.length > 0 
+          ? `Votre arrivage a été publié avec ${validOffers.length} offre(s)`
+          : 'Votre arrivage a été publié. Vous pourrez ajouter des offres plus tard.',
       });
 
       navigate('/dashboard/pecheur');
@@ -347,10 +338,10 @@ const CreateArrivage = () => {
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Fish className="h-5 w-5" />
-                    Offres de poisson
+                    Offres de poisson (optionnel)
                   </CardTitle>
                   <CardDescription>
-                    Ajoutez les espèces disponibles et leurs prix
+                    Vous pouvez préciser les espèces disponibles, ou simplement annoncer votre présence au port
                   </CardDescription>
                 </div>
                 <Button type="button" variant="outline" size="sm" onClick={addOffer}>
@@ -360,7 +351,12 @@ const CreateArrivage = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {offers.map((offer, index) => (
+              {offers.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p className="text-sm">Aucune offre ajoutée. Cliquez sur "Ajouter" pour spécifier vos espèces.</p>
+                </div>
+              ) : (
+                offers.map((offer, index) => (
                 <Card key={index} className="relative">
                   <CardContent className="pt-6 space-y-4">
                     {offers.length > 1 && (
@@ -449,7 +445,8 @@ const CreateArrivage = () => {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              ))
+              )}
             </CardContent>
           </Card>
 
