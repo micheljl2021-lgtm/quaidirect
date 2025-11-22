@@ -12,3 +12,6 @@ verify_jwt = true  # Requires authentication
 
 [functions.approve-fisherman-access]
 verify_jwt = true  # Admin only function
+
+[functions.generate-fisherman-description]
+verify_jwt = true  # Requires authentication
