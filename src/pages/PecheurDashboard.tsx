@@ -83,7 +83,8 @@ const PecheurDashboard = () => {
           .select(`
             *,
             port:ports(*),
-            offers(*)
+            offers(*),
+            drop_species(species:species(*))
           `)
           .eq('fisherman_id', fisherman.id)
           .order('created_at', { ascending: false }) as { data: any[] | null; error: any };
@@ -259,11 +260,26 @@ const PecheurDashboard = () => {
                             <p className="text-sm text-muted-foreground">
                               ETA : {new Date(drop.eta_at).toLocaleString('fr-FR')}
                             </p>
-                            <p className="text-sm text-muted-foreground">
-                              {drop.offers?.length > 0 
-                                ? `${drop.offers.length} offre(s)` 
-                                : 'Présence au port (sans offres détaillées)'}
-                            </p>
+                            {drop.offers?.length > 0 ? (
+                              <p className="text-sm text-muted-foreground">
+                                {drop.offers.length} offre(s) détaillée(s)
+                              </p>
+                            ) : drop.drop_species?.length > 0 ? (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {drop.drop_species.slice(0, 3).map((ds: any) => (
+                                  <span key={ds.species.id} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                                    {ds.species.name}
+                                  </span>
+                                ))}
+                                {drop.drop_species.length > 3 && (
+                                  <span className="text-xs text-muted-foreground">+{drop.drop_species.length - 3}</span>
+                                )}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-muted-foreground">
+                                Présence au port
+                              </p>
+                            )}
                           </div>
                         </div>
                       </div>

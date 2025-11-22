@@ -47,6 +47,42 @@ export type Database = {
         }
         Relationships: []
       }
+      drop_species: {
+        Row: {
+          created_at: string | null
+          drop_id: string
+          id: string
+          species_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          drop_id: string
+          id?: string
+          species_id: string
+        }
+        Update: {
+          created_at?: string | null
+          drop_id?: string
+          id?: string
+          species_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drop_species_drop_id_fkey"
+            columns: ["drop_id"]
+            isOneToOne: false
+            referencedRelation: "drops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drop_species_species_id_fkey"
+            columns: ["species_id"]
+            isOneToOne: false
+            referencedRelation: "species"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drops: {
         Row: {
           created_at: string
