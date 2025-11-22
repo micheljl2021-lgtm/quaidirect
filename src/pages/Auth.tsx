@@ -14,7 +14,7 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
-  const [step, setStep] = useState<'auth' | 'otp'>('auth');
+  const [step, setStep] = useState<'auth' | 'otp' | 'reset'>('auth');
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [loading, setLoading] = useState(false);
   const { signIn, signInWithPassword, verifyOtp } = useAuth();
@@ -215,6 +215,32 @@ const Auth = () => {
     }
   };
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Email envoyé',
+        description: 'Vérifiez votre boîte mail pour réinitialiser votre mot de passe',
+      });
+      setStep('auth');
+    } catch (error: any) {
+      toast({
+        title: 'Erreur',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md space-y-6">
@@ -231,10 +257,12 @@ const Auth = () => {
             <CardTitle>
               {step === 'auth' && 'Connexion'}
               {step === 'otp' && 'Vérification'}
+              {step === 'reset' && 'Réinitialiser le mot de passe'}
             </CardTitle>
             <CardDescription>
               {step === 'auth' && 'Connectez-vous à votre compte'}
               {step === 'otp' && 'Saisissez le code reçu par e-mail'}
+              {step === 'reset' && 'Entrez votre email pour recevoir un lien de réinitialisation'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -281,6 +309,14 @@ const Auth = () => {
                     </div>
                     <Button type="submit" className="w-full" disabled={loading}>
                       {loading ? 'Connexion...' : 'Se connecter'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="w-full text-sm text-muted-foreground"
+                      onClick={() => setStep('reset')}
+                    >
+                      Mot de passe oublié ?
                     </Button>
                   </form>
                 </TabsContent>
@@ -342,7 +378,7 @@ const Auth = () => {
             </TabsContent>
           </Tabs>
         </div>
-      ) : (
+      ) : step === 'otp' ? (
               <form onSubmit={handleVerifyOtp} className="space-y-4">
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground text-center mb-4">
@@ -386,7 +422,43 @@ const Auth = () => {
                   </Button>
                 </div>
               </form>
-            )}
+            ) : step === 'reset' ? (
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      placeholder="votre@email.fr"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    disabled={loading}
+                  >
+                    {loading ? 'Envoi...' : 'Envoyer le lien'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full"
+                    onClick={() => {
+                      setStep('auth');
+                      setEmail('');
+                    }}
+                  >
+                    Retour
+                  </Button>
+                </div>
+              </form>
+            ) : null}
           </CardContent>
         </Card>
 
