@@ -8,9 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, Users, Fish, Anchor, CheckCircle, XCircle, Clock, TrendingUp, MapPin } from 'lucide-react';
+import { Shield, Users, Fish, Anchor, CheckCircle, XCircle, Clock, TrendingUp, MapPin, UserPlus, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface PendingFisherman {
   id: string;
@@ -56,6 +58,8 @@ const AdminDashboard = () => {
   const { user, userRole } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchEmail, setSearchEmail] = useState('');
+  const [isApproving, setIsApproving] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -230,6 +234,71 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleApproveFreeAccess = async () => {
+    if (!searchEmail.trim()) {
+      toast({
+        title: 'Email requis',
+        description: 'Veuillez entrer un email',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsApproving(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('approve-fisherman-access', {
+        body: { email: searchEmail.trim() },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: '✅ Accès approuvé',
+        description: `L'utilisateur ${searchEmail} peut maintenant accéder au formulaire pêcheur`,
+      });
+
+      setSearchEmail('');
+      refetchPending();
+    } catch (error: any) {
+      toast({
+        title: 'Erreur',
+        description: error.message || 'Impossible d\'approuver l\'accès',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  // Fetch recent free approvals
+  const { data: freeApprovals } = useQuery({
+    queryKey: ['free-approvals'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('fishermen')
+        .select('*, profiles(email)')
+        .eq('onboarding_payment_status', 'free')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      // Get emails from auth.users for each fisherman
+      const approvalsWithEmails = await Promise.all(
+        (data || []).map(async (fisherman) => {
+          const { data: { user } } = await supabase.auth.admin.getUserById(fisherman.user_id);
+          return {
+            ...fisherman,
+            email: user?.email || 'N/A',
+          };
+        })
+      );
+
+      return approvalsWithEmails;
+    },
+    enabled: !!user && userRole === 'admin',
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -317,7 +386,7 @@ const AdminDashboard = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="fishermen" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="fishermen" className="gap-2">
               <Anchor className="h-4 w-4" />
               Pêcheurs
@@ -326,6 +395,10 @@ const AdminDashboard = () => {
                   {pendingFishermen.length}
                 </Badge>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="approve" className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              Approuver accès
             </TabsTrigger>
             <TabsTrigger value="users" className="gap-2">
               <Users className="h-4 w-4" />
@@ -418,6 +491,102 @@ const AdminDashboard = () => {
                     </p>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Approve Access Tab */}
+          <TabsContent value="approve" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Approuver un pêcheur sans paiement</CardTitle>
+                <CardDescription>
+                  Créez manuellement un accès pêcheur gratuit pour un utilisateur
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Search Form */}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email de l'utilisateur</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="exemple@email.com"
+                        value={searchEmail}
+                        onChange={(e) => setSearchEmail(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleApproveFreeAccess()}
+                      />
+                      <Button
+                        onClick={handleApproveFreeAccess}
+                        disabled={isApproving || !searchEmail.trim()}
+                        className="gap-2"
+                      >
+                        {isApproving ? (
+                          <>
+                            <Clock className="h-4 w-4 animate-spin" />
+                            Traitement...
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus className="h-4 w-4" />
+                            Approuver
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <Alert>
+                    <Shield className="h-4 w-4" />
+                    <AlertDescription>
+                      L'utilisateur pourra accéder au formulaire pêcheur sans payer les 150€ d'inscription.
+                      Il devra ensuite compléter ses informations (bateau, SIRET, etc.) avant d'être vérifié.
+                    </AlertDescription>
+                  </Alert>
+                </div>
+
+                {/* Recent Free Approvals */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold">Dernières approbations gratuites</h3>
+                    <Badge variant="secondary">{freeApprovals?.length || 0}</Badge>
+                  </div>
+                  
+                  {freeApprovals && freeApprovals.length > 0 ? (
+                    <div className="space-y-2">
+                      {freeApprovals.map((approval: any) => (
+                        <div key={approval.id} className="flex items-center justify-between p-4 rounded-lg border border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/20">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium">{approval.email}</p>
+                              <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+                                Gratuit
+                              </Badge>
+                              {approval.verified_at && (
+                                <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300">
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Vérifié
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {approval.boat_name} - Approuvé le {new Date(approval.created_at).toLocaleDateString('fr-FR')}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 border rounded-lg">
+                      <UserPlus className="h-8 w-8 mx-auto text-muted-foreground/50 mb-2" />
+                      <p className="text-sm text-muted-foreground">
+                        Aucune approbation gratuite récente
+                      </p>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
