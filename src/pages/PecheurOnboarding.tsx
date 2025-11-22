@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
-import { Anchor, Upload, FileText, CheckCircle2 } from 'lucide-react';
+import { Anchor, Upload, FileText, CheckCircle2, Fish } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import Header from '@/components/Header';
 
 const PecheurOnboarding = () => {
@@ -31,7 +32,25 @@ const PecheurOnboarding = () => {
   const [acceptLabeling, setAcceptLabeling] = useState(false);
   const [acceptRules, setAcceptRules] = useState(false);
 
-  const progress = (step / 3) * 100;
+  // Step 3: Species selection
+  const [selectedSpecies, setSelectedSpecies] = useState<string[]>([]);
+  const [primarySpecies, setPrimarySpecies] = useState<string>('');
+
+  const progress = (step / 4) * 100;
+
+  // Fetch species
+  const { data: species } = useQuery({
+    queryKey: ['species'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('species')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const handleStep1Next = () => {
     if (!boatName || !immat) {
@@ -55,6 +74,26 @@ const PecheurOnboarding = () => {
       return;
     }
     setStep(3);
+  };
+
+  const handleStep3Next = () => {
+    if (selectedSpecies.length === 0) {
+      toast({
+        title: 'Sélection requise',
+        description: 'Veuillez sélectionner au moins une espèce que vous pêchez.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setStep(4);
+  };
+
+  const toggleSpecies = (speciesId: string) => {
+    setSelectedSpecies(prev => 
+      prev.includes(speciesId) 
+        ? prev.filter(id => id !== speciesId)
+        : [...prev, speciesId]
+    );
   };
 
   const handleSubmit = async () => {
@@ -88,6 +127,30 @@ const PecheurOnboarding = () => {
         }) as { error: any };
 
       if (error) throw error;
+
+      // Get the created fisherman to link species
+      const { data: createdFisherman, error: fetchError } = await supabase
+        .from('fishermen')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Save selected species
+      if (selectedSpecies.length > 0) {
+        const speciesToInsert = selectedSpecies.map(speciesId => ({
+          fisherman_id: createdFisherman.id,
+          species_id: speciesId,
+          is_primary: speciesId === primarySpecies,
+        }));
+
+        const { error: speciesError } = await supabase
+          .from('fishermen_species')
+          .insert(speciesToInsert);
+
+        if (speciesError) throw speciesError;
+      }
 
       toast({
         title: 'Demande envoyée',
@@ -126,7 +189,7 @@ const PecheurOnboarding = () => {
           <div className="space-y-2">
             <Progress value={progress} />
             <p className="text-sm text-muted-foreground text-center">
-              Étape {step} sur 3
+              Étape {step} sur 4
             </p>
           </div>
 
@@ -290,8 +353,87 @@ const PecheurOnboarding = () => {
             </Card>
           )}
 
-          {/* Step 3: Validation */}
+          {/* Step 3: Species Selection */}
           {step === 3 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Fish className="h-5 w-5" />
+                  Espèces pêchées
+                </CardTitle>
+                <CardDescription>
+                  Sélectionnez les espèces que vous pêchez habituellement
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto pr-2">
+                    {species?.map((s) => (
+                      <div 
+                        key={s.id}
+                        className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-accent cursor-pointer transition-colors"
+                        onClick={() => toggleSpecies(s.id)}
+                      >
+                        <Checkbox
+                          checked={selectedSpecies.includes(s.id)}
+                          onCheckedChange={() => toggleSpecies(s.id)}
+                        />
+                        <div className="flex-1 space-y-1">
+                          <label className="text-sm font-medium leading-none cursor-pointer">
+                            {s.name}
+                          </label>
+                          {s.scientific_name && (
+                            <p className="text-xs text-muted-foreground">
+                              {s.scientific_name}
+                            </p>
+                          )}
+                          {selectedSpecies.includes(s.id) && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant={primarySpecies === s.id ? "default" : "outline"}
+                              className="mt-2 h-6 text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPrimarySpecies(primarySpecies === s.id ? '' : s.id);
+                              }}
+                            >
+                              {primarySpecies === s.id ? '★ Principale' : 'Marquer comme principale'}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {selectedSpecies.length > 0 && (
+                    <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                      <p className="text-sm">
+                        <strong>{selectedSpecies.length}</strong> espèce(s) sélectionnée(s)
+                        {primarySpecies && (
+                          <span className="text-muted-foreground ml-2">
+                            • 1 marquée comme principale
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-3">
+                  <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
+                    Retour
+                  </Button>
+                  <Button onClick={handleStep3Next} className="flex-1">
+                    Suivant
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Step 4: Validation */}
+          {step === 4 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -311,6 +453,7 @@ const PecheurOnboarding = () => {
                       <p><strong>Immatriculation :</strong> {immat}</p>
                       {siret && <p><strong>SIRET :</strong> {siret}</p>}
                       {siren && <p><strong>SIREN :</strong> {siren}</p>}
+                      <p><strong>Espèces pêchées :</strong> {selectedSpecies.length} espèce(s)</p>
                     </div>
                   </div>
 
@@ -323,7 +466,7 @@ const PecheurOnboarding = () => {
                 </div>
 
                 <div className="flex gap-3">
-                  <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
+                  <Button variant="outline" onClick={() => setStep(3)} className="flex-1">
                     Retour
                   </Button>
                   <Button 

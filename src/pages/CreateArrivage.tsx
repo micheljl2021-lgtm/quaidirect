@@ -78,6 +78,44 @@ const CreateArrivage = () => {
     },
   });
 
+  // Fetch fisherman's preferred species
+  const { data: fishermenSpecies } = useQuery({
+    queryKey: ['fisherman-species', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data: fisherman } = await supabase
+        .from('fishermen')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!fisherman) return [];
+
+      const { data, error } = await supabase
+        .from('fishermen_species')
+        .select('species_id, is_primary')
+        .eq('fisherman_id', fisherman.id);
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  // Sort species: primary first, then selected, then alphabetical
+  const sortedSpecies = species?.sort((a, b) => {
+    const aPreferred = fishermenSpecies?.find(fs => fs.species_id === a.id);
+    const bPreferred = fishermenSpecies?.find(fs => fs.species_id === b.id);
+    
+    if (aPreferred?.is_primary) return -1;
+    if (bPreferred?.is_primary) return 1;
+    if (aPreferred && !bPreferred) return -1;
+    if (bPreferred && !aPreferred) return 1;
+    
+    return a.name.localeCompare(b.name);
+  });
+
   const addOffer = () => {
     setOffers([...offers, { speciesId: '', title: '', description: '', unitPrice: '', totalUnits: '' }]);
   };
@@ -382,11 +420,23 @@ const CreateArrivage = () => {
                           <SelectValue placeholder="Sélectionnez une espèce" />
                         </SelectTrigger>
                         <SelectContent>
-                          {species?.map((s) => (
-                            <SelectItem key={s.id} value={s.id}>
-                              {s.name}
-                            </SelectItem>
-                          ))}
+                          {sortedSpecies?.map((s) => {
+                            const preferredSpecies = fishermenSpecies?.find(fs => fs.species_id === s.id);
+                            const isPrimary = preferredSpecies?.is_primary;
+                            const isPreferred = !!preferredSpecies;
+
+                            return (
+                              <SelectItem key={s.id} value={s.id}>
+                                <div className="flex items-center gap-2">
+                                  {isPrimary && <span className="text-primary">★</span>}
+                                  {s.name}
+                                  {isPreferred && !isPrimary && (
+                                    <span className="text-xs text-muted-foreground ml-1">(habituelle)</span>
+                                  )}
+                                </div>
+                              </SelectItem>
+                            );
+                          })}
                         </SelectContent>
                       </Select>
                     </div>
