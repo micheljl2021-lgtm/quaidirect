@@ -25,20 +25,18 @@ serve(async (req) => {
       throw new Error('SIRET invalide (doit contenir 14 chiffres)');
     }
 
-    const apiToken = Deno.env.get('API_ENTREPRISE_TOKEN');
+    const apiToken = Deno.env.get('PAPPERS_API_TOKEN');
     if (!apiToken) {
-      throw new Error('API_ENTREPRISE_TOKEN non configuré');
+      throw new Error('PAPPERS_API_TOKEN non configuré');
     }
-    logStep('API token verified');
+    logStep('Pappers API token verified');
 
-    logStep('Calling API Entreprise', { siret });
+    logStep('Calling Pappers API', { siret });
     const response = await fetch(
-      `https://entreprise.api.gouv.fr/v3/insee/sirene/etablissements/${siret}`,
+      `https://api.pappers.fr/v2/entreprise?api_token=${apiToken}&siret=${siret}`,
       {
         headers: {
-          'Authorization': `Bearer ${apiToken}`,
           'Accept': 'application/json',
-          'Content-Type': 'application/json',
         },
       }
     );
@@ -48,24 +46,22 @@ serve(async (req) => {
         throw new Error('SIRET introuvable');
       }
       const errorText = await response.text();
-      logStep('API error', { status: response.status, error: errorText });
-      throw new Error('Erreur API Entreprise');
+      logStep('Pappers API error', { status: response.status, error: errorText });
+      throw new Error('Erreur API Pappers');
     }
 
     const data = await response.json();
-    const etablissement = data.data;
-    logStep('Company data retrieved', { siren: etablissement.siren });
+    logStep('Company data retrieved', { siren: data.siren });
 
     const companyInfo = {
-      companyName: etablissement.unite_legale?.denomination || 
-                   `${etablissement.unite_legale?.prenom_usuel || ''} ${etablissement.unite_legale?.nom || ''}`.trim(),
-      siren: etablissement.siren,
-      siret: etablissement.siret,
-      address: `${etablissement.adresse?.numero_voie || ''} ${etablissement.adresse?.type_voie || ''} ${etablissement.adresse?.libelle_voie || ''}`.trim(),
-      postalCode: etablissement.adresse?.code_postal || '',
-      city: etablissement.adresse?.libelle_commune || '',
-      activityCode: etablissement.activite_principale?.code || '',
-      activityLabel: etablissement.activite_principale?.libelle || '',
+      companyName: data.nom_entreprise || data.denomination || '',
+      siren: data.siren || '',
+      siret: data.siret || siret,
+      address: data.siege?.adresse_ligne_1 || '',
+      postalCode: data.siege?.code_postal || '',
+      city: data.siege?.ville || '',
+      activityCode: data.code_naf || '',
+      activityLabel: data.libelle_code_naf || '',
     };
 
     logStep('Company info extracted', companyInfo);
