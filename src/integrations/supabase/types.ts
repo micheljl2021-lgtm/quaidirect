@@ -96,7 +96,7 @@ export type Database = {
           notes: string | null
           port_id: string
           public_visible_at: string | null
-          sale_start_time: string | null
+          sale_start_time: string
           status: Database["public"]["Enums"]["drop_status"]
           updated_at: string
           visible_at: string
@@ -113,7 +113,7 @@ export type Database = {
           notes?: string | null
           port_id: string
           public_visible_at?: string | null
-          sale_start_time?: string | null
+          sale_start_time: string
           status?: Database["public"]["Enums"]["drop_status"]
           updated_at?: string
           visible_at?: string
@@ -130,7 +130,7 @@ export type Database = {
           notes?: string | null
           port_id?: string
           public_visible_at?: string | null
-          sale_start_time?: string | null
+          sale_start_time?: string
           status?: Database["public"]["Enums"]["drop_status"]
           updated_at?: string
           visible_at?: string
@@ -171,6 +171,7 @@ export type Database = {
           company_name: string | null
           created_at: string
           description: string | null
+          display_name_preference: string | null
           email: string | null
           facebook_url: string | null
           fishing_methods:
@@ -215,6 +216,7 @@ export type Database = {
           company_name?: string | null
           created_at?: string
           description?: string | null
+          display_name_preference?: string | null
           email?: string | null
           facebook_url?: string | null
           fishing_methods?:
@@ -259,6 +261,7 @@ export type Database = {
           company_name?: string | null
           created_at?: string
           description?: string | null
+          display_name_preference?: string | null
           email?: string | null
           facebook_url?: string | null
           fishing_methods?:
@@ -498,6 +501,38 @@ export type Database = {
             columns: ["drop_id"]
             isOneToOne: false
             referencedRelation: "drops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offer_photos: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          offer_id: string
+          photo_url: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          offer_id: string
+          photo_url: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          offer_id?: string
+          photo_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_photos_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
             referencedColumns: ["id"]
           },
         ]

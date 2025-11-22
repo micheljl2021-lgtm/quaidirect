@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Trash2, Anchor, MapPin, Calendar, Clock, Fish } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import OfferPhotosUpload from '@/components/OfferPhotosUpload';
 
 interface Offer {
   speciesId: string;
@@ -20,6 +21,7 @@ interface Offer {
   description: string;
   unitPrice: string;
   totalUnits: string;
+  photos: string[];
 }
 
 const CreateArrivage = () => {
@@ -118,19 +120,19 @@ const CreateArrivage = () => {
   });
 
   const addOffer = () => {
-    setOffers([...offers, { speciesId: '', title: '', description: '', unitPrice: '', totalUnits: '' }]);
+    setOffers([...offers, { speciesId: '', title: '', description: '', unitPrice: '', totalUnits: '', photos: [] }]);
   };
 
   const removeOffer = (index: number) => {
     setOffers(offers.filter((_, i) => i !== index));
   };
 
-  const updateOffer = (index: number, field: keyof Offer, value: string) => {
+  const updateOffer = (index: number, field: keyof Offer, value: string | string[]) => {
     const newOffers = [...offers];
-    newOffers[index][field] = value;
+    (newOffers[index][field] as any) = value;
     
     // Auto-fill price when species is selected
-    if (field === 'speciesId' && value) {
+    if (field === 'speciesId' && typeof value === 'string') {
       const selectedSpecies = species?.find(s => s.id === value);
       if (selectedSpecies?.indicative_price) {
         newOffers[index].unitPrice = selectedSpecies.indicative_price.toString();
@@ -150,10 +152,10 @@ const CreateArrivage = () => {
 
     try {
       // Validation
-      if (!portId || !etaDate || !etaTime || !saleDate || !saleTime) {
+      if (!portId || !saleDate || !saleTime) {
         toast({
           title: 'Erreur',
-          description: 'Veuillez remplir tous les champs obligatoires',
+          description: 'Veuillez remplir tous les champs obligatoires (port, date et heure de vente)',
           variant: 'destructive',
         });
         setLoading(false);
@@ -171,9 +173,9 @@ const CreateArrivage = () => {
 
       if (fishermanError) throw fishermanError;
 
-      // Create ETA datetime (heure de débarquement)
-      const etaAt = new Date(`${etaDate}T${etaTime}`);
-      // Create sale start time (heure de mise en vente)
+      // Create ETA datetime (heure de débarquement) - optionnel
+      const etaAt = etaDate && etaTime ? new Date(`${etaDate}T${etaTime}`) : null;
+      // Create sale start time (heure de mise en vente) - obligatoire
       const saleStartTime = new Date(`${saleDate}T${saleTime}`);
       const visibleAt = new Date(saleStartTime.getTime() - (isPremium ? 2 : 1) * 60 * 60 * 1000); // 2h before for premium, 1h for regular
       const publicVisibleAt = isPremium ? new Date(visibleAt.getTime() + 30 * 60 * 1000) : null; // 30 min after visible_at
@@ -184,7 +186,7 @@ const CreateArrivage = () => {
         .insert({
           fisherman_id: fisherman.id,
           port_id: portId,
-          eta_at: etaAt.toISOString(),
+          eta_at: etaAt?.toISOString(),
           sale_start_time: saleStartTime.toISOString(),
           visible_at: visibleAt.toISOString(),
           public_visible_at: publicVisibleAt?.toISOString(),
@@ -223,11 +225,34 @@ const CreateArrivage = () => {
           available_units: parseInt(offer.totalUnits),
         }));
 
-        const { error: offersError } = await supabase
+        const { data: insertedOffers, error: offersError } = await supabase
           .from('offers')
-          .insert(offersToInsert);
+          .insert(offersToInsert)
+          .select();
 
         if (offersError) throw offersError;
+
+        // Insert offer photos
+        if (insertedOffers) {
+          for (let i = 0; i < insertedOffers.length; i++) {
+            const offer = validOffers[i];
+            const insertedOffer = insertedOffers[i];
+            
+            if (offer.photos && offer.photos.length > 0) {
+              const photosToInsert = offer.photos.map((photoUrl, index) => ({
+                offer_id: insertedOffer.id,
+                photo_url: photoUrl,
+                display_order: index,
+              }));
+
+              const { error: photosError } = await supabase
+                .from('offer_photos')
+                .insert(photosToInsert);
+
+              if (photosError) console.error('Error inserting photos:', photosError);
+            }
+          }
+        }
       }
 
       toast({
@@ -302,15 +327,15 @@ const CreateArrivage = () => {
                 </Select>
               </div>
 
-              {/* ETA (Débarquement) */}
+              {/* ETA (Débarquement) - Optionnel */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Anchor className="h-4 w-4 text-muted-foreground" />
-                  <Label className="text-base font-medium">Heure de débarquement</Label>
+                  <Label className="text-base font-medium">Heure de débarquement (optionnel)</Label>
                 </div>
                 <div className="grid grid-cols-2 gap-4 pl-6">
                   <div className="space-y-2">
-                    <Label htmlFor="eta-date">Date *</Label>
+                    <Label htmlFor="eta-date">Date</Label>
                     <Input
                       id="eta-date"
                       type="date"
@@ -321,7 +346,7 @@ const CreateArrivage = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="eta-time">Heure *</Label>
+                    <Label htmlFor="eta-time">Heure</Label>
                     <Input
                       id="eta-time"
                       type="time"
@@ -605,6 +630,14 @@ const CreateArrivage = () => {
                         </p>
                       </div>
                     </div>
+
+                    {/* Photos */}
+                    <OfferPhotosUpload
+                      photos={offer.photos}
+                      onChange={(photos) => updateOffer(index, 'photos', photos)}
+                      maxPhotos={5}
+                      minPhotos={2}
+                    />
                   </CardContent>
                 </Card>
               ))
