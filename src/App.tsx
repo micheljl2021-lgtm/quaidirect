@@ -23,6 +23,7 @@ import PremiumDashboard from "./pages/PremiumDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import DemoTracabilite from "./pages/DemoTracabilite";
 import NotFound from "./pages/NotFound";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/dashboard/pecheur" element={<PecheurDashboard />} />
             <Route path="/compte" element={<Compte />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/pecheur/payment" element={<PecheurPayment />} />
             <Route path="/pecheur/onboarding" element={<PecheurOnboarding />} />
             <Route path="/pecheur/nouvel-arrivage" element={<CreateArrivage />} />
