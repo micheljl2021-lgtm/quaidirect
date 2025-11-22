@@ -138,39 +138,39 @@ const Header = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="fixed inset-0 top-16 z-[60] bg-background/98 md:hidden overflow-y-auto">
-            <nav className="flex flex-col gap-4 p-6">
+          <div className="fixed inset-0 top-16 z-[100] bg-background md:hidden overflow-y-auto border-t border-border">
+            <nav className="flex flex-col gap-3 p-6">
               <Link 
                 to="/carte" 
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="text-base font-medium text-foreground hover:text-primary transition-colors py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Carte des arrivages
               </Link>
               <Link 
                 to="/arrivages" 
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="text-base font-medium text-foreground hover:text-primary transition-colors py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Arrivages
               </Link>
               <Link 
                 to="/recettes" 
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="text-base font-medium text-foreground hover:text-primary transition-colors py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Recettes
               </Link>
               <Link 
                 to="/forfaits" 
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="text-base font-medium text-foreground hover:text-primary transition-colors py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Forfaits
               </Link>
               <Link 
                 to="/premium" 
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="text-base font-medium text-foreground hover:text-primary transition-colors py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Premium
