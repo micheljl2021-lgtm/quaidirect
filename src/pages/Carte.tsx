@@ -55,7 +55,7 @@ const Carte = () => {
             boat_name
           )
         `)
-        .eq('status', 'scheduled')
+        .in('status', ['scheduled', 'landed'])
         .order('eta_at', { ascending: true });
 
       if (error) throw error;
