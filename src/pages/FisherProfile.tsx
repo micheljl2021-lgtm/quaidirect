@@ -23,6 +23,7 @@ import {
   Loader2
 } from 'lucide-react';
 import PushNotificationToggle from '@/components/PushNotificationToggle';
+import AmbassadorBadge from '@/components/AmbassadorBadge';
 
 const FisherProfile = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -239,7 +240,12 @@ const FisherProfile = () => {
         
         <div className="absolute bottom-0 inset-x-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
           <div className="container max-w-5xl">
-            <h1 className="text-4xl font-bold text-white">{fisherman.boat_name}</h1>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-4xl font-bold text-white">{fisherman.boat_name}</h1>
+              {fisherman.is_ambassador && (
+                <AmbassadorBadge size="lg" />
+              )}
+            </div>
             {fisherman.company_name && (
               <p className="text-white/90 text-lg">{fisherman.company_name}</p>
             )}

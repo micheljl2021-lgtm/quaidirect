@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Crown, MapPin, Clock, Euro } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import AmbassadorBadge from "@/components/AmbassadorBadge";
 
 interface ArrivageCardProps {
   id: string;
@@ -19,6 +20,7 @@ interface ArrivageCardProps {
   fisherman: {
     name: string;
     boat: string;
+    isAmbassador?: boolean;
   };
 }
 
@@ -145,9 +147,14 @@ const ArrivageCard = ({
 
         {/* Fisherman & Note */}
         <div className="pt-2 border-t border-border space-y-1">
-          <p className="text-xs text-muted-foreground">
-            {fisherman.name} • {fisherman.boat}
-          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-xs text-muted-foreground">
+              {fisherman.name} • {fisherman.boat}
+            </p>
+            {fisherman.isAmbassador && (
+              <AmbassadorBadge size="sm" />
+            )}
+          </div>
           <p className="text-[10px] text-muted-foreground/70 italic">
             * Prix indicatif, ajusté après pesée réglementaire au retrait
           </p>
