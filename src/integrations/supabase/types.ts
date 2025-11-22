@@ -176,13 +176,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "drops_fisherman_id_fkey"
-            columns: ["fisherman_id"]
-            isOneToOne: false
-            referencedRelation: "public_fishermen"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "drops_port_id_fkey"
             columns: ["port_id"]
             isOneToOne: false
@@ -356,13 +349,6 @@ export type Database = {
             referencedRelation: "fishermen"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "fishermen_followers_fisherman_id_fkey"
-            columns: ["fisherman_id"]
-            isOneToOne: false
-            referencedRelation: "public_fishermen"
-            referencedColumns: ["id"]
-          },
         ]
       }
       fishermen_species: {
@@ -393,13 +379,6 @@ export type Database = {
             columns: ["fisherman_id"]
             isOneToOne: false
             referencedRelation: "fishermen"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fishermen_species_fisherman_id_fkey"
-            columns: ["fisherman_id"]
-            isOneToOne: false
-            referencedRelation: "public_fishermen"
             referencedColumns: ["id"]
           },
           {
@@ -1081,13 +1060,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "sales_fisherman_id_fkey"
-            columns: ["fisherman_id"]
-            isOneToOne: false
-            referencedRelation: "public_fishermen"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "sales_offer_id_fkey"
             columns: ["offer_id"]
             isOneToOne: false
@@ -1259,15 +1231,12 @@ export type Database = {
     Views: {
       public_fishermen: {
         Row: {
-          address: string | null
           bio: string | null
           boat_name: string | null
           boat_registration: string | null
-          city: string | null
           company_name: string | null
           created_at: string | null
           description: string | null
-          email: string | null
           facebook_url: string | null
           fishing_methods:
             | Database["public"]["Enums"]["fishing_method"][]
@@ -1282,74 +1251,11 @@ export type Database = {
           photo_boat_2: string | null
           photo_dock_sale: string | null
           photo_url: string | null
-          postal_code: string | null
           slug: string | null
           updated_at: string | null
           user_id: string | null
           verified_at: string | null
           website_url: string | null
-        }
-        Insert: {
-          address?: string | null
-          bio?: string | null
-          boat_name?: string | null
-          boat_registration?: string | null
-          city?: string | null
-          company_name?: string | null
-          created_at?: string | null
-          description?: string | null
-          email?: string | null
-          facebook_url?: string | null
-          fishing_methods?:
-            | Database["public"]["Enums"]["fishing_method"][]
-            | null
-          fishing_zones?: string[] | null
-          fishing_zones_geojson?: Json | null
-          generated_description?: string | null
-          id?: string | null
-          instagram_url?: string | null
-          main_fishing_zone?: string | null
-          photo_boat_1?: string | null
-          photo_boat_2?: string | null
-          photo_dock_sale?: string | null
-          photo_url?: string | null
-          postal_code?: string | null
-          slug?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-          verified_at?: string | null
-          website_url?: string | null
-        }
-        Update: {
-          address?: string | null
-          bio?: string | null
-          boat_name?: string | null
-          boat_registration?: string | null
-          city?: string | null
-          company_name?: string | null
-          created_at?: string | null
-          description?: string | null
-          email?: string | null
-          facebook_url?: string | null
-          fishing_methods?:
-            | Database["public"]["Enums"]["fishing_method"][]
-            | null
-          fishing_zones?: string[] | null
-          fishing_zones_geojson?: Json | null
-          generated_description?: string | null
-          id?: string | null
-          instagram_url?: string | null
-          main_fishing_zone?: string | null
-          photo_boat_1?: string | null
-          photo_boat_2?: string | null
-          photo_dock_sale?: string | null
-          photo_url?: string | null
-          postal_code?: string | null
-          slug?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-          verified_at?: string | null
-          website_url?: string | null
         }
         Relationships: []
       }
@@ -1363,6 +1269,34 @@ export type Database = {
         Returns: undefined
       }
       archive_expired_drops: { Args: never; Returns: undefined }
+      get_public_fishermen: {
+        Args: never
+        Returns: {
+          bio: string
+          boat_name: string
+          boat_registration: string
+          company_name: string
+          created_at: string
+          description: string
+          facebook_url: string
+          fishing_methods: Database["public"]["Enums"]["fishing_method"][]
+          fishing_zones: string[]
+          fishing_zones_geojson: Json
+          generated_description: string
+          id: string
+          instagram_url: string
+          main_fishing_zone: string
+          photo_boat_1: string
+          photo_boat_2: string
+          photo_dock_sale: string
+          photo_url: string
+          slug: string
+          updated_at: string
+          user_id: string
+          verified_at: string
+          website_url: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

@@ -37,31 +37,56 @@ const FisherProfile = () => {
   const { data: fisherman, isLoading } = useQuery({
     queryKey: ['fisherman', slug],
     queryFn: async () => {
-      const query = supabase
+      // First get public fisherman data
+      const publicQuery = supabase
         .from('public_fishermen')
-        .select(`
-          *,
-          fishermen_species(
-            species:species(*),
-            is_primary
-          )
-        `);
+        .select('*');
       
       // Query by ID or slug depending on format
-      const { data, error } = isUUID 
-        ? await query.eq('id', slug).maybeSingle()
-        : await query.eq('slug', slug).maybeSingle();
+      const { data: publicData, error: publicError } = isUUID 
+        ? await publicQuery.eq('id', slug).maybeSingle()
+        : await publicQuery.eq('slug', slug).maybeSingle();
 
-      if (error) throw error;
-      if (!data) throw new Error('Pêcheur introuvable');
+      if (publicError) throw publicError;
+      if (!publicData) throw new Error('Pêcheur introuvable');
       
-      return data;
+      // Fetch associated species separately
+      const { data: speciesData } = await supabase
+        .from('fishermen_species')
+        .select(`
+          species:species(*),
+          is_primary
+        `)
+        .eq('fisherman_id', publicData.id);
+      
+      return {
+        ...publicData,
+        fishermen_species: speciesData || []
+      };
     },
     enabled: !!slug,
   });
 
   // Check if current user is the owner
   const isOwner = user && fisherman && fisherman.user_id === user.id;
+
+  // Fetch full fisherman data if user is the owner (to get contact info)
+  const { data: fullFishermanData } = useQuery({
+    queryKey: ['fisherman-full', fisherman?.id],
+    queryFn: async () => {
+      if (!fisherman?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('fishermen')
+        .select('phone, email, address, city, postal_code')
+        .eq('id', fisherman.id)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!fisherman?.id && isOwner,
+  });
 
   // Check if user is following
   const { data: isFollowing, refetch: refetchFollowing } = useQuery({
@@ -355,25 +380,25 @@ const FisherProfile = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {/* Téléphone */}
-              {(fisherman as any).phone && (
+              {/* Téléphone - Only shown to owner */}
+              {isOwner && fullFishermanData?.phone && (
                 <a
-                  href={`tel:${(fisherman as any).phone}`}
+                  href={`tel:${fullFishermanData.phone}`}
                   className="flex items-center gap-3 p-3 hover:bg-accent rounded-lg transition"
                 >
                   <Phone className="h-5 w-5 text-primary" />
-                  <span className="font-medium">{(fisherman as any).phone}</span>
+                  <span className="font-medium">{fullFishermanData.phone}</span>
                 </a>
               )}
 
-              {/* Email */}
-              {fisherman.email && (
+              {/* Email - Only shown to owner */}
+              {isOwner && fullFishermanData?.email && (
                 <a
-                  href={`mailto:${fisherman.email}`}
+                  href={`mailto:${fullFishermanData.email}`}
                   className="flex items-center gap-3 p-3 hover:bg-accent rounded-lg transition"
                 >
                   <Mail className="h-5 w-5 text-primary" />
-                  <span className="font-medium">{fisherman.email}</span>
+                  <span className="font-medium">{fullFishermanData.email}</span>
                 </a>
               )}
 
@@ -413,11 +438,11 @@ const FisherProfile = () => {
                 </div>
               )}
 
-              {/* Itinéraire */}
-              {fisherman.address && fisherman.city && (
+              {/* Itinéraire - Only shown to owner */}
+              {isOwner && fullFishermanData?.address && fullFishermanData?.city && (
                 <a
                   href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-                    `${fisherman.address}, ${fisherman.postal_code || ''} ${fisherman.city}`
+                    `${fullFishermanData.address}, ${fullFishermanData.postal_code || ''} ${fullFishermanData.city}`
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
