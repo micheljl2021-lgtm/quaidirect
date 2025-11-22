@@ -88,13 +88,17 @@ serve(async (req) => {
     }
 
     // 4) Créer le profil pêcheur en "free"
+    // Génération d'identifiants temporaires uniques
+    const tempBoatReg = `TEMP-${targetUser.id.substring(0, 8).toUpperCase()}`;
+    const tempSiret = `TEMP${targetUser.id.replace(/-/g, '').substring(0, 14)}`;
+    
     const { data: newFisherman, error: insertError } = await supabaseAdmin
       .from("fishermen")
       .insert({
         user_id: targetUser.id,
         boat_name: "À compléter",
-        boat_registration: "À compléter",
-        siret: "À compléter",
+        boat_registration: tempBoatReg,
+        siret: tempSiret,
         onboarding_payment_status: "free",
       })
       .select()
