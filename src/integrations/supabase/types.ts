@@ -161,76 +161,127 @@ export type Database = {
       }
       fishermen: {
         Row: {
+          address: string | null
           bio: string | null
           boat_name: string
           boat_registration: string
+          city: string | null
+          client_message: string | null
           company_name: string | null
           created_at: string
           description: string | null
+          email: string | null
+          facebook_url: string | null
           fishing_methods:
             | Database["public"]["Enums"]["fishing_method"][]
             | null
           fishing_zones: string[] | null
           fishing_zones_geojson: Json | null
+          generated_description: string | null
           id: string
+          instagram_url: string | null
           license_number: string | null
+          main_fishing_zone: string | null
           onboarding_paid_at: string | null
           onboarding_payment_id: string | null
           onboarding_payment_status: string | null
+          passion_quote: string | null
           phone: string | null
+          photo_boat_1: string | null
+          photo_boat_2: string | null
+          photo_dock_sale: string | null
           photo_url: string | null
+          postal_code: string | null
           siret: string
+          slug: string | null
           updated_at: string
           user_id: string
           verified_at: string | null
+          website_url: string | null
+          work_philosophy: string | null
+          years_experience: string | null
         }
         Insert: {
+          address?: string | null
           bio?: string | null
           boat_name: string
           boat_registration: string
+          city?: string | null
+          client_message?: string | null
           company_name?: string | null
           created_at?: string
           description?: string | null
+          email?: string | null
+          facebook_url?: string | null
           fishing_methods?:
             | Database["public"]["Enums"]["fishing_method"][]
             | null
           fishing_zones?: string[] | null
           fishing_zones_geojson?: Json | null
+          generated_description?: string | null
           id?: string
+          instagram_url?: string | null
           license_number?: string | null
+          main_fishing_zone?: string | null
           onboarding_paid_at?: string | null
           onboarding_payment_id?: string | null
           onboarding_payment_status?: string | null
+          passion_quote?: string | null
           phone?: string | null
+          photo_boat_1?: string | null
+          photo_boat_2?: string | null
+          photo_dock_sale?: string | null
           photo_url?: string | null
+          postal_code?: string | null
           siret: string
+          slug?: string | null
           updated_at?: string
           user_id: string
           verified_at?: string | null
+          website_url?: string | null
+          work_philosophy?: string | null
+          years_experience?: string | null
         }
         Update: {
+          address?: string | null
           bio?: string | null
           boat_name?: string
           boat_registration?: string
+          city?: string | null
+          client_message?: string | null
           company_name?: string | null
           created_at?: string
           description?: string | null
+          email?: string | null
+          facebook_url?: string | null
           fishing_methods?:
             | Database["public"]["Enums"]["fishing_method"][]
             | null
           fishing_zones?: string[] | null
           fishing_zones_geojson?: Json | null
+          generated_description?: string | null
           id?: string
+          instagram_url?: string | null
           license_number?: string | null
+          main_fishing_zone?: string | null
           onboarding_paid_at?: string | null
           onboarding_payment_id?: string | null
           onboarding_payment_status?: string | null
+          passion_quote?: string | null
           phone?: string | null
+          photo_boat_1?: string | null
+          photo_boat_2?: string | null
+          photo_dock_sale?: string | null
           photo_url?: string | null
+          postal_code?: string | null
           siret?: string
+          slug?: string | null
           updated_at?: string
           user_id?: string
           verified_at?: string | null
+          website_url?: string | null
+          work_philosophy?: string | null
+          years_experience?: string | null
         }
         Relationships: []
       }
@@ -1129,58 +1180,97 @@ export type Database = {
     Views: {
       public_fishermen: {
         Row: {
+          address: string | null
           bio: string | null
           boat_name: string | null
           boat_registration: string | null
+          city: string | null
           company_name: string | null
           created_at: string | null
           description: string | null
+          email: string | null
+          facebook_url: string | null
           fishing_methods:
             | Database["public"]["Enums"]["fishing_method"][]
             | null
           fishing_zones: string[] | null
           fishing_zones_geojson: Json | null
+          generated_description: string | null
           id: string | null
+          instagram_url: string | null
+          main_fishing_zone: string | null
+          photo_boat_1: string | null
+          photo_boat_2: string | null
+          photo_dock_sale: string | null
           photo_url: string | null
+          postal_code: string | null
+          slug: string | null
           updated_at: string | null
           user_id: string | null
           verified_at: string | null
+          website_url: string | null
         }
         Insert: {
+          address?: string | null
           bio?: string | null
           boat_name?: string | null
           boat_registration?: string | null
+          city?: string | null
           company_name?: string | null
           created_at?: string | null
           description?: string | null
+          email?: string | null
+          facebook_url?: string | null
           fishing_methods?:
             | Database["public"]["Enums"]["fishing_method"][]
             | null
           fishing_zones?: string[] | null
           fishing_zones_geojson?: Json | null
+          generated_description?: string | null
           id?: string | null
+          instagram_url?: string | null
+          main_fishing_zone?: string | null
+          photo_boat_1?: string | null
+          photo_boat_2?: string | null
+          photo_dock_sale?: string | null
           photo_url?: string | null
+          postal_code?: string | null
+          slug?: string | null
           updated_at?: string | null
           user_id?: string | null
           verified_at?: string | null
+          website_url?: string | null
         }
         Update: {
+          address?: string | null
           bio?: string | null
           boat_name?: string | null
           boat_registration?: string | null
+          city?: string | null
           company_name?: string | null
           created_at?: string | null
           description?: string | null
+          email?: string | null
+          facebook_url?: string | null
           fishing_methods?:
             | Database["public"]["Enums"]["fishing_method"][]
             | null
           fishing_zones?: string[] | null
           fishing_zones_geojson?: Json | null
+          generated_description?: string | null
           id?: string | null
+          instagram_url?: string | null
+          main_fishing_zone?: string | null
+          photo_boat_1?: string | null
+          photo_boat_2?: string | null
+          photo_dock_sale?: string | null
           photo_url?: string | null
+          postal_code?: string | null
+          slug?: string | null
           updated_at?: string | null
           user_id?: string | null
           verified_at?: string | null
+          website_url?: string | null
         }
         Relationships: []
       }
