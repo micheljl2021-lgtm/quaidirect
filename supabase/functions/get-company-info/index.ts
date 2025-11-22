@@ -38,6 +38,7 @@ serve(async (req) => {
         headers: {
           'Authorization': `Bearer ${apiToken}`,
           'Accept': 'application/json',
+          'Content-Type': 'application/json',
         },
       }
     );
