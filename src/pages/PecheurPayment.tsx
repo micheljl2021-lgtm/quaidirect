@@ -120,10 +120,6 @@ const PecheurPayment = () => {
             </div>
           </CardContent>
         </Card>
-
-        <div className="text-center text-sm text-muted-foreground">
-          <p>Déjà payé ? <Button variant="link" onClick={() => navigate('/pecheur/onboarding')}>Accéder au formulaire</Button></p>
-        </div>
       </div>
     </div>
   );

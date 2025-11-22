@@ -89,6 +89,13 @@ const PecheurOnboarding = () => {
         .eq('user_id', user.id)
         .single();
 
+      // Check payment status
+      if (!fisherman || fisherman.onboarding_payment_status !== 'paid') {
+        toast.error("Vous devez d'abord compléter le paiement de 150€");
+        navigate('/pecheur/payment');
+        return;
+      }
+
       if (fisherman) {
         setFishermenId(fisherman.id);
         setCurrentStep(fisherman.onboarding_step || 1);
