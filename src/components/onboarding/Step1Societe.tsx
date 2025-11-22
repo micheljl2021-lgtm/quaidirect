@@ -1,10 +1,6 @@
-import { Building2, Loader2, RefreshCw, Ship } from "lucide-react";
-import { useState } from "react";
+import { Building2, Ship } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 interface Step1SocieteProps {
   formData: {
@@ -22,36 +18,6 @@ interface Step1SocieteProps {
 }
 
 export function Step1Societe({ formData, onChange }: Step1SocieteProps) {
-  const [loading, setLoading] = useState(false);
-
-  const handleSiretLookup = async () => {
-    if (!formData.siret || formData.siret.length !== 14) {
-      toast.error("Le SIRET doit contenir 14 chiffres");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('get-company-info', {
-        body: { siret: formData.siret }
-      });
-
-      if (error) throw error;
-
-      if (data) {
-        onChange('companyName', data.name || '');
-        onChange('address', data.address || '');
-        onChange('city', data.city || '');
-        onChange('postalCode', ''); // API Entreprise ne retourne pas toujours le code postal
-        toast.success("Informations récupérées avec succès !");
-      }
-    } catch (error) {
-      console.error('Erreur récupération SIRET:', error);
-      toast.error("Impossible de récupérer les informations du SIRET");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -64,32 +30,17 @@ export function Step1Societe({ formData, onChange }: Step1SocieteProps) {
         <p className="text-muted-foreground">Commençons par les informations de base</p>
       </div>
 
-      {/* SIRET Lookup */}
+      {/* SIRET */}
       <div className="space-y-2">
         <Label htmlFor="siret">SIRET* <span className="text-xs text-muted-foreground">(14 chiffres)</span></Label>
-        <div className="flex gap-2">
-          <Input
-            id="siret"
-            value={formData.siret}
-            onChange={(e) => onChange('siret', e.target.value.replace(/\D/g, '').slice(0, 14))}
-            placeholder="12345678901234"
-            maxLength={14}
-            required
-          />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleSiretLookup}
-            disabled={loading || formData.siret.length !== 14}
-          >
-            {loading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <RefreshCw className="w-4 h-4" />
-            )}
-            Récupérer
-          </Button>
-        </div>
+        <Input
+          id="siret"
+          value={formData.siret}
+          onChange={(e) => onChange('siret', e.target.value.replace(/\D/g, '').slice(0, 14))}
+          placeholder="12345678901234"
+          maxLength={14}
+          required
+        />
       </div>
 
       {/* Boat Name */}
@@ -119,17 +70,16 @@ export function Step1Societe({ formData, onChange }: Step1SocieteProps) {
         />
       </div>
 
-      {/* Company Name (auto-filled) */}
+      {/* Company Name */}
       <div className="space-y-2">
         <Label htmlFor="companyName">Raison sociale</Label>
         <Input
           id="companyName"
           value={formData.companyName}
           onChange={(e) => onChange('companyName', e.target.value)}
-          placeholder="Complété automatiquement via SIRET"
-          className="bg-muted"
+          placeholder="Ex: SARL Les Pêcheurs du Var"
         />
-        <p className="text-xs text-muted-foreground">Complété automatiquement via le SIRET</p>
+        <p className="text-xs text-muted-foreground">Raison sociale de votre entreprise</p>
       </div>
 
       {/* Address */}
