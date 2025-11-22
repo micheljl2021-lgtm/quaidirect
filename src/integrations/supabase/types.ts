@@ -157,7 +157,14 @@ export type Database = {
           bio: string | null
           boat_name: string
           boat_registration: string
+          company_name: string | null
           created_at: string
+          description: string | null
+          fishing_methods:
+            | Database["public"]["Enums"]["fishing_method"][]
+            | null
+          fishing_zones: string[] | null
+          fishing_zones_geojson: Json | null
           id: string
           license_number: string | null
           phone: string | null
@@ -171,7 +178,14 @@ export type Database = {
           bio?: string | null
           boat_name: string
           boat_registration: string
+          company_name?: string | null
           created_at?: string
+          description?: string | null
+          fishing_methods?:
+            | Database["public"]["Enums"]["fishing_method"][]
+            | null
+          fishing_zones?: string[] | null
+          fishing_zones_geojson?: Json | null
           id?: string
           license_number?: string | null
           phone?: string | null
@@ -185,7 +199,14 @@ export type Database = {
           bio?: string | null
           boat_name?: string
           boat_registration?: string
+          company_name?: string | null
           created_at?: string
+          description?: string | null
+          fishing_methods?:
+            | Database["public"]["Enums"]["fishing_method"][]
+            | null
+          fishing_zones?: string[] | null
+          fishing_zones_geojson?: Json | null
           id?: string
           license_number?: string | null
           phone?: string | null
@@ -1052,6 +1073,16 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user" | "premium" | "fisherman"
       drop_status: "scheduled" | "landed" | "cancelled"
+      fishing_method:
+        | "palangre"
+        | "filet"
+        | "ligne"
+        | "casier"
+        | "chalut"
+        | "seine"
+        | "hamecon"
+        | "nasse"
+        | "autre"
       reservation_status: "pending" | "confirmed" | "cancelled" | "completed"
       sale_status: "pending" | "completed" | "refunded"
     }
@@ -1183,6 +1214,17 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user", "premium", "fisherman"],
       drop_status: ["scheduled", "landed", "cancelled"],
+      fishing_method: [
+        "palangre",
+        "filet",
+        "ligne",
+        "casier",
+        "chalut",
+        "seine",
+        "hamecon",
+        "nasse",
+        "autre",
+      ],
       reservation_status: ["pending", "confirmed", "cancelled", "completed"],
       sale_status: ["pending", "completed", "refunded"],
     },
