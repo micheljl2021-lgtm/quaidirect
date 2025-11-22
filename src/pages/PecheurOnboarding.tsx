@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Anchor, Upload, FileText, CheckCircle2, Fish } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -36,7 +37,13 @@ const PecheurOnboarding = () => {
   const [selectedSpecies, setSelectedSpecies] = useState<string[]>([]);
   const [primarySpecies, setPrimarySpecies] = useState<string>('');
 
-  const progress = (step / 4) * 100;
+  // Step 4: Fishing activity
+  const [companyName, setCompanyName] = useState('');
+  const [description, setDescription] = useState('');
+  const [fishingMethods, setFishingMethods] = useState<string[]>([]);
+  const [fishingZones, setFishingZones] = useState('');
+
+  const progress = (step / 5) * 100;
 
   // Fetch species
   const { data: species } = useQuery({
@@ -88,6 +95,19 @@ const PecheurOnboarding = () => {
     setStep(4);
   };
 
+  const handleStep4Next = () => {
+    // All fields optional for this step
+    setStep(5);
+  };
+
+  const toggleFishingMethod = (method: string) => {
+    setFishingMethods(prev => 
+      prev.includes(method) 
+        ? prev.filter(m => m !== method)
+        : [...prev, method]
+    );
+  };
+
   const toggleSpecies = (speciesId: string) => {
     setSelectedSpecies(prev => 
       prev.includes(speciesId) 
@@ -118,11 +138,13 @@ const PecheurOnboarding = () => {
         .insert({
           user_id: user.id,
           siret: siret || null,
-          siren: siren || null,
           boat_name: boatName,
-          immat_navire: immat,
-          photo: photo || null,
-          home_port_id: port?.id || null,
+          boat_registration: immat,
+          photo_url: photo || null,
+          company_name: companyName || null,
+          description: description || null,
+          fishing_methods: fishingMethods.length > 0 ? fishingMethods : null,
+          fishing_zones: fishingZones ? fishingZones.split(',').map(z => z.trim()) : null,
           verified_at: null,
         }) as { error: any };
 
@@ -189,7 +211,7 @@ const PecheurOnboarding = () => {
           <div className="space-y-2">
             <Progress value={progress} />
             <p className="text-sm text-muted-foreground text-center">
-              Étape {step} sur 4
+              Étape {step} sur 5
             </p>
           </div>
 
@@ -432,8 +454,113 @@ const PecheurOnboarding = () => {
             </Card>
           )}
 
-          {/* Step 4: Validation */}
+          {/* Step 4: Fishing Activity */}
           {step === 4 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Anchor className="h-5 w-5" />
+                  Activité de pêche
+                </CardTitle>
+                <CardDescription>
+                  Présentez votre activité (tous les champs sont optionnels)
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  {/* Company Name */}
+                  <div className="space-y-2">
+                    <Label htmlFor="companyName">Nom de l'entreprise (optionnel)</Label>
+                    <Input
+                      id="companyName"
+                      placeholder="Ex: Pêche artisanale du Levant"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Apparaîtra sur votre page vitrine publique
+                    </p>
+                  </div>
+
+                  {/* Description */}
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description de votre activité (optionnel)</Label>
+                    <Textarea
+                      id="description"
+                      placeholder="Ex: Pêche artisanale au large de Porquerolles depuis 3 générations. Spécialisé dans la pêche à la ligne et au filet maillant..."
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      rows={4}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Présentez votre savoir-faire et votre philosophie
+                    </p>
+                  </div>
+
+                  {/* Fishing Methods */}
+                  <div className="space-y-3">
+                    <Label>Méthodes de pêche utilisées (optionnel)</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {[
+                        { value: 'palangre', label: 'Palangre' },
+                        { value: 'filet', label: 'Filet' },
+                        { value: 'ligne', label: 'Ligne' },
+                        { value: 'casier', label: 'Casier' },
+                        { value: 'chalut', label: 'Chalut' },
+                        { value: 'seine', label: 'Seine' },
+                        { value: 'hamecon', label: 'Hameçon' },
+                        { value: 'nasse', label: 'Nasse' },
+                        { value: 'autre', label: 'Autre' },
+                      ].map((method) => (
+                        <label
+                          key={method.value}
+                          className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${
+                            fishingMethods.includes(method.value)
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border hover:border-primary/50'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={fishingMethods.includes(method.value)}
+                            onChange={() => toggleFishingMethod(method.value)}
+                            className="rounded"
+                          />
+                          <span className="text-sm font-medium">{method.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Fishing Zones */}
+                  <div className="space-y-2">
+                    <Label htmlFor="fishingZones">Zones de pêche (optionnel)</Label>
+                    <Input
+                      id="fishingZones"
+                      placeholder="Ex: Porquerolles, Port-Cros, Îles du Levant"
+                      value={fishingZones}
+                      onChange={(e) => setFishingZones(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Séparez les zones par des virgules
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button variant="outline" onClick={() => setStep(3)} className="flex-1">
+                    Retour
+                  </Button>
+                  <Button onClick={handleStep4Next} className="flex-1">
+                    Suivant
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Step 5: Validation */}
+          {step === 5 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -454,6 +581,12 @@ const PecheurOnboarding = () => {
                       {siret && <p><strong>SIRET :</strong> {siret}</p>}
                       {siren && <p><strong>SIREN :</strong> {siren}</p>}
                       <p><strong>Espèces pêchées :</strong> {selectedSpecies.length} espèce(s)</p>
+                      {fishingMethods.length > 0 && (
+                        <p><strong>Méthodes de pêche :</strong> {fishingMethods.length}</p>
+                      )}
+                      {fishingZones && (
+                        <p><strong>Zones de pêche :</strong> {fishingZones}</p>
+                      )}
                     </div>
                   </div>
 
@@ -466,7 +599,7 @@ const PecheurOnboarding = () => {
                 </div>
 
                 <div className="flex gap-3">
-                  <Button variant="outline" onClick={() => setStep(3)} className="flex-1">
+                  <Button variant="outline" onClick={() => setStep(4)} className="flex-1">
                     Retour
                   </Button>
                   <Button 
