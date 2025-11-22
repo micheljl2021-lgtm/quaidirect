@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -6,7 +6,8 @@ import Header from '@/components/Header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Clock, Fish, MapPin, Anchor } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Clock, Fish, MapPin, Anchor, Filter } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -29,6 +30,7 @@ interface Drop {
     company_name: string | null;
     display_name_preference: string | null;
     photo_url: string | null;
+    main_fishing_zone: string | null;
   };
   drop_photos?: Array<{
     id: string;
@@ -41,6 +43,7 @@ interface Drop {
     unit_price: number;
     available_units: number;
     species: {
+      id: string;
       name: string;
     };
     offer_photos: Array<{
@@ -55,6 +58,12 @@ const Arrivages = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
+  
+  // États pour les filtres
+  const [filterZone, setFilterZone] = useState<string>('all');
+  const [filterSpecies, setFilterSpecies] = useState<string>('all');
+  const [filterPort, setFilterPort] = useState<string>('all');
+  const [filterFisherman, setFilterFisherman] = useState<string>('all');
 
   useEffect(() => {
     // Update current time every second for countdown display
@@ -78,7 +87,8 @@ const Arrivages = () => {
           boat_name,
           company_name,
           display_name_preference,
-          photo_url
+          photo_url,
+          main_fishing_zone
         ),
         ports (
           id,
@@ -96,6 +106,7 @@ const Arrivages = () => {
           unit_price,
           available_units,
           species (
+            id,
             name
           ),
           offer_photos (
@@ -181,6 +192,76 @@ const Arrivages = () => {
     });
   };
 
+  // Extraire les options uniques pour les filtres
+  const uniqueZones = useMemo(() => {
+    if (!drops) return [];
+    const zones = drops
+      .map(d => d.fishermen?.main_fishing_zone)
+      .filter((zone): zone is string => !!zone);
+    return Array.from(new Set(zones));
+  }, [drops]);
+
+  const uniqueSpecies = useMemo(() => {
+    if (!drops) return [];
+    const speciesMap = new Map<string, string>();
+    drops.forEach(d => {
+      d.offers?.forEach(o => {
+        if (o.species?.id && o.species?.name) {
+          speciesMap.set(o.species.id, o.species.name);
+        }
+      });
+    });
+    return Array.from(speciesMap, ([id, name]) => ({ id, name }));
+  }, [drops]);
+
+  const uniquePorts = useMemo(() => {
+    if (!drops) return [];
+    const ports = drops.map(d => ({ id: d.ports.id, name: `${d.ports.name}, ${d.ports.city}` }));
+    const uniqueMap = new Map(ports.map(p => [p.id, p.name]));
+    return Array.from(uniqueMap, ([id, name]) => ({ id, name }));
+  }, [drops]);
+
+  const uniqueFishermen = useMemo(() => {
+    if (!drops) return [];
+    const fishermen = drops.map(d => ({
+      id: d.fishermen.id,
+      name: d.fishermen.display_name_preference === 'company_name'
+        ? (d.fishermen.company_name || d.fishermen.boat_name)
+        : d.fishermen.boat_name
+    }));
+    const uniqueMap = new Map(fishermen.map(f => [f.id, f.name]));
+    return Array.from(uniqueMap, ([id, name]) => ({ id, name }));
+  }, [drops]);
+
+  // Appliquer les filtres
+  const filteredDrops = useMemo(() => {
+    if (!drops) return [];
+    return drops.filter(drop => {
+      // Filtre zone
+      if (filterZone !== 'all' && drop.fishermen?.main_fishing_zone !== filterZone) {
+        return false;
+      }
+      
+      // Filtre espèce
+      if (filterSpecies !== 'all') {
+        const hasSpecies = drop.offers?.some(o => o.species.id === filterSpecies);
+        if (!hasSpecies) return false;
+      }
+      
+      // Filtre port
+      if (filterPort !== 'all' && drop.ports.id !== filterPort) {
+        return false;
+      }
+      
+      // Filtre pêcheur
+      if (filterFisherman !== 'all' && drop.fishermen.id !== filterFisherman) {
+        return false;
+      }
+      
+      return true;
+    });
+  }, [drops, filterZone, filterSpecies, filterPort, filterFisherman]);
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -197,6 +278,107 @@ const Arrivages = () => {
             )}
           </p>
         </div>
+
+        {/* Filtres */}
+        <Card className="border-border bg-card">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filtres
+            </CardTitle>
+            <CardDescription>
+              Affinez votre recherche d'arrivages
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Filtre Zone */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Zone de pêche</label>
+                <Select value={filterZone} onValueChange={setFilterZone}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Toutes les zones" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Toutes les zones</SelectItem>
+                    {uniqueZones.map(zone => (
+                      <SelectItem key={zone} value={zone}>{zone}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Filtre Espèce */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Espèce</label>
+                <Select value={filterSpecies} onValueChange={setFilterSpecies}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Toutes les espèces" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Toutes les espèces</SelectItem>
+                    {uniqueSpecies.map(species => (
+                      <SelectItem key={species.id} value={species.id}>{species.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Filtre Port */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Port</label>
+                <Select value={filterPort} onValueChange={setFilterPort}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Tous les ports" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous les ports</SelectItem>
+                    {uniquePorts.map(port => (
+                      <SelectItem key={port.id} value={port.id}>{port.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Filtre Pêcheur */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Pêcheur</label>
+                <Select value={filterFisherman} onValueChange={setFilterFisherman}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Tous les pêcheurs" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous les pêcheurs</SelectItem>
+                    {uniqueFishermen.map(fisherman => (
+                      <SelectItem key={fisherman.id} value={fisherman.id}>{fisherman.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Compteur de résultats et reset */}
+            <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
+              <p className="text-sm text-muted-foreground">
+                {filteredDrops.length} arrivage{filteredDrops.length > 1 ? 's' : ''} trouvé{filteredDrops.length > 1 ? 's' : ''}
+              </p>
+              {(filterZone !== 'all' || filterSpecies !== 'all' || filterPort !== 'all' || filterFisherman !== 'all') && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setFilterZone('all');
+                    setFilterSpecies('all');
+                    setFilterPort('all');
+                    setFilterFisherman('all');
+                  }}
+                >
+                  Réinitialiser les filtres
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Statut utilisateur */}
         <Card className="border-primary/20 bg-primary/5">
@@ -242,6 +424,20 @@ const Arrivages = () => {
         )}
 
         {/* Empty state */}
+        {!isLoading && !error && filteredDrops && filteredDrops.length === 0 && drops && drops.length > 0 && (
+          <Card>
+            <CardContent className="pt-6 text-center py-12">
+              <Fish className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+              <p className="text-muted-foreground">
+                Aucun arrivage ne correspond à vos critères.
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Essayez de modifier vos filtres ci-dessus.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
         {!isLoading && !error && drops && drops.length === 0 && (
           <Card>
             <CardContent className="pt-6 text-center py-12">
@@ -258,7 +454,7 @@ const Arrivages = () => {
 
         {/* Liste des drops */}
         <div className="space-y-4">
-          {drops?.map((drop) => {
+          {filteredDrops?.map((drop) => {
             const etaDate = drop.eta_at ? new Date(drop.eta_at) : null;
             const saleDate = drop.sale_start_time ? new Date(drop.sale_start_time) : null;
             const displayDate = saleDate || etaDate;
