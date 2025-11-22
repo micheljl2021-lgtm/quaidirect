@@ -182,7 +182,7 @@ const PecheurOnboarding = () => {
         user_id: user.id,
         siret: formData.siret,
         boat_name: formData.boatName,
-        boat_registration: formData.boatName, // Temporary
+        boat_registration: formData.siret,
         company_name: formData.companyName || formData.ownerName,
         address: formData.address,
         postal_code: formData.postalCode,
@@ -252,7 +252,7 @@ const PecheurOnboarding = () => {
           user_id: user.id,
           siret: formData.siret,
           boat_name: formData.boatName,
-          boat_registration: formData.boatName,
+          boat_registration: formData.siret,
           company_name: formData.companyName || formData.ownerName,
           address: formData.address,
           postal_code: formData.postalCode,
@@ -296,7 +296,7 @@ const PecheurOnboarding = () => {
       }
 
       toast.success("Profil créé avec succès !");
-      navigate('/onboarding/confirmation');
+      navigate(`/onboarding/confirmation?slug=${fishermanData.slug}`);
     } catch (error) {
       console.error('Erreur soumission:', error);
       toast.error("Impossible de créer le profil");

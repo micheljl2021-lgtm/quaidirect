@@ -25,7 +25,7 @@ const Compte = () => {
       if (userRole === 'fisherman') {
         const { data } = await supabase
           .from('fishermen')
-          .select('*')
+          .select('id, slug, boat_name, company_name')
           .eq('user_id', user.id)
           .maybeSingle();
         
@@ -215,11 +215,11 @@ const Compte = () => {
                   >
                     Tableau de bord
                   </Button>
-                  {fishermanData?.id && (
+                  {fishermanData?.slug && (
                     <Button 
                       variant="outline" 
                       className="flex-1"
-                      onClick={() => navigate(`/pecheur/${fishermanData.id}`)}
+                      onClick={() => navigate(`/pecheurs/${fishermanData.slug}`)}
                     >
                       Ma vitrine
                     </Button>

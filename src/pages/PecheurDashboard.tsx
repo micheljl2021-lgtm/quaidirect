@@ -69,9 +69,9 @@ const PecheurDashboard = () => {
     try {
       const { data: fisherman, error: fishermanError } = await supabase
         .from('fishermen')
-        .select('id')
+        .select('id, slug')
         .eq('user_id', user?.id)
-        .maybeSingle() as { data: { id: string } | null; error: any };
+        .maybeSingle() as { data: { id: string; slug: string } | null; error: any };
 
       if (fishermanError) {
         console.error('Error fetching fisherman:', fishermanError);
@@ -178,7 +178,16 @@ const PecheurDashboard = () => {
                   size="lg" 
                   variant="outline"
                   className="gap-2"
-                  onClick={() => navigate(`/pecheur/${fishermanId}`)}
+                  onClick={async () => {
+                    const { data } = await supabase
+                      .from('fishermen')
+                      .select('slug')
+                      .eq('id', fishermanId)
+                      .maybeSingle();
+                    if (data?.slug) {
+                      navigate(`/pecheurs/${data.slug}`);
+                    }
+                  }}
                 >
                   <Anchor className="h-5 w-5" />
                   Ma page vitrine
