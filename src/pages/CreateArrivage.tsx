@@ -37,6 +37,7 @@ const CreateArrivage = () => {
   const [isPremium, setIsPremium] = useState(false);
   const [notes, setNotes] = useState('');
   const [offers, setOffers] = useState<Offer[]>([]);
+  const [selectedSpeciesIds, setSelectedSpeciesIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (!user) {
@@ -183,6 +184,20 @@ const CreateArrivage = () => {
 
       if (arrivageError) throw arrivageError;
 
+      // Save selected species (if any)
+      if (selectedSpeciesIds.length > 0) {
+        const dropSpeciesToInsert = selectedSpeciesIds.map(speciesId => ({
+          drop_id: arrivage.id,
+          species_id: speciesId,
+        }));
+
+        const { error: dropSpeciesError } = await supabase
+          .from('drop_species')
+          .insert(dropSpeciesToInsert);
+
+        if (dropSpeciesError) throw dropSpeciesError;
+      }
+
       // Create offers (only if there are valid offers)
       if (validOffers.length > 0) {
         const offersToInsert = validOffers.map(offer => ({
@@ -205,8 +220,10 @@ const CreateArrivage = () => {
       toast({
         title: '✅ Arrivage créé !',
         description: validOffers.length > 0 
-          ? `Votre arrivage a été publié avec ${validOffers.length} offre(s)`
-          : 'Votre arrivage a été publié. Vous pourrez ajouter des offres plus tard.',
+          ? `Arrivage publié avec ${validOffers.length} offre(s) détaillée(s)`
+          : selectedSpeciesIds.length > 0
+            ? `Arrivage publié avec ${selectedSpeciesIds.length} espèce(s)`
+            : 'Arrivage publié. Vous pourrez ajouter des détails plus tard.',
       });
 
       navigate('/dashboard/pecheur');
@@ -366,6 +383,70 @@ const CreateArrivage = () => {
                   rows={3}
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Species Selection */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Fish className="h-5 w-5" />
+                Espèces disponibles (optionnel)
+              </CardTitle>
+              <CardDescription>
+                Sélectionnez rapidement jusqu'à 5 espèces que vous ramenez. Pour plus de détails (prix, quantités), utilisez la section "Offres" ci-dessous.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {sortedSpecies?.slice(0, 20).map((species) => {
+                  const isSelected = selectedSpeciesIds.includes(species.id);
+                  const isDisabled = !isSelected && selectedSpeciesIds.length >= 5;
+                  const preferredSpecies = fishermenSpecies?.find(fs => fs.species_id === species.id);
+                  const isPrimary = preferredSpecies?.is_primary;
+
+                  return (
+                    <label
+                      key={species.id}
+                      className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${
+                        isSelected
+                          ? 'border-primary bg-primary/5'
+                          : isDisabled
+                          ? 'border-border opacity-50 cursor-not-allowed'
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          if (e.target.checked && !isDisabled) {
+                            setSelectedSpeciesIds([...selectedSpeciesIds, species.id]);
+                          } else if (!e.target.checked) {
+                            setSelectedSpeciesIds(selectedSpeciesIds.filter(id => id !== species.id));
+                          }
+                        }}
+                        disabled={isDisabled}
+                        className="rounded"
+                      />
+                      <span className="text-sm font-medium flex items-center gap-1">
+                        {isPrimary && <span className="text-primary">★</span>}
+                        {species.name}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+              {selectedSpeciesIds.length >= 5 && (
+                <p className="text-xs text-amber-600 dark:text-amber-500 mt-3">
+                  ⚠️ Maximum 5 espèces sélectionnées
+                </p>
+              )}
+              {selectedSpeciesIds.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-3">
+                  {selectedSpeciesIds.length} espèce(s) sélectionnée(s)
+                </p>
+              )}
             </CardContent>
           </Card>
 
