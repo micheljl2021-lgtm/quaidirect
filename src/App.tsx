@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ProtectedFisherRoute } from "@/components/ProtectedFisherRoute";
 import Landing from "./pages/Landing";
 import Carte from "./pages/Carte";
 import PremiumPaywall from "./pages/PremiumPaywall";
@@ -26,6 +27,7 @@ import DemoTracabilite from "./pages/DemoTracabilite";
 import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
 import OnboardingConfirmation from "./pages/OnboardingConfirmation";
+import PecheurPaymentSuccess from "./pages/PecheurPaymentSuccess";
 
 const queryClient = new QueryClient();
 
@@ -53,7 +55,12 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/pecheur/payment" element={<PecheurPayment />} />
-            <Route path="/pecheur/onboarding" element={<PecheurOnboarding />} />
+            <Route path="/pecheur/payment-success" element={<PecheurPaymentSuccess />} />
+            <Route path="/pecheur/onboarding" element={
+              <ProtectedFisherRoute>
+                <PecheurOnboarding />
+              </ProtectedFisherRoute>
+            } />
             <Route path="/onboarding/confirmation" element={<OnboardingConfirmation />} />
             <Route path="/pecheur/nouvel-arrivage" element={<CreateArrivage />} />
             <Route path="/pecheur/edit-profile" element={<EditFisherProfile />} />

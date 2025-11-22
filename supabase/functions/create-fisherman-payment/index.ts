@@ -61,7 +61,7 @@ serve(async (req) => {
         },
       ],
       mode: 'payment',
-      success_url: `${origin}/pecheur/onboarding?payment=success`,
+      success_url: `${origin}/pecheur/payment-success`,
       cancel_url: `${origin}/pecheur/payment?canceled=true`,
       metadata: {
         user_id: user.id,

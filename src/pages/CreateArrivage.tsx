@@ -495,10 +495,10 @@ const CreateArrivage = () => {
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Fish className="h-5 w-5" />
-                    Offres de poisson (optionnel)
+                    Photos et détails de vos poissons
                   </CardTitle>
                   <CardDescription>
-                    Vous pouvez préciser les espèces disponibles, ou simplement annoncer votre présence au port
+                    Ajoutez des photos pour chaque espèce (2-5 photos par offre). Plus vous ajoutez de détails, plus vous attirerez de clients.
                   </CardDescription>
                 </div>
                 <Button type="button" variant="outline" size="sm" onClick={addOffer}>
@@ -509,8 +509,12 @@ const CreateArrivage = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               {offers.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p className="text-sm">Aucune offre ajoutée. Cliquez sur "Ajouter" pour spécifier vos espèces.</p>
+                <div className="text-center py-8 border-2 border-dashed rounded-lg bg-muted/50">
+                  <Fish className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+                  <p className="text-sm font-medium mb-2">Aucune offre avec photos ajoutée</p>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    Cliquez sur "Ajouter" ci-dessus pour créer une offre avec photos et prix détaillés
+                  </p>
                 </div>
               ) : (
                 offers.map((offer, index) => (
