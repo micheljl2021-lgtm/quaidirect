@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Lock, Anchor } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -109,9 +110,8 @@ const ResetPassword = () => {
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div className="space-y-2">
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    type="password"
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
+                  <PasswordInput
                     placeholder="Nouveau mot de passe"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -121,9 +121,8 @@ const ResetPassword = () => {
                   />
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    type="password"
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
+                  <PasswordInput
                     placeholder="Confirmer le mot de passe"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
