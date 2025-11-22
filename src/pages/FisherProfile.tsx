@@ -17,7 +17,8 @@ import {
   Mail, 
   Heart,
   Calendar,
-  ExternalLink 
+  ExternalLink,
+  Settings
 } from 'lucide-react';
 
 const FisherProfile = () => {
@@ -254,16 +255,29 @@ const FisherProfile = () => {
                   <p className="text-2xl font-bold text-foreground">{followerCount || 0}</p>
                   <p className="text-xs text-muted-foreground">Abonnés</p>
                 </div>
-                <Button
-                  size="lg"
-                  variant={isFollowing ? "outline" : "default"}
-                  onClick={handleFollowToggle}
-                  disabled={followMutation.isPending || unfollowMutation.isPending}
-                  className="gap-2"
-                >
-                  <Heart className={`h-5 w-5 ${isFollowing ? 'fill-current' : ''}`} />
-                  {isFollowing ? 'Abonné' : 'Suivre'}
-                </Button>
+                
+                {/* Show edit button if owner */}
+                {user && fisherman.user_id === user.id ? (
+                  <Button
+                    size="lg"
+                    onClick={() => navigate('/pecheur/edit-profile')}
+                    className="gap-2"
+                  >
+                    <Settings className="h-5 w-5" />
+                    Modifier mon profil
+                  </Button>
+                ) : (
+                  <Button
+                    size="lg"
+                    variant={isFollowing ? "outline" : "default"}
+                    onClick={handleFollowToggle}
+                    disabled={followMutation.isPending || unfollowMutation.isPending}
+                    className="gap-2"
+                  >
+                    <Heart className={`h-5 w-5 ${isFollowing ? 'fill-current' : ''}`} />
+                    {isFollowing ? 'Abonné' : 'Suivre'}
+                  </Button>
+                )}
               </div>
             </div>
 

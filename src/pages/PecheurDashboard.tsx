@@ -8,7 +8,7 @@ import CaisseModule from '@/components/CaisseModule';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Anchor, AlertCircle, ShoppingCart, History, CheckCircle } from 'lucide-react';
+import { Plus, Anchor, AlertCircle, ShoppingCart, History, CheckCircle, Settings } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const PecheurDashboard = () => {
@@ -173,15 +173,26 @@ const PecheurDashboard = () => {
           </div>
           <div className="flex gap-3">
             {fishermanId && (
-              <Button 
-                size="lg" 
-                variant="outline"
-                className="gap-2"
-                onClick={() => navigate(`/pecheur/${fishermanId}`)}
-              >
-                <Anchor className="h-5 w-5" />
-                Ma page vitrine
-              </Button>
+              <>
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => navigate(`/pecheur/${fishermanId}`)}
+                >
+                  <Anchor className="h-5 w-5" />
+                  Ma page vitrine
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => navigate('/pecheur/edit-profile')}
+                >
+                  <Settings className="h-5 w-5" />
+                  Modifier ma vitrine
+                </Button>
+              </>
             )}
             <Button 
               size="lg" 
