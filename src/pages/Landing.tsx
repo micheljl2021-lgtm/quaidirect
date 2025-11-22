@@ -1,10 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Crown, MapPin, Clock, Shield, Users, Anchor } from "lucide-react";
+import { Crown, MapPin, Clock, Shield, Users, Anchor, Award, ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
 import ArrivageCard from "@/components/ArrivageCard";
 import PhotoCarousel from "@/components/PhotoCarousel";
+import AmbassadorBadge from "@/components/AmbassadorBadge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import logoVilleHyeres from "@/assets/logo-ville-hyeres.png";
@@ -94,6 +95,21 @@ const Landing = () => {
         arrivageId: photo.offers?.drop_id || '',
         speciesName: photo.offers?.species?.name || 'Poisson frais'
       })) || [];
+    },
+  });
+
+  // Fetch ambassadors
+  const { data: ambassadors } = useQuery({
+    queryKey: ['ambassadors'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .rpc('get_public_fishermen')
+        .eq('is_ambassador', true)
+        .order('created_at', { ascending: true })
+        .limit(10);
+
+      if (error) throw error;
+      return data || [];
     },
   });
   return (
@@ -363,6 +379,113 @@ const Landing = () => {
           </div>
         </div>
       </section>
+
+      {/* Ambassadors Section */}
+      {ambassadors && ambassadors.length > 0 && (
+        <section className="container px-4 py-16 border-t border-border">
+          <div className="mx-auto max-w-6xl">
+            {/* Header */}
+            <div className="text-center space-y-4 mb-12">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20">
+                <Award className="h-5 w-5 text-amber-600" />
+                <span className="text-sm font-semibold text-amber-700">
+                  Les 10 premiers à prendre la formule - Statut à vie
+                </span>
+              </div>
+              
+              <h2 className="text-4xl font-bold text-foreground">
+                Nos Ambassadeurs Partenaires
+              </h2>
+              
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Ils sont les pionniers de QuaiDirect. Marins-pêcheurs visionnaires qui ont cru 
+                au projet dès le départ et contribuent activement à façonner l'avenir de la vente directe à quai.
+              </p>
+            </div>
+
+            {/* Grid des ambassadeurs */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {ambassadors.map((ambassador) => (
+                <Card 
+                  key={ambassador.id} 
+                  className="group hover:shadow-lg transition-all cursor-pointer"
+                  onClick={() => navigate(`/pecheurs/${ambassador.id}`)}
+                >
+                  <CardContent className="p-0">
+                    {/* Photo */}
+                    <div className="relative h-48 overflow-hidden rounded-t-lg">
+                      <img
+                        src={ambassador.photo_boat_1 || ambassador.photo_url || '/placeholder.svg'}
+                        alt={ambassador.boat_name || 'Photo du bateau'}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute top-3 right-3">
+                        <AmbassadorBadge size="sm" />
+                      </div>
+                    </div>
+
+                    {/* Contenu */}
+                    <div className="p-6 space-y-3">
+                      <div>
+                        <h3 className="text-xl font-bold text-foreground">
+                          {ambassador.boat_name}
+                        </h3>
+                        {ambassador.company_name && (
+                          <p className="text-sm text-muted-foreground">
+                            {ambassador.company_name}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Description courte */}
+                      {ambassador.generated_description && (
+                        <p className="text-sm text-muted-foreground line-clamp-3">
+                          {ambassador.generated_description}
+                        </p>
+                      )}
+
+                      {/* Zone de pêche */}
+                      {ambassador.main_fishing_zone && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <MapPin className="h-4 w-4" />
+                          <span>{ambassador.main_fishing_zone}</span>
+                        </div>
+                      )}
+
+                      {/* CTA */}
+                      <Button variant="ghost" className="w-full mt-4 group-hover:bg-primary/5">
+                        Découvrir le profil
+                        <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Message d'encouragement */}
+            <div className="mt-12 text-center">
+              <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
+                <CardContent className="py-8 px-6">
+                  <p className="text-lg font-medium text-amber-900 mb-4">
+                    💡 Vous êtes pêcheur et souhaitez rejoindre QuaiDirect ?
+                  </p>
+                  <p className="text-muted-foreground mb-6">
+                    Les places d'ambassadeur sont limitées ! Rejoignez-nous dès maintenant pour 
+                    bénéficier du statut à vie et accompagner le développement de la plateforme.
+                  </p>
+                  <Link to="/pecheur/onboarding">
+                    <Button size="lg" className="gap-2">
+                      <Anchor className="h-5 w-5" />
+                      Devenir pêcheur partenaire
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Solidarity Section */}
       <section className="container px-4 py-16 border-t border-border">
