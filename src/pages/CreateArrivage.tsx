@@ -11,9 +11,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, Anchor, MapPin, Calendar, Clock, Fish } from 'lucide-react';
+import { Plus, Trash2, Anchor, MapPin, Calendar, Clock, Fish, Camera, Search } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import OfferPhotosUpload from '@/components/OfferPhotosUpload';
+import { DropPhotosUpload } from '@/components/DropPhotosUpload';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Offer {
   speciesId: string;
@@ -40,6 +43,8 @@ const CreateArrivage = () => {
   const [notes, setNotes] = useState('');
   const [offers, setOffers] = useState<Offer[]>([]);
   const [selectedSpeciesIds, setSelectedSpeciesIds] = useState<string[]>([]);
+  const [dropPhotos, setDropPhotos] = useState<string[]>([]);
+  const [speciesSearch, setSpeciesSearch] = useState("");
 
   useEffect(() => {
     if (!user) {
@@ -52,6 +57,39 @@ const CreateArrivage = () => {
       return;
     }
   }, [user, isVerifiedFisherman, navigate]);
+
+  // Récupérer la zone de pêche du pêcheur
+  const { data: fishermanData } = useQuery({
+    queryKey: ['fisherman-zone', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from('fishermen')
+        .select('id, main_fishing_zone')
+        .eq('user_id', user.id)
+        .single();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  // Mapper la zone du pêcheur vers fishing_area
+  const getFishingArea = (mainZone: string | null): string => {
+    if (!mainZone) return 'all';
+    const zone = mainZone.toLowerCase();
+    if (zone.includes('méditerranée') || zone.includes('hyeres') || zone.includes('marseille') || zone.includes('toulon')) {
+      return 'mediterranee';
+    }
+    if (zone.includes('atlantique') || zone.includes('bretagne') || zone.includes('vendée') || zone.includes('charente')) {
+      return 'atlantique';
+    }
+    if (zone.includes('manche') || zone.includes('normandie') || zone.includes('calais')) {
+      return 'manche';
+    }
+    return 'all';
+  };
+
+  const fishingAreaType = getFishingArea(fishermanData?.main_fishing_zone || null);
 
   // Fetch ports
   const { data: ports } = useQuery({
@@ -67,18 +105,25 @@ const CreateArrivage = () => {
     },
   });
 
-  // Fetch species
+  // Récupérer les espèces filtrées par zone
   const { data: species } = useQuery({
-    queryKey: ['species'],
+    queryKey: ['species', fishingAreaType],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('species')
-        .select('*')
+        .select('id, name, scientific_name, fishing_area, indicative_price, price_unit, presentation')
         .order('name');
-
+      
+      // Filtrer par zone si ce n'est pas 'all'
+      if (fishingAreaType !== 'all') {
+        query = query.in('fishing_area', [fishingAreaType as any, 'all']);
+      }
+      
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
+    enabled: !!fishingAreaType,
   });
 
   // Fetch fisherman's preferred species
@@ -106,8 +151,8 @@ const CreateArrivage = () => {
     enabled: !!user,
   });
 
-  // Sort species: primary first, then selected, then alphabetical
-  const sortedSpecies = species?.sort((a, b) => {
+  // Trier les espèces : favorites en premier, puis alphabétique
+  const sortedSpecies = species ? [...species].sort((a, b) => {
     const aPreferred = fishermenSpecies?.find(fs => fs.species_id === a.id);
     const bPreferred = fishermenSpecies?.find(fs => fs.species_id === b.id);
     
@@ -117,7 +162,13 @@ const CreateArrivage = () => {
     if (bPreferred && !aPreferred) return 1;
     
     return a.name.localeCompare(b.name);
-  });
+  }) : [];
+
+  // Filtrer les espèces par recherche
+  const filteredSpecies = sortedSpecies.filter(s => 
+    s.name.toLowerCase().includes(speciesSearch.toLowerCase()) ||
+    (s.scientific_name && s.scientific_name.toLowerCase().includes(speciesSearch.toLowerCase()))
+  );
 
   const addOffer = () => {
     setOffers([...offers, { speciesId: '', title: '', description: '', unitPrice: '', totalUnits: '', photos: [] }]);
@@ -211,6 +262,24 @@ const CreateArrivage = () => {
           .insert(dropSpeciesToInsert);
 
         if (dropSpeciesError) throw dropSpeciesError;
+      }
+
+      // Insérer les photos générales du drop
+      if (dropPhotos.length > 0) {
+        const dropPhotoInserts = dropPhotos.map((url, index) => ({
+          drop_id: arrivage.id,
+          photo_url: url,
+          display_order: index,
+        }));
+
+        const { error: dropPhotosError } = await supabase
+          .from('drop_photos')
+          .insert(dropPhotoInserts);
+
+        if (dropPhotosError) {
+          console.error('Error inserting drop photos:', dropPhotosError);
+          throw dropPhotosError;
+        }
       }
 
       // Create offers (only if there are valid offers)
@@ -424,67 +493,105 @@ const CreateArrivage = () => {
             </CardContent>
           </Card>
 
-          {/* Quick Species Selection */}
+          {/* Sélection des espèces - Nouveau style */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Fish className="h-5 w-5" />
-                Espèces disponibles (optionnel)
+                Espèces disponibles
               </CardTitle>
               <CardDescription>
-                Sélectionnez rapidement jusqu'à 5 espèces que vous ramenez. Pour plus de détails (prix, quantités), utilisez la section "Offres" ci-dessous.
+                Sélectionnez les espèces que vous allez vendre
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {sortedSpecies?.slice(0, 20).map((species) => {
-                  const isSelected = selectedSpeciesIds.includes(species.id);
-                  const isDisabled = !isSelected && selectedSpeciesIds.length >= 5;
-                  const preferredSpecies = fishermenSpecies?.find(fs => fs.species_id === species.id);
-                  const isPrimary = preferredSpecies?.is_primary;
+            <CardContent className="space-y-4">
+              {/* Message de zone détectée */}
+              {fishermanData?.main_fishing_zone && (
+                <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+                  <div className="flex gap-2">
+                    <span className="text-xl">📍</span>
+                    <AlertDescription className="text-blue-800 dark:text-blue-200">
+                      Zone détectée : <strong>{fishermanData.main_fishing_zone}</strong>
+                      <br />
+                      Seules les espèces de votre zone sont affichées pour faciliter la sélection.
+                    </AlertDescription>
+                  </div>
+                </Alert>
+              )}
 
-                  return (
-                    <label
+              {/* Barre de recherche */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  value={speciesSearch}
+                  onChange={(e) => setSpeciesSearch(e.target.value)}
+                  placeholder="Rechercher un poisson ou crustacé..."
+                  className="pl-10"
+                />
+              </div>
+
+              {/* Grille de checkboxes */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto p-1">
+                {filteredSpecies.length === 0 ? (
+                  <div className="col-span-full text-center py-8 text-muted-foreground">
+                    <Fish className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                    <p className="text-sm">Aucune espèce trouvée</p>
+                  </div>
+                ) : (
+                  filteredSpecies.map((species) => (
+                    <div
                       key={species.id}
-                      className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${
-                        isSelected
-                          ? 'border-primary bg-primary/5'
-                          : isDisabled
-                          ? 'border-border opacity-50 cursor-not-allowed'
-                          : 'border-border hover:border-primary/50'
-                      }`}
+                      className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
                     >
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={(e) => {
-                          if (e.target.checked && !isDisabled) {
+                      <Checkbox
+                        id={species.id}
+                        checked={selectedSpeciesIds.includes(species.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
                             setSelectedSpeciesIds([...selectedSpeciesIds, species.id]);
-                          } else if (!e.target.checked) {
+                          } else {
                             setSelectedSpeciesIds(selectedSpeciesIds.filter(id => id !== species.id));
                           }
                         }}
-                        disabled={isDisabled}
-                        className="rounded"
                       />
-                      <span className="text-sm font-medium flex items-center gap-1">
-                        {isPrimary && <span className="text-primary">★</span>}
-                        {species.name}
-                      </span>
-                    </label>
-                  );
-                })}
+                      <label htmlFor={species.id} className="flex-1 text-sm cursor-pointer">
+                        <div className="font-medium">{species.name}</div>
+                        {species.scientific_name && (
+                          <div className="text-xs text-muted-foreground italic">
+                            {species.scientific_name}
+                          </div>
+                        )}
+                      </label>
+                    </div>
+                  ))
+                )}
               </div>
-              {selectedSpeciesIds.length >= 5 && (
-                <p className="text-xs text-amber-600 dark:text-amber-500 mt-3">
-                  ⚠️ Maximum 5 espèces sélectionnées
-                </p>
-              )}
-              {selectedSpeciesIds.length > 0 && (
-                <p className="text-xs text-muted-foreground mt-3">
-                  {selectedSpeciesIds.length} espèce(s) sélectionnée(s)
-                </p>
-              )}
+
+              {/* Compteur */}
+              <div className="text-sm text-muted-foreground text-center pt-2 border-t">
+                {selectedSpeciesIds.length} espèce{selectedSpeciesIds.length > 1 ? 's' : ''} sélectionnée{selectedSpeciesIds.length > 1 ? 's' : ''}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Photos générales de l'arrivage */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Camera className="h-5 w-5" />
+                Photos de votre point de vente
+              </CardTitle>
+              <CardDescription>
+                Ajoutez 2-5 photos de votre étal, vos caisses de poissons, l'ambiance du point de vente.
+                Ces photos seront visibles sur la carte d'arrivage.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DropPhotosUpload
+                maxPhotos={5}
+                onPhotosChange={(urls) => setDropPhotos(urls)}
+                initialPhotos={dropPhotos}
+              />
             </CardContent>
           </Card>
 

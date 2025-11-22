@@ -25,13 +25,17 @@ interface Drop {
   };
   fishermen: {
     id: string;
-    slug: string;
     boat_name: string;
     company_name: string | null;
     display_name_preference: string | null;
     photo_url: string | null;
   };
-  offers: Array<{
+  drop_photos?: Array<{
+    id: string;
+    photo_url: string;
+    display_order: number;
+  }>;
+  offers?: Array<{
     id: string;
     title: string;
     unit_price: number;
@@ -67,47 +71,44 @@ const Arrivages = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('drops')
-        .select(`
+      .select(`
+        *,
+        fishermen (
           id,
-          port_id,
-          fisherman_id,
-          eta_at,
-          sale_start_time,
-          visible_at,
-          public_visible_at,
-          is_premium,
-          status,
-          ports (
-            name,
-            city
+          boat_name,
+          company_name,
+          display_name_preference,
+          photo_url
+        ),
+        ports (
+          id,
+          name,
+          city
+        ),
+        drop_photos (
+          id,
+          photo_url,
+          display_order
+        ),
+        offers (
+          id,
+          title,
+          unit_price,
+          available_units,
+          species (
+            name
           ),
-          fishermen (
-            id,
-            slug,
-            boat_name,
-            company_name,
-            display_name_preference,
-            photo_url
-          ),
-          offers (
-            id,
-            title,
-            unit_price,
-            available_units,
-            species (
-              name
-            ),
-            offer_photos (
-              photo_url,
-              display_order
-            )
+          offer_photos (
+            photo_url,
+            display_order
           )
-        `)
+        )
+      `)
         .in('status', ['scheduled', 'landed'])
         .order('sale_start_time', { ascending: true });
 
       if (error) throw error;
-      return data as Drop[];
+      return data;
     },
     enabled: !!user,
     refetchInterval: 30000, // Refetch every 30 seconds
@@ -288,7 +289,7 @@ const Arrivages = () => {
                       </CardTitle>
                       {drop.fishermen && (
                         <button
-                          onClick={() => navigate(`/pecheurs/${drop.fishermen.slug}`)}
+                          onClick={() => navigate(`/pecheurs/${drop.fishermen.id}`)}
                           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
                         >
                           <Anchor className="h-4 w-4" />
@@ -323,7 +324,7 @@ const Arrivages = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {drop.offers.length > 0 ? (
+                    {drop.offers && drop.offers.length > 0 ? (
                       <>
                         <div className="grid gap-2">
                           {drop.offers.map((offer) => (

@@ -47,6 +47,38 @@ export type Database = {
         }
         Relationships: []
       }
+      drop_photos: {
+        Row: {
+          created_at: string
+          display_order: number
+          drop_id: string
+          id: string
+          photo_url: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          drop_id: string
+          id?: string
+          photo_url: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          drop_id?: string
+          id?: string
+          photo_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drop_photos_drop_id_fkey"
+            columns: ["drop_id"]
+            isOneToOne: false
+            referencedRelation: "drops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drop_species: {
         Row: {
           created_at: string | null
@@ -1076,6 +1108,7 @@ export type Database = {
           created_at: string
           description: string | null
           fao_zone: string | null
+          fishing_area: Database["public"]["Enums"]["fishing_area"] | null
           fishing_gear: string | null
           id: string
           indicative_price: number | null
@@ -1091,6 +1124,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           fao_zone?: string | null
+          fishing_area?: Database["public"]["Enums"]["fishing_area"] | null
           fishing_gear?: string | null
           id?: string
           indicative_price?: number | null
@@ -1106,6 +1140,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           fao_zone?: string | null
+          fishing_area?: Database["public"]["Enums"]["fishing_area"] | null
           fishing_gear?: string | null
           id?: string
           indicative_price?: number | null
@@ -1339,6 +1374,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user" | "premium" | "fisherman"
       drop_status: "scheduled" | "landed" | "cancelled" | "completed"
+      fishing_area: "mediterranee" | "atlantique" | "manche" | "all"
       fishing_method:
         | "palangre"
         | "filet"
@@ -1480,6 +1516,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user", "premium", "fisherman"],
       drop_status: ["scheduled", "landed", "cancelled", "completed"],
+      fishing_area: ["mediterranee", "atlantique", "manche", "all"],
       fishing_method: [
         "palangre",
         "filet",

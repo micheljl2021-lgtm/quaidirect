@@ -15,6 +15,7 @@ interface ArrivageCardProps {
   quantity: number;
   isPremium?: boolean;
   imageUrl?: string;
+  dropPhotos?: Array<{ photo_url: string; display_order: number }>;
   fisherman: {
     name: string;
     boat: string;
@@ -31,36 +32,81 @@ const ArrivageCard = ({
   quantity,
   isPremium,
   imageUrl,
+  dropPhotos,
   fisherman
 }: ArrivageCardProps) => {
   const displayTime = saleStartTime || eta;
   const timeToSale = formatDistanceToNow(displayTime, { addSuffix: true, locale: fr });
   
+  // Utiliser les photos du drop si disponibles, sinon l'image par défaut
+  const displayPhotos = dropPhotos && dropPhotos.length > 0 
+    ? dropPhotos.sort((a, b) => a.display_order - b.display_order)
+    : null;
+  
   return (
     <Card className="group overflow-hidden hover:shadow-ocean transition-all duration-300 cursor-pointer">
-      {/* Image */}
-      <div className="relative aspect-video overflow-hidden bg-muted">
-        {imageUrl ? (
-          <img 
-            src={imageUrl} 
-            alt={species}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center bg-gradient-sky">
-            <MapPin className="h-12 w-12 text-muted-foreground/30" />
+      {/* Images du point de vente */}
+      {displayPhotos && displayPhotos.length > 0 ? (
+        <div className="relative">
+          {/* Photo principale */}
+          <div className="relative aspect-video overflow-hidden bg-muted">
+            <img 
+              src={displayPhotos[0].photo_url} 
+              alt="Point de vente"
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+            {isPremium && (
+              <div className="absolute top-3 right-3">
+                <Badge className="gap-1 bg-premium text-premium-foreground border-0 shadow-md">
+                  <Crown className="h-3 w-3" />
+                  Premium
+                </Badge>
+              </div>
+            )}
           </div>
-        )}
-        
-        {isPremium && (
-          <div className="absolute top-3 right-3">
-            <Badge className="gap-1 bg-premium text-premium-foreground border-0 shadow-md">
-              <Crown className="h-3 w-3" />
-              Premium
-            </Badge>
-          </div>
-        )}
-      </div>
+          {/* Miniatures des autres photos */}
+          {displayPhotos.length > 1 && (
+            <div className="flex gap-1 p-2 bg-background/95 backdrop-blur-sm">
+              {displayPhotos.slice(1, 4).map((photo, i) => (
+                <img
+                  key={i}
+                  src={photo.photo_url}
+                  alt={`Photo ${i + 2}`}
+                  className="w-16 h-16 object-cover rounded flex-shrink-0 border border-border"
+                />
+              ))}
+              {displayPhotos.length > 4 && (
+                <div className="w-16 h-16 rounded border border-border bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground">
+                  +{displayPhotos.length - 4}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="relative aspect-video overflow-hidden bg-muted">
+          {imageUrl ? (
+            <img 
+              src={imageUrl} 
+              alt={species}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center bg-gradient-sky">
+              <MapPin className="h-12 w-12 text-muted-foreground/30" />
+            </div>
+          )}
+          
+          {isPremium && (
+            <div className="absolute top-3 right-3">
+              <Badge className="gap-1 bg-premium text-premium-foreground border-0 shadow-md">
+                <Crown className="h-3 w-3" />
+                Premium
+              </Badge>
+            </div>
+          )}
+        </div>
+      )}
 
       <CardContent className="p-4 space-y-3">
         {/* Species */}
