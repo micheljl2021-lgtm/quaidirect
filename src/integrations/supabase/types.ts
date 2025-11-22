@@ -218,6 +218,35 @@ export type Database = {
         }
         Relationships: []
       }
+      fishermen_followers: {
+        Row: {
+          created_at: string | null
+          fisherman_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          fisherman_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          fisherman_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fishermen_followers_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fishermen_species: {
         Row: {
           created_at: string

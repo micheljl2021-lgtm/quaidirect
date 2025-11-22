@@ -17,6 +17,7 @@ const PecheurDashboard = () => {
   const { toast } = useToast();
   const [drops, setDrops] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fishermanId, setFishermanId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -78,6 +79,7 @@ const PecheurDashboard = () => {
       }
 
       if (fisherman?.id) {
+        setFishermanId(fisherman.id);
         const { data, error } = await supabase
           .from('drops')
           .select(`
@@ -145,14 +147,27 @@ const PecheurDashboard = () => {
               Gérez vos arrivages et ventes
             </p>
           </div>
-          <Button 
-            size="lg" 
-            className="gap-2"
-            onClick={() => navigate('/pecheur/nouvel-arrivage')}
-          >
-            <Plus className="h-5 w-5" />
-            Nouvel arrivage
-          </Button>
+          <div className="flex gap-3">
+            {fishermanId && (
+              <Button 
+                size="lg" 
+                variant="outline"
+                className="gap-2"
+                onClick={() => navigate(`/pecheur/${fishermanId}`)}
+              >
+                <Anchor className="h-5 w-5" />
+                Ma page vitrine
+              </Button>
+            )}
+            <Button 
+              size="lg" 
+              className="gap-2"
+              onClick={() => navigate('/pecheur/nouvel-arrivage')}
+            >
+              <Plus className="h-5 w-5" />
+              Nouvel arrivage
+            </Button>
+          </div>
         </div>
 
         {/* Stats rapides */}
