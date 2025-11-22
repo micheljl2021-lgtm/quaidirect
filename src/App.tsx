@@ -12,6 +12,7 @@ import Auth from "./pages/Auth";
 import PecheurOnboarding from "./pages/PecheurOnboarding";
 import PecheurDashboard from "./pages/PecheurDashboard";
 import CreateArrivage from "./pages/CreateArrivage";
+import FisherProfile from "./pages/FisherProfile";
 import Recettes from "./pages/Recettes";
 import RecetteDetail from "./pages/RecetteDetail";
 import Forfaits from "./pages/Forfaits";
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/pecheur/onboarding" element={<PecheurOnboarding />} />
             <Route path="/pecheur/nouvel-arrivage" element={<CreateArrivage />} />
+            <Route path="/pecheur/:id" element={<FisherProfile />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -2,15 +2,18 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import Header from '@/components/Header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Clock, Fish, MapPin } from 'lucide-react';
+import { Clock, Fish, MapPin, Anchor } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface Drop {
   id: string;
   port_id: string;
+  fisherman_id: string;
   eta_at: string;
   sale_start_time: string | null;
   visible_at: string;
@@ -19,6 +22,11 @@ interface Drop {
   ports: {
     name: string;
     city: string;
+  };
+  fishermen: {
+    id: string;
+    boat_name: string;
+    company_name: string | null;
   };
   offers: Array<{
     id: string;
@@ -34,6 +42,7 @@ interface Drop {
 const Arrivages = () => {
   const { user, userRole } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -54,6 +63,7 @@ const Arrivages = () => {
         .select(`
           id,
           port_id,
+          fisherman_id,
           eta_at,
           sale_start_time,
           visible_at,
@@ -63,6 +73,11 @@ const Arrivages = () => {
           ports (
             name,
             city
+          ),
+          fishermen (
+            id,
+            boat_name,
+            company_name
           ),
           offers (
             id,
@@ -152,8 +167,9 @@ const Arrivages = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background">
+      <Header />
+      <div className="container max-w-4xl mx-auto px-4 py-8 space-y-6">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-foreground">Arrivages à venir</h1>
           <p className="text-muted-foreground">
@@ -237,11 +253,22 @@ const Arrivages = () => {
               <Card key={drop.id}>
                 <CardHeader>
                   <div className="flex items-start justify-between">
-                    <div className="space-y-1">
+                    <div className="space-y-1 flex-1">
                       <CardTitle className="flex items-center gap-2">
                         <MapPin className="h-5 w-5 text-primary" />
                         {portName}
                       </CardTitle>
+                      {drop.fishermen && (
+                        <button
+                          onClick={() => navigate(`/pecheur/${drop.fishermen.id}`)}
+                          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          <Anchor className="h-4 w-4" />
+                          <span className="font-medium">
+                            {drop.fishermen.company_name || drop.fishermen.boat_name}
+                          </span>
+                        </button>
+                      )}
                       <CardDescription>
                         {saleDate ? (
                           <>
