@@ -42,11 +42,22 @@ serve(async (req) => {
     );
 
     if (!response.ok) {
+      const errorText = await response.text();
+      logStep('Pappers API error', { status: response.status, error: errorText });
+      
       if (response.status === 404) {
         throw new Error('SIRET introuvable');
       }
-      const errorText = await response.text();
-      logStep('Pappers API error', { status: response.status, error: errorText });
+      
+      if (response.status === 401) {
+        try {
+          const errorData = JSON.parse(errorText);
+          throw new Error(errorData.message || 'Clé API Pappers invalide ou crédits épuisés');
+        } catch {
+          throw new Error('Clé API Pappers invalide ou crédits épuisés');
+        }
+      }
+      
       throw new Error('Erreur API Pappers');
     }
 
