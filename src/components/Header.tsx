@@ -138,7 +138,7 @@ const Header = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="fixed inset-0 top-16 z-[100] bg-background md:hidden overflow-y-auto border-t border-border">
+          <div className="absolute inset-x-0 top-16 z-[100] bg-background md:hidden border-t border-border shadow-lg">
             <nav className="flex flex-col gap-3 p-6">
               <Link 
                 to="/carte" 
