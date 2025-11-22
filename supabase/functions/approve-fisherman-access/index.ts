@@ -51,7 +51,7 @@ serve(async (req) => {
       console.log(`User ${emailLower} not found, creating new user via admin API...`);
       const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email: emailLower,
-        email_confirm: false,
+        email_confirm: true,
       });
 
       if (createError || !created?.user) {
