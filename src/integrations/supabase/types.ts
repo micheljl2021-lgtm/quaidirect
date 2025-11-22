@@ -161,6 +161,45 @@ export type Database = {
         }
         Relationships: []
       }
+      fishermen_species: {
+        Row: {
+          created_at: string
+          fisherman_id: string
+          id: string
+          is_primary: boolean | null
+          species_id: string
+        }
+        Insert: {
+          created_at?: string
+          fisherman_id: string
+          id?: string
+          is_primary?: boolean | null
+          species_id: string
+        }
+        Update: {
+          created_at?: string
+          fisherman_id?: string
+          id?: string
+          is_primary?: boolean | null
+          species_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fishermen_species_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fishermen_species_species_id_fkey"
+            columns: ["species_id"]
+            isOneToOne: false
+            referencedRelation: "species"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       follow_ports: {
         Row: {
           created_at: string
