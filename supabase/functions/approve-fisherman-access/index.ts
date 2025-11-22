@@ -8,7 +8,6 @@ const corsHeaders = {
 };
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
 serve(async (req) => {
@@ -18,50 +17,10 @@ serve(async (req) => {
   }
 
   try {
-    // Client lié à l'utilisateur connecté (JWT dans Authorization)
-    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: {
-        headers: {
-          Authorization: req.headers.get("Authorization") ?? "",
-        },
-      },
-      auth: {
-        persistSession: false,
-      },
-    });
-
-    // Vérif authentification
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseClient.auth.getUser();
-
-    if (userError || !user) {
-      console.error("Authentication error:", userError);
-      return new Response(JSON.stringify({ error: "Non authentifié" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     // Client admin (service role)
     const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
       auth: { persistSession: false },
     });
-
-    // Vérif rôle admin via la fonction has_role
-    const { data: hasRole, error: roleError } = await supabaseAdmin.rpc("has_role", {
-      _user_id: user.id,
-      _role: "admin",
-    });
-
-    if (roleError || !hasRole) {
-      console.error("Role verification error:", roleError);
-      return new Response(JSON.stringify({ error: "Accès refusé - Admin uniquement" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
     // Lecture du body
     const body = await req.json().catch(() => null);
@@ -75,7 +34,7 @@ serve(async (req) => {
     }
 
     const emailLower = email.toLowerCase().trim();
-    console.log(`Admin ${user.email} approving free access for ${emailLower}`);
+    console.log(`Approving free access for ${emailLower}`);
 
     // 1) On essaye de trouver l'utilisateur par email
     const { data: usersPage, error: searchError } = await supabaseAdmin.auth.admin.listUsers();
@@ -92,7 +51,7 @@ serve(async (req) => {
       console.log(`User ${emailLower} not found, creating new user via admin API...`);
       const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email: emailLower,
-        email_confirm: false, // il validera via ton flow (magic link, etc.)
+        email_confirm: false,
       });
 
       if (createError || !created?.user) {
@@ -146,7 +105,7 @@ serve(async (req) => {
       throw insertError;
     }
 
-    console.log(`✅ Free access approved for ${emailLower} by admin ${user.email}`);
+    console.log(`✅ Free access approved for ${emailLower}`);
 
     return new Response(
       JSON.stringify({
