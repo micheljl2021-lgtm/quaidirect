@@ -128,6 +128,19 @@ const CreateArrivage = () => {
   const updateOffer = (index: number, field: keyof Offer, value: string) => {
     const newOffers = [...offers];
     newOffers[index][field] = value;
+    
+    // Auto-fill price when species is selected
+    if (field === 'speciesId' && value) {
+      const selectedSpecies = species?.find(s => s.id === value);
+      if (selectedSpecies?.indicative_price) {
+        newOffers[index].unitPrice = selectedSpecies.indicative_price.toString();
+        toast({
+          title: "💰 Prix suggéré",
+          description: `${selectedSpecies.name} (${selectedSpecies.presentation || 'entier'}) : ${selectedSpecies.indicative_price}${selectedSpecies.price_unit || '€/kg'}`,
+        });
+      }
+    }
+    
     setOffers(newOffers);
   };
 
@@ -508,11 +521,19 @@ const CreateArrivage = () => {
 
                             return (
                               <SelectItem key={s.id} value={s.id}>
-                                <div className="flex items-center gap-2">
-                                  {isPrimary && <span className="text-primary">★</span>}
-                                  {s.name}
-                                  {isPreferred && !isPrimary && (
-                                    <span className="text-xs text-muted-foreground ml-1">(habituelle)</span>
+                                <div className="flex items-center justify-between gap-2 w-full">
+                                  <div className="flex items-center gap-1">
+                                    {isPrimary && <span className="text-primary">★</span>}
+                                    <span>{s.name}</span>
+                                    {isPreferred && !isPrimary && (
+                                      <span className="text-xs text-muted-foreground ml-1">(habituelle)</span>
+                                    )}
+                                  </div>
+                                  {s.indicative_price && (
+                                    <span className="text-xs text-muted-foreground">
+                                      {s.presentation && `${s.presentation} - `}
+                                      {s.indicative_price}{s.price_unit || '€/kg'}
+                                    </span>
                                   )}
                                 </div>
                               </SelectItem>
@@ -555,9 +576,19 @@ const CreateArrivage = () => {
                           value={offer.unitPrice}
                           onChange={(e) => updateOffer(index, 'unitPrice', e.target.value)}
                         />
-                        <p className="text-xs text-muted-foreground">
-                          Prix ajusté après pesée au moment du retrait
-                        </p>
+                        {(() => {
+                          const selectedSpecies = species?.find(s => s.id === offer.speciesId);
+                          return selectedSpecies?.indicative_price ? (
+                            <p className="text-xs text-primary">
+                              💡 Prix suggéré : {selectedSpecies.indicative_price}{selectedSpecies.price_unit || '€/kg'} 
+                              {selectedSpecies.presentation && ` (${selectedSpecies.presentation})`}
+                            </p>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">
+                              Prix ajusté après pesée au moment du retrait
+                            </p>
+                          );
+                        })()}
                       </div>
 
                       <div className="space-y-2">

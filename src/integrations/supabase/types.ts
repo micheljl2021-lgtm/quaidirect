@@ -983,8 +983,11 @@ export type Database = {
           fao_zone: string | null
           fishing_gear: string | null
           id: string
+          indicative_price: number | null
           min_size_cm: number | null
           name: string
+          presentation: string | null
+          price_unit: string | null
           scientific_name: string | null
           season_end: number | null
           season_start: number | null
@@ -995,8 +998,11 @@ export type Database = {
           fao_zone?: string | null
           fishing_gear?: string | null
           id?: string
+          indicative_price?: number | null
           min_size_cm?: number | null
           name: string
+          presentation?: string | null
+          price_unit?: string | null
           scientific_name?: string | null
           season_end?: number | null
           season_start?: number | null
@@ -1007,8 +1013,11 @@ export type Database = {
           fao_zone?: string | null
           fishing_gear?: string | null
           id?: string
+          indicative_price?: number | null
           min_size_cm?: number | null
           name?: string
+          presentation?: string | null
+          price_unit?: string | null
           scientific_name?: string | null
           season_end?: number | null
           season_start?: number | null
