@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase-client';
 import { useToast } from '@/hooks/use-toast';
@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
-import { Anchor, Upload, FileText, CheckCircle2, Fish } from 'lucide-react';
+import { Anchor, Upload, FileText, CheckCircle2, Fish, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import Header from '@/components/Header';
 
@@ -18,8 +18,11 @@ const PecheurOnboarding = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [loadingSiret, setLoadingSiret] = useState(false);
+  const [checkingPayment, setCheckingPayment] = useState(true);
 
   // Step 1: Identité pro
   const [siret, setSiret] = useState('');
@@ -45,6 +48,63 @@ const PecheurOnboarding = () => {
 
   const progress = (step / 5) * 100;
 
+  // Check payment status on load
+  useEffect(() => {
+    const checkPaymentStatus = async () => {
+      if (!user) {
+        navigate('/auth');
+        return;
+      }
+
+      // Check for success parameter
+      if (searchParams.get('payment') === 'success') {
+        toast({
+          title: 'Paiement réussi',
+          description: 'Vous pouvez maintenant remplir le formulaire d\'inscription',
+        });
+      }
+
+      try {
+        const { data: fishermanData, error } = await supabase
+          .from('fishermen')
+          .select('onboarding_payment_status, boat_name, boat_registration, siret, company_name, description, fishing_methods, fishing_zones, photo_url')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (!fishermanData || fishermanData.onboarding_payment_status === 'pending') {
+          navigate('/pecheur/payment');
+          return;
+        }
+
+        // Pre-fill form if data exists
+        if (fishermanData && fishermanData.boat_name !== 'À compléter') {
+          setBoatName(fishermanData.boat_name || '');
+          setImmat(fishermanData.boat_registration || '');
+          setSiret(fishermanData.siret || '');
+          setCompanyName(fishermanData.company_name || '');
+          setDescription(fishermanData.description || '');
+          setFishingMethods(fishermanData.fishing_methods || []);
+          setFishingZones(fishermanData.fishing_zones?.join(', ') || '');
+          setPhoto(fishermanData.photo_url || '');
+        }
+
+        setCheckingPayment(false);
+      } catch (error: any) {
+        console.error('Error checking payment:', error);
+        toast({
+          title: 'Erreur',
+          description: 'Impossible de vérifier le statut du paiement',
+          variant: 'destructive',
+        });
+        setCheckingPayment(false);
+      }
+    };
+
+    checkPaymentStatus();
+  }, [user, navigate, searchParams]);
+
   // Fetch species
   const { data: species } = useQuery({
     queryKey: ['species'],
@@ -58,6 +118,43 @@ const PecheurOnboarding = () => {
       return data;
     },
   });
+
+  const handleSiretLookup = async () => {
+    if (!siret || siret.length !== 14) {
+      toast({
+        title: 'SIRET invalide',
+        description: 'Le SIRET doit contenir exactement 14 chiffres',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoadingSiret(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('get-company-info', {
+        body: { siret },
+      });
+
+      if (error) throw error;
+
+      // Pre-fill fields
+      setCompanyName(data.companyName || '');
+      setSiren(data.siren || '');
+      
+      toast({
+        title: 'Informations récupérées',
+        description: 'Les informations de l\'entreprise ont été chargées',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Erreur',
+        description: error.message || 'Impossible de récupérer les informations',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingSiret(false);
+    }
+  };
 
   const handleStep1Next = () => {
     if (!boatName || !immat) {
@@ -192,6 +289,17 @@ const PecheurOnboarding = () => {
     }
   };
 
+  if (checkingPayment) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <p className="text-muted-foreground">Vérification du paiement...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -228,25 +336,36 @@ const PecheurOnboarding = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="siret">SIRET (optionnel)</Label>
-                    <Input
-                      id="siret"
-                      placeholder="12345678901234"
-                      value={siret}
-                      onChange={(e) => setSiret(e.target.value)}
-                      maxLength={14}
-                    />
+                    <Label htmlFor="siret">SIRET (14 chiffres)</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="siret"
+                        placeholder="12345678901234"
+                        value={siret}
+                        onChange={(e) => setSiret(e.target.value.replace(/\D/g, ''))}
+                        maxLength={14}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleSiretLookup}
+                        disabled={loadingSiret || siret.length !== 14}
+                      >
+                        {loadingSiret ? 'Vérification...' : 'Vérifier'}
+                      </Button>
+                    </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="siren">SIREN (optionnel)</Label>
+                    <Label htmlFor="siren">SIREN (auto-rempli)</Label>
                     <Input
                       id="siren"
                       placeholder="123456789"
                       value={siren}
                       onChange={(e) => setSiren(e.target.value)}
                       maxLength={9}
+                      disabled
                     />
                   </div>
                 </div>

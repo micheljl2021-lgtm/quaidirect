@@ -41,10 +41,66 @@ serve(async (req) => {
         logStep('Checkout session completed', { sessionId: session.id });
 
         const userId = session.metadata?.user_id;
-        const plan = session.metadata?.plan;
+        const paymentType = session.metadata?.payment_type;
         
-        if (!userId || !plan) {
-          logStep('ERROR: Missing metadata', { userId, plan });
+        if (!userId) {
+          logStep('ERROR: Missing user_id in metadata');
+          break;
+        }
+
+        // Handle fisherman onboarding payment
+        if (paymentType === 'fisherman_onboarding') {
+          logStep('Processing fisherman onboarding payment', { userId });
+          
+          const { data: existingFisherman } = await supabaseClient
+            .from('fishermen')
+            .select('id')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+          if (existingFisherman) {
+            // Update existing fisherman record
+            const { error: updateError } = await supabaseClient
+              .from('fishermen')
+              .update({
+                onboarding_payment_status: 'paid',
+                onboarding_payment_id: session.payment_intent as string,
+                onboarding_paid_at: new Date().toISOString(),
+              })
+              .eq('user_id', userId);
+
+            if (updateError) {
+              logStep('ERROR updating fisherman payment status', { error: updateError });
+            } else {
+              logStep('Fisherman payment status updated successfully');
+            }
+          } else {
+            // Create minimal fisherman record
+            const { error: insertError } = await supabaseClient
+              .from('fishermen')
+              .insert({
+                user_id: userId,
+                boat_name: 'À compléter',
+                boat_registration: 'À compléter',
+                siret: 'À compléter',
+                onboarding_payment_status: 'paid',
+                onboarding_payment_id: session.payment_intent as string,
+                onboarding_paid_at: new Date().toISOString(),
+              });
+
+            if (insertError) {
+              logStep('ERROR creating fisherman record', { error: insertError });
+            } else {
+              logStep('Fisherman record created with payment successfully');
+            }
+          }
+          break;
+        }
+
+        // Handle premium subscription payment
+        const plan = session.metadata?.plan;
+        if (!plan) {
+          logStep('ERROR: Missing plan in metadata');
           break;
         }
 

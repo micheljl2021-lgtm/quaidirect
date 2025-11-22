@@ -3,3 +3,9 @@ project_id = "topqlhxdflykejrlbuqx"
 # Edge Functions Configuration
 [functions.stripe-webhook]
 verify_jwt = false  # Webhooks are called by Stripe, not authenticated users
+
+[functions.get-company-info]
+verify_jwt = true  # Requires authentication
+
+[functions.create-fisherman-payment]
+verify_jwt = true  # Requires authentication
