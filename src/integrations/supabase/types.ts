@@ -174,6 +174,9 @@ export type Database = {
           fishing_zones_geojson: Json | null
           id: string
           license_number: string | null
+          onboarding_paid_at: string | null
+          onboarding_payment_id: string | null
+          onboarding_payment_status: string | null
           phone: string | null
           photo_url: string | null
           siret: string
@@ -195,6 +198,9 @@ export type Database = {
           fishing_zones_geojson?: Json | null
           id?: string
           license_number?: string | null
+          onboarding_paid_at?: string | null
+          onboarding_payment_id?: string | null
+          onboarding_payment_status?: string | null
           phone?: string | null
           photo_url?: string | null
           siret: string
@@ -216,6 +222,9 @@ export type Database = {
           fishing_zones_geojson?: Json | null
           id?: string
           license_number?: string | null
+          onboarding_paid_at?: string | null
+          onboarding_payment_id?: string | null
+          onboarding_payment_status?: string | null
           phone?: string | null
           photo_url?: string | null
           siret?: string

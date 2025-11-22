@@ -10,6 +10,7 @@ import PremiumPaywall from "./pages/PremiumPaywall";
 import Compte from "./pages/Compte";
 import Auth from "./pages/Auth";
 import PecheurOnboarding from "./pages/PecheurOnboarding";
+import PecheurPayment from "./pages/PecheurPayment";
 import PecheurDashboard from "./pages/PecheurDashboard";
 import CreateArrivage from "./pages/CreateArrivage";
 import FisherProfile from "./pages/FisherProfile";
@@ -47,6 +48,7 @@ const App = () => (
             <Route path="/dashboard/pecheur" element={<PecheurDashboard />} />
             <Route path="/compte" element={<Compte />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/pecheur/payment" element={<PecheurPayment />} />
             <Route path="/pecheur/onboarding" element={<PecheurOnboarding />} />
             <Route path="/pecheur/nouvel-arrivage" element={<CreateArrivage />} />
             <Route path="/pecheur/:id" element={<FisherProfile />} />
