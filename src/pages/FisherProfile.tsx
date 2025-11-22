@@ -27,12 +27,12 @@ const FisherProfile = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch fisherman profile
+  // Fetch fisherman profile (using public view to protect sensitive data)
   const { data: fisherman, isLoading } = useQuery({
     queryKey: ['fisherman-profile', id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('fishermen')
+        .from('public_fishermen')
         .select(`
           *,
           fishermen_species(
@@ -40,7 +40,6 @@ const FisherProfile = () => {
           )
         `)
         .eq('id', id)
-        .not('verified_at', 'is', null)
         .maybeSingle();
 
       if (error) throw error;
@@ -272,21 +271,6 @@ const FisherProfile = () => {
               <p className="text-muted-foreground leading-relaxed mb-4">
                 {fisherman.description}
               </p>
-            )}
-
-            {/* Contact Info */}
-            {(fisherman.phone || fisherman.bio) && (
-              <div className="flex flex-wrap gap-4 text-sm">
-                {fisherman.phone && (
-                  <a
-                    href={`tel:${fisherman.phone}`}
-                    className="flex items-center gap-2 text-primary hover:underline"
-                  >
-                    <Phone className="h-4 w-4" />
-                    {fisherman.phone}
-                  </a>
-                )}
-              </div>
             )}
           </CardContent>
         </Card>

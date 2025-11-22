@@ -144,6 +144,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "drops_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "public_fishermen"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "drops_port_id_fkey"
             columns: ["port_id"]
             isOneToOne: false
@@ -245,6 +252,13 @@ export type Database = {
             referencedRelation: "fishermen"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fishermen_followers_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "public_fishermen"
+            referencedColumns: ["id"]
+          },
         ]
       }
       fishermen_species: {
@@ -275,6 +289,13 @@ export type Database = {
             columns: ["fisherman_id"]
             isOneToOne: false
             referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fishermen_species_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "public_fishermen"
             referencedColumns: ["id"]
           },
           {
@@ -924,6 +945,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "sales_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "public_fishermen"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "sales_offer_id_fkey"
             columns: ["offer_id"]
             isOneToOne: false
@@ -1081,7 +1109,63 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_fishermen: {
+        Row: {
+          bio: string | null
+          boat_name: string | null
+          boat_registration: string | null
+          company_name: string | null
+          created_at: string | null
+          description: string | null
+          fishing_methods:
+            | Database["public"]["Enums"]["fishing_method"][]
+            | null
+          fishing_zones: string[] | null
+          fishing_zones_geojson: Json | null
+          id: string | null
+          photo_url: string | null
+          updated_at: string | null
+          user_id: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          bio?: string | null
+          boat_name?: string | null
+          boat_registration?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          description?: string | null
+          fishing_methods?:
+            | Database["public"]["Enums"]["fishing_method"][]
+            | null
+          fishing_zones?: string[] | null
+          fishing_zones_geojson?: Json | null
+          id?: string | null
+          photo_url?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          bio?: string | null
+          boat_name?: string | null
+          boat_registration?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          description?: string | null
+          fishing_methods?:
+            | Database["public"]["Enums"]["fishing_method"][]
+            | null
+          fishing_zones?: string[] | null
+          fishing_zones_geojson?: Json | null
+          id?: string | null
+          photo_url?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_test_user_role: {
