@@ -22,6 +22,7 @@ import {
   Globe,
   Loader2
 } from 'lucide-react';
+import PushNotificationToggle from '@/components/PushNotificationToggle';
 
 const FisherProfile = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -231,30 +232,36 @@ const FisherProfile = () => {
       <div className="container max-w-5xl px-4 py-8">
         {/* CTA Principal + Stats */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-4">
-            {isOwner ? (
-              <Button
-                variant="outline"
-                onClick={() => navigate('/pecheur/edit-profile')}
-                className="gap-2"
-              >
-                <Settings className="h-4 w-4" />
-                Modifier mon profil
-              </Button>
-            ) : (
-              <Button
-                variant={isFollowing ? "outline" : "default"}
-                onClick={handleFollowToggle}
-                disabled={followMutation.isPending || unfollowMutation.isPending}
-                className="gap-2"
-              >
-                <Heart className={isFollowing ? "h-4 w-4 fill-current" : "h-4 w-4"} />
-                {isFollowing ? 'Abonné' : 'Suivre'}
-              </Button>
-            )}
-            <div className="text-sm text-muted-foreground">
-              {followerCount || 0} abonné{followerCount !== 1 ? 's' : ''}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex items-center gap-4">
+              {isOwner ? (
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/pecheur/edit-profile')}
+                  className="gap-2"
+                >
+                  <Settings className="h-4 w-4" />
+                  Modifier mon profil
+                </Button>
+              ) : (
+                <Button
+                  variant={isFollowing ? "outline" : "default"}
+                  onClick={handleFollowToggle}
+                  disabled={followMutation.isPending || unfollowMutation.isPending}
+                  className="gap-2"
+                >
+                  <Heart className={isFollowing ? "h-4 w-4 fill-current" : "h-4 w-4"} />
+                  {isFollowing ? 'Abonné' : 'Suivre'}
+                </Button>
+              )}
+              <div className="text-sm text-muted-foreground">
+                {followerCount || 0} abonné{followerCount !== 1 ? 's' : ''}
+              </div>
             </div>
+
+            {!isOwner && isFollowing && (
+              <PushNotificationToggle fishermanId={fisherman.id} />
+            )}
           </div>
 
           <Button size="lg" onClick={() => navigate(`/arrivages?pecheur=${fisherman.id}`)}>
