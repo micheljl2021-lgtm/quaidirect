@@ -8,7 +8,7 @@ import CaisseModule from '@/components/CaisseModule';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Anchor, AlertCircle, ShoppingCart } from 'lucide-react';
+import { Plus, Anchor, AlertCircle, ShoppingCart, History, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const PecheurDashboard = () => {
@@ -16,6 +16,7 @@ const PecheurDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [drops, setDrops] = useState<any[]>([]);
+  const [archivedDrops, setArchivedDrops] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [fishermanId, setFishermanId] = useState<string | null>(null);
 
@@ -80,7 +81,9 @@ const PecheurDashboard = () => {
 
       if (fisherman?.id) {
         setFishermanId(fisherman.id);
-        const { data, error } = await supabase
+        
+        // Fetch active drops
+        const { data: activeData, error: activeError } = await supabase
           .from('drops')
           .select(`
             *,
@@ -89,12 +92,33 @@ const PecheurDashboard = () => {
             drop_species(species:species(*))
           `)
           .eq('fisherman_id', fisherman.id)
+          .in('status', ['scheduled', 'landed'])
           .order('created_at', { ascending: false }) as { data: any[] | null; error: any };
 
-        if (error) {
-          console.error('Error fetching drops:', error);
+        if (activeError) {
+          console.error('Error fetching active drops:', activeError);
         } else {
-          setDrops(data || []);
+          setDrops(activeData || []);
+        }
+
+        // Fetch archived drops
+        const { data: archivedData, error: archivedError } = await supabase
+          .from('drops')
+          .select(`
+            *,
+            port:ports(*),
+            offers(*),
+            drop_species(species:species(*))
+          `)
+          .eq('fisherman_id', fisherman.id)
+          .in('status', ['completed', 'cancelled'])
+          .order('created_at', { ascending: false })
+          .limit(10) as { data: any[] | null; error: any };
+
+        if (archivedError) {
+          console.error('Error fetching archived drops:', archivedError);
+        } else {
+          setArchivedDrops(archivedData || []);
         }
       }
     } catch (error) {
@@ -186,9 +210,9 @@ const PecheurDashboard = () => {
 
           <Card>
             <CardHeader className="pb-3">
-              <CardDescription>Programmés</CardDescription>
+              <CardDescription>Actifs</CardDescription>
               <CardTitle className="text-3xl">
-                {drops.filter(d => d.status === 'scheduled').length}
+                {drops.length}
               </CardTitle>
             </CardHeader>
           </Card>
@@ -256,20 +280,21 @@ const PecheurDashboard = () => {
                     {drops.map(drop => (
                       <div 
                         key={drop.id}
-                        className="p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                        onClick={() => navigate(`/drop/${drop.id}`)}
+                        className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                       >
                         <div className="flex items-start justify-between">
-                          <div className="space-y-1">
+                          <div 
+                            className="space-y-1 flex-1 cursor-pointer"
+                            onClick={() => navigate(`/drop/${drop.id}`)}
+                          >
                             <div className="flex items-center gap-2">
                               <h3 className="font-medium">{drop.port?.name}</h3>
                               <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                drop.status === 'scheduled' ? 'bg-blue-100 text-blue-700' :
-                                drop.status === 'landed' ? 'bg-green-100 text-green-700' :
-                                drop.status === 'cancelled' ? 'bg-red-100 text-red-700' :
-                                'bg-gray-100 text-gray-700'
+                                drop.status === 'scheduled' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' :
+                                drop.status === 'landed' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' :
+                                'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
                               }`}>
-                                {drop.status}
+                                {drop.status === 'scheduled' ? 'Programmé' : 'Arrivé'}
                               </span>
                             </div>
                             <p className="text-sm text-muted-foreground">
@@ -296,6 +321,35 @@ const PecheurDashboard = () => {
                               </p>
                             )}
                           </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-2"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              const { error } = await supabase
+                                .from('drops')
+                                .update({ status: 'completed' })
+                                .eq('id', drop.id);
+                              
+                              if (error) {
+                                toast({
+                                  title: 'Erreur',
+                                  description: 'Impossible de marquer comme terminé',
+                                  variant: 'destructive',
+                                });
+                              } else {
+                                toast({
+                                  title: 'Arrivage archivé',
+                                  description: 'L\'arrivage a été marqué comme terminé',
+                                });
+                                fetchDrops();
+                              }
+                            }}
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                            Terminer
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -303,6 +357,60 @@ const PecheurDashboard = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* History section */}
+            {archivedDrops.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <History className="h-5 w-5" />
+                    Historique des arrivages
+                  </CardTitle>
+                  <CardDescription>
+                    Les 10 derniers arrivages terminés ou annulés
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {archivedDrops.map(drop => (
+                      <div key={drop.id} className="p-3 border-b last:border-0">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <p className="font-medium">{drop.port?.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(drop.eta_at).toLocaleDateString('fr-FR', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric'
+                              })}
+                            </p>
+                            {drop.drop_species?.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {drop.drop_species.slice(0, 2).map((ds: any) => (
+                                  <span key={ds.species.id} className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded">
+                                    {ds.species.name}
+                                  </span>
+                                ))}
+                                {drop.drop_species.length > 2 && (
+                                  <span className="text-xs text-muted-foreground">+{drop.drop_species.length - 2}</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ml-2 ${
+                            drop.status === 'completed' 
+                              ? 'bg-secondary text-secondary-foreground' 
+                              : 'bg-destructive/10 text-destructive'
+                          }`}>
+                            {drop.status === 'completed' ? 'Terminé' : 'Annulé'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="caisse">

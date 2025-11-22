@@ -1091,6 +1091,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      archive_expired_drops: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1101,7 +1102,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user" | "premium" | "fisherman"
-      drop_status: "scheduled" | "landed" | "cancelled"
+      drop_status: "scheduled" | "landed" | "cancelled" | "completed"
       fishing_method:
         | "palangre"
         | "filet"
@@ -1242,7 +1243,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user", "premium", "fisherman"],
-      drop_status: ["scheduled", "landed", "cancelled"],
+      drop_status: ["scheduled", "landed", "cancelled", "completed"],
       fishing_method: [
         "palangre",
         "filet",
