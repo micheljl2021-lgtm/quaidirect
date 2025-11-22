@@ -29,11 +29,14 @@ const FisherProfile = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Fetch fisherman by slug
+  // Detect if slug is UUID (ID) or actual slug
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug || '');
+
+  // Fetch fisherman by slug or ID
   const { data: fisherman, isLoading } = useQuery({
-    queryKey: ['fisherman-by-slug', slug],
+    queryKey: ['fisherman', slug],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const query = supabase
         .from('public_fishermen')
         .select(`
           *,
@@ -41,9 +44,12 @@ const FisherProfile = () => {
             species:species(*),
             is_primary
           )
-        `)
-        .eq('slug', slug)
-        .maybeSingle();
+        `);
+      
+      // Query by ID or slug depending on format
+      const { data, error } = isUUID 
+        ? await query.eq('id', slug).maybeSingle()
+        : await query.eq('slug', slug).maybeSingle();
 
       if (error) throw error;
       if (!data) throw new Error('Pêcheur introuvable');

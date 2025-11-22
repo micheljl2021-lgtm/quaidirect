@@ -48,6 +48,7 @@ const EditFisherProfile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [fishermanId, setFishermanId] = useState<string | null>(null);
+  const [fishermanSlug, setFishermanSlug] = useState<string>('');
   const [allSpecies, setAllSpecies] = useState<any[]>([]);
   const [selectedSpecies, setSelectedSpecies] = useState<string[]>([]);
   const [primarySpeciesId, setPrimarySpeciesId] = useState<string>('');
@@ -91,6 +92,7 @@ const EditFisherProfile = () => {
         }
 
         setFishermanId(fisherman.id);
+        setFishermanSlug(fisherman.slug || '');
         form.reset({
           boat_name: fisherman.boat_name || '',
           company_name: fisherman.company_name || '',
@@ -182,7 +184,7 @@ const EditFisherProfile = () => {
         description: 'Vos modifications ont été enregistrées',
       });
 
-      navigate(`/pecheur/${fishermanId}`);
+      navigate(`/pecheurs/${fishermanSlug}`);
     } catch (error: any) {
       toast({
         title: 'Erreur',
@@ -420,7 +422,7 @@ const EditFisherProfile = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate(`/pecheur/${fishermanId}`)}
+                onClick={() => navigate(`/pecheurs/${fishermanSlug}`)}
                 disabled={saving}
               >
                 Annuler
