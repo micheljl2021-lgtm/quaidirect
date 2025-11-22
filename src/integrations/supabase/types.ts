@@ -165,6 +165,7 @@ export type Database = {
           bio: string | null
           boat_name: string
           boat_registration: string
+          can_edit_profile: boolean | null
           city: string | null
           client_message: string | null
           company_name: string | null
@@ -182,9 +183,11 @@ export type Database = {
           instagram_url: string | null
           license_number: string | null
           main_fishing_zone: string | null
+          onboarding_data: Json | null
           onboarding_paid_at: string | null
           onboarding_payment_id: string | null
           onboarding_payment_status: string | null
+          onboarding_step: number | null
           passion_quote: string | null
           phone: string | null
           photo_boat_1: string | null
@@ -206,6 +209,7 @@ export type Database = {
           bio?: string | null
           boat_name: string
           boat_registration: string
+          can_edit_profile?: boolean | null
           city?: string | null
           client_message?: string | null
           company_name?: string | null
@@ -223,9 +227,11 @@ export type Database = {
           instagram_url?: string | null
           license_number?: string | null
           main_fishing_zone?: string | null
+          onboarding_data?: Json | null
           onboarding_paid_at?: string | null
           onboarding_payment_id?: string | null
           onboarding_payment_status?: string | null
+          onboarding_step?: number | null
           passion_quote?: string | null
           phone?: string | null
           photo_boat_1?: string | null
@@ -247,6 +253,7 @@ export type Database = {
           bio?: string | null
           boat_name?: string
           boat_registration?: string
+          can_edit_profile?: boolean | null
           city?: string | null
           client_message?: string | null
           company_name?: string | null
@@ -264,9 +271,11 @@ export type Database = {
           instagram_url?: string | null
           license_number?: string | null
           main_fishing_zone?: string | null
+          onboarding_data?: Json | null
           onboarding_paid_at?: string | null
           onboarding_payment_id?: string | null
           onboarding_payment_status?: string | null
+          onboarding_step?: number | null
           passion_quote?: string | null
           phone?: string | null
           photo_boat_1?: string | null
