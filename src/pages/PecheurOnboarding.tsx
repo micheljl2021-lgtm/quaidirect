@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase-client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,45 +10,108 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
-import { Anchor, Upload, FileText, CheckCircle2, Fish, Loader2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Building2, Globe, Waves, Fish, Camera, Loader2, Check } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import Header from '@/components/Header';
+import { PhotoUpload } from '@/components/PhotoUpload';
+import { FisherProfilePreview } from '@/components/FisherProfilePreview';
+
+const ZONES_PRINCIPALES = [
+  'Hyères',
+  'Giens',
+  'Porquerolles',
+  'Port-Cros',
+  'Var Est',
+  'Var Ouest',
+  'Méditerranée Nord',
+  'Autre'
+];
+
+const FISHING_METHODS = [
+  { value: 'filet', label: 'Filets' },
+  { value: 'palangre', label: 'Palangre' },
+  { value: 'casier', label: 'Casier' },
+  { value: 'ligne', label: 'Ligne' },
+  { value: 'autre', label: 'Autre' },
+];
 
 const PecheurOnboarding = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [loadingSiret, setLoadingSiret] = useState(false);
   const [checkingPayment, setCheckingPayment] = useState(true);
 
-  // Step 1: Identité pro
+  // Étape 1: Société & Contact
   const [siret, setSiret] = useState('');
-  const [siren, setSiren] = useState('');
   const [boatName, setBoatName] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [immat, setImmat] = useState('');
-  const [photo, setPhoto] = useState('');
+  const [address, setAddress] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [city, setCity] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
 
-  // Step 2: Charte
-  const [acceptTraceability, setAcceptTraceability] = useState(false);
-  const [acceptLabeling, setAcceptLabeling] = useState(false);
-  const [acceptRules, setAcceptRules] = useState(false);
+  // Étape 2: Présence en ligne
+  const [facebookUrl, setFacebookUrl] = useState('');
+  const [instagramUrl, setInstagramUrl] = useState('');
+  const [websiteUrl, setWebsiteUrl] = useState('');
 
-  // Step 3: Species selection
+  // Étape 3: Zones & Méthodes
+  const [mainFishingZone, setMainFishingZone] = useState('');
+  const [fishingZonesDetail, setFishingZonesDetail] = useState('');
+  const [fishingMethods, setFishingMethods] = useState<string[]>([]);
+  const [otherMethod, setOtherMethod] = useState('');
+
+  // Étape 4: Espèces
   const [selectedSpecies, setSelectedSpecies] = useState<string[]>([]);
   const [primarySpecies, setPrimarySpecies] = useState<string>('');
+  const [otherSpecies, setOtherSpecies] = useState('');
 
-  // Step 4: Fishing activity
-  const [companyName, setCompanyName] = useState('');
-  const [description, setDescription] = useState('');
-  const [fishingMethods, setFishingMethods] = useState<string[]>([]);
-  const [fishingZones, setFishingZones] = useState('');
+  // Étape 5: Photos & Description
+  const [photoBoat1, setPhotoBoat1] = useState<string | null>(null);
+  const [photoBoat2, setPhotoBoat2] = useState<string | null>(null);
+  const [photoDockSale, setPhotoDockSale] = useState<string | null>(null);
+  const [yearsExperience, setYearsExperience] = useState('');
+  const [passionQuote, setPassionQuote] = useState('');
+  const [workPhilosophy, setWorkPhilosophy] = useState('');
+  const [clientMessage, setClientMessage] = useState('');
+  const [generatedDescription, setGeneratedDescription] = useState('');
 
   const progress = (step / 5) * 100;
 
-  // Check payment status on load
+  // Générer automatiquement la description
+  useEffect(() => {
+    const generateDescription = () => {
+      const parts = [];
+      
+      if (yearsExperience) {
+        parts.push(yearsExperience);
+      }
+      
+      if (passionQuote) {
+        parts.push(`Ce que j'aime le plus dans mon métier ? ${passionQuote}`);
+      }
+      
+      if (workPhilosophy) {
+        parts.push(`Ma philosophie : ${workPhilosophy}`);
+      }
+      
+      if (clientMessage) {
+        parts.push(`Mon message : ${clientMessage}`);
+      }
+      
+      return parts.join('\n\n');
+    };
+
+    setGeneratedDescription(generateDescription());
+  }, [yearsExperience, passionQuote, workPhilosophy, clientMessage]);
+
+  // Check payment status
   useEffect(() => {
     const checkPaymentStatus = async () => {
       if (!user) {
@@ -56,18 +119,14 @@ const PecheurOnboarding = () => {
         return;
       }
 
-      // Check for success parameter
       if (searchParams.get('payment') === 'success') {
-        toast({
-          title: 'Paiement réussi',
-          description: 'Vous pouvez maintenant remplir le formulaire d\'inscription',
-        });
+        toast.success('Paiement réussi ! Remplissez maintenant le formulaire');
       }
 
       try {
         const { data: fishermanData, error } = await supabase
           .from('fishermen')
-          .select('onboarding_payment_status, boat_name, boat_registration, siret, company_name, description, fishing_methods, fishing_zones, photo_url')
+          .select('*')
           .eq('user_id', user.id)
           .maybeSingle();
 
@@ -78,26 +137,38 @@ const PecheurOnboarding = () => {
           return;
         }
 
-        // Pre-fill form if data exists
+        // Pré-remplir si données existantes
         if (fishermanData && fishermanData.boat_name !== 'À compléter') {
           setBoatName(fishermanData.boat_name || '');
           setImmat(fishermanData.boat_registration || '');
           setSiret(fishermanData.siret || '');
           setCompanyName(fishermanData.company_name || '');
-          setDescription(fishermanData.description || '');
+          setAddress(fishermanData.address || '');
+          setPostalCode(fishermanData.postal_code || '');
+          setCity(fishermanData.city || '');
+          setEmail(fishermanData.email || user.email || '');
+          setPhone(fishermanData.phone || '');
+          setFacebookUrl(fishermanData.facebook_url || '');
+          setInstagramUrl(fishermanData.instagram_url || '');
+          setWebsiteUrl(fishermanData.website_url || '');
+          setMainFishingZone(fishermanData.main_fishing_zone || '');
+          setFishingZonesDetail(fishermanData.fishing_zones?.join(', ') || '');
           setFishingMethods(fishermanData.fishing_methods || []);
-          setFishingZones(fishermanData.fishing_zones?.join(', ') || '');
-          setPhoto(fishermanData.photo_url || '');
+          setPhotoBoat1(fishermanData.photo_boat_1);
+          setPhotoBoat2(fishermanData.photo_boat_2);
+          setPhotoDockSale(fishermanData.photo_dock_sale);
+          setYearsExperience(fishermanData.years_experience || '');
+          setPassionQuote(fishermanData.passion_quote || '');
+          setWorkPhilosophy(fishermanData.work_philosophy || '');
+          setClientMessage(fishermanData.client_message || '');
+        } else {
+          setEmail(user.email || '');
         }
 
         setCheckingPayment(false);
       } catch (error: any) {
-        console.error('Error checking payment:', error);
-        toast({
-          title: 'Erreur',
-          description: 'Impossible de vérifier le statut du paiement',
-          variant: 'destructive',
-        });
+        console.error('Error:', error);
+        toast.error('Erreur lors de la vérification');
         setCheckingPayment(false);
       }
     };
@@ -119,13 +190,14 @@ const PecheurOnboarding = () => {
     },
   });
 
+  const speciesNames = species?.reduce((acc, s) => {
+    acc[s.id] = s.name;
+    return acc;
+  }, {} as Record<string, string>) || {};
+
   const handleSiretLookup = async () => {
     if (!siret || siret.length !== 14) {
-      toast({
-        title: 'SIRET invalide',
-        description: 'Le SIRET doit contenir exactement 14 chiffres',
-        variant: 'destructive',
-      });
+      toast.error('Le SIRET doit contenir 14 chiffres');
       return;
     }
 
@@ -137,79 +209,65 @@ const PecheurOnboarding = () => {
 
       if (error) throw error;
 
-      // Pre-fill fields
       setCompanyName(data.companyName || '');
-      setSiren(data.siren || '');
+      setAddress(data.address || '');
+      setPostalCode(data.postalCode || '');
+      setCity(data.city || '');
       
-      toast({
-        title: 'Informations récupérées',
-        description: 'Les informations de l\'entreprise ont été chargées',
-      });
+      toast.success('Informations récupérées avec succès');
     } catch (error: any) {
-      toast({
-        title: 'Erreur',
-        description: error.message || 'Impossible de récupérer les informations',
-        variant: 'destructive',
-      });
+      toast.error(error.message || 'Impossible de récupérer les informations');
     } finally {
       setLoadingSiret(false);
     }
   };
 
-  const handleStep1Next = () => {
-    if (!boatName || !immat) {
-      toast({
-        title: 'Informations manquantes',
-        description: 'Veuillez remplir au minimum le nom du bateau et l\'immatriculation.',
-        variant: 'destructive',
-      });
-      return;
+  const validateStep1 = () => {
+    if (!boatName || !immat || !phone || !email) {
+      toast.error('Veuillez remplir tous les champs obligatoires');
+      return false;
     }
-    setStep(2);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error('Email invalide');
+      return false;
+    }
+    return true;
   };
 
-  const handleStep2Next = () => {
-    if (!acceptTraceability || !acceptLabeling || !acceptRules) {
-      toast({
-        title: 'Acceptation requise',
-        description: 'Vous devez accepter toutes les conditions pour continuer.',
-        variant: 'destructive',
-      });
-      return;
+  const validateStep2 = () => {
+    const urlPattern = /^https?:\/\/.+/;
+    if (facebookUrl && !urlPattern.test(facebookUrl)) {
+      toast.error('URL Facebook invalide');
+      return false;
     }
-    setStep(3);
+    if (instagramUrl && !urlPattern.test(instagramUrl)) {
+      toast.error('URL Instagram invalide');
+      return false;
+    }
+    if (websiteUrl && !urlPattern.test(websiteUrl)) {
+      toast.error('URL du site web invalide');
+      return false;
+    }
+    return true;
   };
 
-  const handleStep3Next = () => {
-    if (selectedSpecies.length === 0) {
-      toast({
-        title: 'Sélection requise',
-        description: 'Veuillez sélectionner au moins une espèce que vous pêchez.',
-        variant: 'destructive',
-      });
-      return;
+  const validateStep4 = () => {
+    if (selectedSpecies.length === 0 && !otherSpecies) {
+      toast.error('Sélectionnez au moins une espèce');
+      return false;
     }
-    setStep(4);
-  };
-
-  const handleStep4Next = () => {
-    // All fields optional for this step
-    setStep(5);
+    return true;
   };
 
   const toggleFishingMethod = (method: string) => {
     setFishingMethods(prev => 
-      prev.includes(method) 
-        ? prev.filter(m => m !== method)
-        : [...prev, method]
+      prev.includes(method) ? prev.filter(m => m !== method) : [...prev, method]
     );
   };
 
   const toggleSpecies = (speciesId: string) => {
     setSelectedSpecies(prev => 
-      prev.includes(speciesId) 
-        ? prev.filter(id => id !== speciesId)
-        : [...prev, speciesId]
+      prev.includes(speciesId) ? prev.filter(id => id !== speciesId) : [...prev, speciesId]
     );
   };
 
@@ -218,48 +276,61 @@ const PecheurOnboarding = () => {
 
     setLoading(true);
     try {
-      // Récupérer le port par défaut (Hyères)
-      const { data: port, error: portError } = await supabase
-        .from('ports')
-        .select('id')
-        .eq('name', 'Port Saint-Pierre - Hyères')
-        .maybeSingle() as { data: { id: string } | null; error: any };
+      const zonesArray = fishingZonesDetail
+        .split(',')
+        .map(z => z.trim())
+        .filter(z => z.length > 0);
 
-      if (portError) {
-        console.error('Error fetching port:', portError);
-      }
+      const finalMethods = [...fishingMethods];
+      if (otherMethod) finalMethods.push(otherMethod);
 
-      // Créer le profil pêcheur
-      const { error } = await supabase
+      // Upsert fisherman profile
+      const { data: fishermanData, error: upsertError } = await supabase
         .from('fishermen')
-        .insert({
+        .upsert({
           user_id: user.id,
           siret: siret || null,
           boat_name: boatName,
           boat_registration: immat,
-          photo_url: photo || null,
           company_name: companyName || null,
-          description: description || null,
-          fishing_methods: fishingMethods.length > 0 ? fishingMethods : null,
-          fishing_zones: fishingZones ? fishingZones.split(',').map(z => z.trim()) : null,
+          address: address || null,
+          postal_code: postalCode || null,
+          city: city || null,
+          phone: phone,
+          email: email,
+          facebook_url: facebookUrl || null,
+          instagram_url: instagramUrl || null,
+          website_url: websiteUrl || null,
+          main_fishing_zone: mainFishingZone || null,
+          fishing_zones: zonesArray.length > 0 ? zonesArray : null,
+          fishing_methods: finalMethods.length > 0 ? finalMethods : null,
+          photo_boat_1: photoBoat1,
+          photo_boat_2: photoBoat2,
+          photo_dock_sale: photoDockSale,
+          years_experience: yearsExperience || null,
+          passion_quote: passionQuote || null,
+          work_philosophy: workPhilosophy || null,
+          client_message: clientMessage || null,
+          generated_description: generatedDescription || null,
           verified_at: null,
-        }) as { error: any };
-
-      if (error) throw error;
-
-      // Get the created fisherman to link species
-      const { data: createdFisherman, error: fetchError } = await supabase
-        .from('fishermen')
-        .select('id')
-        .eq('user_id', user.id)
+        }, {
+          onConflict: 'user_id'
+        })
+        .select('id, slug')
         .single();
 
-      if (fetchError) throw fetchError;
+      if (upsertError) throw upsertError;
 
-      // Save selected species
+      // Delete existing species links
+      await supabase
+        .from('fishermen_species')
+        .delete()
+        .eq('fisherman_id', fishermanData.id);
+
+      // Insert species
       if (selectedSpecies.length > 0) {
         const speciesToInsert = selectedSpecies.map(speciesId => ({
-          fisherman_id: createdFisherman.id,
+          fisherman_id: fishermanData.id,
           species_id: speciesId,
           is_primary: speciesId === primarySpecies,
         }));
@@ -271,19 +342,11 @@ const PecheurOnboarding = () => {
         if (speciesError) throw speciesError;
       }
 
-      toast({
-        title: 'Demande envoyée',
-        description: 'Votre profil pêcheur est en attente de validation par notre équipe.',
-      });
-
-      navigate('/compte');
+      toast.success('Page vitrine créée avec succès !');
+      navigate(`/onboarding/confirmation?slug=${fishermanData.slug}`);
     } catch (error: any) {
-      console.error('Error creating fisherman profile:', error);
-      toast({
-        title: 'Erreur',
-        description: error.message,
-        variant: 'destructive',
-      });
+      console.error('Error:', error);
+      toast.error(error.message || 'Erreur lors de la création');
     } finally {
       setLoading(false);
     }
@@ -291,10 +354,10 @@ const PecheurOnboarding = () => {
 
   if (checkingPayment) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          <p className="text-muted-foreground">Vérification du paiement...</p>
+          <p className="text-muted-foreground">Vérification...</p>
         </div>
       </div>
     );
@@ -304,39 +367,33 @@ const PecheurOnboarding = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <div className="container max-w-2xl px-4 py-8">
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="text-center space-y-2">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-              <Anchor className="h-8 w-8 text-primary" />
-            </div>
-            <h1 className="text-3xl font-bold text-foreground">Devenir pêcheur vérifié</h1>
-            <p className="text-muted-foreground">Vendez votre poisson en direct à quai</p>
-          </div>
-
-          {/* Progress */}
-          <div className="space-y-2">
+      <div className="container px-4 py-8">
+        {/* Header */}
+        <div className="text-center space-y-2 mb-8">
+          <h1 className="text-3xl font-bold">Créer ma page vitrine</h1>
+          <p className="text-muted-foreground">Présentez votre activité de pêche</p>
+          <div className="max-w-md mx-auto space-y-2 pt-4">
             <Progress value={progress} />
-            <p className="text-sm text-muted-foreground text-center">
-              Étape {step} sur 5
-            </p>
+            <p className="text-sm text-muted-foreground">Étape {step} sur 5</p>
           </div>
+        </div>
 
-          {/* Step 1: Identité pro */}
-          {step === 1 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Identité professionnelle
-                </CardTitle>
-                <CardDescription>
-                  Informations sur votre activité de pêche
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-4">
+        {/* Layout 2 colonnes */}
+        <div className="grid lg:grid-cols-[1fr,400px] gap-8 max-w-7xl mx-auto">
+          {/* Colonne formulaire */}
+          <div>
+            {/* Étape 1: Société & Contact */}
+            {step === 1 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5" />
+                    Société & Contact
+                  </CardTitle>
+                  <CardDescription>Informations de base sur votre activité</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* SIRET */}
                   <div className="space-y-2">
                     <Label htmlFor="siret">SIRET (14 chiffres)</Label>
                     <div className="flex gap-2">
@@ -353,297 +410,226 @@ const PecheurOnboarding = () => {
                         onClick={handleSiretLookup}
                         disabled={loadingSiret || siret.length !== 14}
                       >
-                        {loadingSiret ? 'Vérification...' : 'Vérifier'}
+                        {loadingSiret ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Récupérer'}
                       </Button>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="siren">SIREN (auto-rempli)</Label>
-                    <Input
-                      id="siren"
-                      placeholder="123456789"
-                      value={siren}
-                      onChange={(e) => setSiren(e.target.value)}
-                      maxLength={9}
-                      disabled
-                    />
-                  </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="boatName">Nom du bateau *</Label>
-                  <Input
-                    id="boatName"
-                    placeholder="L'Espérance"
-                    value={boatName}
-                    onChange={(e) => setBoatName(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="immat">Immatriculation navire *</Label>
-                  <Input
-                    id="immat"
-                    placeholder="HY-123456"
-                    value={immat}
-                    onChange={(e) => setImmat(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="photo">Photo (URL)</Label>
-                  <div className="relative">
-                    <Upload className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="photo"
-                      placeholder="https://..."
-                      value={photo}
-                      onChange={(e) => setPhoto(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-
-                <Button onClick={handleStep1Next} className="w-full">
-                  Suivant
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Step 2: Charte */}
-          {step === 2 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5" />
-                  Charte et légalité
-                </CardTitle>
-                <CardDescription>
-                  Engagements pour une vente directe responsable
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <Checkbox
-                      id="traceability"
-                      checked={acceptTraceability}
-                      onCheckedChange={(checked) => setAcceptTraceability(checked as boolean)}
-                    />
-                    <label
-                      htmlFor="traceability"
-                      className="text-sm leading-relaxed cursor-pointer"
-                    >
-                      Je m'engage à garantir la <strong>traçabilité</strong> de mes captures 
-                      (zone FAO, date de capture, engin de pêche)
-                    </label>
-                  </div>
-
-                  <div className="flex items-start space-x-3">
-                    <Checkbox
-                      id="labeling"
-                      checked={acceptLabeling}
-                      onCheckedChange={(checked) => setAcceptLabeling(checked as boolean)}
-                    />
-                    <label
-                      htmlFor="labeling"
-                      className="text-sm leading-relaxed cursor-pointer"
-                    >
-                      Je m'engage à respecter les <strong>règles d'étiquetage</strong> 
-                      (nom commercial et scientifique, taille minimale)
-                    </label>
-                  </div>
-
-                  <div className="flex items-start space-x-3">
-                    <Checkbox
-                      id="rules"
-                      checked={acceptRules}
-                      onCheckedChange={(checked) => setAcceptRules(checked as boolean)}
-                    />
-                    <label
-                      htmlFor="rules"
-                      className="text-sm leading-relaxed cursor-pointer"
-                    >
-                      Je m'engage à respecter les <strong>règles de vente directe</strong> 
-                      et la réglementation en vigueur
-                    </label>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm text-muted-foreground">
-                    Pour plus d'informations, consultez notre{' '}
-                    <a href="/legal" className="text-primary hover:underline">
-                      page légale
-                    </a>
-                  </p>
-                </div>
-
-                <div className="flex gap-3">
-                  <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
-                    Retour
-                  </Button>
-                  <Button onClick={handleStep2Next} className="flex-1">
-                    Suivant
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Step 3: Species Selection */}
-          {step === 3 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Fish className="h-5 w-5" />
-                  Espèces pêchées
-                </CardTitle>
-                <CardDescription>
-                  Sélectionnez les espèces que vous pêchez habituellement
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto pr-2">
-                    {species?.map((s) => (
-                      <div 
-                        key={s.id}
-                        className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-accent cursor-pointer transition-colors"
-                        onClick={() => toggleSpecies(s.id)}
-                      >
-                        <Checkbox
-                          checked={selectedSpecies.includes(s.id)}
-                          onCheckedChange={() => toggleSpecies(s.id)}
-                        />
-                        <div className="flex-1 space-y-1">
-                          <label className="text-sm font-medium leading-none cursor-pointer">
-                            {s.name}
-                          </label>
-                          {s.scientific_name && (
-                            <p className="text-xs text-muted-foreground">
-                              {s.scientific_name}
-                            </p>
-                          )}
-                          {selectedSpecies.includes(s.id) && (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant={primarySpecies === s.id ? "default" : "outline"}
-                              className="mt-2 h-6 text-xs"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setPrimarySpecies(primarySpecies === s.id ? '' : s.id);
-                              }}
-                            >
-                              {primarySpecies === s.id ? '★ Principale' : 'Marquer comme principale'}
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {selectedSpecies.length > 0 && (
-                    <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                      <p className="text-sm">
-                        <strong>{selectedSpecies.length}</strong> espèce(s) sélectionnée(s)
-                        {primarySpecies && (
-                          <span className="text-muted-foreground ml-2">
-                            • 1 marquée comme principale
-                          </span>
-                        )}
-                      </p>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="boatName">Nom du bateau *</Label>
+                      <Input
+                        id="boatName"
+                        placeholder="L'Espérance"
+                        value={boatName}
+                        onChange={(e) => setBoatName(e.target.value)}
+                        required
+                      />
                     </div>
-                  )}
-                </div>
 
-                <div className="flex gap-3">
-                  <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
-                    Retour
-                  </Button>
-                  <Button onClick={handleStep3Next} className="flex-1">
+                    <div className="space-y-2">
+                      <Label htmlFor="companyName">Nom de l'entreprise</Label>
+                      <Input
+                        id="companyName"
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="immat">Immatriculation navire *</Label>
+                    <Input
+                      id="immat"
+                      placeholder="HY-123456"
+                      value={immat}
+                      onChange={(e) => setImmat(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Adresse</Label>
+                    <Input
+                      id="address"
+                      placeholder="Port de Hyères"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="postalCode">Code postal</Label>
+                      <Input
+                        id="postalCode"
+                        placeholder="83400"
+                        value={postalCode}
+                        onChange={(e) => setPostalCode(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="city">Ville</Label>
+                      <Input
+                        id="city"
+                        placeholder="Hyères"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Téléphone portable *</Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="06 12 34 56 78"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="contact@exemple.fr"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={() => {
+                      if (validateStep1()) setStep(2);
+                    }}
+                    className="w-full"
+                  >
                     Suivant
                   </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                </CardContent>
+              </Card>
+            )}
 
-          {/* Step 4: Fishing Activity */}
-          {step === 4 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Anchor className="h-5 w-5" />
-                  Activité de pêche
-                </CardTitle>
-                <CardDescription>
-                  Présentez votre activité (tous les champs sont optionnels)
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  {/* Company Name */}
+            {/* Étape 2: Présence en ligne */}
+            {step === 2 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Globe className="h-5 w-5" />
+                    Présence en ligne
+                  </CardTitle>
+                  <CardDescription>Liens vers vos réseaux sociaux (optionnel)</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="companyName">Nom de l'entreprise (optionnel)</Label>
+                    <Label htmlFor="facebook">URL Facebook</Label>
                     <Input
-                      id="companyName"
-                      placeholder="Ex: Pêche artisanale du Levant"
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
+                      id="facebook"
+                      type="url"
+                      placeholder="https://facebook.com/..."
+                      value={facebookUrl}
+                      onChange={(e) => setFacebookUrl(e.target.value)}
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Apparaîtra sur votre page vitrine publique
-                    </p>
                   </div>
 
-                  {/* Description */}
                   <div className="space-y-2">
-                    <Label htmlFor="description">Description de votre activité (optionnel)</Label>
-                    <Textarea
-                      id="description"
-                      placeholder="Ex: Pêche artisanale au large de Porquerolles depuis 3 générations. Spécialisé dans la pêche à la ligne et au filet maillant..."
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      rows={4}
+                    <Label htmlFor="instagram">URL Instagram</Label>
+                    <Input
+                      id="instagram"
+                      type="url"
+                      placeholder="https://instagram.com/..."
+                      value={instagramUrl}
+                      onChange={(e) => setInstagramUrl(e.target.value)}
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Présentez votre savoir-faire et votre philosophie
-                    </p>
                   </div>
 
-                  {/* Fishing Methods */}
+                  <div className="space-y-2">
+                    <Label htmlFor="website">Site web personnel</Label>
+                    <Input
+                      id="website"
+                      type="url"
+                      placeholder="https://..."
+                      value={websiteUrl}
+                      onChange={(e) => setWebsiteUrl(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
+                      Retour
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        if (validateStep2()) setStep(3);
+                      }}
+                      className="flex-1"
+                    >
+                      Suivant
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Étape 3: Zones & Méthodes */}
+            {step === 3 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Waves className="h-5 w-5" />
+                    Zones & Méthodes de pêche
+                  </CardTitle>
+                  <CardDescription>Où et comment vous pêchez</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="mainZone">Zone principale de pêche</Label>
+                    <Select value={mainFishingZone} onValueChange={setMainFishingZone}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionnez une zone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ZONES_PRINCIPALES.map(zone => (
+                          <SelectItem key={zone} value={zone}>{zone}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="zonesDetail">Zones détaillées (optionnel)</Label>
+                    <Textarea
+                      id="zonesDetail"
+                      placeholder="Ex: Rade de Hyères, îles d'Or, Cap Bénat..."
+                      value={fishingZonesDetail}
+                      onChange={(e) => setFishingZonesDetail(e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+
                   <div className="space-y-3">
-                    <Label>Méthodes de pêche utilisées (optionnel)</Label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {[
-                        { value: 'palangre', label: 'Palangre' },
-                        { value: 'filet', label: 'Filet' },
-                        { value: 'ligne', label: 'Ligne' },
-                        { value: 'casier', label: 'Casier' },
-                        { value: 'chalut', label: 'Chalut' },
-                        { value: 'seine', label: 'Seine' },
-                        { value: 'hamecon', label: 'Hameçon' },
-                        { value: 'nasse', label: 'Nasse' },
-                        { value: 'autre', label: 'Autre' },
-                      ].map((method) => (
+                    <Label>Méthodes de pêche (optionnel)</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {FISHING_METHODS.map(method => (
                         <label
                           key={method.value}
-                          className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${
+                          className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition ${
                             fishingMethods.includes(method.value)
                               ? 'border-primary bg-primary/5'
                               : 'border-border hover:border-primary/50'
                           }`}
                         >
-                          <input
-                            type="checkbox"
+                          <Checkbox
                             checked={fishingMethods.includes(method.value)}
-                            onChange={() => toggleFishingMethod(method.value)}
-                            className="rounded"
+                            onCheckedChange={() => toggleFishingMethod(method.value)}
                           />
                           <span className="text-sm font-medium">{method.label}</span>
                         </label>
@@ -651,87 +637,257 @@ const PecheurOnboarding = () => {
                     </div>
                   </div>
 
-                  {/* Fishing Zones */}
-                  <div className="space-y-2">
-                    <Label htmlFor="fishingZones">Zones de pêche (optionnel)</Label>
-                    <Input
-                      id="fishingZones"
-                      placeholder="Ex: Porquerolles, Port-Cros, Îles du Levant"
-                      value={fishingZones}
-                      onChange={(e) => setFishingZones(e.target.value)}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Séparez les zones par des virgules
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <Button variant="outline" onClick={() => setStep(3)} className="flex-1">
-                    Retour
-                  </Button>
-                  <Button onClick={handleStep4Next} className="flex-1">
-                    Suivant
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Step 5: Validation */}
-          {step === 5 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5" />
-                  Soumettre à validation
-                </CardTitle>
-                <CardDescription>
-                  Dernière étape avant validation
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg space-y-2">
-                    <h3 className="font-medium">Récapitulatif</h3>
-                    <div className="text-sm space-y-1 text-muted-foreground">
-                      <p><strong>Bateau :</strong> {boatName}</p>
-                      <p><strong>Immatriculation :</strong> {immat}</p>
-                      {siret && <p><strong>SIRET :</strong> {siret}</p>}
-                      {siren && <p><strong>SIREN :</strong> {siren}</p>}
-                      <p><strong>Espèces pêchées :</strong> {selectedSpecies.length} espèce(s)</p>
-                      {fishingMethods.length > 0 && (
-                        <p><strong>Méthodes de pêche :</strong> {fishingMethods.length}</p>
-                      )}
-                      {fishingZones && (
-                        <p><strong>Zones de pêche :</strong> {fishingZones}</p>
-                      )}
+                  {fishingMethods.includes('autre') && (
+                    <div className="space-y-2">
+                      <Label htmlFor="otherMethod">Autre méthode</Label>
+                      <Input
+                        id="otherMethod"
+                        placeholder="Précisez..."
+                        value={otherMethod}
+                        onChange={(e) => setOtherMethod(e.target.value)}
+                      />
                     </div>
+                  )}
+
+                  <div className="flex gap-3">
+                    <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
+                      Retour
+                    </Button>
+                    <Button onClick={() => setStep(4)} className="flex-1">
+                      Suivant
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Étape 4: Espèces */}
+            {step === 4 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Fish className="h-5 w-5" />
+                    Espèces pêchées
+                  </CardTitle>
+                  <CardDescription>Sélectionnez les espèces que vous pêchez</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
+                    {species?.map(s => (
+                      <label
+                        key={s.id}
+                        className={`flex items-start gap-2 p-3 rounded-lg border cursor-pointer transition ${
+                          selectedSpecies.includes(s.id)
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <Checkbox
+                          checked={selectedSpecies.includes(s.id)}
+                          onCheckedChange={() => toggleSpecies(s.id)}
+                        />
+                        <div className="flex-1 space-y-1">
+                          <div className="text-sm font-medium">{s.name}</div>
+                          {selectedSpecies.includes(s.id) && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant={primarySpecies === s.id ? "default" : "outline"}
+                              className="mt-1 h-6 text-xs"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setPrimarySpecies(primarySpecies === s.id ? '' : s.id);
+                              }}
+                            >
+                              {primarySpecies === s.id ? '★ Principale' : 'Marquer'}
+                            </Button>
+                          )}
+                        </div>
+                      </label>
+                    ))}
                   </div>
 
-                  <div className="p-4 bg-muted rounded-lg">
-                    <p className="text-sm text-muted-foreground">
-                      Votre demande sera examinée par notre équipe. 
-                      Vous recevrez un e-mail une fois votre profil validé.
-                    </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="otherSpecies">Autre espèce (optionnel)</Label>
+                    <Input
+                      id="otherSpecies"
+                      placeholder="Ex: Langouste"
+                      value={otherSpecies}
+                      onChange={(e) => setOtherSpecies(e.target.value)}
+                    />
                   </div>
-                </div>
+
+                  <div className="flex gap-3">
+                    <Button variant="outline" onClick={() => setStep(3)} className="flex-1">
+                      Retour
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        if (validateStep4()) setStep(5);
+                      }}
+                      className="flex-1"
+                    >
+                      Suivant
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Étape 5: Photos & Description */}
+            {step === 5 && (
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Camera className="h-5 w-5" />
+                      Photos de ton bateau (max 2)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <PhotoUpload
+                        label="Photo 1"
+                        value={photoBoat1}
+                        onChange={setPhotoBoat1}
+                      />
+                      <PhotoUpload
+                        label="Photo 2"
+                        value={photoBoat2}
+                        onChange={setPhotoBoat2}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Photo vente à quai (1 photo)</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <PhotoUpload
+                      label="Photo vente"
+                      value={photoDockSale}
+                      onChange={setPhotoDockSale}
+                    />
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Raconte ton histoire</CardTitle>
+                    <CardDescription>
+                      Réponds à ces questions pour créer ta description
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="years">Depuis quand tu es marin pêcheur ?</Label>
+                      <Input
+                        id="years"
+                        placeholder="Ex: Depuis 15 ans, transmission familiale..."
+                        value={yearsExperience}
+                        onChange={(e) => setYearsExperience(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="passion">Qu'est-ce que tu préfères dans ton métier ?</Label>
+                      <Textarea
+                        id="passion"
+                        placeholder="Ex: Le contact avec la mer, la liberté..."
+                        value={passionQuote}
+                        onChange={(e) => setPassionQuote(e.target.value)}
+                        rows={2}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="philosophy">Comment tu travailles ?</Label>
+                      <Textarea
+                        id="philosophy"
+                        placeholder="Ex: Pêche artisanale, respect des saisons..."
+                        value={workPhilosophy}
+                        onChange={(e) => setWorkPhilosophy(e.target.value)}
+                        rows={2}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="message">Un message pour tes clients ?</Label>
+                      <Textarea
+                        id="message"
+                        placeholder="Ex: Consommer local, c'est soutenir une pêche durable..."
+                        value={clientMessage}
+                        onChange={(e) => setClientMessage(e.target.value)}
+                        rows={2}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Aperçu de ta description</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Textarea
+                      value={generatedDescription}
+                      onChange={(e) => setGeneratedDescription(e.target.value)}
+                      rows={8}
+                      className="font-serif"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Tu peux modifier le texte avant de valider
+                    </p>
+                  </CardContent>
+                </Card>
 
                 <div className="flex gap-3">
                   <Button variant="outline" onClick={() => setStep(4)} className="flex-1">
                     Retour
                   </Button>
-                  <Button 
-                    onClick={handleSubmit} 
-                    className="flex-1"
+                  <Button
+                    onClick={handleSubmit}
                     disabled={loading}
+                    className="flex-1 gap-2"
                   >
-                    {loading ? 'Envoi...' : 'Soumettre ma demande'}
+                    {loading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Création...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="h-4 w-4" />
+                        Créer ma page
+                      </>
+                    )}
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            )}
+          </div>
+
+          {/* Colonne preview - hidden sur mobile */}
+          <div className="hidden lg:block">
+            <FisherProfilePreview
+              boatName={boatName}
+              companyName={companyName}
+              mainFishingZone={mainFishingZone}
+              generatedDescription={generatedDescription}
+              selectedSpecies={selectedSpecies}
+              speciesNames={speciesNames}
+              fishingMethods={fishingMethods}
+              fishingZones={fishingZonesDetail.split(',').map(z => z.trim()).filter(z => z)}
+              phone={phone}
+              email={email}
+              facebookUrl={facebookUrl}
+              instagramUrl={instagramUrl}
+              websiteUrl={websiteUrl}
+              photoBoat1={photoBoat1}
+            />
+          </div>
         </div>
       </div>
     </div>

@@ -25,6 +25,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import DemoTracabilite from "./pages/DemoTracabilite";
 import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
+import OnboardingConfirmation from "./pages/OnboardingConfirmation";
 
 const queryClient = new QueryClient();
 
@@ -53,9 +54,11 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/pecheur/payment" element={<PecheurPayment />} />
             <Route path="/pecheur/onboarding" element={<PecheurOnboarding />} />
+            <Route path="/onboarding/confirmation" element={<OnboardingConfirmation />} />
             <Route path="/pecheur/nouvel-arrivage" element={<CreateArrivage />} />
             <Route path="/pecheur/edit-profile" element={<EditFisherProfile />} />
             <Route path="/pecheur/:id" element={<FisherProfile />} />
+            <Route path="/pecheurs/:slug" element={<FisherProfile />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
