@@ -276,7 +276,7 @@ const AdminDashboard = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('fishermen')
-        .select('*, profiles(email)')
+        .select('*')
         .eq('onboarding_payment_status', 'free')
         .order('created_at', { ascending: false })
         .limit(10);

@@ -58,16 +58,17 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Admin ${user.email} approving free access for ${email}`);
+    const emailLower = email.toLowerCase().trim();
+    console.log(`Admin ${user.email} approving free access for ${emailLower}`);
 
-    // Find user by email
+    // Find user by email (case-insensitive)
     const { data: { users }, error: searchError } = await supabaseAdmin.auth.admin.listUsers();
     if (searchError) {
       console.error('Error searching users:', searchError);
       throw searchError;
     }
 
-    const targetUser = users.find(u => u.email === email);
+    const targetUser = users.find(u => u.email?.toLowerCase() === emailLower);
     if (!targetUser) {
       return new Response(
         JSON.stringify({ error: 'Utilisateur non trouvé' }),
