@@ -1,15 +1,21 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Crown, MapPin, Clock, Shield, Users, Anchor } from "lucide-react";
 import Header from "@/components/Header";
 import ArrivageCard from "@/components/ArrivageCard";
+import PhotoCarousel from "@/components/PhotoCarousel";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import logoVilleHyeres from "@/assets/logo-ville-hyeres.png";
 import logoPortHyeres from "@/assets/logo-port-hyeres.png";
+import freshFishImage from "@/assets/landing/fresh-fish.jpg";
+import fishingPortImage from "@/assets/landing/fishing-port.jpg";
+import fishermanBoatImage from "@/assets/landing/fisherman-boat.jpg";
 
 const Landing = () => {
+  const navigate = useNavigate();
+
   // Fetch latest arrivages for preview
   const { data: latestArrivages } = useQuery({
     queryKey: ['latest-arrivages'],
@@ -61,21 +67,57 @@ const Landing = () => {
       })) || [];
     },
   });
+
+  // Fetch latest offer photos for carousel
+  const { data: carouselPhotos } = useQuery({
+    queryKey: ['carousel-photos'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('offer_photos')
+        .select(`
+          photo_url,
+          display_order,
+          offers (
+            drop_id,
+            species (
+              name
+            )
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      
+      return data?.map(photo => ({
+        url: photo.photo_url,
+        arrivageId: photo.offers?.drop_id || '',
+        speciesName: photo.offers?.species?.name || 'Poisson frais'
+      })) || [];
+    },
+  });
   return (
     <div className="min-h-screen bg-gradient-sky">
       <Header />
       
-      {/* Hero Section */}
-      <section className="container px-4 pt-20 pb-16">
+      {/* Hero Section with Background */}
+      <section 
+        className="container px-4 pt-20 pb-16 relative"
+        style={{
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${fishingPortImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      >
         <div className="mx-auto max-w-4xl text-center space-y-8">
           <div className="space-y-4">
-            <h1 className="text-5xl md:text-6xl font-bold text-foreground leading-tight">
+            <h1 className="text-5xl md:text-6xl font-bold text-white leading-tight">
               Du bateau à votre assiette,
-              <span className="block bg-gradient-ocean bg-clip-text text-transparent">
+              <span className="block text-white">
                 direct du quai
               </span>
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-xl text-white/90 max-w-2xl mx-auto">
               Achetez du poisson frais directement auprès des marins-pêcheurs. 
               Tracé, prix justes, qualité garantie.
             </p>
@@ -89,7 +131,7 @@ const Landing = () => {
               </Button>
             </Link>
             <Link to="/premium">
-              <Button size="lg" variant="outline" className="gap-2 text-lg px-8 h-14 border-2 hover:border-primary hover:bg-primary/5">
+              <Button size="lg" variant="outline" className="gap-2 text-lg px-8 h-14 border-2 border-white text-white hover:bg-white hover:text-primary">
                 <Crown className="h-5 w-5" />
                 Devenir Premium
               </Button>
@@ -198,6 +240,28 @@ const Landing = () => {
           </div>
         </div>
       </section>
+
+      {/* Photo Carousel */}
+      {carouselPhotos && carouselPhotos.length > 0 && (
+        <section className="container px-4 py-16 border-t border-border">
+          <div className="mx-auto max-w-6xl">
+            <div className="text-center space-y-4 mb-8">
+              <h2 className="text-4xl font-bold text-foreground">
+                Photos récentes de nos pêcheurs
+              </h2>
+              <p className="text-lg text-muted-foreground">
+                Découvrez les produits frais de la mer
+              </p>
+            </div>
+
+            <PhotoCarousel 
+              photos={carouselPhotos}
+              autoPlayInterval={4000}
+              onPhotoClick={(arrivageId) => navigate('/arrivages')}
+            />
+          </div>
+        </section>
+      )}
 
       {/* Latest Arrivages Preview */}
       {latestArrivages && latestArrivages.length > 0 && (

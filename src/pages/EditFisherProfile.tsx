@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Anchor, Save, Loader2 } from 'lucide-react';
 
@@ -54,6 +55,7 @@ const EditFisherProfile = () => {
   const [primarySpeciesId, setPrimarySpeciesId] = useState<string>('');
   const [selectedMethods, setSelectedMethods] = useState<FishingMethod[]>([]);
   const [zones, setZones] = useState<string>('');
+  const [displayNamePreference, setDisplayNamePreference] = useState<'boat_name' | 'company_name'>('boat_name');
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -93,6 +95,7 @@ const EditFisherProfile = () => {
 
         setFishermanId(fisherman.id);
         setFishermanSlug(fisherman.slug || '');
+        setDisplayNamePreference((fisherman.display_name_preference || 'boat_name') as 'boat_name' | 'company_name');
         form.reset({
           boat_name: fisherman.boat_name || '',
           company_name: fisherman.company_name || '',
@@ -153,6 +156,7 @@ const EditFisherProfile = () => {
           bio: values.bio || null,
           fishing_methods: selectedMethods.length > 0 ? selectedMethods : null,
           fishing_zones: zonesArray.length > 0 ? zonesArray : null,
+          display_name_preference: displayNamePreference,
         })
         .eq('id', fishermanId);
 
@@ -259,6 +263,22 @@ const EditFisherProfile = () => {
                     </FormItem>
                   )}
                 />
+
+                <div className="space-y-2">
+                  <FormLabel>Nom affiché publiquement</FormLabel>
+                  <Select value={displayNamePreference} onValueChange={(value: 'boat_name' | 'company_name') => setDisplayNamePreference(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="boat_name">Nom du bateau ({form.watch('boat_name') || 'non défini'})</SelectItem>
+                      <SelectItem value="company_name">Raison sociale ({form.watch('company_name') || 'non défini'})</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Ce nom apparaîtra dans vos arrivages et sur votre vitrine publique
+                  </FormDescription>
+                </div>
 
                 <FormField
                   control={form.control}

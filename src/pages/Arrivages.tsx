@@ -14,7 +14,7 @@ interface Drop {
   id: string;
   port_id: string;
   fisherman_id: string;
-  eta_at: string;
+  eta_at: string | null;
   sale_start_time: string | null;
   visible_at: string;
   public_visible_at: string | null;
@@ -25,8 +25,11 @@ interface Drop {
   };
   fishermen: {
     id: string;
+    slug: string;
     boat_name: string;
     company_name: string | null;
+    display_name_preference: string | null;
+    photo_url: string | null;
   };
   offers: Array<{
     id: string;
@@ -36,6 +39,10 @@ interface Drop {
     species: {
       name: string;
     };
+    offer_photos: Array<{
+      photo_url: string;
+      display_order: number;
+    }>;
   }>;
 }
 
@@ -76,8 +83,11 @@ const Arrivages = () => {
           ),
           fishermen (
             id,
+            slug,
             boat_name,
-            company_name
+            company_name,
+            display_name_preference,
+            photo_url
           ),
           offers (
             id,
@@ -86,11 +96,15 @@ const Arrivages = () => {
             available_units,
             species (
               name
+            ),
+            offer_photos (
+              photo_url,
+              display_order
             )
           )
         `)
         .in('status', ['scheduled', 'landed'])
-        .order('eta_at', { ascending: true });
+        .order('sale_start_time', { ascending: true });
 
       if (error) throw error;
       return data as Drop[];
@@ -244,14 +258,28 @@ const Arrivages = () => {
         {/* Liste des drops */}
         <div className="space-y-4">
           {drops?.map((drop) => {
-            const etaDate = new Date(drop.eta_at);
+            const etaDate = drop.eta_at ? new Date(drop.eta_at) : null;
             const saleDate = drop.sale_start_time ? new Date(drop.sale_start_time) : null;
             const displayDate = saleDate || etaDate;
             const portName = `${drop.ports.name}, ${drop.ports.city}`;
+            const displayName = drop.fishermen.display_name_preference === 'company_name' 
+              ? (drop.fishermen.company_name || drop.fishermen.boat_name)
+              : drop.fishermen.boat_name;
             
             return (
               <Card key={drop.id}>
                 <CardHeader>
+                  {/* Photo du pêcheur si disponible */}
+                  {drop.fishermen.photo_url && (
+                    <div className="mb-4">
+                      <img 
+                        src={drop.fishermen.photo_url} 
+                        alt={displayName}
+                        className="w-full h-48 object-cover rounded-lg"
+                      />
+                    </div>
+                  )}
+                  
                   <div className="flex items-start justify-between">
                     <div className="space-y-1 flex-1">
                       <CardTitle className="flex items-center gap-2">
@@ -260,32 +288,34 @@ const Arrivages = () => {
                       </CardTitle>
                       {drop.fishermen && (
                         <button
-                          onClick={() => navigate(`/pecheur/${drop.fishermen.id}`)}
+                          onClick={() => navigate(`/pecheurs/${drop.fishermen.slug}`)}
                           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
                         >
                           <Anchor className="h-4 w-4" />
                           <span className="font-medium">
-                            {drop.fishermen.company_name || drop.fishermen.boat_name}
+                            {displayName}
                           </span>
                         </button>
                       )}
                       <CardDescription>
-                        {saleDate ? (
+                        {saleDate && displayDate ? (
                           <>
                             Retrait à partir de : {displayDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                             {' · '}
                             {displayDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
-                            <span className="block text-xs text-muted-foreground/70 mt-1">
-                              (Débarqué le {etaDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} à {etaDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })})
-                            </span>
+                            {etaDate && (
+                              <span className="block text-xs text-muted-foreground/70 mt-1">
+                                (Débarqué le {etaDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} à {etaDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })})
+                              </span>
+                            )}
                           </>
-                        ) : (
+                        ) : displayDate ? (
                           <>
                             Arrivée prévue : {displayDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                             {' · '}
                             {displayDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
                           </>
-                        )}
+                        ) : null}
                       </CardDescription>
                     </div>
                     {getAccessBadge(drop)}
@@ -297,20 +327,39 @@ const Arrivages = () => {
                       <>
                         <div className="grid gap-2">
                           {drop.offers.map((offer) => (
-                            <div key={offer.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                              <div className="flex items-center gap-3">
-                                <Fish className="h-5 w-5 text-primary" />
-                                <div>
-                                  <p className="font-medium">{offer.species.name}</p>
-                                  <p className="text-sm text-muted-foreground">
-                                    {offer.available_units} unités disponibles
-                                  </p>
+                            <div key={offer.id} className="space-y-2">
+                              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                                <div className="flex items-center gap-3">
+                                  <Fish className="h-5 w-5 text-primary" />
+                                  <div>
+                                    <p className="font-medium">{offer.species.name}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {offer.available_units} unités disponibles
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <p className="font-bold text-lg">~{offer.unit_price}€</p>
+                                  <p className="text-xs text-muted-foreground">/ pièce*</p>
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <p className="font-bold text-lg">~{offer.unit_price}€</p>
-                                <p className="text-xs text-muted-foreground">/ pièce*</p>
-                              </div>
+                              
+                              {/* Photos de l'offre */}
+                              {offer.offer_photos && offer.offer_photos.length > 0 && (
+                                <div className="grid grid-cols-3 gap-2 px-3">
+                                  {offer.offer_photos
+                                    .sort((a, b) => a.display_order - b.display_order)
+                                    .slice(0, 3)
+                                    .map((photo, idx) => (
+                                      <img 
+                                        key={idx}
+                                        src={photo.photo_url} 
+                                        alt={`${offer.species.name} ${idx + 1}`}
+                                        className="w-full h-24 object-cover rounded-lg border border-border"
+                                      />
+                                    ))}
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -330,7 +379,7 @@ const Arrivages = () => {
                       <div className="text-center py-6">
                         <Fish className="h-12 w-12 mx-auto text-muted-foreground/50 mb-2" />
                         <p className="text-sm text-muted-foreground">
-                          Aucune offre disponible pour ce arrivage
+                          Aucune offre disponible pour cet arrivage
                         </p>
                       </div>
                     )}
