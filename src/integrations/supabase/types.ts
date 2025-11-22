@@ -207,6 +207,7 @@ export type Database = {
           generated_description: string | null
           id: string
           instagram_url: string | null
+          is_ambassador: boolean | null
           license_number: string | null
           main_fishing_zone: string | null
           onboarding_data: Json | null
@@ -252,6 +253,7 @@ export type Database = {
           generated_description?: string | null
           id?: string
           instagram_url?: string | null
+          is_ambassador?: boolean | null
           license_number?: string | null
           main_fishing_zone?: string | null
           onboarding_data?: Json | null
@@ -297,6 +299,7 @@ export type Database = {
           generated_description?: string | null
           id?: string
           instagram_url?: string | null
+          is_ambassador?: boolean | null
           license_number?: string | null
           main_fishing_zone?: string | null
           onboarding_data?: Json | null
@@ -1246,6 +1249,7 @@ export type Database = {
           generated_description: string | null
           id: string | null
           instagram_url: string | null
+          is_ambassador: boolean | null
           main_fishing_zone: string | null
           photo_boat_1: string | null
           photo_boat_2: string | null
@@ -1285,6 +1289,7 @@ export type Database = {
           generated_description: string
           id: string
           instagram_url: string
+          is_ambassador: boolean
           main_fishing_zone: string
           photo_boat_1: string
           photo_boat_2: string

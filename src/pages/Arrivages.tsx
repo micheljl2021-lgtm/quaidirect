@@ -31,6 +31,7 @@ interface Drop {
     display_name_preference: string | null;
     photo_url: string | null;
     main_fishing_zone: string | null;
+    is_ambassador?: boolean;
   };
   drop_photos?: Array<{
     id: string;
@@ -88,7 +89,8 @@ const Arrivages = () => {
           company_name,
           display_name_preference,
           photo_url,
-          main_fishing_zone
+          main_fishing_zone,
+          is_ambassador
         ),
         ports (
           id,
