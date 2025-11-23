@@ -22,86 +22,6 @@ const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleQuickLogin = async (testEmail: string, testPassword: string, role: string) => {
-    setLoading(true);
-    try {
-      // Try to sign in first
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: testEmail,
-        password: testPassword,
-      });
-
-      if (signInError) {
-        // If sign in fails, create the account
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email: testEmail,
-          password: testPassword,
-          options: {
-            emailRedirectTo: `${window.location.origin}/`,
-          },
-        });
-
-        if (signUpError) throw signUpError;
-
-        // Add role
-        if (data.user) {
-          await supabase.rpc('add_test_user_role', {
-            user_email: testEmail,
-            user_role: role as any,
-          });
-
-          // If fisherman, create fisherman entry
-          if (role === 'fisherman') {
-            const { data: ports } = await supabase
-              .from('ports')
-              .select('id')
-              .eq('name', 'Hyères')
-              .single();
-
-            if (ports) {
-              await supabase.from('fishermen').insert({
-                user_id: data.user.id,
-                boat_name: 'SEB',
-                boat_registration: 'HY-TEST-001',
-                siret: '12345678900001',
-                license_number: 'TEST-001',
-                verified_at: new Date().toISOString(),
-              });
-            }
-          }
-
-          toast({
-            title: 'Compte créé et connecté',
-            description: `Bienvenue ${testEmail}`,
-          });
-        }
-      } else {
-        toast({
-          title: 'Connexion réussie',
-          description: `Bienvenue ${testEmail}`,
-        });
-      }
-
-      // Navigate based on role
-      if (role === 'admin') {
-        navigate('/dashboard/admin');
-      } else if (role === 'fisherman') {
-        navigate('/dashboard/pecheur');
-      } else if (role === 'premium') {
-        navigate('/dashboard/premium');
-      } else {
-        navigate('/dashboard/user');
-      }
-    } catch (error: any) {
-      toast({
-        title: 'Erreur',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,21 +36,6 @@ const Auth = () => {
       });
       
       if (error) throw error;
-      
-      // Check if this is a test account and assign role
-      const testAccounts: Record<string, 'fisherman' | 'premium' | 'admin'> = {
-        'test@pecheur.fr': 'fisherman',
-        'test@premium.fr': 'premium',
-        'test@admin.fr': 'admin',
-      };
-      
-      if (data.user && testAccounts[email.toLowerCase()]) {
-        // Call the helper function to assign role
-        await supabase.rpc('add_test_user_role', {
-          user_email: email.toLowerCase(),
-          user_role: testAccounts[email.toLowerCase()],
-        });
-      }
       
       toast({
         title: 'Compte créé',
@@ -460,39 +365,6 @@ const Auth = () => {
             ) : null}
           </CardContent>
         </Card>
-
-        <div className="text-center text-sm text-muted-foreground space-y-3">
-          <p className="font-medium text-base">🚀 Connexion rapide pour les tests</p>
-          <div className="space-y-2">
-            <Button
-              onClick={() => handleQuickLogin('test@pecheur.fr', 'pecheur123', 'fisherman')}
-              disabled={loading}
-              className="w-full"
-              variant="outline"
-            >
-              🐟 Connexion Pêcheur
-            </Button>
-            <Button
-              onClick={() => handleQuickLogin('test@premium.fr', 'premium123', 'premium')}
-              disabled={loading}
-              className="w-full"
-              variant="outline"
-            >
-              ⭐ Connexion Premium
-            </Button>
-            <Button
-              onClick={() => handleQuickLogin('test@admin.fr', 'admin123', 'admin')}
-              disabled={loading}
-              className="w-full"
-              variant="outline"
-            >
-              👑 Connexion Admin
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Les comptes seront créés automatiquement si nécessaire
-          </p>
-        </div>
       </div>
     </div>
   );
