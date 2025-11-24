@@ -187,6 +187,7 @@ export type Database = {
       fishermen: {
         Row: {
           address: string | null
+          ambassador_slot: number | null
           bio: string | null
           boat_name: string
           boat_registration: string
@@ -233,6 +234,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          ambassador_slot?: number | null
           bio?: string | null
           boat_name: string
           boat_registration: string
@@ -279,6 +281,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          ambassador_slot?: number | null
           bio?: string | null
           boat_name?: string
           boat_registration?: string
@@ -325,6 +328,56 @@ export type Database = {
         }
         Relationships: []
       }
+      fishermen_contacts: {
+        Row: {
+          contact_group: string | null
+          created_at: string | null
+          email: string | null
+          first_name: string | null
+          fisherman_id: string
+          id: string
+          imported_at: string | null
+          last_contacted_at: string | null
+          last_name: string | null
+          notes: string | null
+          phone: string | null
+        }
+        Insert: {
+          contact_group?: string | null
+          created_at?: string | null
+          email?: string | null
+          first_name?: string | null
+          fisherman_id: string
+          id?: string
+          imported_at?: string | null
+          last_contacted_at?: string | null
+          last_name?: string | null
+          notes?: string | null
+          phone?: string | null
+        }
+        Update: {
+          contact_group?: string | null
+          created_at?: string | null
+          email?: string | null
+          first_name?: string | null
+          fisherman_id?: string
+          id?: string
+          imported_at?: string | null
+          last_contacted_at?: string | null
+          last_name?: string | null
+          notes?: string | null
+          phone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fishermen_contacts_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fishermen_followers: {
         Row: {
           created_at: string | null
@@ -347,6 +400,60 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "fishermen_followers_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fishermen_messages: {
+        Row: {
+          body: string
+          created_at: string | null
+          drop_id: string | null
+          fisherman_id: string
+          id: string
+          message_type: string
+          recipient_count: number | null
+          sent_at: string | null
+          sent_to_group: string | null
+          subject: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string | null
+          drop_id?: string | null
+          fisherman_id: string
+          id?: string
+          message_type: string
+          recipient_count?: number | null
+          sent_at?: string | null
+          sent_to_group?: string | null
+          subject?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string | null
+          drop_id?: string | null
+          fisherman_id?: string
+          id?: string
+          message_type?: string
+          recipient_count?: number | null
+          sent_at?: string | null
+          sent_to_group?: string | null
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fishermen_messages_drop_id_fkey"
+            columns: ["drop_id"]
+            isOneToOne: false
+            referencedRelation: "drops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fishermen_messages_fisherman_id_fkey"
             columns: ["fisherman_id"]
             isOneToOne: false
             referencedRelation: "fishermen"
