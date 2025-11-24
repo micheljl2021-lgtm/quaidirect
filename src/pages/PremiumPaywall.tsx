@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { StripeBuyButton } from "@/components/StripeBuyButton";
 
 const PLANS = {
   monthly: {
@@ -149,14 +150,10 @@ export default function PremiumPaywall() {
               </ul>
             </CardContent>
             <CardFooter>
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={() => handleSubscribe(PLANS.monthly.priceId, PLANS.monthly.plan)}
-                disabled={loading === PLANS.monthly.plan}
-              >
-                {loading === PLANS.monthly.plan ? "Chargement..." : "S'abonner Mensuel"}
-              </Button>
+              <StripeBuyButton
+                buyButtonId="buy_btn_1SX6uuHAdgkt6k4qJ7jAhGyM"
+                publishableKey="pk_test_51SQbdCHAdgkt6k4qDKCNjnZiGkvzO7lOw2teFSlPlmEWT1oQ5l8TwkOhulWaMOoFB7iBuZgdwPj3IgdQNbEv32cF003MbMUk9Q"
+              />
             </CardFooter>
           </Card>
 
