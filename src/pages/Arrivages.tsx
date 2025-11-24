@@ -298,10 +298,10 @@ const Arrivages = () => {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">Zone de pêche</label>
                 <Select value={filterZone} onValueChange={setFilterZone}>
-                  <SelectTrigger>
+                  <SelectTrigger className="z-50">
                     <SelectValue placeholder="Toutes les zones" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-50">
                     <SelectItem value="all">Toutes les zones</SelectItem>
                     {uniqueZones.map(zone => (
                       <SelectItem key={zone} value={zone}>{zone}</SelectItem>
@@ -314,10 +314,10 @@ const Arrivages = () => {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">Espèce</label>
                 <Select value={filterSpecies} onValueChange={setFilterSpecies}>
-                  <SelectTrigger>
+                  <SelectTrigger className="z-50">
                     <SelectValue placeholder="Toutes les espèces" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-50">
                     <SelectItem value="all">Toutes les espèces</SelectItem>
                     {uniqueSpecies.map(species => (
                       <SelectItem key={species.id} value={species.id}>{species.name}</SelectItem>
@@ -330,10 +330,10 @@ const Arrivages = () => {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">Port</label>
                 <Select value={filterPort} onValueChange={setFilterPort}>
-                  <SelectTrigger>
+                  <SelectTrigger className="z-50">
                     <SelectValue placeholder="Tous les ports" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-50">
                     <SelectItem value="all">Tous les ports</SelectItem>
                     {uniquePorts.map(port => (
                       <SelectItem key={port.id} value={port.id}>{port.name}</SelectItem>
@@ -346,10 +346,10 @@ const Arrivages = () => {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">Pêcheur</label>
                 <Select value={filterFisherman} onValueChange={setFilterFisherman}>
-                  <SelectTrigger>
+                  <SelectTrigger className="z-50">
                     <SelectValue placeholder="Tous les pêcheurs" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-50">
                     <SelectItem value="all">Tous les pêcheurs</SelectItem>
                     {uniqueFishermen.map(fisherman => (
                       <SelectItem key={fisherman.id} value={fisherman.id}>{fisherman.name}</SelectItem>

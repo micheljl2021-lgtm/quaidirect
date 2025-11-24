@@ -47,7 +47,7 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch drop details
+    // Fetch drop details with species
     const { data: drop, error: dropError } = await supabase
       .from('drops')
       .select(`
@@ -60,7 +60,10 @@ serve(async (req) => {
           display_name_preference
         ),
         offers(
-          species(name)
+          species(
+            id,
+            name
+          )
         ),
         ports(
           name,
@@ -75,30 +78,58 @@ serve(async (req) => {
       throw new Error('Drop not found');
     }
 
-    // Get followers of this fisherman
-    const { data: followers, error: followersError } = await supabase
+    // Extract species IDs from offers
+    const speciesIds = (drop.offers as any[])
+      ?.map((o: any) => o.species?.id)
+      .filter(Boolean) || [];
+
+    console.log('Drop species IDs:', speciesIds);
+
+    // Get Premium users who follow these species
+    const { data: premiumFollowers, error: followersError } = await supabase
+      .from('follow_species')
+      .select(`
+        user_id,
+        user_roles!inner(role)
+      `)
+      .in('species_id', speciesIds)
+      .eq('user_roles.role', 'premium');
+
+    if (followersError) {
+      console.error('Error fetching premium followers:', followersError);
+    }
+
+    const premiumUserIds = premiumFollowers?.map(f => f.user_id) || [];
+    console.log('Premium users to notify:', premiumUserIds.length);
+
+    // Also get regular fisherman followers
+    const { data: fishermenFollowers, error: fishermenFollowersError } = await supabase
       .from('fishermen_followers')
       .select('user_id')
       .eq('fisherman_id', drop.fisherman_id);
 
-    if (followersError) {
-      console.error('Error fetching followers:', followersError);
-      throw followersError;
+    if (fishermenFollowersError) {
+      console.error('Error fetching fishermen followers:', fishermenFollowersError);
     }
 
-    if (!followers || followers.length === 0) {
-      console.log('No followers to notify');
-      return new Response(JSON.stringify({ message: 'No followers to notify' }), {
+    const fishermenFollowerIds = fishermenFollowers?.map(f => f.user_id) || [];
+
+    // Combine both lists (unique users)
+    const allUserIds = Array.from(new Set([...premiumUserIds, ...fishermenFollowerIds]));
+    console.log('Total users to notify:', allUserIds.length);
+
+    if (allUserIds.length === 0) {
+      console.log('No users to notify');
+      return new Response(JSON.stringify({ message: 'No users to notify' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     // Get push subscriptions for these users
-    const userIds = followers.map(f => f.user_id);
     const { data: subscriptions, error: subsError } = await supabase
       .from('push_subscriptions')
       .select('*')
-      .in('user_id', userIds);
+      .in('user_id', allUserIds);
 
     if (subsError) {
       console.error('Error fetching subscriptions:', subsError);

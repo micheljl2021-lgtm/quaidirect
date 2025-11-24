@@ -1,21 +1,22 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Crown, MapPin, Clock, Shield, Users, Anchor, Award, ArrowRight } from "lucide-react";
+import { Crown, MapPin, Bell, Shield, Users, Anchor, Award, ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
 import ArrivageCard from "@/components/ArrivageCard";
 import PhotoCarousel from "@/components/PhotoCarousel";
 import AmbassadorBadge from "@/components/AmbassadorBadge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import logoVilleHyeres from "@/assets/logo-ville-hyeres.png";
-import logoPortHyeres from "@/assets/logo-port-hyeres.png";
 import freshFishImage from "@/assets/landing/fresh-fish.jpg";
 import fishingPortImage from "@/assets/landing/fishing-port.jpg";
 import fishermanBoatImage from "@/assets/landing/fisherman-boat.jpg";
 
+import { useLandingStats } from "@/hooks/useLandingStats";
+
 const Landing = () => {
   const navigate = useNavigate();
+  const { fishermenCount, usersCount } = useLandingStats();
 
   // Fetch latest arrivages for preview
   const { data: latestArrivages } = useQuery({
@@ -147,23 +148,18 @@ const Landing = () => {
               </Button>
             </Link>
             <Link to="/premium">
-              <Button size="lg" variant="outline" className="gap-2 text-lg px-8 h-14 border-2 border-white text-white hover:bg-white hover:text-primary">
+              <Button size="lg" variant="outline" className="gap-2 text-lg px-8 h-14 border-2 border-white bg-white text-primary hover:bg-white/90">
                 <Crown className="h-5 w-5" />
-                Devenir Premium
+                Premium
               </Button>
             </Link>
           </div>
 
           <div className="mt-8 flex justify-center items-center gap-8">
             <img 
-              src={logoVilleHyeres} 
-              alt="Ville d'Hyères Les Palmiers" 
-              className="h-16 opacity-80"
-            />
-            <img 
-              src={logoPortHyeres} 
-              alt="Port de Hyères" 
-              className="h-16 opacity-80"
+              src={'/src/assets/logo-peche-durable.png'} 
+              alt="Pêche Durable et Responsable" 
+              className="h-20 opacity-90"
             />
           </div>
         </div>
@@ -177,7 +173,7 @@ const Landing = () => {
               <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                 <Anchor className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="text-3xl font-bold text-foreground">150+</h3>
+              <h3 className="text-3xl font-bold text-foreground">{fishermenCount}</h3>
               <p className="text-sm text-muted-foreground">Marins-pêcheurs</p>
             </CardContent>
           </Card>
@@ -197,7 +193,7 @@ const Landing = () => {
               <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                 <Users className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="text-3xl font-bold text-foreground">5k+</h3>
+              <h3 className="text-3xl font-bold text-foreground">{usersCount}</h3>
               <p className="text-sm text-muted-foreground">Utilisateurs actifs</p>
             </CardContent>
           </Card>
@@ -216,7 +212,7 @@ const Landing = () => {
               Accédez en priorité aux meilleurs arrivages
             </h2>
             <p className="text-lg text-muted-foreground">
-              30 minutes d'avance + pré-réservation jusqu'à 5 pièces
+              Soutenez les points de vente et recevez des alertes sur vos espèces favorites
             </p>
           </div>
 
@@ -224,11 +220,11 @@ const Landing = () => {
             <Card>
               <CardContent className="pt-6 space-y-3">
                 <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Clock className="h-5 w-5 text-primary" />
+                  <MapPin className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="text-xl font-bold text-foreground">Accès prioritaire</h3>
+                <h3 className="text-xl font-bold text-foreground">Soutenez les points de vente</h3>
                 <p className="text-muted-foreground">
-                  Découvrez les arrivages 30 minutes avant le public. Les meilleures pièces pour vous.
+                  Une partie de votre abonnement aide à financer les stands à quai de vos marins pêcheurs préférés.
                 </p>
               </CardContent>
             </Card>
@@ -236,11 +232,11 @@ const Landing = () => {
             <Card>
               <CardContent className="pt-6 space-y-3">
                 <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Shield className="h-5 w-5 text-primary" />
+                  <Bell className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="text-xl font-bold text-foreground">Pré-réservation</h3>
+                <h3 className="text-xl font-bold text-foreground">Alertes poissons favoris</h3>
                 <p className="text-muted-foreground">
-                  Réservez jusqu'à 5 pièces par arrivage. Garantissez votre achat avant même l'arrivée au port.
+                  Recevez des notifications dès qu'un point de vente propose vos espèces préférées.
                 </p>
               </CardContent>
             </Card>
@@ -322,7 +318,7 @@ const Landing = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card className="bg-card">
               <CardContent className="pt-6 space-y-4">
                 <div className="flex items-center gap-3">
@@ -330,8 +326,8 @@ const Landing = () => {
                     <Anchor className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-foreground">Jean-Michel Coste</h3>
-                    <p className="text-sm text-muted-foreground">Le Mistral - Hyères</p>
+                    <h3 className="font-bold text-foreground">Sébastien Z.</h3>
+                    <p className="text-sm text-muted-foreground">Hyères</p>
                   </div>
                 </div>
                 <p className="text-muted-foreground italic">
@@ -348,26 +344,8 @@ const Landing = () => {
                     <Anchor className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-foreground">Antoine Ferracci</h3>
-                    <p className="text-sm text-muted-foreground">L'Écume - Toulon</p>
-                  </div>
-                </div>
-                <p className="text-muted-foreground italic">
-                  "Le système de pré-réservation a changé ma vie. Plus de stress à l'arrivée au port, 
-                  je sais déjà ce qui est vendu. Mes revenus ont augmenté de 30%."
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card">
-              <CardContent className="pt-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Anchor className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-foreground">Marc Bianco</h3>
-                    <p className="text-sm text-muted-foreground">La Perle - Six-Fours</p>
+                    <h3 className="font-bold text-foreground">Sébastien P.</h3>
+                    <p className="text-sm text-muted-foreground">Carqueiranne</p>
                   </div>
                 </div>
                 <p className="text-muted-foreground italic">
@@ -524,13 +502,15 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Partnership Section */}
+      {/* Pêche Durable Section */}
       <section className="container px-4 py-12 border-t border-border">
         <div className="mx-auto max-w-4xl">
           <Card className="bg-gradient-ocean/5 border-primary/20">
-            <CardContent className="pt-8 pb-8">
-              <p className="text-center text-lg text-foreground leading-relaxed italic">
-                « En partenariat avec la Ville de Hyères les Palmiers et le Port de Hyères, notre plateforme engage le développement local et maritime : circuits courts, pêche durable, et numérique au service des pêcheurs de la rade. »
+            <CardContent className="pt-8 pb-8 text-center space-y-4">
+              <h3 className="text-2xl font-bold text-foreground">Pêche éco-responsable et durable</h3>
+              <p className="text-lg text-foreground leading-relaxed">
+                QuaiDirect soutient les marins-pêcheurs français dans leur démarche de vente directe et de circuit court. 
+                Notre mission : aider les petits pêcheurs et les nouveaux marins à valoriser leur travail et à créer un lien direct avec les consommateurs.
               </p>
             </CardContent>
           </Card>

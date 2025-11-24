@@ -27,7 +27,7 @@ interface UserSubscription {
   package: SubscriptionPackage;
 }
 
-const Forfaits = () => {
+const Panier = () => {
   const { user } = useAuth();
   const [packages, setPackages] = useState<SubscriptionPackage[]>([]);
   const [userSubscription, setUserSubscription] = useState<UserSubscription | null>(null);
@@ -51,7 +51,7 @@ const Forfaits = () => {
       if (error) throw error;
       setPackages(data || []);
     } catch (error: any) {
-      toast.error("Erreur lors du chargement des forfaits");
+      toast.error("Erreur lors du chargement du panier");
       console.error(error);
     } finally {
       setLoading(false);
@@ -101,7 +101,7 @@ const Forfaits = () => {
 
       if (error) throw error;
 
-      toast.success("Forfait souscrit avec succès!");
+      toast.success("Panier souscrit avec succès!");
       loadUserSubscription();
     } catch (error: any) {
       toast.error("Erreur lors de la souscription");
@@ -117,10 +117,10 @@ const Forfaits = () => {
         <div className="mb-8 space-y-4">
           <div className="text-center max-w-2xl mx-auto">
             <h1 className="text-4xl font-bold text-foreground mb-2">
-              Forfaits Poisson Frais
+              Panier Poisson Frais
             </h1>
             <p className="text-lg text-muted-foreground">
-              Économisez avec nos forfaits hebdomadaires et mensuels
+              Économisez avec nos paniers hebdomadaires et mensuels
             </p>
           </div>
         </div>
@@ -131,7 +131,7 @@ const Forfaits = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-xl font-bold text-foreground">
-                    Votre forfait actif
+                    Votre panier actif
                   </h3>
                   <p className="text-sm text-muted-foreground">
                     {userSubscription.package.name}
@@ -261,4 +261,4 @@ const Forfaits = () => {
   );
 };
 
-export default Forfaits;
+export default Panier;

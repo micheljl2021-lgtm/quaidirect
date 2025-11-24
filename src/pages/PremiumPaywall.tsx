@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Crown, Check, Clock, Bell, Sparkles, Shield } from "lucide-react";
+import { Crown, Check, MapPin, Bell, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { StripeBuyButton } from "@/components/StripeBuyButton";
 
 const PLANS = {
   monthly: {
@@ -31,24 +30,24 @@ const PLANS = {
 
 const FEATURES = [
   {
-    icon: Clock,
-    title: "Accès anticipé de 30 min",
-    description: "Soyez les premiers informés des arrivages avant les autres utilisateurs",
+    icon: MapPin,
+    title: "Soutenez les points de vente",
+    description: "Une partie de votre abonnement aide à financer et améliorer les stands à quai",
   },
   {
-    icon: Sparkles,
-    title: "Pré-réservations exclusives",
-    description: "Réservez vos poissons préférés avant qu'ils ne soient disponibles publiquement",
+    icon: Bell,
+    title: "Alertes sur vos poissons favoris",
+    description: "Choisissez vos espèces préférées, soyez notifié dès qu'un point de vente les propose",
   },
   {
     icon: Bell,
     title: "Notifications prioritaires",
-    description: "Recevez des alertes en temps réel pour les arrivages correspondant à vos préférences",
+    description: "Infos en priorité sur les nouveaux points de vente près de chez vous",
   },
   {
-    icon: Shield,
+    icon: Star,
     title: "Badge Premium",
-    description: "Montrez votre soutien aux pêcheurs avec votre badge exclusif",
+    description: "Mise en avant dans votre compte & accès aux futures fonctionnalités réservées",
   },
 ];
 
@@ -149,11 +148,18 @@ export default function PremiumPaywall() {
                 ))}
               </ul>
             </CardContent>
-            <CardFooter>
-              <StripeBuyButton
-                buyButtonId="buy_btn_1SX6uuHAdgkt6k4qJ7jAhGyM"
-                publishableKey="pk_test_51SQbdCHAdgkt6k4qDKCNjnZiGkvzO7lOw2teFSlPlmEWT1oQ5l8TwkOhulWaMOoFB7iBuZgdwPj3IgdQNbEv32cF003MbMUk9Q"
-              />
+            <CardFooter className="flex-col gap-2">
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={() => handleSubscribe(PLANS.monthly.priceId, PLANS.monthly.plan)}
+                disabled={loading === PLANS.monthly.plan}
+              >
+                {loading === PLANS.monthly.plan ? "Chargement..." : "Essai gratuit 7 jours puis 4,99€/mois"}
+              </Button>
+              <p className="text-xs text-center text-muted-foreground">
+                Aidez-nous à développer les points de vente de vos marins pêcheurs préférés
+              </p>
             </CardFooter>
           </Card>
 
@@ -191,7 +197,7 @@ export default function PremiumPaywall() {
                 ))}
               </ul>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="flex-col gap-2">
               <Button
                 className="w-full"
                 size="lg"
@@ -199,8 +205,11 @@ export default function PremiumPaywall() {
                 onClick={() => handleSubscribe(PLANS.annual.priceId, PLANS.annual.plan)}
                 disabled={loading === PLANS.annual.plan}
               >
-                {loading === PLANS.annual.plan ? "Chargement..." : "S'abonner Annuel"}
+                {loading === PLANS.annual.plan ? "Chargement..." : "Essai gratuit 7 jours puis 39€/an"}
               </Button>
+              <p className="text-xs text-center text-muted-foreground">
+                Économisez 2 mois • Soit 3,25€ / mois
+              </p>
             </CardFooter>
           </Card>
         </div>

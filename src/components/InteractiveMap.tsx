@@ -15,9 +15,10 @@ interface MapProps {
   ports?: Port[];
   onPortClick?: (portId: string) => void;
   selectedPortId?: string | null;
+  userLocation?: { lat: number; lng: number } | null;
 }
 
-const InteractiveMap = ({ ports = [], onPortClick, selectedPortId }: MapProps) => {
+const InteractiveMap = ({ ports = [], onPortClick, selectedPortId, userLocation }: MapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const markers = useRef<maplibregl.Marker[]>([]);
@@ -48,8 +49,8 @@ const InteractiveMap = ({ ports = [], onPortClick, selectedPortId }: MapProps) =
           },
         ],
       },
-      center: [-1.5, 47.0], // Centre sur la côte atlantique française
-      zoom: 6,
+      center: userLocation ? [userLocation.lng, userLocation.lat] : [-1.5, 47.0],
+      zoom: userLocation ? 10 : 6,
     });
 
     // Add navigation controls
@@ -143,15 +144,51 @@ const InteractiveMap = ({ ports = [], onPortClick, selectedPortId }: MapProps) =
       markers.current.push(marker);
     });
 
-    // Fit map to show all ports
+    // Add user location marker if available
+    if (userLocation && map.current) {
+      const userMarker = document.createElement('div');
+      userMarker.style.width = '20px';
+      userMarker.style.height = '20px';
+      userMarker.innerHTML = `
+        <div style="
+          width: 100%;
+          height: 100%;
+          background: #ef4444;
+          border-radius: 50%;
+          border: 3px solid white;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          animation: pulse 2s infinite;
+        "></div>
+      `;
+
+      const userLocationMarker = new maplibregl.Marker({ element: userMarker })
+        .setLngLat([userLocation.lng, userLocation.lat])
+        .setPopup(
+          new maplibregl.Popup({ offset: 15 })
+            .setHTML(`
+              <div style="padding: 8px;">
+                <p style="font-weight: 600; font-size: 12px;">📍 Vous êtes ici</p>
+              </div>
+            `)
+        )
+        .addTo(map.current);
+
+      markers.current.push(userLocationMarker);
+    }
+
+    // Fit map to show all ports (or user location if no ports)
     if (ports.length > 0) {
       const bounds = new maplibregl.LngLatBounds();
       ports.forEach(port => {
         bounds.extend([port.longitude, port.latitude]);
       });
       map.current.fitBounds(bounds, { padding: 50, maxZoom: 10 });
+    } else if (userLocation && map.current) {
+      // Center on user if no ports
+      map.current.setCenter([userLocation.lng, userLocation.lat]);
+      map.current.setZoom(12);
     }
-  }, [ports, mapReady, selectedPortId, onPortClick]);
+  }, [ports, mapReady, selectedPortId, onPortClick, userLocation]);
 
   return (
     <div className="relative w-full h-full rounded-xl overflow-hidden border-2 border-border shadow-lg">
