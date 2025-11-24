@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import ArrivageCard from "@/components/ArrivageCard";
@@ -12,6 +12,25 @@ import { Filter, Search, MapPin } from "lucide-react";
 const Carte = () => {
   const [selectedPort, setSelectedPort] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+  // Get user's geolocation
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.log('Geolocation error:', error);
+          // Silently fail, map will use default center
+        }
+      );
+    }
+  }, []);
 
   // Fetch real ports from database
   const { data: ports } = useQuery({
@@ -153,6 +172,7 @@ const Carte = () => {
             ports={ports || []}
             selectedPortId={selectedPort}
             onPortClick={setSelectedPort}
+            userLocation={userLocation}
           />
         </div>
 

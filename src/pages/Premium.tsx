@@ -2,7 +2,7 @@ import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Crown, Check, Clock, Shield, Bell, Star } from "lucide-react";
+import { Crown, Check, MapPin, Bell, Star } from "lucide-react";
 
 const Premium = () => {
   return (
@@ -25,7 +25,7 @@ const Premium = () => {
           </h1>
           
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Accédez 30 minutes avant tout le monde et pré-réservez jusqu'à 5 pièces par arrivage
+            Soutenez les points de vente et recevez des alertes sur vos espèces favorites
           </p>
         </div>
 
@@ -47,10 +47,10 @@ const Premium = () => {
               </Button>
               <div className="space-y-3">
                 {[
-                  "Accès prioritaire 30 min",
-                  "Pré-réservation 5 pièces",
-                  "Notifications push",
-                  "Sans engagement"
+                  "Soutenez les points de vente",
+                  "Alertes poissons favoris",
+                  "Notifications prioritaires",
+                  "Essai gratuit 7 jours"
                 ].map((feature, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10">
@@ -85,11 +85,11 @@ const Premium = () => {
               </Button>
               <div className="space-y-3">
                 {[
-                  "Accès prioritaire 30 min",
-                  "Pré-réservation 5 pièces",
-                  "Notifications push",
+                  "Soutenez les points de vente",
+                  "Alertes poissons favoris",
+                  "Notifications prioritaires",
                   "Badge Premium visible",
-                  "Support prioritaire"
+                  "Essai gratuit 7 jours"
                 ].map((feature, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10">
@@ -113,13 +113,13 @@ const Premium = () => {
             <Card>
               <CardContent className="pt-6 space-y-4">
                 <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                  <Clock className="h-6 w-6 text-primary" />
+                  <MapPin className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">
-                  30 minutes d'avance
+                  Soutenez les points de vente
                 </h3>
                 <p className="text-muted-foreground">
-                  Découvrez les nouveaux arrivages avant le grand public. Les meilleures pièces vous attendent.
+                  Une partie de votre abonnement aide à financer et améliorer les stands à quai de vos marins pêcheurs préférés.
                 </p>
               </CardContent>
             </Card>
@@ -127,13 +127,13 @@ const Premium = () => {
             <Card>
               <CardContent className="pt-6 space-y-4">
                 <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                  <Shield className="h-6 w-6 text-primary" />
+                  <Bell className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">
-                  Pré-réservation garantie
+                  Alertes poissons favoris
                 </h3>
                 <p className="text-muted-foreground">
-                  Réservez jusqu'à 5 pièces par arrivage. Plus de risque d'arriver trop tard au port.
+                  Choisissez vos espèces préférées et recevez des notifications dès qu'un point de vente les propose.
                 </p>
               </CardContent>
             </Card>

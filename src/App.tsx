@@ -18,7 +18,7 @@ import FisherProfile from "./pages/FisherProfile";
 import EditFisherProfile from "./pages/EditFisherProfile";
 import Recettes from "./pages/Recettes";
 import RecetteDetail from "./pages/RecetteDetail";
-import Forfaits from "./pages/Forfaits";
+import Panier from "./pages/Panier";
 import Arrivages from "./pages/Arrivages";
 import UserDashboard from "./pages/UserDashboard";
 import PremiumDashboard from "./pages/PremiumDashboard";
@@ -45,7 +45,7 @@ const App = () => (
             <Route path="/demo-tracabilite" element={<DemoTracabilite />} />
           <Route path="/recettes" element={<Recettes />} />
           <Route path="/recettes/:id" element={<RecetteDetail />} />
-          <Route path="/forfaits" element={<Forfaits />} />
+          <Route path="/panier" element={<Panier />} />
           <Route path="/arrivages" element={<Arrivages />} />
             <Route path="/dashboard/user" element={<UserDashboard />} />
             <Route path="/dashboard/premium" element={<PremiumDashboard />} />

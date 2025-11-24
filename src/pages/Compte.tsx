@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Crown, User, Bell, MapPin, Settings, Anchor, Shield } from "lucide-react";
+import { Crown, User, Bell, MapPin, Settings, Anchor, Shield, Fish } from "lucide-react";
+import { FavoriteSpeciesManager } from "@/components/FavoriteSpeciesManager";
 
 const Compte = () => {
   const { user, userRole, isVerifiedFisherman } = useAuth();
@@ -269,6 +270,11 @@ const Compte = () => {
               </Button>
             </CardContent>
           </Card>
+
+          {/* Favorite Species - Premium Feature */}
+          {userRole === 'premium' && (
+            <FavoriteSpeciesManager />
+          )}
 
           {/* Ports préférés */}
           <Card>
