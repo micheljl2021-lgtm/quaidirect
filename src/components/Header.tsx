@@ -45,8 +45,8 @@ const Header = () => {
           <Link to="/recettes" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Recettes
           </Link>
-          <Link to="/forfaits" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-            Forfaits
+          <Link to="/panier" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            Panier
           </Link>
           <Link to="/premium" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Premium
@@ -162,11 +162,11 @@ const Header = () => {
                 Recettes
               </Link>
               <Link 
-                to="/forfaits" 
+                to="/panier" 
                 className="text-base font-medium text-foreground hover:text-primary transition-colors py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Forfaits
+                Panier
               </Link>
               <Link 
                 to="/premium" 

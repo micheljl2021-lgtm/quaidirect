@@ -13,10 +13,12 @@ import fishingPortImage from "@/assets/landing/fishing-port.jpg";
 import fishermanBoatImage from "@/assets/landing/fisherman-boat.jpg";
 
 import { useLandingStats } from "@/hooks/useLandingStats";
+import { useAmbassadorStats } from "@/hooks/useAmbassadorStats";
 
 const Landing = () => {
   const navigate = useNavigate();
   const { fishermenCount, usersCount } = useLandingStats();
+  const { data: ambassadorStats } = useAmbassadorStats();
 
   // Fetch latest arrivages for preview
   const { data: latestArrivages } = useQuery({
@@ -445,17 +447,22 @@ const Landing = () => {
             <div className="mt-12 text-center">
               <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
                 <CardContent className="py-8 px-6">
-                  <p className="text-lg font-medium text-amber-900 mb-4">
+                  <p className="text-lg font-medium text-amber-900 mb-2">
                     💡 Vous êtes pêcheur et souhaitez rejoindre QuaiDirect ?
                   </p>
+                  {ambassadorStats && !ambassadorStats.isFull && (
+                    <p className="text-2xl font-bold text-amber-900 mb-4">
+                      🔥 Plus que {ambassadorStats.remainingSlots} place{ambassadorStats.remainingSlots > 1 ? 's' : ''} Ambassadeur{ambassadorStats.remainingSlots > 1 ? 's' : ''} disponible{ambassadorStats.remainingSlots > 1 ? 's' : ''} !
+                    </p>
+                  )}
                   <p className="text-muted-foreground mb-6">
-                    Les places d'ambassadeur sont limitées ! Rejoignez-nous dès maintenant pour 
-                    bénéficier du statut à vie et accompagner le développement de la plateforme.
+                    <strong>Payé une fois et gratuit pour les années suivantes</strong> (suivant les conditions d'évolutions de la plateforme).
+                    Les 10 premiers ambassadeurs bénéficient du statut à vie et accompagnent le développement de QuaiDirect.
                   </p>
-                  <Link to="/pecheur/onboarding">
+                  <Link to="/pecheur/payment">
                     <Button size="lg" className="gap-2">
                       <Anchor className="h-5 w-5" />
-                      Devenir pêcheur partenaire
+                      Devenir Ambassadeur Partenaire
                     </Button>
                   </Link>
                 </CardContent>

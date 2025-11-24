@@ -44,7 +44,8 @@ const AmbassadorBadge = ({ className = "", size = 'md' }: AmbassadorBadgeProps) 
         </TooltipTrigger>
         <TooltipContent side="bottom" className="max-w-xs">
           <p className="text-sm">
-            Marin pêcheur à l'initiative du projet QuaiDirect. Ambassadeur et partenaire fondateur de la plateforme.
+            Ambassadeur fondateur de QuaiDirect. L'un des 10 premiers marins pêcheurs à nous rejoindre.
+            Payé une fois et gratuit pour les années suivantes (suivant les conditions d'évolutions de la plateforme).
           </p>
         </TooltipContent>
       </Tooltip>

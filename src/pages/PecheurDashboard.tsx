@@ -171,7 +171,7 @@ const PecheurDashboard = () => {
               Gérez vos arrivages et ventes
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
             {fishermanId && (
               <>
                 <Button 
@@ -200,6 +200,15 @@ const PecheurDashboard = () => {
                 >
                   <Settings className="h-5 w-5" />
                   Modifier ma vitrine
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => navigate('/pecheur/contacts')}
+                >
+                  <Settings className="h-5 w-5" />
+                  Mes contacts clients
                 </Button>
               </>
             )}

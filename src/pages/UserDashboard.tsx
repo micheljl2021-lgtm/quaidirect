@@ -301,10 +301,10 @@ const UserDashboard = () => {
           )}
         </div>
 
-        {/* Forfaits disponibles */}
+        {/* Paniers disponibles */}
         <div>
           <h2 className="text-2xl font-bold text-foreground mb-4">
-            Nos forfaits
+            Nos paniers
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {packages?.slice(0, 3).map((pkg) => (
@@ -328,7 +328,7 @@ const UserDashboard = () => {
                   </div>
                   <Button 
                     className="w-full"
-                    onClick={() => navigate('/forfaits')}
+                    onClick={() => navigate('/panier')}
                   >
                     Souscrire
                   </Button>
