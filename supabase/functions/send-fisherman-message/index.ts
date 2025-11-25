@@ -16,7 +16,7 @@ const logStep = (step: string, details?: any) => {
 
 const getEmailTemplate = (type: string, fishermanName: string, dropDetails?: any) => {
   switch (type) {
-    case 'invitation':
+    case 'invitation_initiale':
       return {
         subject: `${fishermanName} rejoint QuaiDirect !`,
         html: `
@@ -42,6 +42,7 @@ const getEmailTemplate = (type: string, fishermanName: string, dropDetails?: any
           <p>À très bientôt,<br>${fishermanName}</p>
         `
       };
+    case 'custom':
     default:
       return {
         subject: dropDetails?.subject || `Message de ${fishermanName}`,
