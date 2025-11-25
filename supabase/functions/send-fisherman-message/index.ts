@@ -1,14 +1,57 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[SEND-FISHERMAN-MESSAGE] ${step}${detailsStr}`);
+};
+
+const getEmailTemplate = (type: string, fishermanName: string, dropDetails?: any) => {
+  switch (type) {
+    case 'invitation':
+      return {
+        subject: `${fishermanName} rejoint QuaiDirect !`,
+        html: `
+          <h1>Bonjour !</h1>
+          <p>Je suis maintenant sur <strong>QuaiDirect</strong> !</p>
+          <p>Retrouvez tous mes arrivages et points de vente sur ma page :</p>
+          <p><a href="${dropDetails?.profileUrl}" style="background: #0066cc; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">Voir mon profil</a></p>
+          <p>À très bientôt,<br>${fishermanName}</p>
+        `
+      };
+    case 'new_drop':
+      return {
+        subject: `${fishermanName} - Nouvel arrivage disponible !`,
+        html: `
+          <h1>Nouvel arrivage !</h1>
+          <p><strong>${fishermanName}</strong> vend du poisson frais :</p>
+          <ul>
+            <li><strong>Quand :</strong> ${dropDetails?.time}</li>
+            <li><strong>Où :</strong> ${dropDetails?.location}</li>
+            <li><strong>Espèces :</strong> ${dropDetails?.species}</li>
+          </ul>
+          <p><a href="${dropDetails?.dropUrl}" style="background: #0066cc; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">Voir les détails</a></p>
+          <p>À très bientôt,<br>${fishermanName}</p>
+        `
+      };
+    default:
+      return {
+        subject: dropDetails?.subject || `Message de ${fishermanName}`,
+        html: `
+          <h1>Message de ${fishermanName}</h1>
+          <p>${dropDetails?.body}</p>
+          <p>Cordialement,<br>${fishermanName}</p>
+        `
+      };
+  }
 };
 
 serve(async (req) => {
@@ -36,17 +79,17 @@ serve(async (req) => {
     if (!user?.id) throw new Error('User not authenticated');
     logStep('User authenticated', { userId: user.id });
 
-    // Récupérer le fisherman_id
+    // Récupérer le fisherman
     const { data: fisherman, error: fishermanError } = await supabaseClient
       .from('fishermen')
-      .select('id')
+      .select('id, boat_name, slug')
       .eq('user_id', user.id)
       .single();
 
     if (fishermanError || !fisherman) throw new Error('Fisherman not found');
     logStep('Fisherman found', { fishermanId: fisherman.id });
 
-    const { message_type, subject, body, sent_to_group, drop_id } = await req.json();
+    const { message_type, subject, body, sent_to_group, drop_id, drop_details } = await req.json();
 
     // Récupérer les contacts
     let query = supabaseClient
@@ -63,18 +106,46 @@ serve(async (req) => {
 
     logStep('Contacts retrieved', { count: contacts?.length });
 
-    // Pour l'instant, on enregistre juste le message
-    // L'envoi réel d'emails/SMS nécessiterait Resend/Twilio
+    if (!contacts || contacts.length === 0) {
+      throw new Error('Aucun contact à contacter');
+    }
+
+    // Préparer le template email
+    const emailTemplate = getEmailTemplate(message_type, fisherman.boat_name, {
+      ...drop_details,
+      subject,
+      body,
+      profileUrl: `${Deno.env.get('SUPABASE_URL')}/pecheur/${fisherman.slug}`,
+    });
+
+    // Envoyer les emails via Resend
+    const emailPromises = contacts
+      .filter(c => c.email)
+      .map(contact => 
+        resend.emails.send({
+          from: 'QuaiDirect <notifications@quaidirect.fr>',
+          to: [contact.email],
+          subject: emailTemplate.subject,
+          html: emailTemplate.html,
+        })
+      );
+
+    const results = await Promise.allSettled(emailPromises);
+    const successCount = results.filter(r => r.status === 'fulfilled').length;
+    
+    logStep('Emails sent', { successCount, totalAttempts: emailPromises.length });
+
+    // Enregistrer le message
     const { error: messageError } = await supabaseClient
       .from('fishermen_messages')
       .insert({
         fisherman_id: fisherman.id,
         message_type,
-        subject,
+        subject: emailTemplate.subject,
         body,
         sent_to_group: sent_to_group || null,
         drop_id: drop_id || null,
-        recipient_count: contacts?.length || 0
+        recipient_count: successCount
       });
 
     if (messageError) throw messageError;
@@ -93,8 +164,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        recipient_count: contacts?.length || 0,
-        message: 'Message enregistré. L\'envoi réel nécessite configuration Resend/Twilio.'
+        recipient_count: successCount,
+        message: `${successCount} emails envoyés avec succès`
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

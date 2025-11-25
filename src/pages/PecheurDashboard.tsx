@@ -3,13 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase-client';
 import { useToast } from '@/hooks/use-toast';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/Header';
 import CaisseModule from '@/components/CaisseModule';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Anchor, AlertCircle, ShoppingCart, History, CheckCircle, Settings } from 'lucide-react';
+import { Plus, Anchor, AlertCircle, ShoppingCart, History, CheckCircle, Settings, Users, Mail, Send } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const PecheurDashboard = () => {
   const { user, userRole, isVerifiedFisherman } = useAuth();
@@ -19,6 +24,10 @@ const PecheurDashboard = () => {
   const [archivedDrops, setArchivedDrops] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [fishermanId, setFishermanId] = useState<string | null>(null);
+  const [messageType, setMessageType] = useState<'invitation' | 'new_drop' | 'custom'>('invitation');
+  const [customMessage, setCustomMessage] = useState('');
+  const [selectedGroup, setSelectedGroup] = useState('all');
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!user) {
@@ -128,6 +137,54 @@ const PecheurDashboard = () => {
     }
   };
 
+  const sendMessageMutation = useMutation({
+    mutationFn: async (data: { message_type: string; body: string; sent_to_group: string }) => {
+      const { data: result, error } = await supabase.functions.invoke('send-fisherman-message', {
+        body: data
+      });
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: 'Succès',
+        description: `Message envoyé à ${data.recipient_count} contact(s)`,
+      });
+      setCustomMessage('');
+      queryClient.invalidateQueries({ queryKey: ['fishermen-contacts'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Erreur',
+        description: error.message || "Erreur lors de l'envoi",
+        variant: 'destructive',
+      });
+    }
+  });
+
+  const handleSendMessage = () => {
+    if (messageType === 'custom' && !customMessage.trim()) {
+      toast({
+        title: 'Erreur',
+        description: "Veuillez saisir un message",
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const messageBody = messageType === 'custom' 
+      ? customMessage 
+      : messageType === 'invitation'
+      ? "Bonjour, je suis maintenant sur QuaiDirect ! Retrouvez tous mes arrivages et points de vente sur ma page."
+      : "Nouveau drop disponible ! Consultez les détails sur ma page QuaiDirect.";
+
+    sendMessageMutation.mutate({
+      message_type: messageType,
+      body: messageBody,
+      sent_to_group: selectedGroup
+    });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -207,7 +264,7 @@ const PecheurDashboard = () => {
                   className="gap-2"
                   onClick={() => navigate('/pecheur/contacts')}
                 >
-                  <Settings className="h-5 w-5" />
+                  <Users className="h-5 w-5" />
                   Mes contacts clients
                 </Button>
               </>
@@ -222,6 +279,79 @@ const PecheurDashboard = () => {
             </Button>
           </div>
         </div>
+
+        {/* Section Messaging */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Envoyer un message groupé
+            </CardTitle>
+            <CardDescription>
+              Contactez vos clients pour les inviter ou les informer de vos arrivages
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Type de message</Label>
+              <RadioGroup value={messageType} onValueChange={(v: any) => setMessageType(v)}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="invitation" id="invitation" />
+                  <Label htmlFor="invitation" className="font-normal cursor-pointer">
+                    Message d'invitation - "Je rejoins QuaiDirect"
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="new_drop" id="new_drop" />
+                  <Label htmlFor="new_drop" className="font-normal cursor-pointer">
+                    Annonce d'arrivage - "Nouveau drop disponible"
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="custom" id="custom" />
+                  <Label htmlFor="custom" className="font-normal cursor-pointer">
+                    Message personnalisé
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {messageType === 'custom' && (
+              <div className="space-y-2">
+                <Label htmlFor="message">Votre message</Label>
+                <Textarea
+                  id="message"
+                  placeholder="Rédigez votre message ici..."
+                  value={customMessage}
+                  onChange={(e) => setCustomMessage(e.target.value)}
+                  rows={4}
+                />
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="group">Groupe de contacts</Label>
+              <Select value={selectedGroup} onValueChange={setSelectedGroup}>
+                <SelectTrigger id="group">
+                  <SelectValue placeholder="Sélectionner un groupe" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous mes contacts</SelectItem>
+                  <SelectItem value="general">Groupe général</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button 
+              onClick={handleSendMessage} 
+              disabled={sendMessageMutation.isPending}
+              className="w-full"
+            >
+              <Send className="h-4 w-4 mr-2" />
+              {sendMessageMutation.isPending ? 'Envoi en cours...' : 'Envoyer le message'}
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Stats rapides */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

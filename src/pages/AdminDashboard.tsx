@@ -13,6 +13,7 @@ import { OffersTab } from "@/components/admin/OffersTab";
 import { ImprovedUsersTab } from "@/components/admin/ImprovedUsersTab";
 import { ImprovedDropsTab } from "@/components/admin/ImprovedDropsTab";
 import { ImprovedFishermenTab } from "@/components/admin/ImprovedFishermenTab";
+import { ContactsTab } from "@/components/admin/ContactsTab";
 
 const AdminDashboard = () => {
   const { user, userRole } = useAuth();
@@ -55,7 +56,7 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 gap-2">
+          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-9 gap-2">
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
             <TabsTrigger value="users">Utilisateurs</TabsTrigger>
             <TabsTrigger value="fishermen">Pêcheurs</TabsTrigger>
@@ -64,6 +65,7 @@ const AdminDashboard = () => {
             <TabsTrigger value="reservations">Réservations</TabsTrigger>
             <TabsTrigger value="offers">Offres</TabsTrigger>
             <TabsTrigger value="premium">Premium</TabsTrigger>
+            <TabsTrigger value="contacts">Contacts</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -96,6 +98,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="premium" className="space-y-6">
             <PremiumSubscriptionsTab />
+          </TabsContent>
+
+          <TabsContent value="contacts" className="space-y-6">
+            <ContactsTab />
           </TabsContent>
         </Tabs>
       </div>

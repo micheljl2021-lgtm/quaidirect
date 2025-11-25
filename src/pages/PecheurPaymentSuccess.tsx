@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Check } from 'lucide-react';
+import { Check, Home } from 'lucide-react';
 import Header from '@/components/Header';
 
 const PecheurPaymentSuccess = () => {
@@ -24,12 +24,21 @@ const PecheurPaymentSuccess = () => {
               Votre paiement de 150€ a été traité avec succès
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4">
             <p className="text-muted-foreground">
               Vous pouvez maintenant compléter votre profil pêcheur et commencer à publier vos arrivages sur QuaiDirect.
             </p>
             <Button onClick={() => navigate('/pecheur/onboarding')} size="lg" className="w-full">
               Commencer le formulaire d'inscription
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/')} 
+              size="lg" 
+              className="w-full"
+            >
+              <Home className="h-4 w-4 mr-2" />
+              Retour à l'accueil
             </Button>
           </CardContent>
         </Card>
