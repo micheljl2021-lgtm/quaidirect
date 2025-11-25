@@ -59,7 +59,7 @@ const PecheurPayment = () => {
           <CardHeader>
             <CardTitle className="text-2xl">Inscription Pêcheur - 150€</CardTitle>
             <CardDescription>
-              Paiement unique pour accéder à tous les outils professionnels
+              Paiement unique pour accéder à tous les outils pro : vitrine en ligne, gestion des arrivages, emails illimités, SMS et outils IA intégrés.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -69,7 +69,7 @@ const PecheurPayment = () => {
                 <div>
                   <p className="font-medium">Page vitrine personnalisée</p>
                   <p className="text-sm text-muted-foreground">
-                    Présentez votre bateau, vos méthodes de pêche et vos espèces
+                    Présentez votre bateau, vos méthodes de pêche, vos espèces et vos points de vente sur une page claire, prête à être partagée à vos clients.
                   </p>
                 </div>
               </div>
@@ -79,7 +79,7 @@ const PecheurPayment = () => {
                 <div>
                   <p className="font-medium">Gestion des arrivages</p>
                   <p className="text-sm text-muted-foreground">
-                    Annoncez vos arrivages et gérez vos ventes en temps réel
+                    Créez vos arrivages en moins de 2 minutes, et l'application envoie automatiquement des emails et des SMS à vos contacts pour les prévenir.
                   </p>
                 </div>
               </div>
@@ -89,7 +89,7 @@ const PecheurPayment = () => {
                 <div>
                   <p className="font-medium">2 points de vente inclus</p>
                   <p className="text-sm text-muted-foreground">
-                    Créez jusqu'à 2 emplacements de vente directe
+                    Déclarez jusqu'à 2 emplacements de vente directe (quai, marché, halles) et utilisez la plateforme pour orienter vos clients au bon endroit, au bon horaire.
                   </p>
                 </div>
               </div>
@@ -99,7 +99,7 @@ const PecheurPayment = () => {
                 <div>
                   <p className="font-medium">Accès clients professionnels</p>
                   <p className="text-sm text-muted-foreground">
-                    Connectez-vous avec des restaurateurs et poissonniers
+                    Constituez et gérez votre carnet de restaurateurs, poissonniers et autres pros. L'IA vous aide à cibler qui prévenir en priorité selon vos arrivages.
                   </p>
                 </div>
               </div>
@@ -114,6 +114,9 @@ const PecheurPayment = () => {
               >
                 {loading ? 'Préparation du paiement...' : 'Payer 150€ et commencer'}
               </Button>
+              <p className="text-xs text-center text-muted-foreground px-4">
+                Inclus : emails illimités, envoi de SMS à vos clients et outils IA QuaiDirect pour optimiser vos ventes à quai.
+              </p>
               <Button
                 variant="outline"
                 onClick={() => navigate('/')}
