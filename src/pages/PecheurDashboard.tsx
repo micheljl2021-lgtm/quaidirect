@@ -465,11 +465,14 @@ const PecheurDashboard = () => {
                               </p>
                             ) : drop.drop_species?.length > 0 ? (
                               <div className="flex flex-wrap gap-1 mt-1">
-                                {drop.drop_species.slice(0, 3).map((ds: any) => (
-                                  <span key={ds.species.id} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                                    {ds.species.name}
-                                  </span>
-                                ))}
+                                {drop.drop_species
+                                  .filter((ds: any) => ds.species && ds.species.id)
+                                  .slice(0, 3)
+                                  .map((ds: any) => (
+                                    <span key={ds.species.id} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                                      {ds.species.name}
+                                    </span>
+                                  ))}
                                 {drop.drop_species.length > 3 && (
                                   <span className="text-xs text-muted-foreground">+{drop.drop_species.length - 3}</span>
                                 )}
