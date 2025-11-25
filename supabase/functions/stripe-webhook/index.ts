@@ -48,6 +48,77 @@ serve(async (req) => {
           break;
         }
 
+        // Handle SMS pack purchase
+        if (paymentType === 'sms_pack') {
+          logStep('Processing SMS pack purchase', { userId });
+          
+          const fishermanId = session.metadata?.fisherman_id;
+          const packType = session.metadata?.pack_type;
+          const smsQuantity = parseInt(session.metadata?.sms_quantity || '0');
+          
+          if (!fishermanId || !smsQuantity) {
+            logStep('ERROR: Missing SMS pack data in metadata');
+            break;
+          }
+
+          // Record SMS pack purchase
+          const { error: packError } = await supabaseClient
+            .from('fishermen_sms_packs')
+            .insert({
+              fisherman_id: fishermanId,
+              pack_type: packType,
+              sms_quantity: smsQuantity,
+              price_paid: session.amount_total ? session.amount_total / 100 : 0,
+              stripe_payment_intent_id: session.payment_intent as string,
+            });
+
+          if (packError) {
+            logStep('ERROR inserting SMS pack', { error: packError });
+          } else {
+            logStep('SMS pack recorded successfully');
+          }
+
+          // Update SMS balance
+          const currentMonth = new Date().toISOString().slice(0, 7);
+          const { data: usage } = await supabaseClient
+            .from('fishermen_sms_usage')
+            .select('*')
+            .eq('fisherman_id', fishermanId)
+            .eq('month_year', currentMonth)
+            .maybeSingle();
+
+          if (usage) {
+            const { error: updateError } = await supabaseClient
+              .from('fishermen_sms_usage')
+              .update({
+                paid_sms_balance: (usage.paid_sms_balance || 0) + smsQuantity,
+              })
+              .eq('id', usage.id);
+
+            if (updateError) {
+              logStep('ERROR updating SMS balance', { error: updateError });
+            } else {
+              logStep('SMS balance updated successfully', { newBalance: (usage.paid_sms_balance || 0) + smsQuantity });
+            }
+          } else {
+            const { error: insertError } = await supabaseClient
+              .from('fishermen_sms_usage')
+              .insert({
+                fisherman_id: fishermanId,
+                month_year: currentMonth,
+                paid_sms_balance: smsQuantity,
+                free_sms_used: 0,
+              });
+
+            if (insertError) {
+              logStep('ERROR creating SMS usage record', { error: insertError });
+            } else {
+              logStep('SMS usage record created successfully');
+            }
+          }
+          break;
+        }
+
         // Handle fisherman onboarding payment
         if (paymentType === 'fisherman_onboarding') {
           logStep('Processing fisherman onboarding payment', { userId });
@@ -59,7 +130,6 @@ serve(async (req) => {
             .maybeSingle();
 
           if (existingFisherman) {
-            // Update existing fisherman record
             const { error: updateError } = await supabaseClient
               .from('fishermen')
               .update({
@@ -75,7 +145,6 @@ serve(async (req) => {
               logStep('Fisherman payment status updated successfully');
             }
           } else {
-            // Create minimal fisherman record
             const { error: insertError } = await supabaseClient
               .from('fishermen')
               .insert({
