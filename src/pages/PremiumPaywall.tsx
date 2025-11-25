@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import Header from "@/components/Header";
 
 const PLANS = {
   monthly: {
@@ -104,6 +105,7 @@ export default function PremiumPaywall() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
+      <Header />
       {/* Hero Section */}
       <div className="container px-4 py-12 max-w-6xl mx-auto">
         <div className="text-center mb-12">
