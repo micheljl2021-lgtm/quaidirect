@@ -12,7 +12,7 @@ const PLANS = {
   monthly: {
     name: "Premium Mensuel",
     price: "4,99€",
-    priceId: "price_1SRNwVH0VhS1yyE0wkaqzQ5j",
+    priceId: "price_1SX8ShH0VhS1yyE0egaFoKQw",
     plan: "monthly_4_99",
     period: "par mois",
     description: "Engagement mensuel",
@@ -20,7 +20,7 @@ const PLANS = {
   annual: {
     name: "Premium Annuel",
     price: "39€",
-    priceId: "price_1SRNwkH0VhS1yyE0fIMjjzfR",
+    priceId: "price_1SXFTFH0VhS1yyE0gvSacpSN",
     plan: "annual_39",
     period: "par an",
     description: "Économisez 2 mois",
