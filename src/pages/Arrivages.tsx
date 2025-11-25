@@ -211,7 +211,7 @@ const Arrivages = () => {
     const speciesMap = new Map<string, string>();
     drops.forEach(d => {
       d.offers?.forEach(o => {
-        if (o.species?.id && o.species?.name) {
+        if (o && o.species?.id && o.species?.name) {
           speciesMap.set(o.species.id, o.species.name);
         }
       });
@@ -221,19 +221,23 @@ const Arrivages = () => {
 
   const uniquePorts = useMemo(() => {
     if (!drops) return [];
-    const ports = drops.map(d => ({ id: d.ports.id, name: `${d.ports.name}, ${d.ports.city}` }));
+    const ports = drops
+      .filter(d => d.ports?.id)
+      .map(d => ({ id: d.ports.id, name: `${d.ports.name}, ${d.ports.city}` }));
     const uniqueMap = new Map(ports.map(p => [p.id, p.name]));
     return Array.from(uniqueMap, ([id, name]) => ({ id, name }));
   }, [drops]);
 
   const uniqueFishermen = useMemo(() => {
     if (!drops) return [];
-    const fishermen = drops.map(d => ({
-      id: d.fishermen.id,
-      name: d.fishermen.display_name_preference === 'company_name'
-        ? (d.fishermen.company_name || d.fishermen.boat_name)
-        : d.fishermen.boat_name
-    }));
+    const fishermen = drops
+      .filter(d => d.fishermen?.id)
+      .map(d => ({
+        id: d.fishermen.id,
+        name: d.fishermen.display_name_preference === 'company_name'
+          ? (d.fishermen.company_name || d.fishermen.boat_name)
+          : d.fishermen.boat_name
+      }));
     const uniqueMap = new Map(fishermen.map(f => [f.id, f.name]));
     return Array.from(uniqueMap, ([id, name]) => ({ id, name }));
   }, [drops]);
@@ -254,12 +258,12 @@ const Arrivages = () => {
       }
       
       // Filtre port
-      if (filterPort !== 'all' && drop.ports.id !== filterPort) {
+      if (filterPort !== 'all' && drop.ports?.id !== filterPort) {
         return false;
       }
       
       // Filtre pêcheur
-      if (filterFisherman !== 'all' && drop.fishermen.id !== filterFisherman) {
+      if (filterFisherman !== 'all' && drop.fishermen?.id !== filterFisherman) {
         return false;
       }
       
