@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase-client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Check, Anchor, Users, MapPin } from 'lucide-react';
+import { Check, Anchor, Users, MapPin, ArrowLeft } from 'lucide-react';
 import Header from '@/components/Header';
 
 const PecheurPayment = () => {
@@ -105,7 +105,7 @@ const PecheurPayment = () => {
               </div>
             </div>
 
-            <div className="pt-6 border-t">
+            <div className="pt-6 border-t space-y-3">
               <Button
                 onClick={handlePayment}
                 disabled={loading}
@@ -113,6 +113,14 @@ const PecheurPayment = () => {
                 className="w-full"
               >
                 {loading ? 'Préparation du paiement...' : 'Payer 150€ et commencer'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => navigate('/')}
+                className="w-full"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Retour à l'accueil
               </Button>
               <p className="text-xs text-center text-muted-foreground mt-2">
                 Paiement sécurisé par Stripe

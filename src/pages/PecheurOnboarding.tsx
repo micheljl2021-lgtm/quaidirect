@@ -5,7 +5,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Save } from "lucide-react";
+import { ArrowLeft, ArrowRight, Save, X } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { OnboardingStepIndicator } from "@/components/onboarding/OnboardingStepIndicator";
 import { Step1Societe } from "@/components/onboarding/Step1Societe";
 import { Step2Liens } from "@/components/onboarding/Step2Liens";
@@ -323,6 +334,32 @@ const PecheurOnboarding = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
       <div className="max-w-4xl mx-auto">
+        {/* Bouton Quitter */}
+        <div className="flex justify-end mb-4">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="sm" className="text-muted-foreground">
+                <X className="h-4 w-4 mr-2" />
+                Quitter
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Quitter le formulaire ?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Vos données actuelles seront sauvegardées. Vous pourrez revenir plus tard pour continuer.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogAction onClick={() => navigate('/dashboard/pecheur')}>
+                  Quitter
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+
         {/* Step Indicator */}
         <OnboardingStepIndicator currentStep={currentStep} />
 
