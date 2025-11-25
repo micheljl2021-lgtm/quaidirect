@@ -9,7 +9,7 @@ import CaisseModule from '@/components/CaisseModule';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Anchor, AlertCircle, ShoppingCart, History, CheckCircle, Settings, Users, Mail, Send } from 'lucide-react';
+import { Plus, Anchor, AlertCircle, ShoppingCart, History, CheckCircle, Settings, Users, Mail, Send, Pencil } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -480,11 +480,24 @@ const PecheurDashboard = () => {
                               </p>
                             )}
                           </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-2"
-                            onClick={async (e) => {
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/pecheur/modifier-arrivage/${drop.id}`);
+                              }}
+                            >
+                              <Pencil className="h-3 w-3" />
+                              Modifier
+                            </Button>
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="gap-2"
+                              onClick={async (e) => {
                               e.stopPropagation();
                               const { error } = await supabase
                                 .from('drops')
@@ -504,11 +517,12 @@ const PecheurDashboard = () => {
                                 });
                                 fetchDrops();
                               }
-                            }}
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                            Terminer
-                          </Button>
+                             }}
+                           >
+                             <CheckCircle className="h-4 w-4" />
+                             Terminer
+                           </Button>
+                          </div>
                         </div>
                       </div>
                     ))}

@@ -14,6 +14,7 @@ import PecheurOnboarding from "./pages/PecheurOnboarding";
 import PecheurPayment from "./pages/PecheurPayment";
 import PecheurDashboard from "./pages/PecheurDashboard";
 import CreateArrivage from "./pages/CreateArrivage";
+import EditArrivage from "./pages/EditArrivage";
 import FisherProfile from "./pages/FisherProfile";
 import EditFisherProfile from "./pages/EditFisherProfile";
 import Recettes from "./pages/Recettes";
@@ -65,6 +66,11 @@ const App = () => (
             } />
             <Route path="/onboarding/confirmation" element={<OnboardingConfirmation />} />
             <Route path="/pecheur/nouvel-arrivage" element={<CreateArrivage />} />
+            <Route path="/pecheur/modifier-arrivage/:dropId" element={
+              <ProtectedFisherRoute>
+                <EditArrivage />
+              </ProtectedFisherRoute>
+            } />
             <Route path="/pecheur/edit-profile" element={<EditFisherProfile />} />
             <Route path="/pecheur/:id" element={<FisherProfile />} />
             <Route path="/pecheurs/:slug" element={<FisherProfile />} />
