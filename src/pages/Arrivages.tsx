@@ -249,7 +249,7 @@ const Arrivages = () => {
       
       // Filtre espèce
       if (filterSpecies !== 'all') {
-        const hasSpecies = drop.offers?.some(o => o.species.id === filterSpecies);
+        const hasSpecies = drop.offers?.some(o => o.species && o.species.id === filterSpecies);
         if (!hasSpecies) return false;
       }
       
