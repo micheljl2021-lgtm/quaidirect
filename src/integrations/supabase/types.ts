@@ -410,38 +410,50 @@ export type Database = {
       fishermen_messages: {
         Row: {
           body: string
+          channel: string | null
           created_at: string | null
           drop_id: string | null
+          email_count: number | null
           fisherman_id: string
           id: string
           message_type: string
           recipient_count: number | null
           sent_at: string | null
           sent_to_group: string | null
+          sms_cost: number | null
+          sms_count: number | null
           subject: string | null
         }
         Insert: {
           body: string
+          channel?: string | null
           created_at?: string | null
           drop_id?: string | null
+          email_count?: number | null
           fisherman_id: string
           id?: string
           message_type: string
           recipient_count?: number | null
           sent_at?: string | null
           sent_to_group?: string | null
+          sms_cost?: number | null
+          sms_count?: number | null
           subject?: string | null
         }
         Update: {
           body?: string
+          channel?: string | null
           created_at?: string | null
           drop_id?: string | null
+          email_count?: number | null
           fisherman_id?: string
           id?: string
           message_type?: string
           recipient_count?: number | null
           sent_at?: string | null
           sent_to_group?: string | null
+          sms_cost?: number | null
+          sms_count?: number | null
           subject?: string | null
         }
         Relationships: [
@@ -454,6 +466,82 @@ export type Database = {
           },
           {
             foreignKeyName: "fishermen_messages_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fishermen_sms_packs: {
+        Row: {
+          fisherman_id: string
+          id: string
+          pack_type: string
+          price_paid: number
+          purchased_at: string | null
+          sms_quantity: number
+          stripe_payment_intent_id: string | null
+        }
+        Insert: {
+          fisherman_id: string
+          id?: string
+          pack_type: string
+          price_paid: number
+          purchased_at?: string | null
+          sms_quantity: number
+          stripe_payment_intent_id?: string | null
+        }
+        Update: {
+          fisherman_id?: string
+          id?: string
+          pack_type?: string
+          price_paid?: number
+          purchased_at?: string | null
+          sms_quantity?: number
+          stripe_payment_intent_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fishermen_sms_packs_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fishermen_sms_usage: {
+        Row: {
+          created_at: string | null
+          fisherman_id: string
+          free_sms_used: number | null
+          id: string
+          month_year: string
+          paid_sms_balance: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          fisherman_id: string
+          free_sms_used?: number | null
+          id?: string
+          month_year: string
+          paid_sms_balance?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          fisherman_id?: string
+          free_sms_used?: number | null
+          id?: string
+          month_year?: string
+          paid_sms_balance?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fishermen_sms_usage_fisherman_id_fkey"
             columns: ["fisherman_id"]
             isOneToOne: false
             referencedRelation: "fishermen"
@@ -1416,6 +1504,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      reset_monthly_free_sms: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user" | "premium" | "fisherman"
