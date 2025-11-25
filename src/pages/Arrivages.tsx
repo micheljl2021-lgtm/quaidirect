@@ -469,30 +469,35 @@ const Arrivages = () => {
             
             // Pour chaque drop, créer une card par offre (ou une seule si pas d'offres)
             if (drop.offers && drop.offers.length > 0) {
-              return drop.offers.map((offer) => (
-                <div key={`${drop.id}-${offer.id}`} className="cursor-pointer" onClick={() => handleReserve(offer.id)}>
-                  <ArrivageCard
-                    id={drop.id}
-                    species={offer.species.name}
-                    scientificName={offer.species.scientific_name || ''}
-                    port={portName}
-                    eta={etaDate || saleDate!}
-                    saleStartTime={saleDate}
-                    pricePerPiece={offer.unit_price}
-                    quantity={offer.available_units}
-                    isPremium={drop.is_premium}
-                    dropPhotos={drop.drop_photos}
-                    fisherman={{
-                      name: displayName,
-                      boat: drop.fishermen.boat_name,
-                      isAmbassador: drop.fishermen.is_ambassador
-                    }}
-                  />
-                </div>
-              ));
+              // Filtrer les offres avec species valide
+              const validOffers = drop.offers.filter(offer => offer.species && offer.species.id);
+              
+              if (validOffers.length > 0) {
+                return validOffers.map((offer) => (
+                  <div key={`${drop.id}-${offer.id}`} className="cursor-pointer" onClick={() => handleReserve(offer.id)}>
+                    <ArrivageCard
+                      id={drop.id}
+                      species={offer.species.name}
+                      scientificName={offer.species.scientific_name || ''}
+                      port={portName}
+                      eta={etaDate || saleDate!}
+                      saleStartTime={saleDate}
+                      pricePerPiece={offer.unit_price}
+                      quantity={offer.available_units}
+                      isPremium={drop.is_premium}
+                      dropPhotos={drop.drop_photos}
+                      fisherman={{
+                        name: displayName,
+                        boat: drop.fishermen.boat_name,
+                        isAmbassador: drop.fishermen.is_ambassador
+                      }}
+                    />
+                  </div>
+                ));
+              }
             }
             
-            // Si pas d'offres, afficher quand même le drop avec les photos générales
+            // Si pas d'offres valides, afficher quand même le drop avec les photos générales
             return (
               <div key={drop.id}>
                 <ArrivageCard
