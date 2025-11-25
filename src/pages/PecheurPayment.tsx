@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase-client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Check, Anchor, Users, MapPin, ArrowLeft } from 'lucide-react';
+import { Mail, Store, Zap, Brain, ArrowLeft } from 'lucide-react';
 import Header from '@/components/Header';
 
 const PecheurPayment = () => {
@@ -49,57 +49,69 @@ const PecheurPayment = () => {
       
       <div className="container max-w-4xl mx-auto px-4 py-12">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4">Devenir Pêcheur sur QuaiDirect</h1>
+          <h1 className="text-4xl font-bold mb-4">Vendez votre pêche en direct, sans intermédiaire</h1>
           <p className="text-xl text-muted-foreground">
-            Rejoignez notre plateforme et vendez votre poisson en direct
+            Rejoignez les marins pêcheurs qui ont choisi l'autonomie et la rentabilité
           </p>
         </div>
 
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle className="text-2xl">Inscription Pêcheur - 150€</CardTitle>
+            <CardTitle className="text-2xl">Accès Complet Pêcheur Professionnel — 150€ (paiement unique)</CardTitle>
             <CardDescription>
-              Paiement unique pour accéder à tous les outils pro : vitrine en ligne, gestion des arrivages, emails illimités, SMS et outils IA intégrés.
+              Tout ce dont vous avez besoin pour vendre votre pêche en direct : vitrine professionnelle, gestion ultra-rapide des arrivages, communication illimitée (emails + SMS) et intelligence artificielle pour optimiser vos ventes. Un seul paiement, accès à vie.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-md">
+              <p className="font-semibold text-blue-900 mb-2">
+                💰 Ce que vous économisez avec QuaiDirect
+              </p>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>✓ Plus de commission intermédiaire (vendez 100% de votre marge)</li>
+                <li>✓ Plus de temps perdu en coups de fil (emails/SMS automatiques)</li>
+                <li>✓ Plus de papier à gérer (tout est digitalisé)</li>
+                <li>✓ Accès à vie à tous les outils (un seul paiement de 150€)</li>
+              </ul>
+            </div>
+
             <div className="space-y-4">
               <div className="flex items-start gap-3">
-                <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <Mail className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="font-medium">Page vitrine personnalisée</p>
+                  <p className="font-medium text-lg">📧 Emails illimités + SMS inclus</p>
                   <p className="text-sm text-muted-foreground">
-                    Présentez votre bateau, vos méthodes de pêche, vos espèces et vos points de vente sur une page claire, prête à être partagée à vos clients.
+                    Prévenez instantanément tous vos clients (restaurateurs, poissonniers, particuliers) de vos arrivages par email ET SMS. Aucune limite d'envoi. L'IA QuaiDirect optimise vos messages pour maximiser vos ventes.
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
-                <Anchor className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <Store className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="font-medium">Gestion des arrivages</p>
+                  <p className="font-medium text-lg">🏪 Votre vitrine en ligne professionnelle</p>
                   <p className="text-sm text-muted-foreground">
-                    Créez vos arrivages en moins de 2 minutes, et l'application envoie automatiquement des emails et des SMS à vos contacts pour les prévenir.
+                    Une page dédiée à votre bateau, visible 24h/24 : présentez vos méthodes de pêche, vos espèces, vos points de vente. Partagez-la sur Facebook, Instagram ou par SMS. Vos clients vous retrouvent en un clic.
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                <Zap className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="font-medium">2 points de vente inclus</p>
+                  <p className="font-medium text-lg">⚡ Créez un arrivage en 2 minutes chrono</p>
                   <p className="text-sm text-muted-foreground">
-                    Déclarez jusqu'à 2 emplacements de vente directe (quai, marché, halles) et utilisez la plateforme pour orienter vos clients au bon endroit, au bon horaire.
+                    Plus de temps perdu à gérer du papier ou à passer des coups de fil. Publiez votre arrivage en 3 clics, l'app envoie automatiquement emails et SMS à tous vos contacts. Vous gérez tout depuis votre téléphone, même à 2h du matin sur le quai.
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
-                <Users className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                <Brain className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="font-medium">Accès clients professionnels</p>
+                  <p className="font-medium text-lg">🤝 Constituez votre carnet client pro + IA ciblée</p>
                   <p className="text-sm text-muted-foreground">
-                    Constituez et gérez votre carnet de restaurateurs, poissonniers et autres pros. L'IA vous aide à cibler qui prévenir en priorité selon vos arrivages.
+                    Importez et gérez votre base de restaurateurs, poissonniers et grossistes. L'intelligence artificielle QuaiDirect vous suggère qui prévenir en priorité selon vos espèces disponibles. Vendez mieux, plus vite, sans effort.
                   </p>
                 </div>
               </div>
@@ -110,13 +122,18 @@ const PecheurPayment = () => {
                 onClick={handlePayment}
                 disabled={loading}
                 size="lg"
-                className="w-full"
+                className="w-full text-lg h-14 font-bold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
               >
-                {loading ? 'Préparation du paiement...' : 'Payer 150€ et commencer'}
+                {loading ? 'Préparation du paiement...' : '🚀 Payer 150€ et démarrer maintenant'}
               </Button>
-              <p className="text-xs text-center text-muted-foreground px-4">
-                Inclus : emails illimités, envoi de SMS à vos clients et outils IA QuaiDirect pour optimiser vos ventes à quai.
-              </p>
+              <div className="text-xs text-center text-muted-foreground px-4 space-y-2">
+                <p>
+                  ✅ Inclus dans votre abonnement à vie : emails illimités, SMS sans limite mensuelle, intelligence artificielle de ciblage client, support prioritaire et toutes les futures mises à jour gratuites.
+                </p>
+                <p className="font-semibold text-orange-600">
+                  ⏰ Offre limitée aux 10 premiers inscrits : accès Ambassadeur Partenaire (statut privilégié à vie)
+                </p>
+              </div>
               <Button
                 variant="outline"
                 onClick={() => navigate('/')}
