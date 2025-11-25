@@ -211,11 +211,11 @@ export const ContactsTab = () => {
                           </TableCell>
                           <TableCell>
                             <Badge variant={
-                              message.message_type === 'invitation' ? 'default' :
+                              message.message_type === 'invitation_initiale' ? 'default' :
                               message.message_type === 'new_drop' ? 'secondary' :
                               'outline'
                             }>
-                              {message.message_type === 'invitation' ? 'Invitation' :
+                              {message.message_type === 'invitation_initiale' ? 'Invitation' :
                                message.message_type === 'new_drop' ? 'Nouveau drop' :
                                'Personnalisé'}
                             </Badge>

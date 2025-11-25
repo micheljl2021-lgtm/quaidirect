@@ -24,7 +24,7 @@ const PecheurDashboard = () => {
   const [archivedDrops, setArchivedDrops] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [fishermanId, setFishermanId] = useState<string | null>(null);
-  const [messageType, setMessageType] = useState<'invitation' | 'new_drop' | 'custom'>('invitation');
+  const [messageType, setMessageType] = useState<'invitation_initiale' | 'new_drop' | 'custom'>('invitation_initiale');
   const [customMessage, setCustomMessage] = useState('');
   const [selectedGroup, setSelectedGroup] = useState('all');
   const queryClient = useQueryClient();
@@ -174,7 +174,7 @@ const PecheurDashboard = () => {
 
     const messageBody = messageType === 'custom' 
       ? customMessage 
-      : messageType === 'invitation'
+      : messageType === 'invitation_initiale'
       ? "Bonjour, je suis maintenant sur QuaiDirect ! Retrouvez tous mes arrivages et points de vente sur ma page."
       : "Nouveau drop disponible ! Consultez les détails sur ma page QuaiDirect.";
 
@@ -296,8 +296,8 @@ const PecheurDashboard = () => {
               <Label>Type de message</Label>
               <RadioGroup value={messageType} onValueChange={(v: any) => setMessageType(v)}>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="invitation" id="invitation" />
-                  <Label htmlFor="invitation" className="font-normal cursor-pointer">
+                  <RadioGroupItem value="invitation_initiale" id="invitation_initiale" />
+                  <Label htmlFor="invitation_initiale" className="font-normal cursor-pointer">
                     Message d'invitation - "Je rejoins QuaiDirect"
                   </Label>
                 </div>
