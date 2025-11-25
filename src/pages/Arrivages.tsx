@@ -3,11 +3,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import Header from '@/components/Header';
+import ArrivageCard from '@/components/ArrivageCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Clock, Fish, MapPin, Anchor, Filter } from 'lucide-react';
+import { Clock, Fish, Filter } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -46,6 +47,7 @@ interface Drop {
     species: {
       id: string;
       name: string;
+      scientific_name: string | null;
     };
     offer_photos: Array<{
       photo_url: string;
@@ -109,7 +111,8 @@ const Arrivages = () => {
           available_units,
           species (
             id,
-            name
+            name,
+            scientific_name
           ),
           offer_photos (
             photo_url,
@@ -459,132 +462,57 @@ const Arrivages = () => {
           {filteredDrops?.map((drop) => {
             const etaDate = drop.eta_at ? new Date(drop.eta_at) : null;
             const saleDate = drop.sale_start_time ? new Date(drop.sale_start_time) : null;
-            const displayDate = saleDate || etaDate;
             const portName = `${drop.ports.name}, ${drop.ports.city}`;
             const displayName = drop.fishermen.display_name_preference === 'company_name' 
               ? (drop.fishermen.company_name || drop.fishermen.boat_name)
               : drop.fishermen.boat_name;
             
+            // Pour chaque drop, créer une card par offre (ou une seule si pas d'offres)
+            if (drop.offers && drop.offers.length > 0) {
+              return drop.offers.map((offer) => (
+                <div key={`${drop.id}-${offer.id}`} className="cursor-pointer" onClick={() => handleReserve(offer.id)}>
+                  <ArrivageCard
+                    id={drop.id}
+                    species={offer.species.name}
+                    scientificName={offer.species.scientific_name || ''}
+                    port={portName}
+                    eta={etaDate || saleDate!}
+                    saleStartTime={saleDate}
+                    pricePerPiece={offer.unit_price}
+                    quantity={offer.available_units}
+                    isPremium={drop.is_premium}
+                    dropPhotos={drop.drop_photos}
+                    fisherman={{
+                      name: displayName,
+                      boat: drop.fishermen.boat_name,
+                      isAmbassador: drop.fishermen.is_ambassador
+                    }}
+                  />
+                </div>
+              ));
+            }
+            
+            // Si pas d'offres, afficher quand même le drop avec les photos générales
             return (
-              <Card key={drop.id}>
-                <CardHeader>
-                  {/* Photo du pêcheur si disponible */}
-                  {drop.fishermen.photo_url && (
-                    <div className="mb-4">
-                      <img 
-                        src={drop.fishermen.photo_url} 
-                        alt={displayName}
-                        className="w-full h-48 object-cover rounded-lg"
-                      />
-                    </div>
-                  )}
-                  
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1 flex-1">
-                      <CardTitle className="flex items-center gap-2">
-                        <MapPin className="h-5 w-5 text-primary" />
-                        {portName}
-                      </CardTitle>
-                      {drop.fishermen && (
-                        <button
-                          onClick={() => navigate(`/pecheurs/${drop.fishermen.id}`)}
-                          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-                        >
-                          <Anchor className="h-4 w-4" />
-                          <span className="font-medium">
-                            {displayName}
-                          </span>
-                        </button>
-                      )}
-                      <CardDescription>
-                        {saleDate && displayDate ? (
-                          <>
-                            Retrait à partir de : {displayDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                            {' · '}
-                            {displayDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
-                            {etaDate && (
-                              <span className="block text-xs text-muted-foreground/70 mt-1">
-                                (Débarqué le {etaDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} à {etaDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })})
-                              </span>
-                            )}
-                          </>
-                        ) : displayDate ? (
-                          <>
-                            Arrivée prévue : {displayDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                            {' · '}
-                            {displayDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
-                          </>
-                        ) : null}
-                      </CardDescription>
-                    </div>
-                    {getAccessBadge(drop)}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {drop.offers && drop.offers.length > 0 ? (
-                      <>
-                        <div className="grid gap-2">
-                          {drop.offers.map((offer) => (
-                            <div key={offer.id} className="space-y-2">
-                              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                                <div className="flex items-center gap-3">
-                                  <Fish className="h-5 w-5 text-primary" />
-                                  <div>
-                                    <p className="font-medium">{offer.species.name}</p>
-                                    <p className="text-sm text-muted-foreground">
-                                      {offer.available_units} unités disponibles
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <p className="font-bold text-lg">~{offer.unit_price}€</p>
-                                  <p className="text-xs text-muted-foreground">/ pièce*</p>
-                                </div>
-                              </div>
-                              
-                              {/* Photos de l'offre */}
-                              {offer.offer_photos && offer.offer_photos.length > 0 && (
-                                <div className="grid grid-cols-3 gap-2 px-3">
-                                  {offer.offer_photos
-                                    .sort((a, b) => a.display_order - b.display_order)
-                                    .slice(0, 3)
-                                    .map((photo, idx) => (
-                                      <img 
-                                        key={idx}
-                                        src={photo.photo_url} 
-                                        alt={`${offer.species.name} ${idx + 1}`}
-                                        className="w-full h-24 object-cover rounded-lg border border-border"
-                                      />
-                                    ))}
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                        <div className="space-y-2">
-                          <Button 
-                            className="w-full" 
-                            onClick={() => drop.offers[0] && handleReserve(drop.offers[0].id)}
-                          >
-                            {userRole === 'premium' ? 'Pré-réserver ma pièce' : 'Réserver ma pièce'}
-                          </Button>
-                          <p className="text-xs text-muted-foreground text-center">
-                            * Prix indicatif, ajusté après pesée réglementaire au retrait
-                          </p>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="text-center py-6">
-                        <Fish className="h-12 w-12 mx-auto text-muted-foreground/50 mb-2" />
-                        <p className="text-sm text-muted-foreground">
-                          Aucune offre disponible pour cet arrivage
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+              <div key={drop.id}>
+                <ArrivageCard
+                  id={drop.id}
+                  species="Arrivage général"
+                  scientificName=""
+                  port={portName}
+                  eta={etaDate || saleDate!}
+                  saleStartTime={saleDate}
+                  pricePerPiece={0}
+                  quantity={0}
+                  isPremium={drop.is_premium}
+                  dropPhotos={drop.drop_photos}
+                  fisherman={{
+                    name: displayName,
+                    boat: drop.fishermen.boat_name,
+                    isAmbassador: drop.fishermen.is_ambassador
+                  }}
+                />
+              </div>
             );
           })}
         </div>
