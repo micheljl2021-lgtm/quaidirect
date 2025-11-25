@@ -142,13 +142,18 @@ serve(async (req) => {
         fisherman_id: fisherman.id,
         message_type,
         subject: emailTemplate.subject,
-        body,
+        body: body || emailTemplate.html,
         sent_to_group: sent_to_group || null,
         drop_id: drop_id || null,
-        recipient_count: successCount
+        recipient_count: successCount,
+        email_count: successCount,
+        channel: 'email'
       });
 
-    if (messageError) throw messageError;
+    if (messageError) {
+      logStep('ERROR inserting message', { error: JSON.stringify(messageError) });
+      throw new Error(messageError.message || 'Failed to save message');
+    }
 
     // Mettre à jour last_contacted_at pour les contacts
     if (contacts && contacts.length > 0) {
@@ -173,8 +178,15 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep('ERROR', { message: errorMessage });
+    let errorMessage = 'Unknown error';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'object' && error !== null) {
+      errorMessage = JSON.stringify(error);
+    } else {
+      errorMessage = String(error);
+    }
+    logStep('ERROR', { message: errorMessage, error });
     return new Response(
       JSON.stringify({ error: errorMessage }),
       {
