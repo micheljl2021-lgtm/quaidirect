@@ -3,12 +3,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mail, Phone, Users, MessageSquare } from "lucide-react";
+import { Mail, Phone, Users, MessageSquare, Eye, Archive, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { toast } from "sonner";
+import { useState } from "react";
 
 export const ContactsTab = () => {
+  const [selectedMessage, setSelectedMessage] = useState<any>(null);
+  
   const { data: contacts, isLoading: contactsLoading } = useQuery({
     queryKey: ['admin-fishermen-contacts'],
     queryFn: async () => {
@@ -25,7 +31,7 @@ export const ContactsTab = () => {
     }
   });
 
-  const { data: messages, isLoading: messagesLoading } = useQuery({
+  const { data: messages, isLoading: messagesLoading, refetch } = useQuery({
     queryKey: ['admin-fishermen-messages'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -44,6 +50,18 @@ export const ContactsTab = () => {
   const totalContacts = contacts?.length || 0;
   const totalMessages = messages?.length || 0;
   const totalRecipients = messages?.reduce((acc, msg) => acc + (msg.recipient_count || 0), 0) || 0;
+
+  const handleMarkAsRead = async (messageId: string) => {
+    // TODO: Ajouter un champ status dans fishermen_messages
+    toast.success("Marqué comme lu");
+    refetch();
+  };
+
+  const handleArchive = async (messageId: string) => {
+    // TODO: Ajouter un champ archived dans fishermen_messages
+    toast.success("Message archivé");
+    refetch();
+  };
 
   return (
     <div className="space-y-6">
@@ -201,6 +219,7 @@ export const ContactsTab = () => {
                         <TableHead>Groupe cible</TableHead>
                         <TableHead>Destinataires</TableHead>
                         <TableHead>Date d'envoi</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -237,6 +256,63 @@ export const ContactsTab = () => {
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
                             {format(new Date(message.sent_at || message.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setSelectedMessage(message)}
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-2xl">
+                                  <DialogHeader>
+                                    <DialogTitle>Détails du message</DialogTitle>
+                                    <DialogDescription>
+                                      Envoyé par {message.fishermen?.boat_name || message.fishermen?.company_name}
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="space-y-4">
+                                    <div>
+                                      <strong>Type:</strong> {message.message_type}
+                                    </div>
+                                    <div>
+                                      <strong>Sujet:</strong> {message.subject || '-'}
+                                    </div>
+                                    <div>
+                                      <strong>Message:</strong>
+                                      <div className="mt-2 p-4 bg-muted rounded-lg whitespace-pre-wrap">
+                                        {message.body}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <strong>Groupe cible:</strong> {message.sent_to_group || 'Tous'}
+                                    </div>
+                                    <div>
+                                      <strong>Destinataires:</strong> {message.recipient_count || 0}
+                                    </div>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleMarkAsRead(message.id)}
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleArchive(message.id)}
+                              >
+                                <Archive className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}

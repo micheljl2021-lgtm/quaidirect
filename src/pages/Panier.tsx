@@ -1,262 +1,225 @@
-import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import Footer from "@/components/Footer";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Package, Users, Gift } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Check, Package, ShoppingBasket, Users, Gift } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@/hooks/useAuth";
 
-interface SubscriptionPackage {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  duration_days: number;
-  fish_quota: number;
-  is_active: boolean;
-}
-
-interface UserSubscription {
-  id: string;
-  remaining_quota: number;
-  start_date: string;
-  end_date: string;
-  status: string;
-  package: SubscriptionPackage;
-}
+const PANIERS = [
+  {
+    id: 'decouverte',
+    name: 'Panier Découverte',
+    price: 25,
+    weight: '~1.5kg',
+    variety: '2-3 espèces',
+    description: 'Parfait pour découvrir la pêche locale',
+    features: [
+      'Environ 1.5kg de poissons frais',
+      '2 à 3 espèces différentes selon arrivage',
+      'Poissons de saison',
+      'Conseils de préparation inclus'
+    ],
+    color: 'from-blue-500 to-cyan-500'
+  },
+  {
+    id: 'famille',
+    name: 'Panier Famille',
+    price: 45,
+    weight: '~3kg',
+    variety: '4-5 espèces',
+    description: 'Idéal pour les repas en famille',
+    popular: true,
+    features: [
+      'Environ 3kg de poissons frais',
+      '4 à 5 espèces variées',
+      'Mélange de poissons nobles et courants',
+      'Recettes suggérées incluses',
+      'Conseils de conservation'
+    ],
+    color: 'from-orange-500 to-amber-500'
+  },
+  {
+    id: 'gourmet',
+    name: 'Panier Gourmet',
+    price: 75,
+    weight: '~4kg',
+    variety: 'Espèces premium',
+    description: 'Pour les amateurs de qualité exceptionnelle',
+    features: [
+      'Environ 4kg de poissons premium',
+      'Espèces nobles et recherchées',
+      'Sélection du pêcheur',
+      'Préparation spéciale possible',
+      'Recettes gastronomiques',
+      'Service prioritaire'
+    ],
+    color: 'from-purple-500 to-pink-500'
+  }
+];
 
 const Panier = () => {
-  const { user } = useAuth();
-  const [packages, setPackages] = useState<SubscriptionPackage[]>([]);
-  const [userSubscription, setUserSubscription] = useState<UserSubscription | null>(null);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    loadPackages();
-    if (user) {
-      loadUserSubscription();
-    }
-  }, [user]);
-
-  const loadPackages = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("subscription_packages")
-        .select("*")
-        .eq("is_active", true)
-        .order("price", { ascending: true });
-
-      if (error) throw error;
-      setPackages(data || []);
-    } catch (error: any) {
-      toast.error("Erreur lors du chargement du panier");
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadUserSubscription = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from("user_package_subscriptions")
-        .select(`
-          *,
-          package:package_id (*)
-        `)
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .single();
-
-      if (error && error.code !== "PGRST116") throw error;
-      setUserSubscription(data);
-    } catch (error: any) {
-      console.error(error);
-    }
-  };
-
-  const handleSubscribe = async (packageId: string, durationDays: number, quota: number) => {
-    if (!user) {
-      toast.error("Veuillez vous connecter pour souscrire");
-      return;
-    }
-
-    try {
-      const endDate = new Date();
-      endDate.setDate(endDate.getDate() + durationDays);
-
-      const { error } = await supabase
-        .from("user_package_subscriptions")
-        .insert({
-          user_id: user.id,
-          package_id: packageId,
-          remaining_quota: quota,
-          end_date: endDate.toISOString(),
-          status: "active",
-        });
-
-      if (error) throw error;
-
-      toast.success("Panier souscrit avec succès!");
-      loadUserSubscription();
-    } catch (error: any) {
-      toast.error("Erreur lors de la souscription");
-      console.error(error);
-    }
+  const handleOrderPanier = (panierId: string, panierName: string) => {
+    toast.info(`Fonctionnalité en cours de développement : ${panierName}`);
+    // TODO: Implémenter la commande de panier
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen flex flex-col bg-background">
       <Header />
-
-      <div className="container px-4 py-8">
-        <div className="mb-8 space-y-4">
-          <div className="text-center max-w-2xl mx-auto">
-            <h1 className="text-4xl font-bold text-foreground mb-2">
-              Panier Poisson Frais
+      
+      <main className="flex-1">
+        <div className="container mx-auto px-4 py-12">
+          {/* Hero Section */}
+          <div className="text-center mb-12 space-y-4">
+            <div className="flex justify-center mb-4">
+              <ShoppingBasket className="h-16 w-16 text-primary" />
+            </div>
+            <h1 className="text-4xl md:text-5xl font-bold">
+              Nos Paniers de Poissons Frais
             </h1>
-            <p className="text-lg text-muted-foreground">
-              Économisez avec nos paniers hebdomadaires et mensuels
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Des paniers préparés avec soin par nos pêcheurs partenaires.
+              Poissons ultra-frais, pêchés le jour même ou la veille.
             </p>
           </div>
-        </div>
 
-        {userSubscription && (
-          <Card className="mb-8 max-w-2xl mx-auto border-primary">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-xl font-bold text-foreground">
-                    Votre panier actif
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {userSubscription.package.name}
-                  </p>
-                </div>
-                <Badge className="bg-green-500">Actif</Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Poissons restants</span>
-                <span className="text-2xl font-bold text-primary">
-                  {userSubscription.remaining_quota}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Expire le</span>
-                <span className="font-medium">
-                  {new Date(userSubscription.end_date).toLocaleDateString("fr-FR")}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {packages.map((pkg) => (
-            <Card
-              key={pkg.id}
-              className="relative overflow-hidden hover:shadow-lg transition-shadow"
-            >
-              {pkg.fish_quota >= 8 && (
-                <div className="absolute top-4 right-4">
-                  <Badge className="bg-gradient-ocean">
-                    Populaire
-                  </Badge>
-                </div>
-              )}
-
-              <CardHeader className="text-center space-y-2 pt-8">
-                <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mx-auto">
-                  <Package className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-2xl font-bold text-foreground">
-                  {pkg.name}
-                </h3>
+          {/* Avantages */}
+          <div className="grid md:grid-cols-3 gap-6 mb-12">
+            <Card className="text-center">
+              <CardContent className="pt-6">
+                <Package className="h-12 w-12 mx-auto mb-4 text-primary" />
+                <h3 className="font-semibold mb-2">Composition Variable</h3>
                 <p className="text-sm text-muted-foreground">
-                  {pkg.description}
+                  Le contenu des paniers varie selon les arrivages du jour pour garantir la fraîcheur
                 </p>
-              </CardHeader>
-
-              <CardContent className="space-y-6">
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-foreground">
-                    {pkg.price.toFixed(2)}€
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    pour {pkg.duration_days === 7 ? "1 semaine" : "1 mois"}
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Check className="h-5 w-5 text-green-600" />
-                    <span className="text-sm">
-                      <strong>{pkg.fish_quota}</strong> poissons inclus
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="h-5 w-5 text-green-600" />
-                    <span className="text-sm">Prix unitaire réduit</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="h-5 w-5 text-green-600" />
-                    <span className="text-sm">Choix libre des espèces</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="h-5 w-5 text-green-600" />
-                    <span className="text-sm">Qualité garantie</span>
-                  </div>
-                </div>
-
-                <Button
-                  className="w-full"
-                  onClick={() => handleSubscribe(pkg.id, pkg.duration_days, pkg.fish_quota)}
-                  disabled={!!userSubscription}
-                >
-                  {userSubscription ? "Déjà abonné" : "Souscrire"}
-                </Button>
               </CardContent>
             </Card>
-          ))}
-        </div>
+            <Card className="text-center">
+              <CardContent className="pt-6">
+                <Users className="h-12 w-12 mx-auto mb-4 text-primary" />
+                <h3 className="font-semibold mb-2">Direct Pêcheur</h3>
+                <p className="text-sm text-muted-foreground">
+                  Achetez directement aux pêcheurs, sans intermédiaire, pour une rémunération équitable
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="text-center">
+              <CardContent className="pt-6">
+                <Gift className="h-12 w-12 mx-auto mb-4 text-primary" />
+                <h3 className="font-semibold mb-2">Sur Mesure</h3>
+                <p className="text-sm text-muted-foreground">
+                  Possibilité d'adapter les paniers selon vos préférences et allergies
+                </p>
+              </CardContent>
+            </Card>
+          </div>
 
-        {/* Programme de parrainage */}
-        <div className="mt-16 max-w-4xl mx-auto">
-          <Card className="bg-gradient-ocean text-white overflow-hidden">
-            <CardContent className="pt-8 pb-8">
-              <div className="flex flex-col md:flex-row items-center gap-6">
-                <div className="flex-shrink-0">
-                  <div className="h-24 w-24 rounded-full bg-white/20 flex items-center justify-center">
-                    <Gift className="h-12 w-12" />
+          {/* Paniers */}
+          <div className="grid md:grid-cols-3 gap-8 mb-12">
+            {PANIERS.map((panier) => (
+              <Card 
+                key={panier.id} 
+                className={`relative overflow-hidden ${panier.popular ? 'ring-2 ring-primary shadow-lg' : ''}`}
+              >
+                {panier.popular && (
+                  <Badge className="absolute top-4 right-4 bg-gradient-to-r from-orange-500 to-amber-500">
+                    Le plus populaire
+                  </Badge>
+                )}
+                
+                <CardHeader>
+                  <div className={`h-32 -mx-6 -mt-6 mb-4 bg-gradient-to-br ${panier.color} rounded-t-lg flex items-center justify-center`}>
+                    <ShoppingBasket className="h-16 w-16 text-white" />
                   </div>
-                </div>
-                <div className="flex-1 text-center md:text-left">
-                  <h3 className="text-2xl font-bold mb-2">
-                    Parrainez et gagnez!
-                  </h3>
-                  <p className="text-white/90 mb-4">
-                    Invitez un ami ou un pêcheur professionnel et recevez tous les deux
-                    <strong> 10€ de bonus</strong> dès la première commande.
-                  </p>
-                  <Button
-                    variant="secondary"
-                    className="gap-2"
+                  <CardTitle className="text-2xl">{panier.name}</CardTitle>
+                  <CardDescription>{panier.description}</CardDescription>
+                </CardHeader>
+
+                <CardContent className="space-y-6">
+                  <div>
+                    <div className="text-4xl font-bold">{panier.price}€</div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      {panier.weight} • {panier.variety}
+                    </div>
+                  </div>
+
+                  <ul className="space-y-3">
+                    {panier.features.map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-2 text-sm">
+                        <Check className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button 
+                    className="w-full"
+                    size="lg"
+                    variant={panier.popular ? "default" : "outline"}
+                    onClick={() => handleOrderPanier(panier.id, panier.name)}
                   >
-                    <Users className="h-4 w-4" />
-                    Parrainer maintenant
+                    Commander ce panier
                   </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Informations pratiques */}
+          <Card className="bg-blue-50 border-blue-200">
+            <CardHeader>
+              <CardTitle>Comment ça marche ?</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-3 gap-6">
+                <div>
+                  <div className="font-semibold mb-2">1. Commandez</div>
+                  <p className="text-sm text-muted-foreground">
+                    Choisissez votre panier et validez votre commande en ligne
+                  </p>
                 </div>
+                <div>
+                  <div className="font-semibold mb-2">2. Récupération</div>
+                  <p className="text-sm text-muted-foreground">
+                    Retirez votre panier directement au point de vente du pêcheur
+                  </p>
+                </div>
+                <div>
+                  <div className="font-semibold mb-2">3. Dégustez</div>
+                  <p className="text-sm text-muted-foreground">
+                    Savourez des poissons ultra-frais pêchés par des professionnels
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-blue-300">
+                <p className="text-sm text-muted-foreground">
+                  <strong>Bon à savoir :</strong> Les paniers sont préparés selon les arrivages du jour.
+                  La composition exacte peut varier mais la qualité et la fraîcheur sont toujours garanties.
+                  Venez avec un contenant isotherme pour une conservation optimale.
+                </p>
               </div>
             </CardContent>
           </Card>
+
+          {/* CTA Final */}
+          <div className="text-center mt-12">
+            <h2 className="text-2xl font-bold mb-4">Pas encore inscrit ?</h2>
+            <p className="text-muted-foreground mb-6">
+              Créez votre compte pour commander vos paniers et suivre vos pêcheurs favoris
+            </p>
+            <Button size="lg" onClick={() => navigate('/auth')}>
+              Créer mon compte gratuitement
+            </Button>
+          </div>
         </div>
-      </div>
+      </main>
+
+      <Footer />
     </div>
   );
 };
