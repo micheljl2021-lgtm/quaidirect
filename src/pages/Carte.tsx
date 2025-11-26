@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import ArrivageCard from "@/components/ArrivageCard";
 import InteractiveMap from "@/components/InteractiveMap";
 import { Button } from "@/components/ui/button";
@@ -191,6 +192,7 @@ const Carte = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };

@@ -8,6 +8,10 @@ import { ProtectedFisherRoute } from "@/components/ProtectedFisherRoute";
 import Landing from "./pages/Landing";
 import Carte from "./pages/Carte";
 import PremiumPaywall from "./pages/PremiumPaywall";
+import PremiumSuccess from "./pages/PremiumSuccess";
+import PremiumSettings from "./pages/PremiumSettings";
+import CGV from "./pages/CGV";
+import MentionsLegales from "./pages/MentionsLegales";
 import Compte from "./pages/Compte";
 import Auth from "./pages/Auth";
 import PecheurOnboarding from "./pages/PecheurOnboarding";
@@ -44,6 +48,10 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             <Route path="/carte" element={<Carte />} />
             <Route path="/premium" element={<PremiumPaywall />} />
+            <Route path="/premium/success" element={<PremiumSuccess />} />
+            <Route path="/premium/reglages" element={<PremiumSettings />} />
+            <Route path="/cgv" element={<CGV />} />
+            <Route path="/mentions-legales" element={<MentionsLegales />} />
             <Route path="/demo-tracabilite" element={<DemoTracabilite />} />
           <Route path="/recettes" element={<Recettes />} />
           <Route path="/recettes/:id" element={<RecetteDetail />} />

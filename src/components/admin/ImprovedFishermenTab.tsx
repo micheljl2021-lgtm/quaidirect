@@ -129,6 +129,8 @@ export function ImprovedFishermenTab() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nom du bateau</TableHead>
+                  <TableHead>Entreprise</TableHead>
+                  <TableHead>Email</TableHead>
                   <TableHead>SIRET</TableHead>
                   <TableHead>Immatriculation</TableHead>
                   <TableHead>Date création</TableHead>
@@ -141,6 +143,8 @@ export function ImprovedFishermenTab() {
                 {fishermen?.map((fisherman) => (
                   <TableRow key={fisherman.id}>
                     <TableCell className="font-medium">{fisherman.boat_name}</TableCell>
+                    <TableCell>{fisherman.company_name || '-'}</TableCell>
+                    <TableCell className="text-sm">{fisherman.email || '-'}</TableCell>
                     <TableCell className="font-mono text-xs">{fisherman.siret}</TableCell>
                     <TableCell>{fisherman.boat_registration}</TableCell>
                     <TableCell>{format(new Date(fisherman.created_at), 'dd/MM/yyyy')}</TableCell>

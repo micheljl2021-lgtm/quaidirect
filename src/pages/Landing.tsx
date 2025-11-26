@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Crown, MapPin, Bell, Shield, Users, Anchor, Award, ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import ArrivageCard from "@/components/ArrivageCard";
 import PhotoCarousel from "@/components/PhotoCarousel";
 import AmbassadorBadge from "@/components/AmbassadorBadge";
@@ -525,19 +526,7 @@ const Landing = () => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-card mt-16">
-        <div className="container px-4 py-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-primary" />
-              <span className="font-bold text-foreground">QuaiDirect</span>
-            </div>
-            <p className="text-sm text-muted-foreground text-center">
-              © 2024 QuaiDirect. Plateforme de vente directe du pêcheur au consommateur.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
