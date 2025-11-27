@@ -124,7 +124,7 @@ serve(async (req) => {
       .filter(c => c.email)
       .map(contact => 
         resend.emails.send({
-          from: 'QuaiDirect <notifications@quaidirect.fr>',
+          from: 'QuaiDirect <onboarding@resend.dev>',
           to: [contact.email],
           subject: emailTemplate.subject,
           html: emailTemplate.html,
