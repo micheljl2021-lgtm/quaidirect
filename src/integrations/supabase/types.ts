@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_conversations: {
+        Row: {
+          created_at: string
+          fisherman_id: string
+          id: string
+          messages: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fisherman_id: string
+          id?: string
+          messages?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fisherman_id?: string
+          id?: string
+          messages?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_conversations_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audits: {
         Row: {
           action: string
@@ -44,6 +76,112 @@ export type Database = {
           record_id?: string
           table_name?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      basket_orders: {
+        Row: {
+          basket_id: string
+          created_at: string
+          drop_id: string | null
+          fisherman_id: string | null
+          id: string
+          notes: string | null
+          pickup_location: string | null
+          pickup_time: string | null
+          status: string
+          stripe_payment_id: string | null
+          total_price_cents: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          basket_id: string
+          created_at?: string
+          drop_id?: string | null
+          fisherman_id?: string | null
+          id?: string
+          notes?: string | null
+          pickup_location?: string | null
+          pickup_time?: string | null
+          status?: string
+          stripe_payment_id?: string | null
+          total_price_cents: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          basket_id?: string
+          created_at?: string
+          drop_id?: string | null
+          fisherman_id?: string | null
+          id?: string
+          notes?: string | null
+          pickup_location?: string | null
+          pickup_time?: string | null
+          status?: string
+          stripe_payment_id?: string | null
+          total_price_cents?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "basket_orders_basket_id_fkey"
+            columns: ["basket_id"]
+            isOneToOne: false
+            referencedRelation: "client_baskets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "basket_orders_drop_id_fkey"
+            columns: ["drop_id"]
+            isOneToOne: false
+            referencedRelation: "drops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "basket_orders_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_baskets: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          price_cents: number
+          updated_at: string
+          variety_level: string | null
+          weight_kg: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          price_cents: number
+          updated_at?: string
+          variety_level?: string | null
+          weight_kg?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          price_cents?: number
+          updated_at?: string
+          variety_level?: string | null
+          weight_kg?: number | null
         }
         Relationships: []
       }
@@ -231,6 +369,7 @@ export type Database = {
           website_url: string | null
           work_philosophy: string | null
           years_experience: string | null
+          zone_id: string | null
         }
         Insert: {
           address?: string | null
@@ -278,6 +417,7 @@ export type Database = {
           website_url?: string | null
           work_philosophy?: string | null
           years_experience?: string | null
+          zone_id?: string | null
         }
         Update: {
           address?: string | null
@@ -325,8 +465,17 @@ export type Database = {
           website_url?: string | null
           work_philosophy?: string | null
           years_experience?: string | null
+          zone_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fishermen_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones_peche"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fishermen_contacts: {
         Row: {
@@ -1422,6 +1571,69 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      zones_especes: {
+        Row: {
+          created_at: string
+          id: string
+          species_id: string
+          zone_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          species_id: string
+          zone_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          species_id?: string
+          zone_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zones_especes_species_id_fkey"
+            columns: ["species_id"]
+            isOneToOne: false
+            referencedRelation: "species"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "zones_especes_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones_peche"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      zones_peche: {
+        Row: {
+          created_at: string
+          id: string
+          latitude: number
+          longitude: number
+          name: string
+          region: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          latitude: number
+          longitude: number
+          name: string
+          region: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          latitude?: number
+          longitude?: number
+          name?: string
+          region?: string
         }
         Relationships: []
       }
