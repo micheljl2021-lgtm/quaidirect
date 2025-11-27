@@ -34,6 +34,8 @@ import ResetPassword from "./pages/ResetPassword";
 import OnboardingConfirmation from "./pages/OnboardingConfirmation";
 import PecheurPaymentSuccess from "./pages/PecheurPaymentSuccess";
 import PecheurContacts from "./pages/PecheurContacts";
+import AmbassadorPartner from "./pages/AmbassadorPartner";
+import PecheurAmbassadorStatus from "./pages/PecheurAmbassadorStatus";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +82,8 @@ const App = () => (
               </ProtectedFisherRoute>
             } />
             <Route path="/pecheur/edit-profile" element={<EditFisherProfile />} />
+            <Route path="/pecheur/ambassadeur" element={<PecheurAmbassadorStatus />} />
+            <Route path="/ambassadeur-partenaire" element={<AmbassadorPartner />} />
             <Route path="/pecheur/:id" element={<FisherProfile />} />
             <Route path="/pecheurs/:slug" element={<FisherProfile />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -58,38 +58,20 @@ const CreateArrivage = () => {
     }
   }, [user, isVerifiedFisherman, navigate]);
 
-  // Récupérer la zone de pêche du pêcheur
+  // Récupérer le pêcheur avec sa zone
   const { data: fishermanData } = useQuery({
     queryKey: ['fisherman-zone', user?.id],
     queryFn: async () => {
       if (!user) return null;
       const { data } = await supabase
         .from('fishermen')
-        .select('id, main_fishing_zone')
+        .select('id, zone_id, main_fishing_zone')
         .eq('user_id', user.id)
         .single();
       return data;
     },
     enabled: !!user,
   });
-
-  // Mapper la zone du pêcheur vers fishing_area
-  const getFishingArea = (mainZone: string | null): string => {
-    if (!mainZone) return 'all';
-    const zone = mainZone.toLowerCase();
-    if (zone.includes('méditerranée') || zone.includes('hyeres') || zone.includes('marseille') || zone.includes('toulon')) {
-      return 'mediterranee';
-    }
-    if (zone.includes('atlantique') || zone.includes('bretagne') || zone.includes('vendée') || zone.includes('charente')) {
-      return 'atlantique';
-    }
-    if (zone.includes('manche') || zone.includes('normandie') || zone.includes('calais')) {
-      return 'manche';
-    }
-    return 'all';
-  };
-
-  const fishingAreaType = getFishingArea(fishermanData?.main_fishing_zone || null);
 
   // Fetch ports
   const { data: ports } = useQuery({
@@ -105,25 +87,50 @@ const CreateArrivage = () => {
     },
   });
 
-  // Récupérer les espèces filtrées par zone
-  const { data: species } = useQuery({
-    queryKey: ['species', fishingAreaType],
+  // Récupérer le nom de la zone
+  const { data: zoneData } = useQuery({
+    queryKey: ['zone-name', fishermanData?.zone_id],
     queryFn: async () => {
-      let query = supabase
+      if (!fishermanData?.zone_id) return null;
+      const { data } = await supabase
+        .from('zones_peche')
+        .select('name, region')
+        .eq('id', fishermanData.zone_id)
+        .single();
+      return data;
+    },
+    enabled: !!fishermanData?.zone_id,
+  });
+
+  // Récupérer les espèces filtrées par zone du pêcheur
+  const { data: species } = useQuery({
+    queryKey: ['species-by-zone', fishermanData?.zone_id],
+    queryFn: async () => {
+      // Si le pêcheur a une zone définie, filtrer via zones_especes
+      if (fishermanData?.zone_id) {
+        const { data: zoneSpecies, error } = await supabase
+          .from('zones_especes')
+          .select(`
+            species:species (
+              id, name, scientific_name, fishing_area, indicative_price, price_unit, presentation
+            )
+          `)
+          .eq('zone_id', fishermanData.zone_id);
+
+        if (error) throw error;
+        return zoneSpecies?.map(zs => zs.species).filter(Boolean) || [];
+      }
+
+      // Sinon, afficher toutes les espèces
+      const { data, error } = await supabase
         .from('species')
         .select('id, name, scientific_name, fishing_area, indicative_price, price_unit, presentation')
         .order('name');
       
-      // Filtrer par zone si ce n'est pas 'all'
-      if (fishingAreaType !== 'all') {
-        query = query.in('fishing_area', [fishingAreaType as any, 'all']);
-      }
-      
-      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
-    enabled: !!fishingAreaType,
+    enabled: !!fishermanData,
   });
 
   // Fetch fisherman's preferred species
@@ -506,12 +513,12 @@ const CreateArrivage = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Message de zone détectée */}
-              {fishermanData?.main_fishing_zone && (
+              {zoneData && (
                 <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
                   <div className="flex gap-2">
                     <span className="text-xl">📍</span>
                     <AlertDescription className="text-blue-800 dark:text-blue-200">
-                      Zone détectée : <strong>{fishermanData.main_fishing_zone}</strong>
+                      Zone détectée : <strong>{zoneData.name} ({zoneData.region})</strong>
                       <br />
                       Seules les espèces de votre zone sont affichées pour faciliter la sélection.
                     </AlertDescription>

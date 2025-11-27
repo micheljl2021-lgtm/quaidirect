@@ -7,6 +7,7 @@ import Header from '@/components/Header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import { Crown, Fish, MapPin, Clock, Zap, Bell, Calendar, CheckCircle2, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -58,6 +59,108 @@ const PremiumDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [favoritePorts, setFavoritePorts] = useState<string[]>([]);
+  const [favoriteSpecies, setFavoriteSpecies] = useState<string[]>([]);
+  const [showSettings, setShowSettings] = useState(false);
+
+  // Fetch user preferences
+  const { data: profile } = useQuery({
+    queryKey: ['user-profile', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  // Fetch all ports for selection
+  const { data: allPorts } = useQuery({
+    queryKey: ['all-ports'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ports')
+        .select('*')
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch all species for selection
+  const { data: allSpecies } = useQuery({
+    queryKey: ['all-species'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('species')
+        .select('*')
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Load favorite ports and species from follow tables
+  useEffect(() => {
+    if (!user) return;
+
+    const loadPreferences = async () => {
+      const { data: followedPorts } = await supabase
+        .from('follow_ports')
+        .select('port_id')
+        .eq('user_id', user.id);
+      
+      const { data: followedSpecies } = await supabase
+        .from('follow_species')
+        .select('species_id')
+        .eq('user_id', user.id);
+
+      if (followedPorts) setFavoritePorts(followedPorts.map(fp => fp.port_id));
+      if (followedSpecies) setFavoriteSpecies(followedSpecies.map(fs => fs.species_id));
+    };
+
+    loadPreferences();
+  }, [user]);
+
+  const saveFavorites = async () => {
+    if (!user) return;
+
+    try {
+      // Delete existing follows
+      await supabase.from('follow_ports').delete().eq('user_id', user.id);
+      await supabase.from('follow_species').delete().eq('user_id', user.id);
+
+      // Insert new favorites
+      if (favoritePorts.length > 0) {
+        await supabase
+          .from('follow_ports')
+          .insert(favoritePorts.map(port_id => ({ user_id: user.id, port_id })));
+      }
+
+      if (favoriteSpecies.length > 0) {
+        await supabase
+          .from('follow_species')
+          .insert(favoriteSpecies.map(species_id => ({ user_id: user.id, species_id })));
+      }
+
+      toast({
+        title: 'Préférences enregistrées',
+        description: 'Vous recevrez des alertes pour vos favoris',
+      });
+      setShowSettings(false);
+    } catch (error: any) {
+      toast({
+        title: 'Erreur',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -268,23 +371,101 @@ const PremiumDashboard = () => {
       
       <div className="container px-4 py-8 max-w-7xl mx-auto">
         {/* Premium Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500">
-              <Crown className="h-6 w-6 text-white" />
+        <Card className="mb-8 border-2 border-primary bg-gradient-to-br from-primary/5 to-primary/10">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500">
+                  <Crown className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+                    Compte Premium Actif
+                    <Badge className="gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
+                      <Crown className="h-3 w-3" />
+                      Premium
+                    </Badge>
+                  </h1>
+                  <p className="text-muted-foreground">
+                    Alertes ciblées • Soutien aux pêcheurs
+                  </p>
+                </div>
+              </div>
+              <Button variant="outline" onClick={() => setShowSettings(!showSettings)}>
+                Mes préférences
+              </Button>
             </div>
-            <h1 className="text-4xl font-bold text-foreground">
-              Dashboard Premium
-            </h1>
-            <Badge className="gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
-              <Crown className="h-3 w-3" />
-              Premium
-            </Badge>
-          </div>
-          <p className="text-lg text-muted-foreground">
-            Accédez aux meilleurs arrivages 30 minutes avant tout le monde
-          </p>
-        </div>
+
+            {/* Settings Panel */}
+            {showSettings && (
+              <div className="mt-6 pt-6 border-t space-y-6">
+                <div className="space-y-3">
+                  <Label>Ports favoris (maximum 2)</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {allPorts?.map(port => (
+                      <div key={port.id} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id={`port-${port.id}`}
+                          checked={favoritePorts.includes(port.id)}
+                          onChange={(e) => {
+                            if (e.target.checked && favoritePorts.length >= 2) {
+                              toast({
+                                title: 'Limite atteinte',
+                                description: 'Vous pouvez sélectionner maximum 2 ports',
+                                variant: 'destructive',
+                              });
+                              return;
+                            }
+                            setFavoritePorts(prev => 
+                              e.target.checked 
+                                ? [...prev, port.id]
+                                : prev.filter(p => p !== port.id)
+                            );
+                          }}
+                          className="rounded"
+                        />
+                        <label htmlFor={`port-${port.id}`} className="text-sm cursor-pointer">
+                          {port.name} ({port.city})
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <Label>Espèces favorites</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto p-2 border rounded-lg">
+                    {allSpecies?.map(species => (
+                      <div key={species.id} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id={`species-${species.id}`}
+                          checked={favoriteSpecies.includes(species.id)}
+                          onChange={(e) => {
+                            setFavoriteSpecies(prev => 
+                              e.target.checked 
+                                ? [...prev, species.id]
+                                : prev.filter(s => s !== species.id)
+                            );
+                          }}
+                          className="rounded"
+                        />
+                        <label htmlFor={`species-${species.id}`} className="text-sm cursor-pointer">
+                          {species.name}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <Button onClick={saveFavorites} className="w-full">
+                  Enregistrer mes préférences
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Premium Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

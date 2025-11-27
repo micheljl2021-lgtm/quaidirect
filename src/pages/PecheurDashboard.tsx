@@ -9,7 +9,7 @@ import CaisseModule from '@/components/CaisseModule';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Anchor, AlertCircle, ShoppingCart, History, CheckCircle, Settings, Users, Mail, Send, Pencil } from 'lucide-react';
+import { Plus, Anchor, AlertCircle, ShoppingCart, History, CheckCircle, Settings, Users, Mail, Send, Pencil, Crown } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -256,7 +256,7 @@ const PecheurDashboard = () => {
                   onClick={() => navigate('/pecheur/edit-profile')}
                 >
                   <Settings className="h-5 w-5" />
-                  Modifier ma vitrine
+                  Configurer ma vitrine
                 </Button>
                 <Button 
                   size="lg" 
@@ -265,7 +265,16 @@ const PecheurDashboard = () => {
                   onClick={() => navigate('/pecheur/contacts')}
                 >
                   <Users className="h-5 w-5" />
-                  Mes contacts clients
+                  Carnet de clients
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  className="gap-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 border-0"
+                  onClick={() => navigate('/pecheur/ambassadeur')}
+                >
+                  <Crown className="h-5 w-5" />
+                  Ambassadeur
                 </Button>
               </>
             )}
