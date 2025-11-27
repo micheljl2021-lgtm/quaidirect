@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Anchor, Save, Loader2 } from 'lucide-react';
@@ -56,6 +57,10 @@ const EditFisherProfile = () => {
   const [selectedMethods, setSelectedMethods] = useState<FishingMethod[]>([]);
   const [zones, setZones] = useState<string>('');
   const [displayNamePreference, setDisplayNamePreference] = useState<'boat_name' | 'company_name'>('boat_name');
+  const [lockedData, setLockedData] = useState({ siret: '', boatRegistration: '' });
+  const [regeneratingDesc, setRegeneratingDesc] = useState(false);
+  const [allZones, setAllZones] = useState<any[]>([]);
+  const [selectedZoneId, setSelectedZoneId] = useState<string>('');
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -96,6 +101,11 @@ const EditFisherProfile = () => {
         setFishermanId(fisherman.id);
         setFishermanSlug(fisherman.slug || '');
         setDisplayNamePreference((fisherman.display_name_preference || 'boat_name') as 'boat_name' | 'company_name');
+        setLockedData({
+          siret: fisherman.siret || '',
+          boatRegistration: fisherman.boat_registration || '',
+        });
+        setSelectedZoneId(fisherman.zone_id || '');
         form.reset({
           boat_name: fisherman.boat_name || '',
           company_name: fisherman.company_name || '',
@@ -105,6 +115,13 @@ const EditFisherProfile = () => {
 
         setSelectedMethods((fisherman.fishing_methods || []) as FishingMethod[]);
         setZones(fisherman.fishing_zones?.join(', ') || '');
+
+        // Fetch zones
+        const { data: zonesData } = await supabase
+          .from('zones_peche')
+          .select('*')
+          .order('name');
+        if (zonesData) setAllZones(zonesData);
 
         // Fetch fisherman species
         const { data: fisherSpecies } = await supabase
@@ -157,6 +174,7 @@ const EditFisherProfile = () => {
           fishing_methods: selectedMethods.length > 0 ? selectedMethods : null,
           fishing_zones: zonesArray.length > 0 ? zonesArray : null,
           display_name_preference: displayNamePreference,
+          zone_id: selectedZoneId || null,
         })
         .eq('id', fishermanId);
 
@@ -228,9 +246,33 @@ const EditFisherProfile = () => {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Locked Fields Card */}
+            <Card className="border-muted bg-muted/20">
+              <CardHeader>
+                <CardTitle>Informations verrouillées</CardTitle>
+                <CardDescription>
+                  Ces données ne peuvent plus être modifiées après validation
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground">SIRET</Label>
+                  <div className="px-3 py-2 bg-muted rounded-md text-foreground font-mono">
+                    {lockedData.siret || 'Non renseigné'}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground">N° Immatriculation</Label>
+                  <div className="px-3 py-2 bg-muted rounded-md text-foreground font-mono">
+                    {lockedData.boatRegistration || 'Non renseigné'}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
-                <CardTitle>Informations principales</CardTitle>
+                <CardTitle>Informations modifiables</CardTitle>
                 <CardDescription>
                   Ces informations seront visibles sur votre page publique
                 </CardDescription>
@@ -285,7 +327,46 @@ const EditFisherProfile = () => {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description courte</FormLabel>
+                      <div className="flex items-center justify-between">
+                        <FormLabel>Description courte</FormLabel>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            setRegeneratingDesc(true);
+                            try {
+                              const { data, error } = await supabase.functions.invoke('generate-fisherman-description', {
+                                body: {
+                                  yearsExperience: '5',
+                                  passion: form.watch('bio') || '',
+                                  workPhilosophy: zones || '',
+                                  clientMessage: form.watch('company_name') || '',
+                                }
+                              });
+                              if (error) throw error;
+                              if (data?.description) {
+                                form.setValue('description', data.description);
+                                toast({
+                                  title: 'Description régénérée',
+                                  description: 'La description a été mise à jour par l\'IA',
+                                });
+                              }
+                            } catch (error: any) {
+                              toast({
+                                title: 'Erreur',
+                                description: error.message,
+                                variant: 'destructive',
+                              });
+                            } finally {
+                              setRegeneratingDesc(false);
+                            }
+                          }}
+                          disabled={regeneratingDesc}
+                        >
+                          {regeneratingDesc ? 'Génération...' : '✨ Régénérer avec IA'}
+                        </Button>
+                      </div>
                       <FormControl>
                         <Textarea 
                           placeholder="Décrivez votre activité en quelques mots..."
@@ -423,8 +504,27 @@ const EditFisherProfile = () => {
                   </div>
                 </div>
 
+                <div className="space-y-2">
+                  <FormLabel>Zone de pêche principale</FormLabel>
+                  <Select value={selectedZoneId} onValueChange={setSelectedZoneId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionnez votre zone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allZones.map(zone => (
+                        <SelectItem key={zone.id} value={zone.id}>
+                          {zone.name} ({zone.region})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    La zone où vous pêchez principalement
+                  </FormDescription>
+                </div>
+
                 <div>
-                  <FormLabel>Zones de pêche</FormLabel>
+                  <FormLabel>Zones de pêche (texte libre)</FormLabel>
                   <Input
                     placeholder="Ex: Manche, Atlantique Nord, Méditerranée"
                     value={zones}
@@ -432,7 +532,7 @@ const EditFisherProfile = () => {
                     className="mt-2"
                   />
                   <FormDescription>
-                    Séparez les zones par des virgules
+                    Séparez les zones par des virgules (optionnel)
                   </FormDescription>
                 </div>
               </CardContent>

@@ -15,3 +15,9 @@ verify_jwt = true  # Admin only function
 
 [functions.generate-fisherman-description]
 verify_jwt = true  # Requires authentication
+
+[functions.create-basket-checkout]
+verify_jwt = true  # Requires authentication
+
+[functions.create-checkout]
+verify_jwt = true  # Requires authentication
