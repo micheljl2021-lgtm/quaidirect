@@ -56,16 +56,22 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price: 'price_1SXFiyH0VhS1yyE0MZJz3qOm',
+          price: 'price_1SYEZfH0VhS1yyE0EIqnJlrW', // Abonnement annuel 150€/an
           quantity: 1,
         },
       ],
-      mode: 'payment',
+      mode: 'subscription',
       success_url: `${origin}/pecheur/payment-success`,
       cancel_url: `${origin}/pecheur/payment?canceled=true`,
       metadata: {
         user_id: user.id,
-        payment_type: 'fisherman_onboarding',
+        payment_type: 'fisherman_annual_subscription',
+      },
+      subscription_data: {
+        metadata: {
+          user_id: user.id,
+          payment_type: 'fisherman_annual_subscription',
+        },
       },
     });
 
