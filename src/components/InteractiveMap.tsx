@@ -176,17 +176,29 @@ const InteractiveMap = ({ ports = [], onPortClick, selectedPortId, userLocation 
       markers.current.push(userLocationMarker);
     }
 
-    // Fit map to show all ports (or user location if no ports)
-    if (ports.length > 0) {
+    // Priority to user location for zoom, then include ports in view
+    if (userLocation && map.current) {
+      // If user location exists, center on it with appropriate zoom
+      if (ports.length > 0) {
+        // Include both user location and ports in bounds
+        const bounds = new maplibregl.LngLatBounds();
+        bounds.extend([userLocation.lng, userLocation.lat]);
+        ports.forEach(port => {
+          bounds.extend([port.longitude, port.latitude]);
+        });
+        map.current.fitBounds(bounds, { padding: 80, maxZoom: 12 });
+      } else {
+        // Only user location, zoom closer
+        map.current.setCenter([userLocation.lng, userLocation.lat]);
+        map.current.setZoom(12);
+      }
+    } else if (ports.length > 0) {
+      // No user location, just show ports
       const bounds = new maplibregl.LngLatBounds();
       ports.forEach(port => {
         bounds.extend([port.longitude, port.latitude]);
       });
       map.current.fitBounds(bounds, { padding: 50, maxZoom: 10 });
-    } else if (userLocation && map.current) {
-      // Center on user if no ports
-      map.current.setCenter([userLocation.lng, userLocation.lat]);
-      map.current.setZoom(12);
     }
   }, [ports, mapReady, selectedPortId, onPortClick, userLocation]);
 
