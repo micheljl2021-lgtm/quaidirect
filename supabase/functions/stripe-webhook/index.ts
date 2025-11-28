@@ -119,10 +119,13 @@ serve(async (req) => {
           break;
         }
 
-        // Handle fisherman onboarding payment
+        // Handle fisherman onboarding payment (recurring subscription)
         if (paymentType === 'fisherman_onboarding') {
-          logStep('Processing fisherman onboarding payment', { userId });
+          logStep('Processing fisherman onboarding subscription', { userId });
           
+          const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+          
+          // Create/update fisherman record
           const { data: existingFisherman } = await supabaseClient
             .from('fishermen')
             .select('id')
@@ -162,6 +165,45 @@ serve(async (req) => {
             } else {
               logStep('Fisherman record created with payment successfully');
             }
+          }
+
+          // Create subscription payment record
+          const { error: paymentError } = await supabaseClient
+            .from('payments')
+            .upsert({
+              user_id: userId,
+              stripe_subscription_id: subscription.id,
+              stripe_customer_id: subscription.customer as string,
+              plan: 'fisherman_annual',
+              status: 'active',
+              current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+              trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
+            }, {
+              onConflict: 'stripe_subscription_id'
+            });
+
+          if (paymentError) {
+            logStep('ERROR creating fisherman subscription payment', { error: paymentError });
+          } else {
+            logStep('Fisherman subscription payment record created');
+          }
+
+          // Add fisherman role to user
+          const { error: roleError } = await supabaseClient
+            .from('user_roles')
+            .upsert({
+              user_id: userId,
+              role: 'fisherman'
+            }, {
+              onConflict: 'user_id,role',
+              ignoreDuplicates: true
+            });
+
+          if (roleError) {
+            logStep('ERROR adding fisherman role', { error: roleError });
+          } else {
+            logStep('Fisherman role added successfully');
           }
           break;
         }
@@ -280,24 +322,43 @@ serve(async (req) => {
           logStep('Subscription marked as canceled');
         }
 
-        // Remove premium role
+        // Get payment data to determine subscription type
         const { data: paymentData } = await supabaseClient
           .from('payments')
-          .select('user_id')
+          .select('user_id, plan')
           .eq('stripe_subscription_id', subscription.id)
           .single();
 
         if (paymentData) {
+          // Remove role based on subscription plan
+          const roleToRemove = paymentData.plan === 'fisherman_annual' ? 'fisherman' : 'premium';
+          
           const { error: roleError } = await supabaseClient
             .from('user_roles')
             .delete()
             .eq('user_id', paymentData.user_id)
-            .eq('role', 'premium');
+            .eq('role', roleToRemove);
 
           if (roleError) {
-            logStep('ERROR removing premium role', { error: roleError });
+            logStep(`ERROR removing ${roleToRemove} role`, { error: roleError });
           } else {
-            logStep('Premium role removed successfully');
+            logStep(`${roleToRemove} role removed successfully`);
+          }
+
+          // Update fisherman status if it's a fisherman subscription
+          if (paymentData.plan === 'fisherman_annual') {
+            const { error: fisherError } = await supabaseClient
+              .from('fishermen')
+              .update({
+                onboarding_payment_status: 'canceled',
+              })
+              .eq('user_id', paymentData.user_id);
+
+            if (fisherError) {
+              logStep('ERROR updating fisherman status', { error: fisherError });
+            } else {
+              logStep('Fisherman subscription canceled');
+            }
           }
         }
         break;
