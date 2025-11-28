@@ -18,6 +18,7 @@ import PecheurOnboarding from "./pages/PecheurOnboarding";
 import PecheurPayment from "./pages/PecheurPayment";
 import PecheurDashboard from "./pages/PecheurDashboard";
 import CreateArrivage from "./pages/CreateArrivage";
+import CreateArrivageWizard from "./pages/CreateArrivageWizard";
 import EditArrivage from "./pages/EditArrivage";
 import DuplicateArrivage from "./pages/DuplicateArrivage";
 import FisherProfile from "./pages/FisherProfile";
@@ -80,6 +81,11 @@ const App = () => (
             } />
             <Route path="/onboarding/confirmation" element={<OnboardingConfirmation />} />
             <Route path="/pecheur/nouvel-arrivage" element={<CreateArrivage />} />
+            <Route path="/pecheur/nouvel-arrivage-v2" element={
+              <ProtectedFisherRoute>
+                <CreateArrivageWizard />
+              </ProtectedFisherRoute>
+            } />
             <Route path="/pecheur/modifier-arrivage/:dropId" element={
               <ProtectedFisherRoute>
                 <EditArrivage />
