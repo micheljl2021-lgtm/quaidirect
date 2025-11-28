@@ -33,6 +33,7 @@ const PecheurDashboard = () => {
 
   useEffect(() => {
     if (authLoading) return; // Wait for auth to load
+    if (user && userRole === null) return; // Wait for role to be fetched
 
     if (!user) {
       navigate('/auth');
@@ -189,12 +190,12 @@ const PecheurDashboard = () => {
     });
   };
 
-  if (loading) {
+  if (authLoading || loading || (user && userRole === null)) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="container px-4 py-8">
-          <p className="text-center text-muted-foreground">Chargement...</p>
+        <div className="container px-4 py-8 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </div>
     );

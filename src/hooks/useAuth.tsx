@@ -45,14 +45,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchUserRole(session.user.id);
+        await fetchUserRole(session.user.id); // Wait for role to be fetched
       }
-      setLoading(false);
+      setLoading(false); // Only set loading to false after role is fetched
     });
 
     return () => subscription.unsubscribe();

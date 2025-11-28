@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Crown, User, Bell, MapPin, Settings, Anchor, Shield, Fish } from "lucide-react";
+import { Crown, User, Bell, MapPin, Settings, Anchor, Shield, Fish, Loader2 } from "lucide-react";
 import { FavoriteSpeciesManager } from "@/components/FavoriteSpeciesManager";
 
 const Compte = () => {
@@ -18,6 +18,7 @@ const Compte = () => {
 
   useEffect(() => {
     if (authLoading) return; // Wait for auth to load
+    if (user && userRole === null) return; // Wait for role to be fetched
 
     if (!user) {
       navigate('/auth');
@@ -40,12 +41,12 @@ const Compte = () => {
     fetchUserData();
   }, [user, userRole, authLoading, navigate]);
 
-  if (loading) {
+  if (authLoading || loading || (user && userRole === null)) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="container px-4 py-8">
-          <p className="text-center text-muted-foreground">Chargement...</p>
+        <div className="container px-4 py-8 flex items-center justify-center">
+          <Loader2 className="h-4 w-4 animate-spin text-primary" />
         </div>
       </div>
     );
