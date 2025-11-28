@@ -19,11 +19,13 @@ import PecheurPayment from "./pages/PecheurPayment";
 import PecheurDashboard from "./pages/PecheurDashboard";
 import CreateArrivage from "./pages/CreateArrivage";
 import EditArrivage from "./pages/EditArrivage";
+import DuplicateArrivage from "./pages/DuplicateArrivage";
 import FisherProfile from "./pages/FisherProfile";
 import EditFisherProfile from "./pages/EditFisherProfile";
 import Recettes from "./pages/Recettes";
 import RecetteDetail from "./pages/RecetteDetail";
 import Panier from "./pages/Panier";
+import PanierSuccess from "./pages/PanierSuccess";
 import Arrivages from "./pages/Arrivages";
 import UserDashboard from "./pages/UserDashboard";
 import PremiumDashboard from "./pages/PremiumDashboard";
@@ -59,6 +61,7 @@ const App = () => (
           <Route path="/recettes" element={<Recettes />} />
           <Route path="/recettes/:id" element={<RecetteDetail />} />
           <Route path="/panier" element={<Panier />} />
+          <Route path="/panier/success" element={<PanierSuccess />} />
           <Route path="/arrivages" element={<Arrivages />} />
             <Route path="/dashboard/user" element={<UserDashboard />} />
             <Route path="/dashboard/premium" element={<PremiumDashboard />} />
@@ -80,6 +83,11 @@ const App = () => (
             <Route path="/pecheur/modifier-arrivage/:dropId" element={
               <ProtectedFisherRoute>
                 <EditArrivage />
+              </ProtectedFisherRoute>
+            } />
+            <Route path="/pecheur/dupliquer-arrivage/:dropId" element={
+              <ProtectedFisherRoute>
+                <DuplicateArrivage />
               </ProtectedFisherRoute>
             } />
             <Route path="/pecheur/edit-profile" element={<EditFisherProfile />} />

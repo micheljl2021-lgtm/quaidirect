@@ -9,7 +9,7 @@ import CaisseModule from '@/components/CaisseModule';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Anchor, AlertCircle, ShoppingCart, History, CheckCircle, Settings, Users, Mail, Send, Pencil, Crown, Bot } from 'lucide-react';
+import { CheckCircle, Anchor, Plus, Send, MessageSquare, Loader2, Package, Calculator, Edit, Copy, AlertCircle, Settings, Users, Crown, Bot, Mail, ShoppingCart, Pencil, History } from "lucide-react";
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -502,6 +502,18 @@ const PecheurDashboard = () => {
                             )}
                           </div>
                           <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/pecheur/dupliquer-arrivage/${drop.id}`);
+                              }}
+                            >
+                              <Copy className="h-3 w-3" />
+                              Dupliquer
+                            </Button>
                             <Button
                               variant="outline"
                               size="sm"
