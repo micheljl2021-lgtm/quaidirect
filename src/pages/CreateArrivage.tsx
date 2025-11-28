@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, Anchor, MapPin, Calendar, Clock, Fish, Camera, Search } from 'lucide-react';
+import { Plus, Trash2, Anchor, MapPin, Calendar, Clock, Fish, Camera, Search, X, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import OfferPhotosUpload from '@/components/OfferPhotosUpload';
 import { DropPhotosUpload } from '@/components/DropPhotosUpload';
@@ -30,8 +30,13 @@ interface Offer {
 const CreateArrivage = () => {
   const { user, userRole, isVerifiedFisherman } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+
+  // Check if duplicating
+  const searchParams = new URLSearchParams(location.search);
+  const isDuplicating = searchParams.get('duplicate') === 'true';
 
   // Form state
   const [portId, setPortId] = useState('');
@@ -157,6 +162,40 @@ const CreateArrivage = () => {
     },
     enabled: !!user,
   });
+
+  // Load duplication data if duplicating
+  useEffect(() => {
+    if (isDuplicating) {
+      const duplicateData = sessionStorage.getItem('duplicateDropData');
+      if (duplicateData) {
+        try {
+          const data = JSON.parse(duplicateData);
+          setPortId(data.port_id || '');
+          setIsPremium(data.is_premium || false);
+          setNotes(data.notes || '');
+          setDropPhotos(data.drop_photos?.map((p: any) => p.photo_url) || []);
+          setSelectedSpeciesIds(data.species || []);
+          setOffers(data.offers?.map((o: any) => ({
+            speciesId: o.species_id,
+            title: o.title,
+            description: o.description || '',
+            unitPrice: o.unit_price?.toString() || '',
+            totalUnits: o.total_units?.toString() || '',
+            photos: o.photos?.map((p: any) => p.url) || []
+          })) || []);
+          
+          sessionStorage.removeItem('duplicateDropData');
+          
+          toast({
+            title: "Arrivage dupliqué",
+            description: "Modifiez la date et l'heure, puis validez pour créer le nouvel arrivage",
+          });
+        } catch (error) {
+          console.error('Error loading duplicate data:', error);
+        }
+      }
+    }
+  }, [isDuplicating, toast]);
 
   // Trier les espèces : favorites en premier, puis alphabétique
   const sortedSpecies = species ? [...species].sort((a, b) => {
@@ -615,9 +654,9 @@ const CreateArrivage = () => {
                     Ajoutez des photos pour chaque espèce (2-5 photos par offre). Plus vous ajoutez de détails, plus vous attirerez de clients.
                   </CardDescription>
                 </div>
-                <Button type="button" variant="outline" size="sm" onClick={addOffer}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Ajouter
+                <Button type="button" variant="outline" size="lg" onClick={addOffer} className="h-12">
+                  <Plus className="h-5 w-5 mr-2" />
+                  Ajouter une offre
                 </Button>
               </div>
             </CardHeader>
@@ -768,18 +807,31 @@ const CreateArrivage = () => {
             <Button
               type="button"
               variant="outline"
-              className="flex-1"
+              className="flex-1 h-14 text-base"
+              size="lg"
               onClick={() => navigate('/dashboard/pecheur')}
               disabled={loading}
             >
+              <X className="h-5 w-5 mr-2" />
               Annuler
             </Button>
             <Button
               type="submit"
-              className="flex-1"
+              className="flex-1 h-14 text-base font-bold"
+              size="lg"
               disabled={loading}
             >
-              {loading ? 'Création...' : 'Créer l\'arrivage'}
+              {loading ? (
+                <>
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  Création en cours...
+                </>
+              ) : (
+                <>
+                  <Anchor className="h-5 w-5 mr-2" />
+                  Créer l'arrivage
+                </>
+              )}
             </Button>
           </div>
         </form>

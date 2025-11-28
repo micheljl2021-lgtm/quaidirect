@@ -23,7 +23,6 @@ const AmbassadorPartner = () => {
             species:species(name)
           )
         `)
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id || '')
         .eq('email', 'seb.zadeyan.leboncoin@gmail.com')
         .maybeSingle();
 

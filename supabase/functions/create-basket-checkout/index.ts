@@ -67,7 +67,7 @@ serve(async (req) => {
         },
       ],
       mode: 'payment',
-      success_url: `${origin}/panier?success=true`,
+      success_url: `${origin}/panier/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/panier?canceled=true`,
       metadata: {
         user_id: user.id,
