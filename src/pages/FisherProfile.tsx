@@ -69,7 +69,7 @@ const FisherProfile = () => {
   });
 
   // Check if current user is the owner
-  const isOwner = user && fisherman && fisherman.user_id === user.id;
+  const isOwner = !!(user && fisherman && fisherman.user_id === user.id);
 
   // Fetch full fisherman data if user is the owner (to get contact info)
   const { data: fullFishermanData } = useQuery({
