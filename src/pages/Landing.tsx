@@ -12,7 +12,6 @@ import { supabase } from "@/integrations/supabase/client";
 import freshFishImage from "@/assets/landing/fresh-fish.jpg";
 import fishingPortImage from "@/assets/landing/fishing-port.jpg";
 import fishermanBoatImage from "@/assets/landing/fisherman-boat.jpg";
-import logoPecheDurable from "@/assets/logo-peche-durable.png";
 
 import { useLandingStats } from "@/hooks/useLandingStats";
 import { useAmbassadorStats } from "@/hooks/useAmbassadorStats";
@@ -162,7 +161,7 @@ const Landing = () => {
 
           <div className="mt-8 flex justify-center items-center gap-8">
             <img 
-              src={logoPecheDurable} 
+              src={'/src/assets/logo-peche-durable.png'} 
               alt="Pêche Durable et Responsable" 
               className="h-20 opacity-90"
             />

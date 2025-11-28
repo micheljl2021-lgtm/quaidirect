@@ -33,14 +33,12 @@ interface Drop {
 }
 
 const UserDashboard = () => {
-  const { user, userRole, loading: authLoading } = useAuth();
+  const { user, userRole } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    if (authLoading) return; // Wait for auth to load
-
     if (!user) {
       navigate('/auth');
       return;
@@ -51,7 +49,7 @@ const UserDashboard = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [user, authLoading, navigate]);
+  }, [user, navigate]);
 
   // Fetch drops publics disponibles
   const { data: drops, isLoading } = useQuery({

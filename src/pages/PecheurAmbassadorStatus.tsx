@@ -8,21 +8,19 @@ import Header from '@/components/Header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Crown, Trophy, Award, Users, CheckCircle2, Star, Zap, Loader2 } from 'lucide-react';
+import { Crown, Trophy, Award, Users, CheckCircle2, Star, Zap } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const PecheurAmbassadorStatus = () => {
-  const { user, isVerifiedFisherman, loading } = useAuth();
+  const { user, isVerifiedFisherman } = useAuth();
   const navigate = useNavigate();
   const { data: stats } = useAmbassadorStats();
 
   useEffect(() => {
-    if (loading) return; // Wait for auth to load
-    
     if (!user || !isVerifiedFisherman) {
       navigate('/dashboard/pecheur');
     }
-  }, [user, isVerifiedFisherman, loading, navigate]);
+  }, [user, isVerifiedFisherman, navigate]);
 
   // Fetch current fisherman's ambassador status
   const { data: fishermanData } = useQuery({
@@ -44,14 +42,6 @@ const PecheurAmbassadorStatus = () => {
 
   const isAmbassador = fishermanData?.is_ambassador || false;
   const ambassadorRank = fishermanData?.ambassador_slot || null;
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">

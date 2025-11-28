@@ -18,7 +18,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const PecheurDashboard = () => {
-  const { user, userRole, isVerifiedFisherman, loading: authLoading } = useAuth();
+  const { user, userRole, isVerifiedFisherman } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [drops, setDrops] = useState<any[]>([]);
@@ -32,9 +32,6 @@ const PecheurDashboard = () => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (authLoading) return; // Wait for auth to load
-    if (user && userRole === null) return; // Wait for role to be fetched
-
     if (!user) {
       navigate('/auth');
       return;
@@ -53,7 +50,7 @@ const PecheurDashboard = () => {
     if (isVerifiedFisherman) {
       fetchDrops();
     }
-  }, [user, userRole, isVerifiedFisherman, authLoading, navigate]);
+  }, [user, userRole, isVerifiedFisherman, navigate]);
 
   // Set up realtime subscription for drops
   useEffect(() => {
@@ -190,12 +187,12 @@ const PecheurDashboard = () => {
     });
   };
 
-  if (authLoading || loading || (user && userRole === null)) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="container px-4 py-8 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="container px-4 py-8">
+          <p className="text-center text-muted-foreground">Chargement...</p>
         </div>
       </div>
     );

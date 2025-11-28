@@ -69,7 +69,7 @@ const DuplicateArrivage = () => {
         }));
 
         // Redirect to create page with duplication flag
-        navigate('/pecheur/nouvel-arrivage?duplicate=true');
+        navigate('/pecheur/creer-arrivage?duplicate=true');
       } catch (error) {
         console.error('Error loading drop for duplication:', error);
         toast({

@@ -148,14 +148,6 @@ const PecheurContacts = () => {
       <Header />
       <div className="container mx-auto py-8 px-4 max-w-6xl">
       <div className="mb-6">
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate('/pecheur/dashboard')}
-          className="mb-4"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Retour au dashboard
-        </Button>
         <h1 className="text-3xl font-bold mb-2">Mes Contacts Clients</h1>
         <p className="text-muted-foreground">
           Gérez votre base de contacts pour envoyer des messages groupés

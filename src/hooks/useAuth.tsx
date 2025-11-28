@@ -33,8 +33,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch user role without setTimeout to ensure synchronous handling
-          await fetchUserRole(session.user.id);
+          // Fetch user role
+          setTimeout(() => {
+            fetchUserRole(session.user.id);
+          }, 0);
         } else {
           setUserRole(null);
           setIsVerifiedFisherman(false);
@@ -43,14 +45,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        await fetchUserRole(session.user.id); // Wait for role to be fetched
+        fetchUserRole(session.user.id);
       }
-      setLoading(false); // Only set loading to false after role is fetched
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();

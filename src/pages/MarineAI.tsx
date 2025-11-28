@@ -22,7 +22,7 @@ const QUICK_ACTIONS = [
 ];
 
 const MarineAI = () => {
-  const { user, isVerifiedFisherman, loading } = useAuth();
+  const { user, isVerifiedFisherman } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -31,14 +31,10 @@ const MarineAI = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Ne rien faire tant que l'auth est en cours de chargement
-    if (loading) return;
-    
-    // Une fois chargé, vérifier les permissions
     if (!user || !isVerifiedFisherman) {
       navigate('/dashboard/pecheur');
     }
-  }, [user, isVerifiedFisherman, loading, navigate]);
+  }, [user, isVerifiedFisherman, navigate]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -74,16 +70,7 @@ const MarineAI = () => {
       );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        
-        if (response.status === 429) {
-          throw new Error(errorData.error || 'Trop de requêtes. Veuillez patienter quelques instants.');
-        }
-        if (response.status === 402) {
-          throw new Error(errorData.error || 'Crédits IA épuisés. Veuillez contacter le support.');
-        }
-        
-        throw new Error(errorData.error || 'Impossible de contacter l\'IA');
+        throw new Error('Failed to get AI response');
       }
 
       const reader = response.body?.getReader();
@@ -143,139 +130,130 @@ const MarineAI = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {loading ? (
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      ) : (
-        <>
-          <Header />
+      <Header />
 
-          <div className="container px-4 py-8 max-w-5xl mx-auto">
-            {/* Header */}
-            <div className="mb-6">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500">
-                  <Bot className="h-6 w-6 text-white" />
-                </div>
-                <h1 className="text-3xl font-bold text-foreground">IA du Marin</h1>
-                <Badge className="gap-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white">
-                  Assistant IA
-                </Badge>
-              </div>
-              <p className="text-muted-foreground">
-                Votre assistant personnel pour la météo, la stratégie de pêche, et la gestion commerciale
-              </p>
+      <div className="container px-4 py-8 max-w-5xl mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500">
+              <Bot className="h-6 w-6 text-white" />
             </div>
-
-            {/* Quick Actions */}
-            {messages.length === 0 && (
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-muted-foreground mb-3">Actions rapides</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {QUICK_ACTIONS.map((action) => (
-                    <Button
-                      key={action.label}
-                      variant="outline"
-                      className="h-auto py-4 flex-col gap-2"
-                      onClick={() => sendMessage(action.prompt)}
-                      disabled={isLoading}
-                    >
-                      <action.icon className="h-5 w-5 text-primary" />
-                      <span className="text-xs text-center">{action.label}</span>
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Chat Messages */}
-            <Card className="mb-6 min-h-[400px] max-h-[600px] flex flex-col">
-              <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                    <Bot className="h-16 w-16 text-muted-foreground/30 mb-4" />
-                    <h3 className="text-lg font-medium text-foreground mb-2">
-                      Bienvenue dans l'IA du Marin
-                    </h3>
-                    <p className="text-sm text-muted-foreground max-w-md">
-                      Posez toutes vos questions sur la météo marine, la stratégie de pêche, 
-                      la gestion commerciale, l'entretien du bateau, et plus encore.
-                    </p>
-                  </div>
-                ) : (
-                  messages.map((msg, i) => (
-                    <div
-                      key={i}
-                      className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-[80%] rounded-lg p-4 ${
-                          msg.role === 'user'
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted text-foreground'
-                        }`}
-                      >
-                        <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                      </div>
-                    </div>
-                  ))
-                )}
-                <div ref={messagesEndRef} />
-              </CardContent>
-            </Card>
-
-            {/* Input */}
-            <div className="flex gap-3">
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage(input);
-                  }
-                }}
-                placeholder="Posez votre question... (Entrée pour envoyer, Shift+Entrée pour nouvelle ligne)"
-                className="resize-none"
-                rows={3}
-                disabled={isLoading}
-              />
-              <Button
-                onClick={() => sendMessage(input)}
-                disabled={isLoading || !input.trim()}
-                size="lg"
-                className="gap-2"
-              >
-                {isLoading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <Send className="h-5 w-5" />
-                )}
-              </Button>
-            </div>
-
-            {/* Info Banner */}
-            <Card className="mt-6 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20">
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-3">
-                  <Shield className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-blue-800 dark:text-blue-200">
-                    <p className="font-medium mb-1">Assistant IA sécurisé</p>
-                    <p>
-                      Vos conversations sont privées et sécurisées. L'IA est spécialisée dans 
-                      l'aide aux marins-pêcheurs artisanaux français.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <h1 className="text-3xl font-bold text-foreground">IA du Marin</h1>
+            <Badge className="gap-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white">
+              Assistant IA
+            </Badge>
           </div>
-        </>
-      )}
+          <p className="text-muted-foreground">
+            Votre assistant personnel pour la météo, la stratégie de pêche, et la gestion commerciale
+          </p>
+        </div>
+
+        {/* Quick Actions */}
+        {messages.length === 0 && (
+          <div className="mb-6">
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">Actions rapides</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {QUICK_ACTIONS.map((action) => (
+                <Button
+                  key={action.label}
+                  variant="outline"
+                  className="h-auto py-4 flex-col gap-2"
+                  onClick={() => sendMessage(action.prompt)}
+                  disabled={isLoading}
+                >
+                  <action.icon className="h-5 w-5 text-primary" />
+                  <span className="text-xs text-center">{action.label}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Chat Messages */}
+        <Card className="mb-6 min-h-[400px] max-h-[600px] flex flex-col">
+          <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                <Bot className="h-16 w-16 text-muted-foreground/30 mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">
+                  Bienvenue dans l'IA du Marin
+                </h3>
+                <p className="text-sm text-muted-foreground max-w-md">
+                  Posez toutes vos questions sur la météo marine, la stratégie de pêche, 
+                  la gestion commerciale, l'entretien du bateau, et plus encore.
+                </p>
+              </div>
+            ) : (
+              messages.map((msg, i) => (
+                <div
+                  key={i}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[80%] rounded-lg p-4 ${
+                      msg.role === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-foreground'
+                    }`}
+                  >
+                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                  </div>
+                </div>
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </CardContent>
+        </Card>
+
+        {/* Input */}
+        <div className="flex gap-3">
+          <Textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage(input);
+              }
+            }}
+            placeholder="Posez votre question... (Entrée pour envoyer, Shift+Entrée pour nouvelle ligne)"
+            className="resize-none"
+            rows={3}
+            disabled={isLoading}
+          />
+          <Button
+            onClick={() => sendMessage(input)}
+            disabled={isLoading || !input.trim()}
+            size="lg"
+            className="gap-2"
+          >
+            {isLoading ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <Send className="h-5 w-5" />
+            )}
+          </Button>
+        </div>
+
+        {/* Info Banner */}
+        <Card className="mt-6 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <Shield className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-blue-800 dark:text-blue-200">
+                <p className="font-medium mb-1">Assistant IA sécurisé</p>
+                <p>
+                  Vos conversations sont privées et sécurisées. L'IA est spécialisée dans 
+                  l'aide aux marins-pêcheurs artisanaux français.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
-
 };
 
 export default MarineAI;
