@@ -16,16 +16,18 @@ export const useLandingStats = () => {
     },
   });
 
-  // Fetch total users count
+  // Fetch total users count (DISTINCT user_id pour éviter les doublons)
   const { data: usersCount } = useQuery({
     queryKey: ['users-count'],
     queryFn: async () => {
-      const { count, error } = await supabase
+      const { data, error } = await supabase
         .from('user_roles')
-        .select('user_id', { count: 'exact', head: true });
+        .select('user_id');
       
       if (error) throw error;
-      return count || 0;
+      // Compter les user_id uniques
+      const uniqueUsers = new Set(data?.map(role => role.user_id));
+      return uniqueUsers.size || 0;
     },
   });
 
