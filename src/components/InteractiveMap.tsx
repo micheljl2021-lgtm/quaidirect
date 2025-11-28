@@ -49,7 +49,7 @@ const InteractiveMap = ({ ports = [], onPortClick, selectedPortId, userLocation 
           },
         ],
       },
-      center: userLocation ? [userLocation.lng, userLocation.lat] : [-1.5, 47.0],
+      center: userLocation ? [userLocation.lng, userLocation.lat] : [2.5, 45.5],
       zoom: userLocation ? 10 : 6,
     });
 
