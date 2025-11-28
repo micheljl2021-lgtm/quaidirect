@@ -33,10 +33,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch user role
-          setTimeout(() => {
-            fetchUserRole(session.user.id);
-          }, 0);
+          // Fetch user role without setTimeout to ensure synchronous handling
+          await fetchUserRole(session.user.id);
         } else {
           setUserRole(null);
           setIsVerifiedFisherman(false);
