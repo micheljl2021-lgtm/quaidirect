@@ -28,7 +28,7 @@ interface Offer {
 }
 
 const CreateArrivage = () => {
-  const { user, userRole, isVerifiedFisherman } = useAuth();
+  const { user, userRole, isVerifiedFisherman, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -52,6 +52,8 @@ const CreateArrivage = () => {
   const [speciesSearch, setSpeciesSearch] = useState("");
 
   useEffect(() => {
+    if (authLoading) return; // Wait for auth to load
+
     if (!user) {
       navigate('/auth');
       return;
@@ -61,7 +63,7 @@ const CreateArrivage = () => {
       navigate('/dashboard/pecheur');
       return;
     }
-  }, [user, isVerifiedFisherman, navigate]);
+  }, [user, isVerifiedFisherman, authLoading, navigate]);
 
   // Récupérer le pêcheur avec sa zone
   const { data: fishermanData } = useQuery({

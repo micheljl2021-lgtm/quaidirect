@@ -11,12 +11,14 @@ import { Crown, User, Bell, MapPin, Settings, Anchor, Shield, Fish } from "lucid
 import { FavoriteSpeciesManager } from "@/components/FavoriteSpeciesManager";
 
 const Compte = () => {
-  const { user, userRole, isVerifiedFisherman } = useAuth();
+  const { user, userRole, isVerifiedFisherman, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [fishermanData, setFishermanData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return; // Wait for auth to load
+
     if (!user) {
       navigate('/auth');
       return;
@@ -36,7 +38,7 @@ const Compte = () => {
     };
 
     fetchUserData();
-  }, [user, userRole, navigate]);
+  }, [user, userRole, authLoading, navigate]);
 
   if (loading) {
     return (
