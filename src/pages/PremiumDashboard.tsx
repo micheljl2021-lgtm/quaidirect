@@ -55,7 +55,7 @@ interface Reservation {
 }
 
 const PremiumDashboard = () => {
-  const { user, userRole } = useAuth();
+  const { user, userRole, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -163,6 +163,8 @@ const PremiumDashboard = () => {
   };
 
   useEffect(() => {
+    if (authLoading) return; // Wait for auth to load
+
     if (!user) {
       navigate('/auth');
       return;
@@ -178,7 +180,7 @@ const PremiumDashboard = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [user, userRole, navigate]);
+  }, [user, userRole, authLoading, navigate]);
 
   // Fetch drops premium (avec accès anticipé)
   const { data: drops, isLoading, refetch } = useQuery({

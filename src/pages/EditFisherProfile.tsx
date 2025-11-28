@@ -44,7 +44,7 @@ const FISHING_METHODS = [
 ];
 
 const EditFisherProfile = () => {
-  const { user, isVerifiedFisherman } = useAuth();
+  const { user, isVerifiedFisherman, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -73,6 +73,8 @@ const EditFisherProfile = () => {
   });
 
   useEffect(() => {
+    if (authLoading) return; // Wait for auth to load
+
     if (!user || !isVerifiedFisherman) {
       navigate('/auth');
       return;
@@ -154,7 +156,7 @@ const EditFisherProfile = () => {
     };
 
     fetchData();
-  }, [user, isVerifiedFisherman, navigate, form, toast]);
+  }, [user, isVerifiedFisherman, authLoading, navigate, form, toast]);
 
   const onSubmit = async (values: FormData) => {
     if (!fishermanId) return;
