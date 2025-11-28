@@ -36,9 +36,9 @@ serve(async (req) => {
     if (!user?.email) throw new Error('User not authenticated or email not available');
     logStep('User authenticated', { userId: user.id, email: user.email });
 
-    const { basketId, priceId } = await req.json();
+    const { basketId, priceId, fishermanId, dropId } = await req.json();
     if (!basketId || !priceId) throw new Error('Missing basketId or priceId');
-    logStep('Request data validated', { basketId, priceId });
+    logStep('Request data validated', { basketId, priceId, fishermanId, dropId });
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2025-08-27.basil',
@@ -72,6 +72,8 @@ serve(async (req) => {
       metadata: {
         user_id: user.id,
         basket_id: basketId,
+        fisherman_id: fishermanId || '',
+        drop_id: dropId || '',
       },
     });
 

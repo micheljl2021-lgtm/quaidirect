@@ -98,10 +98,10 @@ serve(async (req) => {
             if (updateError) {
               logStep('ERROR updating SMS balance', { error: updateError });
             } else {
-              logStep('SMS balance updated successfully', { newBalance: (usage.paid_sms_balance || 0) + smsQuantity });
+              logStep('SMS balance updated successfully');
             }
           } else {
-            const { error: insertError } = await supabaseClient
+            const { error: createError } = await supabaseClient
               .from('fishermen_sms_usage')
               .insert({
                 fisherman_id: fishermanId,
@@ -110,11 +110,40 @@ serve(async (req) => {
                 free_sms_used: 0,
               });
 
-            if (insertError) {
-              logStep('ERROR creating SMS usage record', { error: insertError });
+            if (createError) {
+              logStep('ERROR creating SMS usage record', { error: createError });
             } else {
               logStep('SMS usage record created successfully');
             }
+          }
+          break;
+        }
+
+        // Handle basket order purchase
+        const basketId = session.metadata?.basket_id;
+        if (basketId && session.mode === 'payment') {
+          logStep('Processing basket order', { userId, basketId });
+          
+          const fishermanId = session.metadata?.fisherman_id || null;
+          const dropId = session.metadata?.drop_id || null;
+          
+          // Create basket order record
+          const { error: orderError } = await supabaseClient
+            .from('basket_orders')
+            .insert({
+              user_id: userId,
+              basket_id: basketId,
+              fisherman_id: fishermanId,
+              drop_id: dropId,
+              total_price_cents: session.amount_total || 0,
+              stripe_payment_id: session.payment_intent as string,
+              status: 'pending',
+            });
+
+          if (orderError) {
+            logStep('ERROR creating basket order', { error: orderError });
+          } else {
+            logStep('Basket order created successfully', { basketId, fishermanId, dropId });
           }
           break;
         }
