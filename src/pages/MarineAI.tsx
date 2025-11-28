@@ -70,7 +70,16 @@ const MarineAI = () => {
       );
 
       if (!response.ok) {
-        throw new Error('Failed to get AI response');
+        const errorData = await response.json().catch(() => ({}));
+        
+        if (response.status === 429) {
+          throw new Error(errorData.error || 'Trop de requêtes. Veuillez patienter quelques instants.');
+        }
+        if (response.status === 402) {
+          throw new Error(errorData.error || 'Crédits IA épuisés. Veuillez contacter le support.');
+        }
+        
+        throw new Error(errorData.error || 'Impossible de contacter l\'IA');
       }
 
       const reader = response.body?.getReader();
