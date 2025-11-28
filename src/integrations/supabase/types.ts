@@ -267,9 +267,55 @@ export type Database = {
           },
         ]
       }
+      drop_templates: {
+        Row: {
+          created_at: string | null
+          fisherman_id: string
+          icon: string | null
+          id: string
+          name: string
+          payload: Json
+          usage_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          fisherman_id: string
+          icon?: string | null
+          id?: string
+          name: string
+          payload: Json
+          usage_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          fisherman_id?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          payload?: Json
+          usage_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drop_templates_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drop_templates_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "public_fishermen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drops: {
         Row: {
           created_at: string
+          drop_type: string | null
           eta_at: string
           fisherman_id: string
           id: string
@@ -287,6 +333,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          drop_type?: string | null
           eta_at: string
           fisherman_id: string
           id?: string
@@ -304,6 +351,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          drop_type?: string | null
           eta_at?: string
           fisherman_id?: string
           id?: string
@@ -343,6 +391,60 @@ export type Database = {
           },
         ]
       }
+      fisherman_sale_points: {
+        Row: {
+          address: string
+          created_at: string | null
+          description: string | null
+          fisherman_id: string
+          id: string
+          is_primary: boolean | null
+          label: string
+          latitude: number | null
+          longitude: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          address: string
+          created_at?: string | null
+          description?: string | null
+          fisherman_id: string
+          id?: string
+          is_primary?: boolean | null
+          label: string
+          latitude?: number | null
+          longitude?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string
+          created_at?: string | null
+          description?: string | null
+          fisherman_id?: string
+          id?: string
+          is_primary?: boolean | null
+          label?: string
+          latitude?: number | null
+          longitude?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fisherman_sale_points_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fisherman_sale_points_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "public_fishermen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fishermen: {
         Row: {
           address: string | null
@@ -355,6 +457,8 @@ export type Database = {
           client_message: string | null
           company_name: string | null
           created_at: string
+          default_sale_point_id: string | null
+          default_time_slot: string | null
           description: string | null
           display_name_preference: string | null
           email: string | null
@@ -403,6 +507,8 @@ export type Database = {
           client_message?: string | null
           company_name?: string | null
           created_at?: string
+          default_sale_point_id?: string | null
+          default_time_slot?: string | null
           description?: string | null
           display_name_preference?: string | null
           email?: string | null
@@ -451,6 +557,8 @@ export type Database = {
           client_message?: string | null
           company_name?: string | null
           created_at?: string
+          default_sale_point_id?: string | null
+          default_time_slot?: string | null
           description?: string | null
           display_name_preference?: string | null
           email?: string | null
@@ -489,6 +597,13 @@ export type Database = {
           zone_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fishermen_default_sale_point_id_fkey"
+            columns: ["default_sale_point_id"]
+            isOneToOne: false
+            referencedRelation: "fisherman_sale_points"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fishermen_zone_id_fkey"
             columns: ["zone_id"]

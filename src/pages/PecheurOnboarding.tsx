@@ -23,6 +23,8 @@ import { Step2Liens } from "@/components/onboarding/Step2Liens";
 import { Step3ZonesMethodes } from "@/components/onboarding/Step3ZonesMethodes";
 import { Step4Especes } from "@/components/onboarding/Step4Especes";
 import { Step5Photos } from "@/components/onboarding/Step5Photos";
+import { Step6PointsVente } from "@/components/onboarding/Step6PointsVente";
+import { isWhitelistedFisher } from "@/config/fisherWhitelist";
 
 interface FormData {
   // Step 1
@@ -54,6 +56,13 @@ interface FormData {
   workStyle: string;
   clientMessage: string;
   generatedDescription: string;
+  // Step 6
+  salePoint1Label: string;
+  salePoint1Address: string;
+  salePoint1Description: string;
+  salePoint2Label: string;
+  salePoint2Address: string;
+  salePoint2Description: string;
 }
 
 const PecheurOnboarding = () => {
@@ -87,6 +96,12 @@ const PecheurOnboarding = () => {
     workStyle: "",
     clientMessage: "",
     generatedDescription: "",
+    salePoint1Label: "",
+    salePoint1Address: "",
+    salePoint1Description: "",
+    salePoint2Label: "",
+    salePoint2Address: "",
+    salePoint2Description: "",
   });
 
   // Load existing data on mount
@@ -100,8 +115,9 @@ const PecheurOnboarding = () => {
         .eq('user_id', user.id)
         .single();
 
-      // Check payment status
-      if (!fisherman || fisherman.onboarding_payment_status !== 'paid') {
+      // Check payment status (skip for whitelisted users)
+      const isWhitelisted = isWhitelistedFisher(user.email, user.id);
+      if (!isWhitelisted && (!fisherman || fisherman.onboarding_payment_status !== 'paid')) {
         toast.error("Vous devez d'abord compléter le paiement de 150€");
         navigate('/pecheur/payment');
         return;
@@ -138,6 +154,12 @@ const PecheurOnboarding = () => {
           workStyle: fisherman.work_philosophy || "",
           clientMessage: fisherman.client_message || "",
           generatedDescription: fisherman.generated_description || "",
+          salePoint1Label: savedData.salePoint1Label || "",
+          salePoint1Address: savedData.salePoint1Address || "",
+          salePoint1Description: savedData.salePoint1Description || "",
+          salePoint2Label: savedData.salePoint2Label || "",
+          salePoint2Address: savedData.salePoint2Address || "",
+          salePoint2Description: savedData.salePoint2Description || "",
         });
       }
     };
@@ -186,6 +208,12 @@ const PecheurOnboarding = () => {
           return false;
         }
         return true;
+      case 6:
+        if (!formData.salePoint1Label || !formData.salePoint1Address) {
+          toast.error("Veuillez remplir au moins un point de vente");
+          return false;
+        }
+        return true;
       default:
         return true;
     }
@@ -222,7 +250,15 @@ const PecheurOnboarding = () => {
         client_message: formData.clientMessage,
         generated_description: formData.generatedDescription,
         onboarding_step: currentStep,
-        onboarding_data: { selectedSpecies: formData.selectedSpecies },
+        onboarding_data: { 
+          selectedSpecies: formData.selectedSpecies,
+          salePoint1Label: formData.salePoint1Label,
+          salePoint1Address: formData.salePoint1Address,
+          salePoint1Description: formData.salePoint1Description,
+          salePoint2Label: formData.salePoint2Label,
+          salePoint2Address: formData.salePoint2Address,
+          salePoint2Description: formData.salePoint2Description,
+        },
       };
 
       const { error: upsertError } = await supabase
@@ -245,7 +281,7 @@ const PecheurOnboarding = () => {
 
     await handleSaveAndContinueLater();
 
-    if (currentStep < 5) {
+    if (currentStep < 6) {
       setCurrentStep(prev => prev + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -259,7 +295,7 @@ const PecheurOnboarding = () => {
   };
 
   const handleSubmit = async () => {
-    if (!validateStep(5) || !user) return;
+    if (!validateStep(6) || !user) return;
 
     setLoading(true);
     try {
@@ -291,13 +327,44 @@ const PecheurOnboarding = () => {
           work_philosophy: formData.workStyle,
           client_message: formData.clientMessage,
           generated_description: formData.generatedDescription,
-          onboarding_step: 5,
+          onboarding_step: 6,
           onboarding_data: {},
         }], { onConflict: 'user_id' })
         .select()
         .single();
 
       if (fishermanError) throw fishermanError;
+
+      // Save sale points
+      const salePointsToInsert = [];
+      
+      if (formData.salePoint1Label && formData.salePoint1Address) {
+        salePointsToInsert.push({
+          fisherman_id: fishermanData.id,
+          label: formData.salePoint1Label,
+          address: formData.salePoint1Address,
+          description: formData.salePoint1Description || null,
+          is_primary: true,
+        });
+      }
+
+      if (formData.salePoint2Label && formData.salePoint2Address) {
+        salePointsToInsert.push({
+          fisherman_id: fishermanData.id,
+          label: formData.salePoint2Label,
+          address: formData.salePoint2Address,
+          description: formData.salePoint2Description || null,
+          is_primary: false,
+        });
+      }
+
+      if (salePointsToInsert.length > 0) {
+        const { error: salePointsError } = await supabase
+          .from('fisherman_sale_points')
+          .insert(salePointsToInsert);
+
+        if (salePointsError) throw salePointsError;
+      }
 
       // Save species associations
       if (formData.selectedSpecies.length > 0 && fishermanData) {
@@ -380,6 +447,9 @@ const PecheurOnboarding = () => {
           {currentStep === 5 && (
             <Step5Photos formData={formData} onChange={handleFieldChange} />
           )}
+          {currentStep === 6 && (
+            <Step6PointsVente formData={formData} onChange={handleFieldChange} />
+          )}
 
           {/* Footer Navigation */}
           <div className="flex items-center justify-between mt-8 pt-6 border-t">
@@ -401,7 +471,7 @@ const PecheurOnboarding = () => {
               Enregistrer & continuer plus tard
             </Button>
 
-            {currentStep < 5 ? (
+            {currentStep < 6 ? (
               <Button onClick={handleNext} disabled={loading}>
                 Suivant
                 <ArrowRight className="w-4 h-4 ml-2" />
