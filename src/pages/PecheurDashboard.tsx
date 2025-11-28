@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/Header';
 import CaisseModule from '@/components/CaisseModule';
 import { ContactSelector } from '@/components/ContactSelector';
+import { SalePointsSection } from '@/components/SalePointsSection';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -291,11 +292,19 @@ const PecheurDashboard = () => {
             )}
             <Button 
               size="lg" 
+              className="gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+              onClick={() => navigate('/pecheur/annonce-simple')}
+            >
+              <MessageSquare className="h-5 w-5" />
+              Annonce simple
+            </Button>
+            <Button 
+              size="lg" 
               className="gap-2"
               onClick={() => navigate('/pecheur/nouvel-arrivage-v2')}
             >
               <Plus className="h-5 w-5" />
-              Nouvel arrivage
+              Arrivage détaillé
             </Button>
           </div>
         </div>
@@ -384,6 +393,9 @@ const PecheurDashboard = () => {
             </Button>
           </CardContent>
         </Card>
+
+        {/* Section Points de vente */}
+        {fishermanId && <SalePointsSection fishermanId={fishermanId} />}
 
         {/* Stats rapides */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

@@ -19,6 +19,7 @@ import PecheurPayment from "./pages/PecheurPayment";
 import PecheurDashboard from "./pages/PecheurDashboard";
 import CreateArrivage from "./pages/CreateArrivage";
 import CreateArrivageWizard from "./pages/CreateArrivageWizard";
+import SimpleAnnonce from "./pages/SimpleAnnonce";
 import EditArrivage from "./pages/EditArrivage";
 import DuplicateArrivage from "./pages/DuplicateArrivage";
 import FisherProfile from "./pages/FisherProfile";
@@ -40,6 +41,7 @@ import PecheurContacts from "./pages/PecheurContacts";
 import AmbassadorPartner from "./pages/AmbassadorPartner";
 import PecheurAmbassadorStatus from "./pages/PecheurAmbassadorStatus";
 import MarineAI from "./pages/MarineAI";
+import MarineAIRefactored from "./pages/MarineAIRefactored";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +83,11 @@ const App = () => (
             } />
             <Route path="/onboarding/confirmation" element={<OnboardingConfirmation />} />
             <Route path="/pecheur/nouvel-arrivage" element={<CreateArrivage />} />
+            <Route path="/pecheur/annonce-simple" element={
+              <ProtectedFisherRoute>
+                <SimpleAnnonce />
+              </ProtectedFisherRoute>
+            } />
             <Route path="/pecheur/nouvel-arrivage-v2" element={
               <ProtectedFisherRoute>
                 <CreateArrivageWizard />
@@ -98,7 +105,7 @@ const App = () => (
             } />
             <Route path="/pecheur/edit-profile" element={<EditFisherProfile />} />
             <Route path="/pecheur/ambassadeur" element={<PecheurAmbassadorStatus />} />
-            <Route path="/pecheur/ia-marin" element={<MarineAI />} />
+            <Route path="/pecheur/ia-marin" element={<MarineAIRefactored />} />
             <Route path="/ambassadeur-partenaire" element={<AmbassadorPartner />} />
             <Route path="/pecheur/:id" element={<FisherProfile />} />
             <Route path="/pecheurs/:slug" element={<FisherProfile />} />

@@ -1,18 +1,27 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase-client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Store, Zap, Brain, ArrowLeft } from 'lucide-react';
+import { Mail, Store, Zap, Brain, ArrowLeft, Crown } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import Header from '@/components/Header';
+import { isWhitelistedFisher } from '@/config/fisherWhitelist';
 
 const PecheurPayment = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [isWhitelisted, setIsWhitelisted] = useState(false);
+
+  useEffect(() => {
+    if (user && isWhitelistedFisher(user.email, user.id)) {
+      setIsWhitelisted(true);
+    }
+  }, [user]);
 
   const handlePayment = async () => {
     if (!user) {
@@ -54,6 +63,31 @@ const PecheurPayment = () => {
             Rejoignez les marins pêcheurs qui ont choisi l'autonomie et la rentabilité
           </p>
         </div>
+
+        {/* Whitelist Badge */}
+        {isWhitelisted && (
+          <Card className="mb-8 border-amber-300 bg-gradient-to-r from-amber-50 to-yellow-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-center gap-3">
+                <Crown className="h-6 w-6 text-amber-600" />
+                <div className="text-center">
+                  <Badge className="bg-amber-500 text-white mb-2">Compte Partenaire</Badge>
+                  <p className="text-sm text-amber-900">
+                    Vous bénéficiez d'un accès gratuit à QuaiDirect. Cliquez ci-dessous pour accéder à l'onboarding.
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={() => navigate('/pecheur/onboarding')}
+                className="w-full mt-4 bg-amber-600 hover:bg-amber-700"
+              >
+                Accéder à mon compte
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {!isWhitelisted && (
 
         <Card className="mb-8">
           <CardHeader>
@@ -148,6 +182,7 @@ const PecheurPayment = () => {
             </div>
           </CardContent>
         </Card>
+        )}
       </div>
     </div>
   );
