@@ -65,12 +65,12 @@ serve(async (req) => {
       cancel_url: `${origin}/pecheur/payment?canceled=true`,
       metadata: {
         user_id: user.id,
-        payment_type: 'fisherman_annual_subscription',
+        payment_type: 'fisherman_onboarding',
       },
       subscription_data: {
         metadata: {
           user_id: user.id,
-          payment_type: 'fisherman_annual_subscription',
+          payment_type: 'fisherman_onboarding',
         },
       },
     });
