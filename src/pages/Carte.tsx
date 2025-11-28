@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ArrivageCard from "@/components/ArrivageCard";
-import InteractiveMap from "@/components/InteractiveMap";
+import GoogleMapComponent from "@/components/GoogleMapComponent";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -167,9 +167,9 @@ const Carte = () => {
           </div>
         </div>
 
-        {/* Interactive Map */}
-        <div className="mb-8 aspect-video md:aspect-[21/9]">
-          <InteractiveMap 
+        {/* Google Map */}
+        <div className="mb-8 aspect-video md:aspect-[21/9] rounded-lg overflow-hidden border border-border shadow-lg">
+          <GoogleMapComponent 
             ports={ports || []}
             selectedPortId={selectedPort}
             onPortClick={setSelectedPort}
