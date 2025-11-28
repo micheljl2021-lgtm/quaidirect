@@ -16,19 +16,35 @@ const AmbassadorPartner = () => {
     queryKey: ['ambassador-partner'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('fishermen')
-        .select(`
-          *,
-          fishermen_species(
-            species:species(name)
-          )
-        `)
-        .eq('email', 'seb.zadeyan.leboncoin@gmail.com')
+        .from('public_fishermen')
+        .select('*')
+        .eq('id', (
+          await supabase
+            .from('fishermen')
+            .select('id')
+            .eq('email', 'seb.zadeyan.leboncoin@gmail.com')
+            .maybeSingle()
+        ).data?.id)
         .maybeSingle();
 
       if (error) {
         console.error('Error fetching ambassador partner:', error);
         throw error;
+      }
+
+      // Fetch species separately
+      if (data?.id) {
+        const { data: speciesData } = await supabase
+          .from('fishermen_species')
+          .select(`
+            species:species(name)
+          `)
+          .eq('fisherman_id', data.id);
+        
+        return {
+          ...data,
+          fishermen_species: speciesData || []
+        } as any;
       }
 
       return data;
