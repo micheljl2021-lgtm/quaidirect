@@ -47,21 +47,30 @@ export function Step1LieuHoraire({ initialData, onComplete, onCancel }: Step1Pro
   
   const { nearestPort, isLoading: geoLoading } = useNearestPort(ports);
 
+  // Load favorite port and sale points
   useEffect(() => {
     const fetchData = async () => {
       if (!user) return;
 
-      // Fetch fisherman's favorite port
+      // Fetch fisherman's preferences
       const { data: fishermanData } = await supabase
         .from("fishermen")
-        .select("zone_id")
+        .select("zone_id, default_sale_point_id, default_time_slot")
         .eq("user_id", user.id)
         .single();
 
-      if (fishermanData?.zone_id) {
-        setFavoritePortId(fishermanData.zone_id);
-        if (!selectedPort) {
-          setSelectedPort(fishermanData.zone_id);
+      if (fishermanData) {
+        // Set favorite port
+        if (fishermanData.zone_id) {
+          setFavoritePortId(fishermanData.zone_id);
+          if (!selectedPort) {
+            setSelectedPort(fishermanData.zone_id);
+          }
+        }
+
+        // Pre-select default time slot
+        if (fishermanData.default_time_slot && !initialData.timeSlot) {
+          setSelectedTimeSlot(fishermanData.default_time_slot);
         }
       }
 
@@ -85,7 +94,7 @@ export function Step1LieuHoraire({ initialData, onComplete, onCancel }: Step1Pro
     };
 
     fetchData();
-  }, [user, selectedPort]);
+  }, [user, selectedPort, initialData.timeSlot]);
 
   // Auto-select nearest port if no selection and geolocation available
   useEffect(() => {

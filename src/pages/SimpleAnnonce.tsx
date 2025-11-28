@@ -126,14 +126,15 @@ export default function SimpleAnnonce() {
     setLoading(true);
 
     try {
-      // Get fisherman ID
+      // Get fisherman ID and favorite port
       const { data: fisherman } = await supabase
         .from('fishermen')
-        .select('id')
+        .select('id, zone_id')
         .eq('user_id', user?.id)
         .single();
 
       if (!fisherman) throw new Error('Pêcheur non trouvé');
+      if (!fisherman.zone_id) throw new Error('Port favori non configuré. Complétez votre profil.');
 
       // Get sale point details
       const { data: salePoint } = await supabase
@@ -154,18 +155,18 @@ export default function SimpleAnnonce() {
       const etaDate = new Date(formData.date);
       etaDate.setHours(parseInt(slot.start.split(':')[0]), parseInt(slot.start.split(':')[1]));
 
-      // Insert drop (simple type)
+      // Insert drop (simple type) - use fisherman's favorite port as reference
       const { data: drop, error: dropError } = await supabase
         .from('drops')
         .insert({
           fisherman_id: fisherman.id,
-          port_id: salePoint ? null : null, // No port for simple announces, use sale point location
+          port_id: fisherman.zone_id, // Use favorite port as reference
           eta_at: etaDate.toISOString(),
           sale_start_time: etaDate.toISOString(),
           visible_at: new Date().toISOString(),
           status: 'scheduled',
           drop_type: 'simple',
-          notes: formData.description,
+          notes: `${formData.description}\n\nLieu: ${salePoint?.label} - ${salePoint?.address}`,
           latitude: salePoint?.latitude,
           longitude: salePoint?.longitude,
         })
@@ -251,9 +252,18 @@ export default function SimpleAnnonce() {
                 </SelectContent>
               </Select>
               {salePoints.length === 0 && (
-                <p className="text-sm text-muted-foreground mt-2">
-                  Aucun point de vente. Complétez votre onboarding.
-                </p>
+                <div className="p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                  <p className="text-sm text-amber-800 dark:text-amber-300 mb-3">
+                    Aucun point de vente configuré. Configure d'abord tes lieux de vente dans ton profil.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate('/pecheur/edit-profile')}
+                  >
+                    Configurer mes points de vente
+                  </Button>
+                </div>
               )}
             </CardContent>
           </Card>

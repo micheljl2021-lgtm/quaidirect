@@ -38,32 +38,65 @@ export function Step2EspecesQuantites({ initialSpecies, onComplete, onBack }: St
     const fetchSpecies = async () => {
       if (!user) return;
 
-      // Fetch fisherman's preferred species
-      const { data: fishermanSpecies } = await supabase
-        .from("fishermen_species")
-        .select("species:species_id(id, name, indicative_price)")
-        .eq("fisherman_id", (await supabase
-          .from("fishermen")
-          .select("id")
-          .eq("user_id", user.id)
-          .single()
-        ).data?.id || "");
+      const { data: fishermanData } = await supabase
+        .from("fishermen")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
 
-      // Fetch all species
-      const { data: allSpeciesData } = await supabase
+      if (!fishermanData) return;
+
+      const { data: speciesData } = await supabase
         .from("species")
         .select("id, name, indicative_price")
         .order("name");
 
-      if (allSpeciesData) {
-        setAllSpecies(allSpeciesData);
+      if (speciesData) {
+        setAllSpecies(speciesData);
+        setFilteredSpecies(speciesData);
       }
 
-      if (fishermanSpecies) {
-        const preferred = fishermanSpecies.map((fs: any) => fs.species).filter(Boolean);
-        setSuggestedSpecies(preferred.length > 0 ? preferred : (allSpeciesData?.slice(0, 10) || []));
+      const { data: dropsData } = await supabase
+        .from("drops")
+        .select("id")
+        .eq("fisherman_id", fishermanData.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (dropsData && dropsData.length > 0) {
+        const dropIds = dropsData.map(d => d.id);
+        
+        const { data: historyData } = await supabase
+          .from("offers")
+          .select("species_id, species(id, name, indicative_price)")
+          .in("drop_id", dropIds);
+
+        if (historyData) {
+          const speciesCount: Record<string, { species: any; count: number }> = {};
+          
+          historyData.forEach((offer: any) => {
+            if (offer.species) {
+              const id = offer.species.id;
+              if (!speciesCount[id]) {
+                speciesCount[id] = { species: offer.species, count: 0 };
+              }
+              speciesCount[id].count++;
+            }
+          });
+
+          const suggested = Object.values(speciesCount)
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 6)
+            .map(item => item.species);
+
+          if (suggested.length > 0) {
+            setSuggestedSpecies(suggested);
+          } else {
+            setSuggestedSpecies(speciesData?.slice(0, 6) || []);
+          }
+        }
       } else {
-        setSuggestedSpecies(allSpeciesData?.slice(0, 10) || []);
+        setSuggestedSpecies(speciesData?.slice(0, 6) || []);
       }
     };
 
@@ -82,7 +115,6 @@ export function Step2EspecesQuantites({ initialSpecies, onComplete, onBack }: St
   }, [searchQuery, allSpecies]);
 
   const handleSpeciesClick = (species: Species) => {
-    // Check if already added
     const exists = selectedSpecies.find((s) => s.speciesId === species.id);
     if (exists) return;
 
@@ -161,16 +193,13 @@ export function Step2EspecesQuantites({ initialSpecies, onComplete, onBack }: St
           <CardTitle className="text-2xl">Qu'est-ce que tu débarques ?</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Templates Rapides */}
           <TemplatesRapides onTemplateSelect={handleTemplateSelect} />
 
-          {/* Espèces suggérées */}
           <div>
             <label className="block text-sm font-medium mb-3">Espèces suggérées</label>
             <SpeciesChips species={suggestedSpecies} onSpeciesClick={handleSpeciesClick} />
           </div>
 
-          {/* Manual Search */}
           <div>
             <label className="block text-sm font-medium mb-3">Ajouter une espèce</label>
             <div className="relative">
@@ -199,7 +228,6 @@ export function Step2EspecesQuantites({ initialSpecies, onComplete, onBack }: St
             )}
           </div>
 
-          {/* Species Table */}
           {selectedSpecies.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-3">
@@ -228,7 +256,6 @@ export function Step2EspecesQuantites({ initialSpecies, onComplete, onBack }: St
         </CardContent>
       </Card>
 
-      {/* Save Preset Dialog */}
       <SavePresetDialog
         species={selectedSpecies}
         open={saveDialogOpen}
@@ -236,7 +263,6 @@ export function Step2EspecesQuantites({ initialSpecies, onComplete, onBack }: St
         onSave={handleSavePreset}
       />
 
-      {/* Sticky Actions */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t shadow-lg z-50">
         <div className="container max-w-4xl mx-auto flex gap-3">
           <Button
