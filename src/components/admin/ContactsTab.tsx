@@ -52,15 +52,31 @@ export const ContactsTab = () => {
   const totalRecipients = messages?.reduce((acc, msg) => acc + (msg.recipient_count || 0), 0) || 0;
 
   const handleMarkAsRead = async (messageId: string) => {
-    // TODO: Ajouter un champ status dans fishermen_messages
-    toast.success("Marqué comme lu");
-    refetch();
+    const { error } = await supabase
+      .from('fishermen_messages')
+      .update({ status: 'read' })
+      .eq('id', messageId);
+
+    if (error) {
+      toast.error("Erreur lors de la mise à jour");
+    } else {
+      toast.success("Marqué comme lu");
+      refetch();
+    }
   };
 
   const handleArchive = async (messageId: string) => {
-    // TODO: Ajouter un champ archived dans fishermen_messages
-    toast.success("Message archivé");
-    refetch();
+    const { error } = await supabase
+      .from('fishermen_messages')
+      .update({ status: 'archived' })
+      .eq('id', messageId);
+
+    if (error) {
+      toast.error("Erreur lors de l'archivage");
+    } else {
+      toast.success("Message archivé");
+      refetch();
+    }
   };
 
   return (
@@ -229,15 +245,27 @@ export const ContactsTab = () => {
                             {message.fishermen?.boat_name || message.fishermen?.company_name}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={
-                              message.message_type === 'invitation_initiale' ? 'default' :
-                              message.message_type === 'new_drop' ? 'secondary' :
-                              'outline'
-                            }>
-                              {message.message_type === 'invitation_initiale' ? 'Invitation' :
-                               message.message_type === 'new_drop' ? 'Nouveau drop' :
-                               'Personnalisé'}
-                            </Badge>
+                            <div className="flex gap-2 items-center">
+                              <Badge variant={
+                                message.message_type === 'invitation_initiale' ? 'default' :
+                                message.message_type === 'new_drop' ? 'secondary' :
+                                'outline'
+                              }>
+                                {message.message_type === 'invitation_initiale' ? 'Invitation' :
+                                 message.message_type === 'new_drop' ? 'Nouveau drop' :
+                                 'Personnalisé'}
+                              </Badge>
+                              {message.status === 'read' && (
+                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                  Lu
+                                </Badge>
+                              )}
+                              {message.status === 'archived' && (
+                                <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+                                  Archivé
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell className="max-w-xs truncate">
                             {message.subject || '-'}
