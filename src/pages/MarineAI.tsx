@@ -30,6 +30,15 @@ const MarineAI = () => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Afficher un loader pendant que l'auth se charge
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   useEffect(() => {
     // Ne rien faire tant que l'auth est en cours de chargement
     if (loading) return;
@@ -39,15 +48,6 @@ const MarineAI = () => {
       navigate('/dashboard/pecheur');
     }
   }, [user, isVerifiedFisherman, loading, navigate]);
-
-  // Afficher un loader pendant que l'auth se charge
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
