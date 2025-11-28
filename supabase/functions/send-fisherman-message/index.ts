@@ -9,47 +9,66 @@ const corsHeaders = {
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
+// Security: HTML escape function to prevent XSS attacks
+const escapeHtml = (unsafe: string): string => {
+  if (!unsafe) return '';
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+};
+
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[SEND-FISHERMAN-MESSAGE] ${step}${detailsStr}`);
 };
 
 const getEmailTemplate = (type: string, fishermanName: string, dropDetails?: any) => {
+  // Escape all user-provided content to prevent XSS
+  const safeFishermanName = escapeHtml(fishermanName);
+  const safeSubject = escapeHtml(dropDetails?.subject || '');
+  const safeBody = escapeHtml(dropDetails?.body || '');
+  const safeTime = escapeHtml(dropDetails?.time || '');
+  const safeLocation = escapeHtml(dropDetails?.location || '');
+  const safeSpecies = escapeHtml(dropDetails?.species || '');
+  
   switch (type) {
     case 'invitation_initiale':
       return {
-        subject: `${fishermanName} rejoint QuaiDirect !`,
+        subject: `${safeFishermanName} rejoint QuaiDirect !`,
         html: `
           <h1>Bonjour !</h1>
           <p>Je suis maintenant sur <strong>QuaiDirect</strong> !</p>
           <p>Retrouvez tous mes arrivages et points de vente sur ma page :</p>
           <p><a href="${dropDetails?.profileUrl}" style="background: #0066cc; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">Voir mon profil</a></p>
-          <p>À très bientôt,<br>${fishermanName}</p>
+          <p>À très bientôt,<br>${safeFishermanName}</p>
         `
       };
     case 'new_drop':
       return {
-        subject: `${fishermanName} - Nouvel arrivage disponible !`,
+        subject: `${safeFishermanName} - Nouvel arrivage disponible !`,
         html: `
           <h1>Nouvel arrivage !</h1>
-          <p><strong>${fishermanName}</strong> vend du poisson frais :</p>
+          <p><strong>${safeFishermanName}</strong> vend du poisson frais :</p>
           <ul>
-            <li><strong>Quand :</strong> ${dropDetails?.time}</li>
-            <li><strong>Où :</strong> ${dropDetails?.location}</li>
-            <li><strong>Espèces :</strong> ${dropDetails?.species}</li>
+            <li><strong>Quand :</strong> ${safeTime}</li>
+            <li><strong>Où :</strong> ${safeLocation}</li>
+            <li><strong>Espèces :</strong> ${safeSpecies}</li>
           </ul>
           <p><a href="${dropDetails?.dropUrl}" style="background: #0066cc; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">Voir les détails</a></p>
-          <p>À très bientôt,<br>${fishermanName}</p>
+          <p>À très bientôt,<br>${safeFishermanName}</p>
         `
       };
     case 'custom':
     default:
       return {
-        subject: dropDetails?.subject || `Message de ${fishermanName}`,
+        subject: safeSubject || `Message de ${safeFishermanName}`,
         html: `
-          <h1>Message de ${fishermanName}</h1>
-          <p>${dropDetails?.body}</p>
-          <p>Cordialement,<br>${fishermanName}</p>
+          <h1>Message de ${safeFishermanName}</h1>
+          <p>${safeBody}</p>
+          <p>Cordialement,<br>${safeFishermanName}</p>
         `
       };
   }

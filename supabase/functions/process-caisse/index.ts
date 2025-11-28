@@ -11,6 +11,17 @@ const logStep = (step: string, details?: any) => {
   console.log(`[PROCESS-CAISSE] ${step}${detailsStr}`);
 };
 
+// Security: HTML escape function to prevent XSS attacks
+const escapeHtml = (unsafe: string): string => {
+  if (!unsafe) return '';
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+};
+
 // Generate PDF receipt content (HTML)
 const generateReceiptHTML = (data: any) => {
   const {
@@ -25,6 +36,17 @@ const generateReceiptHTML = (data: any) => {
     paidMethod,
     saleDate,
   } = data;
+
+  // Escape all user-provided data to prevent XSS
+  const safeBoatName = escapeHtml(fisherman.boat_name || '');
+  const safeBoatRegistration = escapeHtml(fisherman.boat_registration || '');
+  const safeSiret = escapeHtml(fisherman.siret || '');
+  const safeLicense = escapeHtml(fisherman.license_number || 'N/A');
+  const safePortName = escapeHtml(port.name || '');
+  const safePortCity = escapeHtml(port.city || '');
+  const safeSpeciesName = escapeHtml(species.name || '');
+  const safeScientificName = escapeHtml(species.scientific_name || 'N/A');
+  const safeOfferTitle = escapeHtml(offer.title || 'N/A');
 
   return `
 <!DOCTYPE html>
@@ -53,13 +75,13 @@ const generateReceiptHTML = (data: any) => {
     <h3>INFORMATIONS DU PÊCHEUR</h3>
     <div class="info-grid">
       <span class="label">Navire:</span>
-      <span>${fisherman.boat_name}</span>
+      <span>${safeBoatName}</span>
       <span class="label">Immatriculation:</span>
-      <span>${fisherman.boat_registration}</span>
+      <span>${safeBoatRegistration}</span>
       <span class="label">SIRET:</span>
-      <span>${fisherman.siret}</span>
+      <span>${safeSiret}</span>
       <span class="label">Licence:</span>
-      <span>${fisherman.license_number || 'N/A'}</span>
+      <span>${safeLicense}</span>
     </div>
   </div>
 
@@ -69,7 +91,7 @@ const generateReceiptHTML = (data: any) => {
     <h3>LIEU ET DATE</h3>
     <div class="info-grid">
       <span class="label">Port:</span>
-      <span>${port.name}, ${port.city}</span>
+      <span>${safePortName}, ${safePortCity}</span>
       <span class="label">Date de vente:</span>
       <span>${new Date(saleDate).toLocaleDateString('fr-FR', {
         year: 'numeric',
@@ -87,9 +109,9 @@ const generateReceiptHTML = (data: any) => {
     <h3>PRODUIT VENDU</h3>
     <div class="info-grid">
       <span class="label">Espèce:</span>
-      <span>${species.name} (${species.scientific_name || 'N/A'})</span>
+      <span>${safeSpeciesName} (${safeScientificName})</span>
       <span class="label">Code FAO:</span>
-      <span>${offer.title || 'N/A'}</span>
+      <span>${safeOfferTitle}</span>
       <span class="label">Méthode de pêche:</span>
       <span>Ligne / Filet (selon déclaration)</span>
       <span class="label">Poids:</span>

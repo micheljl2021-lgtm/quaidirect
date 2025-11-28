@@ -1,6 +1,7 @@
 project_id = "topqlhxdflykejrlbuqx"
 
 # Edge Functions Configuration
+
 [functions.stripe-webhook]
 verify_jwt = false  # Webhooks are called by Stripe, not authenticated users
 
@@ -23,4 +24,25 @@ verify_jwt = true  # Requires authentication
 verify_jwt = true  # Requires authentication
 
 [functions.marine-ai-assistant]
+verify_jwt = true  # Requires authentication
+
+[functions.check-sms-quota]
+verify_jwt = true  # Requires authentication
+
+[functions.check-subscription]
+verify_jwt = true  # Requires authentication
+
+[functions.customer-portal]
+verify_jwt = true  # Requires authentication
+
+[functions.process-caisse]
+verify_jwt = true  # Requires authentication
+
+[functions.purchase-sms-pack]
+verify_jwt = true  # Requires authentication
+
+[functions.send-drop-notification]
+verify_jwt = false  # Called by database trigger with anon key
+
+[functions.send-fisherman-message]
 verify_jwt = true  # Requires authentication
