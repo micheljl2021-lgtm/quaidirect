@@ -292,7 +292,7 @@ const PecheurDashboard = () => {
             <Button 
               size="lg" 
               className="gap-2"
-              onClick={() => navigate('/pecheur/nouvel-arrivage')}
+              onClick={() => navigate('/pecheur/nouvel-arrivage-v2')}
             >
               <Plus className="h-5 w-5" />
               Nouvel arrivage
