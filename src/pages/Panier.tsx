@@ -6,9 +6,13 @@ import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, Check, Loader2, Package } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ShoppingCart, Check, Loader2, Package, Anchor, MapPin, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 const STRIPE_BASKETS = {
   discovery: {
@@ -29,6 +33,8 @@ const Panier = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loadingBasket, setLoadingBasket] = useState<string | null>(null);
+  const [selectedDrop, setSelectedDrop] = useState<any>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   // Fetch baskets from database
   const { data: baskets, isLoading } = useQuery({
@@ -45,7 +51,27 @@ const Panier = () => {
     },
   });
 
-  const handlePurchase = async (basketId: string, basketName: string) => {
+  // Fetch available drops with fishermen and port info
+  const { data: drops, isLoading: dropsLoading } = useQuery({
+    queryKey: ['available-drops'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('drops')
+        .select(`
+          *,
+          fishermen!inner(id, boat_name, company_name, slug),
+          ports!inner(id, name, city)
+        `)
+        .in('status', ['scheduled', 'landed'])
+        .gte('sale_start_time', new Date().toISOString())
+        .order('sale_start_time', { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const handleSelectDrop = (basket: any) => {
     if (!user) {
       toast({
         title: 'Connexion requise',
@@ -54,7 +80,11 @@ const Panier = () => {
       });
       return;
     }
+    setSelectedDrop(basket);
+    setDialogOpen(true);
+  };
 
+  const handlePurchase = async (dropId: string, basketId: string, basketName: string) => {
     setLoadingBasket(basketId);
     
     try {
@@ -66,16 +96,22 @@ const Panier = () => {
 
       if (!priceId) throw new Error('Panier non configuré');
 
+      const drop = drops?.find(d => d.id === dropId);
+      if (!drop) throw new Error('Arrivage non trouvé');
+
       const { data, error } = await supabase.functions.invoke('create-basket-checkout', {
         body: { 
           basketId,
           priceId,
+          fishermanId: drop.fishermen.id,
+          dropId: drop.id,
         }
       });
 
       if (error) throw error;
       if (data?.url) {
         window.open(data.url, '_blank');
+        setDialogOpen(false);
       }
     } catch (error: any) {
       toast({
@@ -100,7 +136,7 @@ const Panier = () => {
             <h1 className="text-4xl font-bold text-foreground">Paniers de Poisson Frais</h1>
           </div>
           <p className="text-lg text-muted-foreground">
-            Commandez votre panier de poisson frais auprès de nos pêcheurs locaux
+            Choisissez votre panier et sélectionnez un pêcheur pour le retrait
           </p>
         </div>
 
@@ -113,7 +149,6 @@ const Panier = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {baskets?.map((basket) => {
-              const isPurchasing = loadingBasket === basket.id;
               const isDiscovery = basket.variety_level === 'basic';
               const isGourmet = basket.variety_level === 'premium';
 
@@ -186,20 +221,10 @@ const Panier = () => {
                     {/* CTA Button */}
                     <Button
                       className={`w-full gap-2 ${isGourmet ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600' : ''}`}
-                      onClick={() => handlePurchase(basket.id, basket.name)}
-                      disabled={isPurchasing}
+                      onClick={() => handleSelectDrop(basket)}
                     >
-                      {isPurchasing ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Chargement...
-                        </>
-                      ) : (
-                        <>
-                          <ShoppingCart className="h-4 w-4" />
-                          Commander
-                        </>
-                      )}
+                      <ShoppingCart className="h-4 w-4" />
+                      Choisir ce panier
                     </Button>
                   </CardContent>
                 </Card>
@@ -207,6 +232,78 @@ const Panier = () => {
             })}
           </div>
         )}
+
+        {/* Selection Dialog */}
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Choisissez votre pêcheur et arrivage</DialogTitle>
+              <DialogDescription>
+                Sélectionnez un pêcheur pour retirer votre {selectedDrop?.name}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {dropsLoading ? (
+                <div className="text-center py-8">
+                  <Loader2 className="h-8 w-8 mx-auto animate-spin text-primary mb-2" />
+                  <p className="text-sm text-muted-foreground">Chargement des arrivages...</p>
+                </div>
+              ) : drops && drops.length > 0 ? (
+                <div className="space-y-3">
+                  {drops.map((drop: any) => (
+                    <Card key={drop.id} className="hover:border-primary cursor-pointer transition-colors">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Anchor className="h-4 w-4 text-primary" />
+                              <h4 className="font-semibold">
+                                {drop.fishermen.boat_name || drop.fishermen.company_name}
+                              </h4>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <MapPin className="h-4 w-4" />
+                              {drop.ports.name} - {drop.ports.city}
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Calendar className="h-4 w-4" />
+                              {format(new Date(drop.sale_start_time), "EEEE d MMMM 'à' HH:mm", { locale: fr })}
+                            </div>
+                          </div>
+                          <Button
+                            onClick={() => handlePurchase(drop.id, selectedDrop?.id, selectedDrop?.name)}
+                            disabled={loadingBasket === selectedDrop?.id}
+                            className="gap-2"
+                          >
+                            {loadingBasket === selectedDrop?.id ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Chargement...
+                              </>
+                            ) : (
+                              <>
+                                <ShoppingCart className="h-4 w-4" />
+                                Commander
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">Aucun arrivage disponible pour le moment</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Revenez plus tard pour découvrir les prochains arrivages
+                  </p>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Info Section */}
         <Card className="mt-8">

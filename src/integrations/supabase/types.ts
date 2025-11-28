@@ -571,6 +571,7 @@ export type Database = {
           sent_to_group: string | null
           sms_cost: number | null
           sms_count: number | null
+          status: string | null
           subject: string | null
         }
         Insert: {
@@ -587,6 +588,7 @@ export type Database = {
           sent_to_group?: string | null
           sms_cost?: number | null
           sms_count?: number | null
+          status?: string | null
           subject?: string | null
         }
         Update: {
@@ -603,6 +605,7 @@ export type Database = {
           sent_to_group?: string | null
           sms_cost?: number | null
           sms_count?: number | null
+          status?: string | null
           subject?: string | null
         }
         Relationships: [

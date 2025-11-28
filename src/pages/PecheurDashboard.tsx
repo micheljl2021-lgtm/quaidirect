@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/Header';
 import CaisseModule from '@/components/CaisseModule';
+import { ContactSelector } from '@/components/ContactSelector';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -27,6 +28,7 @@ const PecheurDashboard = () => {
   const [messageType, setMessageType] = useState<'invitation_initiale' | 'new_drop' | 'custom'>('invitation_initiale');
   const [customMessage, setCustomMessage] = useState('');
   const [selectedGroup, setSelectedGroup] = useState('all');
+  const [selectedContacts, setSelectedContacts] = useState<any[]>([]);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -358,15 +360,27 @@ const PecheurDashboard = () => {
                   <SelectItem value="general">Groupe général</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                {selectedContacts.length} contact(s) sélectionné(s)
+              </p>
             </div>
+
+            {/* Contact selector */}
+            {fishermanId && (
+              <ContactSelector
+                fishermanId={fishermanId}
+                selectedGroup={selectedGroup}
+                onSelectedContactsChange={setSelectedContacts}
+              />
+            )}
 
             <Button 
               onClick={handleSendMessage} 
-              disabled={sendMessageMutation.isPending}
+              disabled={sendMessageMutation.isPending || selectedContacts.length === 0}
               className="w-full"
             >
               <Send className="h-4 w-4 mr-2" />
-              {sendMessageMutation.isPending ? 'Envoi en cours...' : 'Envoyer le message'}
+              {sendMessageMutation.isPending ? 'Envoi en cours...' : `Envoyer à ${selectedContacts.length} contact(s)`}
             </Button>
           </CardContent>
         </Card>
