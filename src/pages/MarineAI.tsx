@@ -22,7 +22,7 @@ const QUICK_ACTIONS = [
 ];
 
 const MarineAI = () => {
-  const { user, isVerifiedFisherman } = useAuth();
+  const { user, isVerifiedFisherman, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -31,10 +31,23 @@ const MarineAI = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Ne rien faire tant que l'auth est en cours de chargement
+    if (loading) return;
+    
+    // Une fois chargé, vérifier les permissions
     if (!user || !isVerifiedFisherman) {
       navigate('/dashboard/pecheur');
     }
-  }, [user, isVerifiedFisherman, navigate]);
+  }, [user, isVerifiedFisherman, loading, navigate]);
+
+  // Afficher un loader pendant que l'auth se charge
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
