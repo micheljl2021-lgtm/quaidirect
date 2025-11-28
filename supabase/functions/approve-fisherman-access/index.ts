@@ -17,10 +17,59 @@ serve(async (req) => {
   }
 
   try {
+    // SECURITY: Verify the caller has admin role
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      console.warn("No authorization header provided");
+      return new Response(JSON.stringify({ error: "Non autorisé" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+
     // Client admin (service role)
     const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
       auth: { persistSession: false },
     });
+
+    // Verify the token and get the user
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
+    
+    if (userError || !user) {
+      console.warn("Invalid token or user not found:", userError);
+      return new Response(JSON.stringify({ error: "Non autorisé" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Check if user has admin role
+    const { data: adminRole, error: roleError } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (roleError) {
+      console.error("Error checking admin role:", roleError);
+      return new Response(JSON.stringify({ error: "Erreur de vérification des permissions" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!adminRole) {
+      console.warn(`User ${user.email} attempted to access admin function without admin role`);
+      return new Response(JSON.stringify({ error: "Accès administrateur requis" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log(`Admin ${user.email} is approving fisherman access`);
 
     // Lecture du body
     const body = await req.json().catch(() => null);
