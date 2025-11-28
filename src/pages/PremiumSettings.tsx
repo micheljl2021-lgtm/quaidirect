@@ -12,13 +12,21 @@ import Header from '@/components/Header';
 
 const PremiumSettings = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [ports, setPorts] = useState<any[]>([]);
   const [species, setSpecies] = useState<any[]>([]);
   const [selectedPorts, setSelectedPorts] = useState<string[]>([]);
   const [selectedSpecies, setSelectedSpecies] = useState<string[]>([]);
+
+  // Vérification du rôle premium
+  useEffect(() => {
+    if (userRole && userRole !== 'premium') {
+      toast.error('Accès réservé aux membres Premium');
+      navigate('/premium');
+    }
+  }, [userRole, navigate]);
 
   useEffect(() => {
     loadData();
@@ -117,12 +125,17 @@ const PremiumSettings = () => {
     }
   };
 
-  if (loading) {
+  if (loading || !userRole) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
+  }
+
+  // Double vérification après chargement
+  if (userRole !== 'premium') {
+    return null;
   }
 
   return (
