@@ -30,15 +30,6 @@ const MarineAI = () => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Afficher un loader pendant que l'auth se charge
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   useEffect(() => {
     // Ne rien faire tant que l'auth est en cours de chargement
     if (loading) return;
@@ -52,6 +43,15 @@ const MarineAI = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Afficher un loader pendant que l'auth se charge
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const sendMessage = async (messageText: string) => {
     if (!messageText.trim() || isLoading) return;
