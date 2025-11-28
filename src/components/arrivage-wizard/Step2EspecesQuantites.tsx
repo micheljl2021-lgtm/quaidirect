@@ -6,9 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SpeciesChips } from "./SpeciesChips";
 import { SpeciesTable } from "./SpeciesTable";
 import { TemplatesRapides } from "./TemplatesRapides";
+import { SavePresetDialog } from "./SavePresetDialog";
 import { ArrivageSpecies } from "@/pages/CreateArrivageWizard";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, Star } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Step2Props {
   initialSpecies: ArrivageSpecies[];
@@ -24,11 +26,13 @@ interface Species {
 
 export function Step2EspecesQuantites({ initialSpecies, onComplete, onBack }: Step2Props) {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [selectedSpecies, setSelectedSpecies] = useState<ArrivageSpecies[]>(initialSpecies);
   const [allSpecies, setAllSpecies] = useState<Species[]>([]);
   const [suggestedSpecies, setSuggestedSpecies] = useState<Species[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSpecies, setFilteredSpecies] = useState<Species[]>([]);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchSpecies = async () => {
@@ -104,6 +108,47 @@ export function Step2EspecesQuantites({ initialSpecies, onComplete, onBack }: St
     setSelectedSpecies(updatedSpecies);
   };
 
+  const handleSavePreset = async (name: string, icon: string) => {
+    if (!user) return;
+
+    const { data: fishermanData } = await supabase
+      .from("fishermen")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!fishermanData) return;
+
+    const speciesData = selectedSpecies.map((s) => ({
+      speciesName: s.speciesName,
+      quantity: s.quantity,
+      unit: s.unit,
+      price: s.price,
+    }));
+
+    const { error } = await supabase
+      .from("fishermen_species_presets")
+      .insert({
+        fisherman_id: fishermanData.id,
+        name,
+        icon,
+        species_data: speciesData,
+      });
+
+    if (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder le favori",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Favori sauvegardé",
+        description: `"${name}" est maintenant disponible dans tes templates`,
+      });
+    }
+  };
+
   const handleContinue = () => {
     if (selectedSpecies.length === 0) return;
     onComplete(selectedSpecies);
@@ -157,9 +202,20 @@ export function Step2EspecesQuantites({ initialSpecies, onComplete, onBack }: St
           {/* Species Table */}
           {selectedSpecies.length > 0 && (
             <div>
-              <label className="block text-sm font-medium mb-3">
-                Espèces sélectionnées ({selectedSpecies.length})
-              </label>
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-sm font-medium">
+                  Espèces sélectionnées ({selectedSpecies.length})
+                </label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSaveDialogOpen(true)}
+                >
+                  <Star className="h-4 w-4 mr-2" />
+                  Sauvegarder ce favori
+                </Button>
+              </div>
               <SpeciesTable species={selectedSpecies} onUpdate={handleUpdateSpecies} />
             </div>
           )}
@@ -171,6 +227,14 @@ export function Step2EspecesQuantites({ initialSpecies, onComplete, onBack }: St
           )}
         </CardContent>
       </Card>
+
+      {/* Save Preset Dialog */}
+      <SavePresetDialog
+        species={selectedSpecies}
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        onSave={handleSavePreset}
+      />
 
       {/* Sticky Actions */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t shadow-lg z-50">

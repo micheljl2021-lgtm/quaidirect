@@ -17,12 +17,16 @@ export const DropPhotosUpload = ({
 }: DropPhotosUploadProps) => {
   const [photos, setPhotos] = useState<string[]>(initialPhotos);
   const [uploading, setUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+    handleFilesUpload(Array.from(files));
+  };
 
+  const handleFilesUpload = async (files: File[]) => {
     const remainingSlots = maxPhotos - photos.length;
     if (remainingSlots <= 0) {
       toast({
@@ -33,7 +37,7 @@ export const DropPhotosUpload = ({
       return;
     }
 
-    const filesToUpload = Array.from(files).slice(0, remainingSlots);
+    const filesToUpload = files.slice(0, remainingSlots);
     setUploading(true);
 
     try {
@@ -44,7 +48,7 @@ export const DropPhotosUpload = ({
         const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
         const filePath = `drop-photos/${fileName}`;
 
-        const { error: uploadError, data } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('fishermen-photos')
           .upload(filePath, file);
 
@@ -74,6 +78,26 @@ export const DropPhotosUpload = ({
       });
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+    if (files.length > 0) {
+      handleFilesUpload(files);
     }
   };
 
@@ -112,35 +136,51 @@ export const DropPhotosUpload = ({
         </div>
       )}
 
-      {/* Upload Button */}
+      {/* Upload Button with Drag & Drop */}
       {photos.length < maxPhotos && (
-        <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-border rounded-lg hover:border-primary transition-colors">
-          <Camera className="h-12 w-12 text-muted-foreground mb-3" />
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={`
+            flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg transition-all
+            ${isDragging 
+              ? "border-primary bg-primary/5 scale-105" 
+              : "border-border hover:border-primary"
+            }
+          `}
+        >
+          <Camera className={`h-12 w-12 mb-3 transition-colors ${isDragging ? "text-primary" : "text-muted-foreground"}`} />
           <p className="text-sm font-medium mb-1 text-foreground">
-            Photos de votre point de vente
+            {isDragging ? "Dépose tes photos ici" : "Photos de votre point de vente"}
           </p>
           <p className="text-xs text-muted-foreground mb-4 text-center max-w-sm">
-            Étal, caisses de poissons, ambiance... {photos.length}/{maxPhotos} photos
+            {isDragging 
+              ? "Relâche pour uploader" 
+              : `Glisse-dépose ou clique pour ajouter • ${photos.length}/${maxPhotos} photos`
+            }
           </p>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={uploading}
-            asChild
-          >
-            <label className="cursor-pointer">
-              <Upload className="h-4 w-4 mr-2" />
-              {uploading ? "Upload en cours..." : "Ajouter des photos"}
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={handlePhotoUpload}
-                disabled={uploading}
-              />
-            </label>
-          </Button>
+          {!isDragging && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={uploading}
+              asChild
+            >
+              <label className="cursor-pointer">
+                <Upload className="h-4 w-4 mr-2" />
+                {uploading ? "Upload en cours..." : "Ajouter des photos"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handlePhotoUpload}
+                  disabled={uploading}
+                />
+              </label>
+            </Button>
+          )}
         </div>
       )}
 

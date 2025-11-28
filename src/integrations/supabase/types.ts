@@ -803,6 +803,51 @@ export type Database = {
           },
         ]
       }
+      fishermen_species_presets: {
+        Row: {
+          created_at: string | null
+          fisherman_id: string
+          icon: string | null
+          id: string
+          name: string
+          species_data: Json
+          usage_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          fisherman_id: string
+          icon?: string | null
+          id?: string
+          name: string
+          species_data: Json
+          usage_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          fisherman_id?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          species_data?: Json
+          usage_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fishermen_species_presets_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fishermen_species_presets_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "public_fishermen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       follow_ports: {
         Row: {
           created_at: string

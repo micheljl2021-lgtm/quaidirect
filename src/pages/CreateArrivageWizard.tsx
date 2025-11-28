@@ -32,6 +32,7 @@ export default function CreateArrivageWizard() {
   const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [photos, setPhotos] = useState<string[]>([]);
 
   const [arrivageData, setArrivageData] = useState<ArrivageData>({
     portId: "",
@@ -132,6 +133,23 @@ export default function CreateArrivageWizard() {
 
       if (offersError) throw offersError;
 
+      // Insert photos if any
+      if (photos.length > 0) {
+        const photosData = photos.map((url, index) => ({
+          drop_id: dropData.id,
+          photo_url: url,
+          display_order: index,
+        }));
+
+        const { error: photosError } = await supabase
+          .from("drop_photos")
+          .insert(photosData);
+
+        if (photosError) {
+          console.error("Error inserting photos:", photosError);
+        }
+      }
+
       toast.success("Arrivage publié avec succès !");
       navigate("/pecheur/dashboard");
     } catch (error) {
@@ -190,6 +208,8 @@ export default function CreateArrivageWizard() {
               onEditLieu={() => setStep(1)}
               onEditSpecies={() => setStep(2)}
               isPublishing={isPublishing}
+              photos={photos}
+              onPhotosChange={setPhotos}
             />
           )}
         </div>
