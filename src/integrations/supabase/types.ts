@@ -44,6 +44,13 @@ export type Database = {
             referencedRelation: "fishermen"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "ai_conversations_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "public_fishermen"
+            referencedColumns: ["id"]
+          },
         ]
       }
       audits: {
@@ -145,6 +152,13 @@ export type Database = {
             columns: ["fisherman_id"]
             isOneToOne: false
             referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "basket_orders_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "public_fishermen"
             referencedColumns: ["id"]
           },
         ]
@@ -311,6 +325,13 @@ export type Database = {
             columns: ["fisherman_id"]
             isOneToOne: false
             referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drops_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "public_fishermen"
             referencedColumns: ["id"]
           },
           {
@@ -525,6 +546,13 @@ export type Database = {
             referencedRelation: "fishermen"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fishermen_contacts_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "public_fishermen"
+            referencedColumns: ["id"]
+          },
         ]
       }
       fishermen_followers: {
@@ -552,6 +580,13 @@ export type Database = {
             columns: ["fisherman_id"]
             isOneToOne: false
             referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fishermen_followers_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "public_fishermen"
             referencedColumns: ["id"]
           },
         ]
@@ -623,6 +658,13 @@ export type Database = {
             referencedRelation: "fishermen"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fishermen_messages_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "public_fishermen"
+            referencedColumns: ["id"]
+          },
         ]
       }
       fishermen_sms_packs: {
@@ -659,6 +701,13 @@ export type Database = {
             columns: ["fisherman_id"]
             isOneToOne: false
             referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fishermen_sms_packs_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "public_fishermen"
             referencedColumns: ["id"]
           },
         ]
@@ -699,6 +748,13 @@ export type Database = {
             referencedRelation: "fishermen"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fishermen_sms_usage_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "public_fishermen"
+            referencedColumns: ["id"]
+          },
         ]
       }
       fishermen_species: {
@@ -729,6 +785,13 @@ export type Database = {
             columns: ["fisherman_id"]
             isOneToOne: false
             referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fishermen_species_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "public_fishermen"
             referencedColumns: ["id"]
           },
           {
@@ -1410,6 +1473,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "sales_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "public_fishermen"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "sales_offer_id_fkey"
             columns: ["offer_id"]
             isOneToOne: false
@@ -1671,6 +1741,62 @@ export type Database = {
           verified_at: string | null
           website_url: string | null
         }
+        Insert: {
+          bio?: string | null
+          boat_name?: string | null
+          boat_registration?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          description?: string | null
+          facebook_url?: string | null
+          fishing_methods?:
+            | Database["public"]["Enums"]["fishing_method"][]
+            | null
+          fishing_zones?: string[] | null
+          fishing_zones_geojson?: Json | null
+          generated_description?: string | null
+          id?: string | null
+          instagram_url?: string | null
+          is_ambassador?: boolean | null
+          main_fishing_zone?: string | null
+          photo_boat_1?: string | null
+          photo_boat_2?: string | null
+          photo_dock_sale?: string | null
+          photo_url?: string | null
+          slug?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          verified_at?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          bio?: string | null
+          boat_name?: string | null
+          boat_registration?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          description?: string | null
+          facebook_url?: string | null
+          fishing_methods?:
+            | Database["public"]["Enums"]["fishing_method"][]
+            | null
+          fishing_zones?: string[] | null
+          fishing_zones_geojson?: Json | null
+          generated_description?: string | null
+          id?: string | null
+          instagram_url?: string | null
+          is_ambassador?: boolean | null
+          main_fishing_zone?: string | null
+          photo_boat_1?: string | null
+          photo_boat_2?: string | null
+          photo_dock_sale?: string | null
+          photo_url?: string | null
+          slug?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          verified_at?: string | null
+          website_url?: string | null
+        }
         Relationships: []
       }
     }
@@ -1683,35 +1809,6 @@ export type Database = {
         Returns: undefined
       }
       archive_expired_drops: { Args: never; Returns: undefined }
-      get_public_fishermen: {
-        Args: never
-        Returns: {
-          bio: string
-          boat_name: string
-          boat_registration: string
-          company_name: string
-          created_at: string
-          description: string
-          facebook_url: string
-          fishing_methods: Database["public"]["Enums"]["fishing_method"][]
-          fishing_zones: string[]
-          fishing_zones_geojson: Json
-          generated_description: string
-          id: string
-          instagram_url: string
-          is_ambassador: boolean
-          main_fishing_zone: string
-          photo_boat_1: string
-          photo_boat_2: string
-          photo_dock_sale: string
-          photo_url: string
-          slug: string
-          updated_at: string
-          user_id: string
-          verified_at: string
-          website_url: string
-        }[]
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

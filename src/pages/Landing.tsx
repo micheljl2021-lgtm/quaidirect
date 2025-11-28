@@ -107,7 +107,8 @@ const Landing = () => {
     queryKey: ['ambassadors'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .rpc('get_public_fishermen')
+        .from('public_fishermen')
+        .select('*')
         .eq('is_ambassador', true)
         .order('created_at', { ascending: true })
         .limit(10);
