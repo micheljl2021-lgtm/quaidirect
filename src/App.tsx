@@ -36,6 +36,7 @@ import PecheurPaymentSuccess from "./pages/PecheurPaymentSuccess";
 import PecheurContacts from "./pages/PecheurContacts";
 import AmbassadorPartner from "./pages/AmbassadorPartner";
 import PecheurAmbassadorStatus from "./pages/PecheurAmbassadorStatus";
+import MarineAI from "./pages/MarineAI";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +84,7 @@ const App = () => (
             } />
             <Route path="/pecheur/edit-profile" element={<EditFisherProfile />} />
             <Route path="/pecheur/ambassadeur" element={<PecheurAmbassadorStatus />} />
+            <Route path="/pecheur/ia-marin" element={<MarineAI />} />
             <Route path="/ambassadeur-partenaire" element={<AmbassadorPartner />} />
             <Route path="/pecheur/:id" element={<FisherProfile />} />
             <Route path="/pecheurs/:slug" element={<FisherProfile />} />

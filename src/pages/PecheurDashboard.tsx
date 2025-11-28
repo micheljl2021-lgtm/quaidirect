@@ -9,7 +9,7 @@ import CaisseModule from '@/components/CaisseModule';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Anchor, AlertCircle, ShoppingCart, History, CheckCircle, Settings, Users, Mail, Send, Pencil, Crown } from 'lucide-react';
+import { Plus, Anchor, AlertCircle, ShoppingCart, History, CheckCircle, Settings, Users, Mail, Send, Pencil, Crown, Bot } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -275,6 +275,15 @@ const PecheurDashboard = () => {
                 >
                   <Crown className="h-5 w-5" />
                   Ambassadeur
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 border-0"
+                  onClick={() => navigate('/pecheur/ia-marin')}
+                >
+                  <Bot className="h-5 w-5" />
+                  IA du Marin
                 </Button>
               </>
             )}
