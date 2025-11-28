@@ -76,7 +76,7 @@ const EditFisherProfile = () => {
     if (authLoading) return; // Wait for auth to load
 
     if (!user || !isVerifiedFisherman) {
-      navigate('/auth');
+      navigate('/dashboard/pecheur');
       return;
     }
 
