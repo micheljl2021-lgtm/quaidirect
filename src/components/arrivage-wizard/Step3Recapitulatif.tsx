@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrivageData } from "@/pages/CreateArrivageWizard";
+import { DropPhotosUpload } from "@/components/DropPhotosUpload";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { MapPin, Calendar, Clock, Edit, CheckCircle2, Loader2 } from "lucide-react";
+import { MapPin, Calendar, Clock, Edit, CheckCircle2, Loader2, Camera } from "lucide-react";
 
 interface Step3Props {
   arrivageData: ArrivageData;
@@ -11,6 +13,8 @@ interface Step3Props {
   onEditLieu: () => void;
   onEditSpecies: () => void;
   isPublishing: boolean;
+  photos: string[];
+  onPhotosChange: (photos: string[]) => void;
 }
 
 const TIME_SLOT_LABELS: Record<string, string> = {
@@ -26,7 +30,11 @@ export function Step3Recapitulatif({
   onEditLieu,
   onEditSpecies,
   isPublishing,
+  photos,
+  onPhotosChange,
 }: Step3Props) {
+  const [showPhotos, setShowPhotos] = useState(false);
+
   return (
     <div className="space-y-6 pb-24">
       <Card>
@@ -104,6 +112,38 @@ export function Step3Recapitulatif({
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Photos Section */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Camera className="h-5 w-5" />
+                Photos ({photos.length}/5)
+              </h3>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowPhotos(!showPhotos)}
+              >
+                {showPhotos ? "Masquer" : "Ajouter des photos"}
+              </Button>
+            </div>
+            {showPhotos && (
+              <DropPhotosUpload
+                maxPhotos={5}
+                onPhotosChange={onPhotosChange}
+                initialPhotos={photos}
+              />
+            )}
+            {photos.length > 0 && !showPhotos && (
+              <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                <p className="text-xs text-green-800 dark:text-green-200">
+                  ✅ {photos.length} photo(s) ajoutée(s) • Des photos augmentent vos ventes de 40%
+                </p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

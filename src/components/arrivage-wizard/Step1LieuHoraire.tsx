@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, MapPin } from "lucide-react";
+import { CalendarIcon, MapPin, Navigation } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useNearestPort } from "@/hooks/useNearestPort";
 
 interface Step1Props {
   initialData: {
@@ -24,6 +25,8 @@ interface Port {
   id: string;
   name: string;
   city: string;
+  latitude: number;
+  longitude: number;
 }
 
 const TIME_SLOTS = [
@@ -41,6 +44,8 @@ export function Step1LieuHoraire({ initialData, onComplete, onCancel }: Step1Pro
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(initialData.timeSlot || "matin");
   const [ports, setPorts] = useState<Port[]>([]);
   const [favoritePortId, setFavoritePortId] = useState<string | null>(null);
+  
+  const { nearestPort, isLoading: geoLoading } = useNearestPort(ports);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -60,10 +65,10 @@ export function Step1LieuHoraire({ initialData, onComplete, onCancel }: Step1Pro
         }
       }
 
-      // Fetch all ports
+      // Fetch all ports with coordinates
       const { data: portsData } = await supabase
         .from("ports")
-        .select("id, name, city")
+        .select("id, name, city, latitude, longitude")
         .order("name");
 
       if (portsData) {
@@ -81,6 +86,14 @@ export function Step1LieuHoraire({ initialData, onComplete, onCancel }: Step1Pro
 
     fetchData();
   }, [user, selectedPort]);
+
+  // Auto-select nearest port if no selection and geolocation available
+  useEffect(() => {
+    if (!selectedPort && !favoritePortId && nearestPort && !geoLoading) {
+      setSelectedPort(nearestPort.id);
+      setSelectedPortName(`${nearestPort.name} - ${nearestPort.city}`);
+    }
+  }, [nearestPort, geoLoading, selectedPort, favoritePortId]);
 
   const handlePortSelect = (port: Port) => {
     setSelectedPort(port.id);
@@ -126,6 +139,12 @@ export function Step1LieuHoraire({ initialData, onComplete, onCancel }: Step1Pro
                   {port.id === favoritePortId && (
                     <span className="ml-auto text-xs bg-primary/20 px-2 py-1 rounded">
                       Favori
+                    </span>
+                  )}
+                  {port.id === nearestPort?.id && port.id !== favoritePortId && (
+                    <span className="ml-auto text-xs bg-green-500/20 text-green-700 dark:text-green-300 px-2 py-1 rounded flex items-center gap-1">
+                      <Navigation className="h-3 w-3" />
+                      Le plus proche
                     </span>
                   )}
                 </Button>

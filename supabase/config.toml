@@ -46,3 +46,6 @@ verify_jwt = false  # Called by database trigger with anon key
 
 [functions.send-fisherman-message]
 verify_jwt = true  # Requires authentication
+
+[functions.send-reservation-notification]
+verify_jwt = false  # Called by database trigger
