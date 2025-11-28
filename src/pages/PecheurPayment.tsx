@@ -57,9 +57,9 @@ const PecheurPayment = () => {
 
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle className="text-2xl">Accès Complet Pêcheur Professionnel — 150€ (paiement unique)</CardTitle>
+            <CardTitle className="text-2xl">Accès Complet Pêcheur Professionnel — 150€/an</CardTitle>
             <CardDescription>
-              Tout ce dont vous avez besoin pour vendre votre pêche en direct : vitrine professionnelle, gestion ultra-rapide des arrivages, communication illimitée (emails + SMS) et intelligence artificielle pour optimiser vos ventes. Un seul paiement, accès à vie.
+              Tout ce dont vous avez besoin pour vendre votre pêche en direct : vitrine professionnelle, gestion ultra-rapide des arrivages, communication illimitée (emails + SMS) et intelligence artificielle pour optimiser vos ventes. Abonnement annuel renouvelable.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -71,7 +71,7 @@ const PecheurPayment = () => {
                 <li>✓ Plus de commission intermédiaire (vendez 100% de votre marge)</li>
                 <li>✓ Plus de temps perdu en coups de fil (emails/SMS automatiques)</li>
                 <li>✓ Plus de papier à gérer (tout est digitalisé)</li>
-                <li>✓ Accès à vie à tous les outils (un seul paiement de 150€)</li>
+                <li>✓ Accès complet renouvelable pour 150€/an</li>
               </ul>
             </div>
 
@@ -128,10 +128,10 @@ const PecheurPayment = () => {
               </Button>
               <div className="text-xs text-center text-muted-foreground px-4 space-y-2">
                 <p>
-                  ✅ Inclus dans votre abonnement à vie : emails illimités, SMS sans limite mensuelle, intelligence artificielle de ciblage client, support prioritaire et toutes les futures mises à jour gratuites.
+                  ✅ Inclus dans votre abonnement annuel : emails illimités, SMS sans limite mensuelle, intelligence artificielle de ciblage client, support prioritaire et toutes les futures mises à jour gratuites.
                 </p>
                 <p className="font-semibold text-orange-600">
-                  ⏰ Offre limitée aux 10 premiers inscrits : accès Ambassadeur Partenaire (statut privilégié à vie)
+                  ⏰ Offre limitée aux 10 premiers inscrits : accès Ambassadeur Partenaire (statut privilégié)
                 </p>
               </div>
               <Button

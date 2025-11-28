@@ -112,11 +112,13 @@ serve(async (req) => {
     }
 
     // Préparer le template email
+    const origin = req.headers.get('origin') || 'https://quaidirect.lovable.app';
     const emailTemplate = getEmailTemplate(message_type, fisherman.boat_name, {
       ...drop_details,
       subject,
       body,
-      profileUrl: `${Deno.env.get('SUPABASE_URL')}/pecheur/${fisherman.slug}`,
+      profileUrl: `${origin}/pecheur/${fisherman.slug}`,
+      dropUrl: drop_id ? `${origin}/arrivages?drop=${drop_id}` : `${origin}/arrivages`,
     });
 
     // Envoyer les emails via Resend
