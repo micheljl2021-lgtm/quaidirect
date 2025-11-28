@@ -5,12 +5,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 
 export const ProtectedFisherRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [isPaid, setIsPaid] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkPayment = async () => {
+      if (authLoading) return; // Wait for auth to load
+      
       if (!user) {
         setLoading(false);
         return;
@@ -33,7 +35,15 @@ export const ProtectedFisherRoute = ({ children }: { children: React.ReactNode }
     };
     
     checkPayment();
-  }, [user]);
+  }, [user, authLoading]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!user) return <Navigate to="/auth" />;
   
