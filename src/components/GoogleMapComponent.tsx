@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-maps/api';
+import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import { MapPin } from 'lucide-react';
 
 interface Port {
@@ -54,12 +55,18 @@ const GoogleMapComponent = ({
 
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [activeInfoWindow, setActiveInfoWindow] = useState<string | null>(null);
+  const markersRef = useRef<google.maps.Marker[]>([]);
+  const clustererRef = useRef<MarkerClusterer | null>(null);
 
   const onLoad = useCallback((map: google.maps.Map) => {
     setMap(map);
   }, []);
 
   const onUnmount = useCallback(() => {
+    // Nettoyer le clusterer
+    if (clustererRef.current) {
+      clustererRef.current.clearMarkers();
+    }
     setMap(null);
   }, []);
 
@@ -119,6 +126,76 @@ const GoogleMapComponent = ({
     }
   }, [map, selectedPortId, ports]);
 
+  // Créer les marqueurs et le clusterer pour les ports
+  useEffect(() => {
+    if (!map || !ports || ports.length === 0) return;
+
+    // Nettoyer les anciens marqueurs
+    markersRef.current.forEach(marker => marker.setMap(null));
+    markersRef.current = [];
+    
+    if (clustererRef.current) {
+      clustererRef.current.clearMarkers();
+    }
+
+    // Créer les nouveaux marqueurs
+    const newMarkers = ports.map((port) => {
+      const marker = new google.maps.Marker({
+        position: { lat: port.latitude, lng: port.longitude },
+        map: map,
+        title: port.name,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          fillColor: selectedPortId === port.id ? '#0EA5E9' : '#06B6D4',
+          fillOpacity: selectedPortId === port.id ? 1 : 0.7,
+          strokeColor: '#FFFFFF',
+          strokeWeight: 2,
+          scale: selectedPortId === port.id ? 10 : 8,
+        },
+      });
+
+      marker.addListener('click', () => {
+        onPortClick(port.id);
+        setActiveInfoWindow(port.id);
+      });
+
+      return marker;
+    });
+
+    markersRef.current = newMarkers;
+
+    // Créer le clusterer avec les nouveaux marqueurs
+    clustererRef.current = new MarkerClusterer({
+      map,
+      markers: newMarkers,
+      renderer: {
+        render: ({ count, position }) => {
+          return new google.maps.Marker({
+            position,
+            icon: {
+              url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+                <svg width="50" height="50" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="25" cy="25" r="20" fill="#0EA5E9" opacity="0.9" stroke="#FFFFFF" stroke-width="3"/>
+                  <text x="25" y="30" font-size="14" font-weight="bold" fill="#FFFFFF" text-anchor="middle" font-family="Arial">${count}</text>
+                </svg>
+              `)}`,
+              scaledSize: new google.maps.Size(50, 50),
+            },
+            label: undefined,
+            zIndex: Number(google.maps.Marker.MAX_ZINDEX) + count,
+          });
+        },
+      },
+    });
+
+    return () => {
+      newMarkers.forEach(marker => marker.setMap(null));
+      if (clustererRef.current) {
+        clustererRef.current.clearMarkers();
+      }
+    };
+  }, [map, ports, selectedPortId, onPortClick]);
+
   if (loadError) {
     return (
       <div className="flex items-center justify-center h-full bg-muted rounded-lg">
@@ -168,43 +245,31 @@ const GoogleMapComponent = ({
         />
       )}
 
-      {/* Marqueurs des ports */}
-      {ports.map((port) => (
-        <Marker
-          key={port.id}
-          position={{ lat: port.latitude, lng: port.longitude }}
-          onClick={() => {
-            onPortClick(port.id);
-            setActiveInfoWindow(port.id);
+      {/* InfoWindows pour les ports (affichées séparément du clustering) */}
+      {activeInfoWindow && ports.find(p => p.id === activeInfoWindow) && (
+        <InfoWindow
+          position={{
+            lat: ports.find(p => p.id === activeInfoWindow)!.latitude,
+            lng: ports.find(p => p.id === activeInfoWindow)!.longitude,
           }}
-          icon={{
-            path: google.maps.SymbolPath.CIRCLE,
-            fillColor: selectedPortId === port.id ? '#0EA5E9' : '#06B6D4',
-            fillOpacity: selectedPortId === port.id ? 1 : 0.7,
-            strokeColor: '#FFFFFF',
-            strokeWeight: 2,
-            scale: selectedPortId === port.id ? 10 : 8,
+          onCloseClick={() => {
+            setActiveInfoWindow(null);
+            onPortClick(null);
           }}
-          title={port.name}
         >
-          {activeInfoWindow === port.id && (
-            <InfoWindow
-              onCloseClick={() => {
-                setActiveInfoWindow(null);
-                onPortClick(null);
-              }}
-            >
-              <div className="p-2">
-                <div className="flex items-center gap-2 mb-1">
-                  <MapPin className="h-4 w-4 text-primary" />
-                  <h3 className="font-semibold text-foreground">{port.name}</h3>
-                </div>
-                <p className="text-sm text-muted-foreground">{port.city}</p>
-              </div>
-            </InfoWindow>
-          )}
-        </Marker>
-      ))}
+          <div className="p-2">
+            <div className="flex items-center gap-2 mb-1">
+              <MapPin className="h-4 w-4 text-primary" />
+              <h3 className="font-semibold text-foreground">
+                {ports.find(p => p.id === activeInfoWindow)!.name}
+              </h3>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {ports.find(p => p.id === activeInfoWindow)!.city}
+            </p>
+          </div>
+        </InfoWindow>
+      )}
     </GoogleMap>
   );
 };
