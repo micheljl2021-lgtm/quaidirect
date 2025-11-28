@@ -42,6 +42,7 @@ import AmbassadorPartner from "./pages/AmbassadorPartner";
 import PecheurAmbassadorStatus from "./pages/PecheurAmbassadorStatus";
 import MarineAI from "./pages/MarineAI";
 import MarineAIRefactored from "./pages/MarineAIRefactored";
+import PecheurPreferences from "./pages/PecheurPreferences";
 
 const queryClient = new QueryClient();
 
@@ -105,7 +106,8 @@ const App = () => (
             } />
             <Route path="/pecheur/edit-profile" element={<EditFisherProfile />} />
             <Route path="/pecheur/ambassadeur" element={<PecheurAmbassadorStatus />} />
-            <Route path="/pecheur/ia-marin" element={<MarineAIRefactored />} />
+          <Route path="/pecheur/ia-marin" element={<MarineAIRefactored />} />
+          <Route path="/pecheur/preferences" element={<PecheurPreferences />} />
             <Route path="/ambassadeur-partenaire" element={<AmbassadorPartner />} />
             <Route path="/pecheur/:id" element={<FisherProfile />} />
             <Route path="/pecheurs/:slug" element={<FisherProfile />} />

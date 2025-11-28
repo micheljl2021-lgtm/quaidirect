@@ -256,10 +256,19 @@ const PecheurDashboard = () => {
                   size="lg" 
                   variant="outline"
                   className="gap-2"
-                  onClick={() => navigate('/pecheur/edit-profile')}
+                  onClick={() => navigate('/pecheur/preferences')}
                 >
                   <Settings className="h-5 w-5" />
-                  Configurer ma vitrine
+                  Préférences
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => navigate('/pecheur/edit-profile')}
+                >
+                  <Pencil className="h-5 w-5" />
+                  Ma vitrine
                 </Button>
                 <Button 
                   size="lg" 
@@ -528,6 +537,59 @@ const PecheurDashboard = () => {
                             )}
                           </div>
                           <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="gap-1"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                // Open save template dialog
+                                const arrivageData = {
+                                  portId: drop.port_id,
+                                  portName: drop.port?.name,
+                                  timeSlot: "matin", // Default, could be extracted from times
+                                  species: drop.offers?.map((o: any) => ({
+                                    id: o.id,
+                                    speciesId: o.species_id,
+                                    speciesName: o.title,
+                                    quantity: o.total_units,
+                                    unit: o.price_type === 'per_kg' ? 'kg' : 'pieces',
+                                    price: o.unit_price,
+                                    remark: o.description,
+                                  })) || [],
+                                };
+                                
+                                // Create a dialog to save as template
+                                const name = prompt("Nom du modèle :");
+                                if (name) {
+                                  const { error } = await supabase
+                                    .from("drop_templates")
+                                    .insert({
+                                      fisherman_id: fishermanId,
+                                      name,
+                                      icon: "⭐",
+                                      payload: arrivageData,
+                                      usage_count: 0,
+                                    });
+                                  
+                                  if (error) {
+                                    toast({
+                                      title: 'Erreur',
+                                      description: 'Impossible de sauvegarder le modèle',
+                                      variant: 'destructive',
+                                    });
+                                  } else {
+                                    toast({
+                                      title: 'Modèle enregistré !',
+                                      description: `Tu pourras réutiliser "${name}" pour créer rapidement des arrivages similaires`,
+                                    });
+                                  }
+                                }
+                              }}
+                            >
+                              <Package className="h-3 w-3" />
+                              Modèle
+                            </Button>
                             <Button
                               variant="outline"
                               size="sm"

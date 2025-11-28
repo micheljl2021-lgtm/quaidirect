@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { WizardProgressBar } from "@/components/arrivage-wizard/WizardProgressBar";
 import { Step1LieuHoraire } from "@/components/arrivage-wizard/Step1LieuHoraire";
 import { Step2EspecesQuantites } from "@/components/arrivage-wizard/Step2EspecesQuantites";
@@ -8,6 +10,7 @@ import { Step3Recapitulatif } from "@/components/arrivage-wizard/Step3Recapitula
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase-client";
 import { toast } from "sonner";
+import { Package } from "lucide-react";
 
 export interface ArrivageSpecies {
   id: string;
@@ -33,6 +36,9 @@ export default function CreateArrivageWizard() {
   const [step, setStep] = useState(1);
   const [isPublishing, setIsPublishing] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
+  const [showTemplates, setShowTemplates] = useState(true);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(true);
 
   const [arrivageData, setArrivageData] = useState<ArrivageData>({
     portId: "",
@@ -41,6 +47,60 @@ export default function CreateArrivageWizard() {
     timeSlot: "matin",
     species: [],
   });
+
+  // Load templates on mount
+  useEffect(() => {
+    const loadTemplates = async () => {
+      if (!user) return;
+      
+      try {
+        const { data: fishermanData } = await supabase
+          .from("fishermen")
+          .select("id")
+          .eq("user_id", user.id)
+          .single();
+
+        if (fishermanData) {
+          const { data: templatesData } = await supabase
+            .from("drop_templates")
+            .select("*")
+            .eq("fisherman_id", fishermanData.id)
+            .order("usage_count", { ascending: false });
+
+          if (templatesData) {
+            setTemplates(templatesData);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading templates:", error);
+      } finally {
+        setLoadingTemplates(false);
+      }
+    };
+
+    loadTemplates();
+  }, [user]);
+
+  const handleTemplateSelect = async (template: any) => {
+    const payload = template.payload;
+    
+    setArrivageData({
+      portId: payload.portId || "",
+      portName: payload.portName || "",
+      date: new Date(),
+      timeSlot: payload.timeSlot || "matin",
+      species: payload.species || [],
+    });
+
+    // Increment usage count
+    await supabase
+      .from("drop_templates")
+      .update({ usage_count: (template.usage_count || 0) + 1 })
+      .eq("id", template.id);
+
+    setShowTemplates(false);
+    toast.success(`Modèle "${template.name}" chargé !`);
+  };
 
   const handleStep1Complete = (data: { portId: string; portName: string; date: Date; timeSlot: string }) => {
     setArrivageData((prev) => ({ ...prev, ...data }));
@@ -177,6 +237,53 @@ export default function CreateArrivageWizard() {
 
         {/* Progress Bar */}
         <WizardProgressBar currentStep={step} totalSteps={3} />
+
+        {/* Templates Section */}
+        {showTemplates && templates.length > 0 && step === 1 && (
+          <div className="mb-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  Modèles rapides
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Gagne du temps avec tes arrivages habituels
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {templates.map((template) => (
+                    <Button
+                      key={template.id}
+                      variant="outline"
+                      size="lg"
+                      className="h-auto py-4 justify-start"
+                      onClick={() => handleTemplateSelect(template)}
+                    >
+                      <span className="text-2xl mr-3">{template.icon || "⭐"}</span>
+                      <div className="text-left flex-1">
+                        <div className="font-semibold">{template.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {template.payload?.species?.length || 0} espèces
+                          {template.usage_count > 0 && ` • Utilisé ${template.usage_count}x`}
+                        </div>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full mt-3"
+                  onClick={() => setShowTemplates(false)}
+                >
+                  Créer un arrivage depuis zéro
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Steps */}
         <div className="mt-8">
