@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-maps/api';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import { MapPin } from 'lucide-react';
+import { getGoogleMapsApiKey, defaultMapConfig, quaiDirectMapStyles } from '@/lib/google-maps';
 
 interface Port {
   id: string;
@@ -23,25 +24,6 @@ const mapContainerStyle = {
   height: '100%',
 };
 
-const defaultCenter = {
-  lat: 43.1177,
-  lng: 6.1298, // Hyères
-};
-
-// Style personnalisé aux couleurs QuaiDirect
-const mapStyles = [
-  {
-    featureType: 'water',
-    elementType: 'geometry',
-    stylers: [{ color: '#a0d2eb' }]
-  },
-  {
-    featureType: 'water',
-    elementType: 'labels.text.fill',
-    stylers: [{ color: '#074e7c' }]
-  }
-];
-
 const GoogleMapComponent = ({ 
   ports, 
   selectedPortId, 
@@ -50,8 +32,18 @@ const GoogleMapComponent = ({
 }: GoogleMapComponentProps) => {
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
+    googleMapsApiKey: getGoogleMapsApiKey(),
   });
+
+  // Mémoïser les options de la carte pour éviter les re-renders
+  const mapOptions = useMemo(() => ({
+    styles: quaiDirectMapStyles,
+    disableDefaultUI: false,
+    zoomControl: true,
+    mapTypeControl: true,
+    streetViewControl: false,
+    fullscreenControl: true,
+  }), []);
 
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [activeInfoWindow, setActiveInfoWindow] = useState<string | null>(null);
@@ -109,8 +101,8 @@ const GoogleMapComponent = ({
       });
     } else {
       // PRIORITÉ 3 : Centre par défaut (Hyères)
-      map.setCenter(defaultCenter);
-      map.setZoom(10);
+      map.setCenter(defaultMapConfig.center);
+      map.setZoom(defaultMapConfig.zoom);
     }
   }, [map, ports, userLocation]);
 
@@ -215,18 +207,11 @@ const GoogleMapComponent = ({
   return (
     <GoogleMap
       mapContainerStyle={mapContainerStyle}
-      center={defaultCenter}
-      zoom={10}
+      center={defaultMapConfig.center}
+      zoom={defaultMapConfig.zoom}
       onLoad={onLoad}
       onUnmount={onUnmount}
-      options={{
-        styles: mapStyles,
-        disableDefaultUI: false,
-        zoomControl: true,
-        mapTypeControl: true,
-        streetViewControl: false,
-        fullscreenControl: true,
-      }}
+      options={mapOptions}
     >
       {/* Marqueur position utilisateur */}
       {userLocation && (
