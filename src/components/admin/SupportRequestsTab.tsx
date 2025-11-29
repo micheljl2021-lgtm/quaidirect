@@ -13,7 +13,7 @@ import { toast } from "sonner";
 
 const categoryLabels = {
   profile_modification: "Modification du profil initial",
-  technical: "Problème technique",
+  technical: "Probleme technique",
   commercial: "Question commerciale",
   other: "Autre demande"
 };
@@ -21,9 +21,9 @@ const categoryLabels = {
 const statusLabels = {
   pending: "En attente",
   in_progress: "En cours",
-  link_sent: "Lien envoyé",
-  resolved: "Résolue",
-  rejected: "Refusée"
+  link_sent: "Lien envoye",
+  resolved: "Resolue",
+  rejected: "Refusee"
 };
 
 const statusIcons = {
@@ -61,7 +61,7 @@ export function SupportRequestsTab() {
     }
   });
 
-  // Fetch all support requests with fisherman details and type definitions
+  // Fetch all support requests with fisherman details
   const { data: requests, isLoading } = useQuery({
     queryKey: ["admin-support-requests"],
     queryFn: async () => {
@@ -74,7 +74,9 @@ export function SupportRequestsTab() {
             boat_name,
             company_name,
             email,
-            siret
+            phone,
+            siret,
+            boat_registration
           )
         `)
         .order("created_at", { ascending: false });
@@ -110,9 +112,9 @@ export function SupportRequestsTab() {
 
           if (emailError) {
             console.error("Error sending support response email:", emailError);
-            toast.error("Demande mise à jour mais l'email n'a pas pu être envoyé");
+            toast.error("Demande mise a jour mais l'email n'a pas pu etre envoye");
           } else {
-            toast.success("Email envoyé au pêcheur");
+            toast.success("Email envoye au pecheur");
           }
         } catch (emailError) {
           console.error("Error invoking email function:", emailError);
@@ -121,13 +123,13 @@ export function SupportRequestsTab() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-support-requests"] });
-      toast.success("Demande mise à jour avec succès");
+      toast.success("Demande mise a jour avec succes");
       setSelectedRequest(null);
       setAdminResponse("");
       setNewStatus("");
     },
     onError: () => {
-      toast.error("Erreur lors de la mise à jour");
+      toast.error("Erreur lors de la mise a jour");
     }
   });
 
@@ -149,7 +151,7 @@ export function SupportRequestsTab() {
 
       if (error) throw error;
 
-      toast.success(data.message || "Lien envoyé avec succès");
+      toast.success(data.message || "Lien envoye avec succes");
       queryClient.invalidateQueries({ queryKey: ["admin-support-requests"] });
       setSelectedRequest(null);
     } catch (error: any) {
@@ -210,7 +212,7 @@ export function SupportRequestsTab() {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Résolues</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Resolues</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
@@ -240,10 +242,10 @@ export function SupportRequestsTab() {
 
           <Select value={filterCategory} onValueChange={setFilterCategory}>
             <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Catégorie" />
+              <SelectValue placeholder="Categorie" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Toutes les catégories</SelectItem>
+              <SelectItem value="all">Toutes les categories</SelectItem>
               {Object.entries(categoryLabels).map(([value, label]) => (
                 <SelectItem key={value} value={value}>{label}</SelectItem>
               ))}
@@ -262,8 +264,8 @@ export function SupportRequestsTab() {
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
-                <TableHead>Pêcheur</TableHead>
-                <TableHead>Catégorie</TableHead>
+                <TableHead>Pecheur</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Sujet</TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead>Actions</TableHead>
@@ -279,6 +281,8 @@ export function SupportRequestsTab() {
               ) : (
                 filteredRequests.map((request: any) => {
                   const StatusIcon = statusIcons[request.status as keyof typeof statusIcons];
+                  const requestType = requestTypes?.find((t: any) => t.code === request.request_type_code);
+                  
                   return (
                     <TableRow key={request.id}>
                       <TableCell>
@@ -295,9 +299,16 @@ export function SupportRequestsTab() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">
-                          {categoryLabels[request.category as keyof typeof categoryLabels]}
-                        </Badge>
+                        <div className="flex flex-col gap-1">
+                          <Badge variant="outline">
+                            {requestType?.label || categoryLabels[request.category as keyof typeof categoryLabels]}
+                          </Badge>
+                          {request.request_type_code && (
+                            <span className="text-xs text-muted-foreground font-mono">
+                              {request.request_type_code}
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="max-w-xs truncate">
                         {request.subject}
@@ -315,7 +326,7 @@ export function SupportRequestsTab() {
                           onClick={() => handleOpenDialog(request)}
                         >
                           <MessageSquare className="h-4 w-4 mr-2" />
-                          Répondre
+                          Gerer
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -331,14 +342,14 @@ export function SupportRequestsTab() {
       <Dialog open={!!selectedRequest} onOpenChange={() => setSelectedRequest(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Gérer la demande</DialogTitle>
+            <DialogTitle>Gerer la demande</DialogTitle>
             <DialogDescription>
-              Pêcheur : {selectedRequest?.fishermen?.boat_name} ({selectedRequest?.fishermen?.email})
+              Pecheur : {selectedRequest?.fishermen?.boat_name} ({selectedRequest?.fishermen?.email})
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* Afficher le type prédéfini si disponible */}
+            {/* Afficher le type predefini si disponible */}
             {selectedRequest?.request_type_code && (
               <div>
                 <p className="text-sm font-medium mb-2">Type de demande :</p>
@@ -354,20 +365,22 @@ export function SupportRequestsTab() {
             )}
 
             <div>
-              <p className="text-sm font-medium mb-2">Catégorie :</p>
+              <p className="text-sm font-medium mb-2">Categorie :</p>
               <Badge variant="outline">
                 {selectedRequest && categoryLabels[selectedRequest.category as keyof typeof categoryLabels]}
               </Badge>
             </div>
 
-            {/* Identité pêcheur complète */}
+            {/* Identite pecheur complete */}
             <div className="p-3 bg-muted/50 rounded-lg">
-              <p className="text-sm font-medium mb-2">Identité du pêcheur :</p>
+              <p className="text-sm font-medium mb-2">Identite du pecheur :</p>
               <div className="text-sm space-y-1">
                 <p><strong>Bateau :</strong> {selectedRequest?.fishermen?.boat_name}</p>
                 <p><strong>Entreprise :</strong> {selectedRequest?.fishermen?.company_name || "N/A"}</p>
                 <p><strong>Email :</strong> {selectedRequest?.fishermen?.email}</p>
+                <p><strong>Telephone :</strong> {selectedRequest?.fishermen?.phone || "N/A"}</p>
                 <p><strong>SIRET :</strong> {selectedRequest?.fishermen?.siret || "N/A"}</p>
+                <p><strong>Immatriculation :</strong> {selectedRequest?.fishermen?.boat_registration || "N/A"}</p>
                 <p className="text-xs text-muted-foreground mt-2">ID: {selectedRequest?.fishermen?.id}</p>
               </div>
             </div>
@@ -392,7 +405,7 @@ export function SupportRequestsTab() {
                   <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
                     <p className="text-sm font-medium mb-3 flex items-center gap-2">
                       <Link2 className="h-4 w-4" />
-                      Action recommandée
+                      Action recommandee
                     </p>
                     <Button
                       onClick={() => handleSendSecureLink(selectedRequest.id, actionAdmin)}
@@ -403,7 +416,7 @@ export function SupportRequestsTab() {
                       {requestType?.action_button_label}
                     </Button>
                     <p className="text-xs text-muted-foreground mt-2">
-                      Génère un lien sécurisé valide 24h permettant au pêcheur de modifier son profil lui-même
+                      Genere un lien securise valide 24h permettant au pecheur de modifier son profil lui-meme
                     </p>
                   </div>
                 );
@@ -414,7 +427,7 @@ export function SupportRequestsTab() {
                   <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
                     <p className="text-sm font-medium mb-3 flex items-center gap-2">
                       <CreditCard className="h-4 w-4" />
-                      Action recommandée
+                      Action recommandee
                     </p>
                     <Button
                       onClick={() => handleSendSecureLink(selectedRequest.id, actionAdmin)}
@@ -425,7 +438,7 @@ export function SupportRequestsTab() {
                       {requestType?.action_button_label}
                     </Button>
                     <p className="text-xs text-muted-foreground mt-2">
-                      Envoie un lien vers le portail Stripe pour gérer paiement et facturation
+                      Envoie un lien vers le portail Stripe pour gerer paiement et facturation
                     </p>
                   </div>
                 );
@@ -449,11 +462,11 @@ export function SupportRequestsTab() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Votre réponse</label>
+              <label className="text-sm font-medium mb-2 block">Votre reponse</label>
               <Textarea
                 value={adminResponse}
                 onChange={(e) => setAdminResponse(e.target.value)}
-                placeholder="Répondez au pêcheur..."
+                placeholder="Repondez au pecheur..."
                 rows={6}
               />
             </div>
