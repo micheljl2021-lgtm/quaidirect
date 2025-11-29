@@ -15,16 +15,35 @@ const AmbassadorPartner = () => {
   const { data: ambassador, isLoading } = useQuery({
     queryKey: ['ambassador-partner'],
     queryFn: async () => {
+      // First, get the user_id from auth.users
+      const { data: userData } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', 'seb.zadeyan.leboncoin@gmail.com')
+        .maybeSingle();
+
+      if (!userData?.id) {
+        console.error('Ambassador partner user not found');
+        return null;
+      }
+
+      // Then get fisherman by user_id
+      const { data: fisherData } = await supabase
+        .from('fishermen')
+        .select('id')
+        .eq('user_id', userData.id)
+        .maybeSingle();
+
+      if (!fisherData?.id) {
+        console.error('Ambassador partner fisherman not found');
+        return null;
+      }
+
+      // Get public fisherman data
       const { data, error } = await supabase
         .from('public_fishermen')
         .select('*')
-        .eq('id', (
-          await supabase
-            .from('fishermen')
-            .select('id')
-            .eq('email', 'seb.zadeyan.leboncoin@gmail.com')
-            .maybeSingle()
-        ).data?.id)
+        .eq('id', fisherData.id)
         .maybeSingle();
 
       if (error) {

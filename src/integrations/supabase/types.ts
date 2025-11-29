@@ -1969,6 +1969,8 @@ export type Database = {
         Returns: undefined
       }
       archive_expired_drops: { Args: never; Returns: undefined }
+      count_users: { Args: never; Returns: number }
+      count_verified_fishermen: { Args: never; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

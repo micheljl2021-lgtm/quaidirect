@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import freshFishImage from "@/assets/landing/fresh-fish.jpg";
 import fishingPortImage from "@/assets/landing/fishing-port.jpg";
 import fishermanBoatImage from "@/assets/landing/fisherman-boat.jpg";
+import pecheDurableLogo from "@/assets/logo-peche-durable.png";
 
 import { useLandingStats } from "@/hooks/useLandingStats";
 import { useAmbassadorStats } from "@/hooks/useAmbassadorStats";
@@ -161,7 +162,7 @@ const Landing = () => {
 
           <div className="mt-8 flex justify-center items-center gap-8">
             <img 
-              src={'/src/assets/logo-peche-durable.png'} 
+              src={pecheDurableLogo} 
               alt="Pêche Durable et Responsable" 
               className="h-20 opacity-90"
             />
@@ -250,7 +251,7 @@ const Landing = () => {
             <Link to="/premium">
               <Button size="lg" className="gap-2 bg-gradient-ocean hover:opacity-90 transition-opacity">
                 <Crown className="h-5 w-5" />
-                À partir de 4,99€/mois
+                À partir de 2,50€/mois
               </Button>
             </Link>
           </div>
