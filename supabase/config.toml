@@ -52,3 +52,6 @@ verify_jwt = true  # Requires authentication
 
 [functions.send-reservation-notification]
 verify_jwt = false  # Called by database trigger
+
+[functions.send-support-response]
+verify_jwt = true  # Requires authentication

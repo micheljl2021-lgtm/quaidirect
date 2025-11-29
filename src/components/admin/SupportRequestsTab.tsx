@@ -81,6 +81,28 @@ export function SupportRequestsTab() {
         .eq("id", id);
 
       if (error) throw error;
+
+      // Send email notification if response provided
+      if (response) {
+        try {
+          const { error: emailError } = await supabase.functions.invoke("send-support-response", {
+            body: {
+              requestId: id,
+              status: status,
+              adminResponse: response
+            }
+          });
+
+          if (emailError) {
+            console.error("Error sending support response email:", emailError);
+            toast.error("Demande mise à jour mais l'email n'a pas pu être envoyé");
+          } else {
+            toast.success("Email envoyé au pêcheur");
+          }
+        } catch (emailError) {
+          console.error("Error invoking email function:", emailError);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-support-requests"] });
