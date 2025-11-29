@@ -11,7 +11,7 @@ import { SalePointsSection } from '@/components/SalePointsSection';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CheckCircle, Anchor, Plus, Send, MessageSquare, Loader2, Package, Calculator, Edit, Copy, AlertCircle, Settings, Users, Crown, Bot, Mail, ShoppingCart, Pencil, History } from "lucide-react";
+import { CheckCircle, Anchor, Plus, Send, MessageSquare, Loader2, Package, Calculator, Edit, Copy, AlertCircle, Settings, Users, Crown, Bot, Mail, ShoppingCart, Pencil, History, HelpCircle } from "lucide-react";
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -296,6 +296,15 @@ const PecheurDashboard = () => {
                 >
                   <Bot className="h-5 w-5" />
                   IA du Marin
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  className="gap-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 border-0"
+                  onClick={() => navigate('/pecheur/support')}
+                >
+                  <HelpCircle className="h-5 w-5" />
+                  Contacter l'admin
                 </Button>
               </>
             )}

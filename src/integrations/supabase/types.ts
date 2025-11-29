@@ -1742,6 +1742,57 @@ export type Database = {
         }
         Relationships: []
       }
+      support_requests: {
+        Row: {
+          admin_response: string | null
+          category: Database["public"]["Enums"]["support_category"]
+          created_at: string
+          fisherman_id: string
+          id: string
+          message: string
+          status: Database["public"]["Enums"]["support_status"]
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          admin_response?: string | null
+          category: Database["public"]["Enums"]["support_category"]
+          created_at?: string
+          fisherman_id: string
+          id?: string
+          message: string
+          status?: Database["public"]["Enums"]["support_status"]
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          admin_response?: string | null
+          category?: Database["public"]["Enums"]["support_category"]
+          created_at?: string
+          fisherman_id?: string
+          id?: string
+          message?: string
+          status?: Database["public"]["Enums"]["support_status"]
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_requests_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_requests_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "public_fishermen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_package_subscriptions: {
         Row: {
           created_at: string
@@ -1996,6 +2047,12 @@ export type Database = {
         | "autre"
       reservation_status: "pending" | "confirmed" | "cancelled" | "completed"
       sale_status: "pending" | "completed" | "refunded"
+      support_category:
+        | "profile_modification"
+        | "technical"
+        | "commercial"
+        | "other"
+      support_status: "pending" | "in_progress" | "resolved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2139,6 +2196,13 @@ export const Constants = {
       ],
       reservation_status: ["pending", "confirmed", "cancelled", "completed"],
       sale_status: ["pending", "completed", "refunded"],
+      support_category: [
+        "profile_modification",
+        "technical",
+        "commercial",
+        "other",
+      ],
+      support_status: ["pending", "in_progress", "resolved", "rejected"],
     },
   },
 } as const
