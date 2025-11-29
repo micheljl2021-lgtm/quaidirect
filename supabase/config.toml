@@ -2,6 +2,9 @@ project_id = "topqlhxdflykejrlbuqx"
 
 # Edge Functions Configuration
 
+[functions.generate-fisherman-site-prompt]
+verify_jwt = true  # Admin only function
+
 [functions.stripe-webhook]
 verify_jwt = false  # Webhooks are called by Stripe, not authenticated users
 
