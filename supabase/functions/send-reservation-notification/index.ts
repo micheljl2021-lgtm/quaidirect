@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
       data: {
         orderId: orderId,
         basketId: basketId,
-        url: '/pecheur/dashboard',
+        url: '/dashboard/pecheur',
       },
     };
 
