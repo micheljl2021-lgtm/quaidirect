@@ -5,13 +5,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, XCircle, Globe } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { GenerateSitePromptDialog } from "./GenerateSitePromptDialog";
 
 export function ImprovedFishermenTab() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [promptDialogOpen, setPromptDialogOpen] = useState(false);
+  const [generatedPrompt, setGeneratedPrompt] = useState("");
+  const [promptMetadata, setPromptMetadata] = useState<any>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const { data: fishermen, isLoading, refetch } = useQuery({
     queryKey: ['admin-fishermen-improved', statusFilter],
@@ -60,6 +65,61 @@ export function ImprovedFishermenTab() {
     } else {
       toast.success(`Statut ambassadeur ${!currentStatus ? 'activé' : 'désactivé'}`);
       refetch();
+    }
+  };
+
+  const handleGenerateSitePrompt = async (fisherman: any) => {
+    setIsGenerating(true);
+    setPromptDialogOpen(true);
+    setGeneratedPrompt("");
+    
+    try {
+      // Déterminer le type de pêche depuis fishing_methods
+      let typeDePeche = "inconnu";
+      if (fisherman.fishing_methods && fisherman.fishing_methods.length > 0) {
+        const method = fisherman.fishing_methods[0];
+        if (method === "ligne") typeDePeche = "ligneur";
+        else if (method === "filet") typeDePeche = "fileyeur";
+        else if (method === "casier") typeDePeche = "caseyeur";
+        else if (method === "palangre") typeDePeche = "palangrier";
+      }
+
+      const requestData = {
+        fishermanId: fisherman.id,
+        NOM_DU_BATEAU: fisherman.boat_name,
+        NOM_DU_PECHEUR: fisherman.company_name || fisherman.boat_name,
+        PORT: fisherman.main_fishing_zone || "Port local",
+        NUMERO: fisherman.phone || "06XXXXXXXX",
+        EMAIL: fisherman.email,
+        TYPE_DE_PECHE: typeDePeche,
+        ZONE_DE_PECHE: fisherman.main_fishing_zone,
+        HEURE_ARRIVEE: fisherman.default_time_slot || "Selon météo",
+        HORAIRES: "Variable selon saison",
+        JOURS_SORTIE: "Selon conditions météo",
+        ANNEES_EXPERIENCE: fisherman.years_experience || 10,
+        TECHNIQUE: fisherman.fishing_methods?.join(", ") || "Pêche artisanale",
+        PRODUITS: [],
+        ADRESSE_ENCODEE: encodeURIComponent(`Port de ${fisherman.main_fishing_zone || ""}`),
+        IMAGE_PRINCIPALE: fisherman.photo_boat_1 || "",
+        URL_SITE: ""
+      };
+
+      const { data, error } = await supabase.functions.invoke('generate-fisherman-site-prompt', {
+        body: requestData
+      });
+
+      if (error) throw error;
+
+      setGeneratedPrompt(data.generatedPrompt);
+      setPromptMetadata(data.metadata);
+      
+      toast.success("Prompt généré avec succès");
+    } catch (error) {
+      console.error('Error generating prompt:', error);
+      toast.error("Impossible de générer le prompt");
+      setPromptDialogOpen(false);
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -135,10 +195,11 @@ export function ImprovedFishermenTab() {
                   <TableHead>Immatriculation</TableHead>
                   <TableHead>Date création</TableHead>
                   <TableHead>Vérifié</TableHead>
-                  <TableHead>Ambassadeur</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
+              <TableHead>Ambassadeur</TableHead>
+              <TableHead>Actions</TableHead>
+              <TableHead>Site web</TableHead>
+            </TableRow>
+          </TableHeader>
               <TableBody>
                 {fishermen?.map((fisherman) => (
                   <TableRow key={fisherman.id}>
@@ -179,6 +240,16 @@ export function ImprovedFishermenTab() {
                         </Button>
                       </div>
                     </TableCell>
+                    <TableCell>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleGenerateSitePrompt(fisherman)}
+                      >
+                        <Globe className="h-4 w-4 mr-1" />
+                        Générer site
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -186,6 +257,14 @@ export function ImprovedFishermenTab() {
           )}
         </CardContent>
       </Card>
+
+      <GenerateSitePromptDialog
+        open={promptDialogOpen}
+        onOpenChange={setPromptDialogOpen}
+        prompt={generatedPrompt}
+        metadata={promptMetadata}
+        isLoading={isGenerating}
+      />
     </div>
   );
 }
