@@ -48,6 +48,7 @@ import DevenirPecheur from "./pages/DevenirPecheur";
 import PoissonFraisHyeres from "./pages/seo/PoissonFraisHyeres";
 import PoissonFraisToulon from "./pages/seo/PoissonFraisToulon";
 import PoissonFraisLaRochelle from "./pages/seo/PoissonFraisLaRochelle";
+import PecheurSupport from "./pages/PecheurSupport";
 
 const queryClient = new QueryClient();
 
@@ -112,6 +113,7 @@ const App = () => (
             <Route path="/pecheur/edit-profile" element={<EditFisherProfile />} />
             <Route path="/pecheur/ambassadeur" element={<PecheurAmbassadorStatus />} />
           <Route path="/pecheur/ia-marin" element={<MarineAIRefactored />} />
+          <Route path="/pecheur/support" element={<PecheurSupport />} />
           <Route path="/pecheur/preferences" element={<PecheurPreferences />} />
             <Route path="/ambassadeur-partenaire" element={<AmbassadorPartner />} />
             <Route path="/comment-ca-marche" element={<CommentCaMarche />} />

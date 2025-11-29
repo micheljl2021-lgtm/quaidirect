@@ -14,6 +14,7 @@ import { ImprovedUsersTab } from "@/components/admin/ImprovedUsersTab";
 import { ImprovedDropsTab } from "@/components/admin/ImprovedDropsTab";
 import { ImprovedFishermenTab } from "@/components/admin/ImprovedFishermenTab";
 import { ContactsTab } from "@/components/admin/ContactsTab";
+import { SupportRequestsTab } from "@/components/admin/SupportRequestsTab";
 
 const AdminDashboard = () => {
   const { user, userRole } = useAuth();
@@ -56,7 +57,7 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-9 gap-2">
+          <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 gap-2">
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
             <TabsTrigger value="users">Utilisateurs</TabsTrigger>
             <TabsTrigger value="fishermen">Pêcheurs</TabsTrigger>
@@ -66,6 +67,7 @@ const AdminDashboard = () => {
             <TabsTrigger value="offers">Offres</TabsTrigger>
             <TabsTrigger value="premium">Premium</TabsTrigger>
             <TabsTrigger value="contacts">Contacts</TabsTrigger>
+            <TabsTrigger value="support">Demandes</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -102,6 +104,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="contacts" className="space-y-6">
             <ContactsTab />
+          </TabsContent>
+
+          <TabsContent value="support" className="space-y-6">
+            <SupportRequestsTab />
           </TabsContent>
         </Tabs>
       </div>
