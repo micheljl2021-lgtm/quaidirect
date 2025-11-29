@@ -8,8 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { Crown, Fish, MapPin, Clock, Zap, Bell, Calendar, CheckCircle2, XCircle } from 'lucide-react';
+import { Crown, Fish, MapPin, Clock, Zap, Bell, Calendar, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getRedirectPathByRole } from '@/lib/authRedirect';
 
 interface Drop {
   id: string;
@@ -55,7 +56,7 @@ interface Reservation {
 }
 
 const PremiumDashboard = () => {
-  const { user, userRole } = useAuth();
+  const { user, userRole, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -163,13 +164,20 @@ const PremiumDashboard = () => {
   };
 
   useEffect(() => {
+    if (loading) return;
+    
     if (!user) {
       navigate('/auth');
       return;
     }
+    
+    if (userRole === 'admin') {
+      navigate('/dashboard/admin');
+      return;
+    }
 
-    if (userRole !== 'premium') {
-      navigate('/dashboard/user');
+    if (userRole !== 'premium' && userRole !== 'fisherman') {
+      navigate(getRedirectPathByRole(userRole));
       return;
     }
 
@@ -178,7 +186,15 @@ const PremiumDashboard = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [user, userRole, navigate]);
+  }, [user, userRole, loading, navigate]);
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   // Fetch drops premium (avec accès anticipé)
   const { data: drops, isLoading, refetch } = useQuery({

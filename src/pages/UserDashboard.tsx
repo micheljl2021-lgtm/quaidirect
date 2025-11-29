@@ -7,8 +7,9 @@ import Header from '@/components/Header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Fish, MapPin, Clock, TrendingUp, Calendar, ArrowRight } from 'lucide-react';
+import { Fish, MapPin, Clock, TrendingUp, Calendar, ArrowRight, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getRedirectPathByRole } from '@/lib/authRedirect';
 
 interface Drop {
   id: string;
@@ -33,14 +34,22 @@ interface Drop {
 }
 
 const UserDashboard = () => {
-  const { user, userRole } = useAuth();
+  const { user, userRole, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
+    if (loading) return;
+    
     if (!user) {
       navigate('/auth');
+      return;
+    }
+    
+    // Redirect users with higher roles to their appropriate dashboard
+    if (userRole && userRole !== 'user') {
+      navigate(getRedirectPathByRole(userRole));
       return;
     }
 
@@ -49,7 +58,15 @@ const UserDashboard = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [user, navigate]);
+  }, [user, userRole, loading, navigate]);
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   // Fetch drops publics disponibles
   const { data: drops, isLoading } = useQuery({

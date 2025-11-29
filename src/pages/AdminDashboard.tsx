@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Header from "@/components/Header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Shield } from "lucide-react";
+import { Shield, Loader2 } from "lucide-react";
 import { OverviewTab } from "@/components/admin/OverviewTab";
 import { SalesTab } from "@/components/admin/SalesTab";
 import { ReservationsTab } from "@/components/admin/ReservationsTab";
@@ -15,24 +15,32 @@ import { ImprovedDropsTab } from "@/components/admin/ImprovedDropsTab";
 import { ImprovedFishermenTab } from "@/components/admin/ImprovedFishermenTab";
 import { ContactsTab } from "@/components/admin/ContactsTab";
 import { SupportRequestsTab } from "@/components/admin/SupportRequestsTab";
+import { getRedirectPathByRole } from "@/lib/authRedirect";
 
 const AdminDashboard = () => {
-  const { user, userRole } = useAuth();
+  const { user, userRole, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (loading) return;
+    
     if (!user) {
       navigate("/auth");
       return;
     }
+    
     if (userRole !== "admin") {
-      navigate("/");
+      navigate(getRedirectPathByRole(userRole));
       return;
     }
-  }, [user, userRole, navigate]);
+  }, [user, userRole, loading, navigate]);
 
-  if (userRole !== "admin") {
-    return null;
+  if (loading || userRole !== "admin") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
