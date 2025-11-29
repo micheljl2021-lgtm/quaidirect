@@ -5,16 +5,46 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Store, Zap, Brain, ArrowLeft, Crown } from 'lucide-react';
+import { Mail, Store, Zap, Brain, ArrowLeft, Crown, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Header from '@/components/Header';
 import { isWhitelistedFisher } from '@/config/fisherWhitelist';
+
+const PLANS = {
+  basic: {
+    name: "Pêcheur Basic",
+    price: "99€",
+    priceId: "price_BASIC_99_YEAR", // À remplacer par le vrai price_id Stripe
+    period: "par an",
+    features: [
+      "Fiche pêcheur + points de vente",
+      "Emails illimités aux clients",
+      "Partage WhatsApp depuis votre téléphone",
+      "IA : textes, descriptions, messages types",
+      "Base clients simple",
+    ],
+  },
+  pro: {
+    name: "Pêcheur Pro",
+    price: "199€",
+    priceId: "price_PRO_199_YEAR", // À remplacer par le vrai price_id Stripe
+    period: "par an",
+    badge: "Recommandé",
+    features: [
+      "Tout le plan Basic inclus",
+      "IA avancée : prix, mise en avant, météo/marée",
+      "Multi-points de vente",
+      "Statistiques : CA estimé, clients touchés",
+      "Priorité support",
+    ],
+  },
+};
 
 const PecheurPayment = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<string | null>(null);
   const [isWhitelisted, setIsWhitelisted] = useState(false);
 
   useEffect(() => {
@@ -23,15 +53,17 @@ const PecheurPayment = () => {
     }
   }, [user]);
 
-  const handlePayment = async () => {
+  const handlePayment = async (priceId: string, planType: string) => {
     if (!user) {
       navigate('/auth');
       return;
     }
 
-    setLoading(true);
+    setLoading(planType);
     try {
-      const { data, error } = await supabase.functions.invoke('create-fisherman-payment');
+      const { data, error } = await supabase.functions.invoke('create-fisherman-payment', {
+        body: { priceId, planType },
+      });
 
       if (error) throw error;
 
@@ -48,7 +80,7 @@ const PecheurPayment = () => {
         variant: 'destructive',
       });
     } finally {
-      setLoading(false);
+      setLoading(null);
     }
   };
 
@@ -56,8 +88,8 @@ const PecheurPayment = () => {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <Header />
       
-      <div className="container max-w-4xl mx-auto px-4 py-12">
-        <div className="text-center mb-8">
+      <div className="container max-w-6xl mx-auto px-4 py-12">
+        <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">Vendez votre pêche en direct, sans intermédiaire</h1>
           <p className="text-xl text-muted-foreground">
             Rejoignez les marins pêcheurs qui ont choisi l'autonomie et la rentabilité
@@ -88,100 +120,136 @@ const PecheurPayment = () => {
         )}
 
         {!isWhitelisted && (
+          <>
+            {/* Pricing Cards */}
+            <div className="grid md:grid-cols-2 gap-6 mb-8 max-w-5xl mx-auto">
+              {/* Basic Plan */}
+              <Card className="relative hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>{PLANS.basic.name}</span>
+                  </CardTitle>
+                  <CardDescription>Pour démarrer la vente en direct</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="mb-6">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-bold">{PLANS.basic.price}</span>
+                      <span className="text-muted-foreground">/{PLANS.basic.period}</span>
+                    </div>
+                  </div>
+                  
+                  <ul className="space-y-3 mb-6">
+                    {PLANS.basic.features.map((feature, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
 
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="text-2xl">Accès Complet Pêcheur Professionnel — 150€/an</CardTitle>
-            <CardDescription>
-              Tout ce dont vous avez besoin pour vendre votre pêche en direct : vitrine professionnelle, gestion ultra-rapide des arrivages, communication illimitée (emails + SMS) et intelligence artificielle pour optimiser vos ventes. Abonnement annuel renouvelable.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-md">
-              <p className="font-semibold text-blue-900 mb-2">
+                  <Button
+                    onClick={() => handlePayment(PLANS.basic.priceId, 'basic')}
+                    disabled={loading === 'basic'}
+                    size="lg"
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {loading === 'basic' ? 'Chargement...' : 'Choisir Basic'}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Pro Plan */}
+              <Card className="relative border-primary shadow-lg hover:shadow-xl transition-shadow">
+                {PLANS.pro.badge && (
+                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    {PLANS.pro.badge}
+                  </Badge>
+                )}
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>{PLANS.pro.name}</span>
+                    <Crown className="h-5 w-5 text-primary" />
+                  </CardTitle>
+                  <CardDescription>Pour maximiser vos ventes</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="mb-6">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-bold">{PLANS.pro.price}</span>
+                      <span className="text-muted-foreground">/{PLANS.pro.period}</span>
+                    </div>
+                  </div>
+                  
+                  <ul className="space-y-3 mb-6">
+                    {PLANS.pro.features.map((feature, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button
+                    onClick={() => handlePayment(PLANS.pro.priceId, 'pro')}
+                    disabled={loading === 'pro'}
+                    size="lg"
+                    className="w-full"
+                  >
+                    {loading === 'pro' ? 'Chargement...' : 'Choisir Pro'}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* SMS Options Info */}
+            <Card className="mb-8 max-w-5xl mx-auto bg-blue-50 border-blue-200">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-3">
+                  <Mail className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-blue-900 mb-2">
+                      📧 Emails illimités + WhatsApp inclus
+                    </p>
+                    <p className="text-sm text-blue-800 mb-2">
+                      Prévenez instantanément tous vos clients par email et partagez vos arrivages sur WhatsApp depuis votre téléphone.
+                    </p>
+                    <p className="text-sm text-blue-800 font-medium">
+                      💬 Options SMS disponibles après inscription (packs à partir de 49€ pour 500 SMS)
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Value Proposition */}
+            <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-lg p-6 mb-8 max-w-5xl mx-auto">
+              <p className="font-semibold text-primary mb-2">
                 💰 Ce que vous économisez avec QuaiDirect
               </p>
-              <ul className="text-sm text-blue-800 space-y-1">
+              <ul className="text-sm space-y-1">
                 <li>✓ Plus de commission intermédiaire (vendez 100% de votre marge)</li>
-                <li>✓ Plus de temps perdu en coups de fil (emails/SMS automatiques)</li>
+                <li>✓ Plus de temps perdu en coups de fil (emails/WhatsApp automatiques)</li>
                 <li>✓ Plus de papier à gérer (tout est digitalisé)</li>
-                <li>✓ Accès complet renouvelable pour 150€/an</li>
+                <li>✓ IA pour optimiser vos ventes et votre communication</li>
               </ul>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <Mail className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="font-medium text-lg">📧 Emails illimités + SMS inclus</p>
-                  <p className="text-sm text-muted-foreground">
-                    Prévenez instantanément tous vos clients (restaurateurs, poissonniers, particuliers) de vos arrivages par email ET SMS. Aucune limite d'envoi. L'IA QuaiDirect optimise vos messages pour maximiser vos ventes.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <Store className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="font-medium text-lg">🏪 Votre vitrine en ligne professionnelle</p>
-                  <p className="text-sm text-muted-foreground">
-                    Une page dédiée à votre bateau, visible 24h/24 : présentez vos méthodes de pêche, vos espèces, vos points de vente. Partagez-la sur Facebook, Instagram ou par SMS. Vos clients vous retrouvent en un clic.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <Zap className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="font-medium text-lg">⚡ Créez un arrivage en 2 minutes chrono</p>
-                  <p className="text-sm text-muted-foreground">
-                    Plus de temps perdu à gérer du papier ou à passer des coups de fil. Publiez votre arrivage en 3 clics, l'app envoie automatiquement emails et SMS à tous vos contacts. Vous gérez tout depuis votre téléphone, même à 2h du matin sur le quai.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <Brain className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="font-medium text-lg">🤝 Constituez votre carnet client pro + IA ciblée</p>
-                  <p className="text-sm text-muted-foreground">
-                    Importez et gérez votre base de restaurateurs, poissonniers et grossistes. L'intelligence artificielle QuaiDirect vous suggère qui prévenir en priorité selon vos espèces disponibles. Vendez mieux, plus vite, sans effort.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-6 border-t space-y-3">
-              <Button
-                onClick={handlePayment}
-                disabled={loading}
-                size="lg"
-                className="w-full text-lg h-14 font-bold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-              >
-                {loading ? 'Préparation du paiement...' : '🚀 Payer 150€ et démarrer maintenant'}
-              </Button>
-              <div className="text-xs text-center text-muted-foreground px-4 space-y-2">
-                <p>
-                  ✅ Inclus dans votre abonnement annuel : emails illimités, SMS sans limite mensuelle, intelligence artificielle de ciblage client, support prioritaire et toutes les futures mises à jour gratuites.
-                </p>
-                <p className="font-semibold text-orange-600">
-                  ⏰ Offre limitée aux 10 premiers inscrits : accès Ambassadeur Partenaire (statut privilégié)
-                </p>
-              </div>
+            <div className="text-center space-y-3 max-w-5xl mx-auto">
               <Button
                 variant="outline"
                 onClick={() => navigate('/')}
-                className="w-full"
+                className="w-full max-w-md"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Retour à l'accueil
               </Button>
-              <p className="text-xs text-center text-muted-foreground mt-2">
+              <p className="text-xs text-muted-foreground">
                 Paiement sécurisé par Stripe
               </p>
             </div>
-          </CardContent>
-        </Card>
+          </>
         )}
       </div>
     </div>

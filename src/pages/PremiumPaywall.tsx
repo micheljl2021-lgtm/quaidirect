@@ -12,17 +12,17 @@ import Header from "@/components/Header";
 const PLANS = {
   monthly: {
     name: "Premium Mensuel",
-    price: "4,99€",
-    priceId: "price_1SX8ShH0VhS1yyE0egaFoKQw",
-    plan: "monthly_4_99",
+    price: "2,50€",
+    priceId: "price_PREMIUM_MONTHLY_2_50", // À remplacer par le vrai price_id Stripe
+    plan: "monthly_2_50",
     period: "par mois",
     description: "Engagement mensuel",
   },
   annual: {
     name: "Premium Annuel",
-    price: "39€",
-    priceId: "price_1SXFTFH0VhS1yyE0gvSacpSN",
-    plan: "annual_39",
+    price: "25€",
+    priceId: "price_PREMIUM_ANNUAL_25", // À remplacer par le vrai price_id Stripe
+    plan: "annual_25",
     period: "par an",
     description: "Économisez 2 mois",
     badge: "Meilleur prix",
@@ -157,7 +157,7 @@ export default function PremiumPaywall() {
                 onClick={() => handleSubscribe(PLANS.monthly.priceId, PLANS.monthly.plan)}
                 disabled={loading === PLANS.monthly.plan}
               >
-                {loading === PLANS.monthly.plan ? "Chargement..." : "Essai gratuit 7 jours puis 4,99€/mois"}
+                {loading === PLANS.monthly.plan ? "Chargement..." : "Essai gratuit 7 jours puis 2,50€/mois"}
               </Button>
               <p className="text-xs text-center text-muted-foreground">
                 Aidez-nous à développer les points de vente de vos marins pêcheurs préférés
@@ -186,7 +186,7 @@ export default function PremiumPaywall() {
                   <span className="text-muted-foreground">/{PLANS.annual.period}</span>
                 </div>
                 <p className="text-sm text-primary font-semibold mt-1">
-                  Soit 3,25€/mois
+                  Soit 2,08€/mois
                 </p>
               </div>
               
@@ -207,10 +207,10 @@ export default function PremiumPaywall() {
                 onClick={() => handleSubscribe(PLANS.annual.priceId, PLANS.annual.plan)}
                 disabled={loading === PLANS.annual.plan}
               >
-                {loading === PLANS.annual.plan ? "Chargement..." : "Essai gratuit 7 jours puis 39€/an"}
+                {loading === PLANS.annual.plan ? "Chargement..." : "Essai gratuit 7 jours puis 25€/an"}
               </Button>
               <p className="text-xs text-center text-muted-foreground">
-                Économisez 2 mois • Soit 3,25€ / mois
+                Économisez 2 mois • Soit 2,08€ / mois
               </p>
             </CardFooter>
           </Card>
