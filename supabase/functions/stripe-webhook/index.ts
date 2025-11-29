@@ -152,6 +152,7 @@ serve(async (req) => {
         if (paymentType === 'fisherman_onboarding') {
           logStep('Processing fisherman onboarding subscription', { userId });
           
+          const planType = session.metadata?.plan_type || 'basic';
           const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
           
           // Create/update fisherman record
@@ -196,14 +197,14 @@ serve(async (req) => {
             }
           }
 
-          // Create subscription payment record
+          // Create subscription payment record with plan type
           const { error: paymentError } = await supabaseClient
             .from('payments')
             .upsert({
               user_id: userId,
               stripe_subscription_id: subscription.id,
               stripe_customer_id: subscription.customer as string,
-              plan: 'fisherman_annual',
+              plan: `fisherman_${planType}`,
               status: 'active',
               current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
               current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
@@ -215,7 +216,7 @@ serve(async (req) => {
           if (paymentError) {
             logStep('ERROR creating fisherman subscription payment', { error: paymentError });
           } else {
-            logStep('Fisherman subscription payment record created');
+            logStep('Fisherman subscription payment record created', { planType });
           }
 
           // Add fisherman role to user

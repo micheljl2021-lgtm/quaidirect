@@ -14,7 +14,7 @@ const PLANS = {
   basic: {
     name: "Pêcheur Basic",
     price: "99€",
-    priceId: "price_BASIC_99_YEAR", // À remplacer par le vrai price_id Stripe
+    priceId: "price_1SYfUYH0VhS1yyE0d3c5GQLA",
     period: "par an",
     features: [
       "Fiche pêcheur + points de vente",
@@ -27,7 +27,7 @@ const PLANS = {
   pro: {
     name: "Pêcheur Pro",
     price: "199€",
-    priceId: "price_PRO_199_YEAR", // À remplacer par le vrai price_id Stripe
+    priceId: "price_1SYgOuH0VhS1yyE0XINPVQdm",
     period: "par an",
     badge: "Recommandé",
     features: [
