@@ -13,7 +13,7 @@ const PLANS = {
   monthly: {
     name: "Premium Mensuel",
     price: "2,50€",
-    priceId: "price_PREMIUM_MONTHLY_2_50", // À remplacer par le vrai price_id Stripe
+    priceId: "price_1SYfFZH0VhS1yyE0e66gI70j",
     plan: "monthly_2_50",
     period: "par mois",
     description: "Engagement mensuel",
@@ -21,7 +21,7 @@ const PLANS = {
   annual: {
     name: "Premium Annuel",
     price: "25€",
-    priceId: "price_PREMIUM_ANNUAL_25", // À remplacer par le vrai price_id Stripe
+    priceId: "price_1SYfFIH0VhS1yyE0xKuHgfhF",
     plan: "annual_25",
     period: "par an",
     description: "Économisez 2 mois",
