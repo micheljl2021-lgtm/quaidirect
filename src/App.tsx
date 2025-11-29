@@ -43,6 +43,11 @@ import PecheurAmbassadorStatus from "./pages/PecheurAmbassadorStatus";
 import MarineAI from "./pages/MarineAI";
 import MarineAIRefactored from "./pages/MarineAIRefactored";
 import PecheurPreferences from "./pages/PecheurPreferences";
+import CommentCaMarche from "./pages/CommentCaMarche";
+import DevenirPecheur from "./pages/DevenirPecheur";
+import PoissonFraisHyeres from "./pages/seo/PoissonFraisHyeres";
+import PoissonFraisToulon from "./pages/seo/PoissonFraisToulon";
+import PoissonFraisLaRochelle from "./pages/seo/PoissonFraisLaRochelle";
 
 const queryClient = new QueryClient();
 
@@ -109,6 +114,11 @@ const App = () => (
           <Route path="/pecheur/ia-marin" element={<MarineAIRefactored />} />
           <Route path="/pecheur/preferences" element={<PecheurPreferences />} />
             <Route path="/ambassadeur-partenaire" element={<AmbassadorPartner />} />
+            <Route path="/comment-ca-marche" element={<CommentCaMarche />} />
+            <Route path="/devenir-pecheur" element={<DevenirPecheur />} />
+            <Route path="/poisson-frais-hyeres" element={<PoissonFraisHyeres />} />
+            <Route path="/poisson-frais-toulon" element={<PoissonFraisToulon />} />
+            <Route path="/poisson-frais-la-rochelle" element={<PoissonFraisLaRochelle />} />
             <Route path="/pecheur/:id" element={<FisherProfile />} />
             <Route path="/pecheurs/:slug" element={<FisherProfile />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

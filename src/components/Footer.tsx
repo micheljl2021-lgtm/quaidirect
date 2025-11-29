@@ -5,7 +5,7 @@ const Footer = () => {
   return (
     <footer className="bg-primary/5 border-t mt-auto">
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Logo & Description */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
@@ -23,16 +23,16 @@ const Footer = () => {
 
           {/* Liens utiles */}
           <div>
-            <h3 className="font-semibold mb-4">Liens utiles</h3>
+            <h3 className="font-semibold mb-4">Découvrir</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/cgv" className="text-muted-foreground hover:text-primary transition-colors">
-                  Conditions Générales
+                <Link to="/comment-ca-marche" className="text-muted-foreground hover:text-primary transition-colors">
+                  Comment ça marche ?
                 </Link>
               </li>
               <li>
-                <Link to="/mentions-legales" className="text-muted-foreground hover:text-primary transition-colors">
-                  Mentions Légales
+                <Link to="/devenir-pecheur" className="text-muted-foreground hover:text-primary transition-colors">
+                  Devenir pêcheur
                 </Link>
               </li>
               <li>
@@ -43,6 +43,28 @@ const Footer = () => {
               <li>
                 <Link to="/carte" className="text-muted-foreground hover:text-primary transition-colors">
                   Carte des ports
+                </Link>
+              </li>
+              <li>
+                <Link to="/poisson-frais-hyeres" className="text-muted-foreground hover:text-primary transition-colors">
+                  Poisson frais Hyères
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Légal */}
+          <div>
+            <h3 className="font-semibold mb-4">Légal</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link to="/cgv" className="text-muted-foreground hover:text-primary transition-colors">
+                  Conditions Générales
+                </Link>
+              </li>
+              <li>
+                <Link to="/mentions-legales" className="text-muted-foreground hover:text-primary transition-colors">
+                  Mentions Légales
                 </Link>
               </li>
             </ul>
