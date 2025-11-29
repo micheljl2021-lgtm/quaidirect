@@ -17,9 +17,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getRedirectPathByRole } from '@/lib/authRedirect';
 
 const PecheurDashboard = () => {
-  const { user, userRole, isVerifiedFisherman } = useAuth();
+  const { user, userRole, isVerifiedFisherman, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [drops, setDrops] = useState<any[]>([]);
@@ -33,13 +34,15 @@ const PecheurDashboard = () => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    if (authLoading) return;
+    
     if (!user) {
       navigate('/auth');
       return;
     }
 
     if (userRole && userRole !== 'fisherman' && userRole !== 'admin') {
-      navigate('/pecheur/onboarding');
+      navigate(getRedirectPathByRole(userRole));
       return;
     }
 
@@ -51,7 +54,7 @@ const PecheurDashboard = () => {
     if (isVerifiedFisherman) {
       fetchDrops();
     }
-  }, [user, userRole, isVerifiedFisherman, navigate]);
+  }, [user, userRole, isVerifiedFisherman, authLoading, navigate]);
 
   // Set up realtime subscription for drops
   useEffect(() => {
@@ -188,13 +191,10 @@ const PecheurDashboard = () => {
     });
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="container px-4 py-8">
-          <p className="text-center text-muted-foreground">Chargement...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }

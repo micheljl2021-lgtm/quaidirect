@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Mail, Anchor, Lock, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getRedirectPathByRole } from '@/lib/authRedirect';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
@@ -37,15 +38,33 @@ const Auth = () => {
       
       if (error) throw error;
       
-      toast({
-        title: 'Compte créé',
-        description: 'Connexion automatique en cours...',
-      });
-      
-      // Auto sign in after signup
-      setTimeout(() => {
-        navigate('/');
-      }, 500);
+      // Get user roles and redirect intelligently
+      if (data.user) {
+        const { data: roles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', data.user.id);
+        
+        const userRoles = roles?.map(r => r.role) || [];
+        let primaryRole = null;
+        
+        if (userRoles.includes('admin')) {
+          primaryRole = 'admin';
+        } else if (userRoles.includes('fisherman')) {
+          primaryRole = 'fisherman';
+        } else if (userRoles.includes('premium')) {
+          primaryRole = 'premium';
+        } else {
+          primaryRole = 'user';
+        }
+        
+        toast({
+          title: 'Compte créé',
+          description: 'Connexion automatique en cours...',
+        });
+        
+        navigate(getRedirectPathByRole(primaryRole));
+      }
     } catch (error: any) {
       toast({
         title: 'Erreur d\'inscription',
@@ -71,20 +90,20 @@ const Auth = () => {
           .select('role')
           .eq('user_id', user.id);
         
-        if (roles && roles.length > 0) {
-          const userRoles = roles.map(r => r.role);
-          if (userRoles.includes('admin')) {
-            navigate('/dashboard/admin');
-          } else if (userRoles.includes('fisherman')) {
-            navigate('/dashboard/pecheur');
-          } else if (userRoles.includes('premium')) {
-            navigate('/dashboard/premium');
-          } else {
-            navigate('/dashboard/user');
-          }
+        const userRoles = roles?.map(r => r.role) || [];
+        let primaryRole = null;
+        
+        if (userRoles.includes('admin')) {
+          primaryRole = 'admin';
+        } else if (userRoles.includes('fisherman')) {
+          primaryRole = 'fisherman';
+        } else if (userRoles.includes('premium')) {
+          primaryRole = 'premium';
         } else {
-          navigate('/dashboard/user');
+          primaryRole = 'user';
         }
+        
+        navigate(getRedirectPathByRole(primaryRole));
       }
     } catch (error) {
       console.error('Error:', error);
@@ -113,7 +132,30 @@ const Auth = () => {
     setLoading(true);
     try {
       await verifyOtp(email, otp);
-      navigate('/');
+      
+      // Get user roles and redirect intelligently
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: roles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
+        
+        const userRoles = roles?.map(r => r.role) || [];
+        let primaryRole = null;
+        
+        if (userRoles.includes('admin')) {
+          primaryRole = 'admin';
+        } else if (userRoles.includes('fisherman')) {
+          primaryRole = 'fisherman';
+        } else if (userRoles.includes('premium')) {
+          primaryRole = 'premium';
+        } else {
+          primaryRole = 'user';
+        }
+        
+        navigate(getRedirectPathByRole(primaryRole));
+      }
     } catch (error) {
       console.error('Error verifying OTP:', error);
     } finally {
