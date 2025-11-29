@@ -9,14 +9,10 @@ import { CheckCircle, XCircle, Globe } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { GenerateSitePromptDialog } from "./GenerateSitePromptDialog";
+
 
 export function ImprovedFishermenTab() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [promptDialogOpen, setPromptDialogOpen] = useState(false);
-  const [generatedPrompt, setGeneratedPrompt] = useState("");
-  const [promptMetadata, setPromptMetadata] = useState<any>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
 
   const { data: fishermen, isLoading, refetch } = useQuery({
     queryKey: ['admin-fishermen-improved', statusFilter],
@@ -68,58 +64,24 @@ export function ImprovedFishermenTab() {
     }
   };
 
-  const handleGenerateSitePrompt = async (fisherman: any) => {
-    setIsGenerating(true);
-    setPromptDialogOpen(true);
-    setGeneratedPrompt("");
-    
+  const handleEnrichProfile = async (fisherman: any) => {
     try {
-      // Déterminer le type de pêche depuis fishing_methods
-      let typeDePeche = "inconnu";
-      if (fisherman.fishing_methods && fisherman.fishing_methods.length > 0) {
-        const method = fisherman.fishing_methods[0];
-        if (method === "ligne") typeDePeche = "ligneur";
-        else if (method === "filet") typeDePeche = "fileyeur";
-        else if (method === "casier") typeDePeche = "caseyeur";
-        else if (method === "palangre") typeDePeche = "palangrier";
-      }
+      toast.loading("Génération du contenu SEO en cours...");
 
-      const requestData = {
-        fishermanId: fisherman.id,
-        NOM_DU_BATEAU: fisherman.boat_name,
-        NOM_DU_PECHEUR: fisherman.company_name || fisherman.boat_name,
-        PORT: fisherman.main_fishing_zone || "Port local",
-        NUMERO: fisherman.phone || "06XXXXXXXX",
-        EMAIL: fisherman.email,
-        TYPE_DE_PECHE: typeDePeche,
-        ZONE_DE_PECHE: fisherman.main_fishing_zone,
-        HEURE_ARRIVEE: fisherman.default_time_slot || "Selon météo",
-        HORAIRES: "Variable selon saison",
-        JOURS_SORTIE: "Selon conditions météo",
-        ANNEES_EXPERIENCE: fisherman.years_experience || 10,
-        TECHNIQUE: fisherman.fishing_methods?.join(", ") || "Pêche artisanale",
-        PRODUITS: [],
-        ADRESSE_ENCODEE: encodeURIComponent(`Port de ${fisherman.main_fishing_zone || ""}`),
-        IMAGE_PRINCIPALE: fisherman.photo_boat_1 || "",
-        URL_SITE: ""
-      };
-
-      const { data, error } = await supabase.functions.invoke('generate-fisherman-site-prompt', {
-        body: requestData
+      const { data, error } = await supabase.functions.invoke('generate-fisherman-seo-content', {
+        body: { fishermanId: fisherman.id }
       });
 
       if (error) throw error;
 
-      setGeneratedPrompt(data.generatedPrompt);
-      setPromptMetadata(data.metadata);
+      toast.success("Profil enrichi avec succès !");
+      refetch();
       
-      toast.success("Prompt généré avec succès");
+      // Afficher un aperçu du contenu généré
+      toast.info(`SEO Title: ${data.data.seo_title}`, { duration: 5000 });
     } catch (error) {
-      console.error('Error generating prompt:', error);
-      toast.error("Impossible de générer le prompt");
-      setPromptDialogOpen(false);
-    } finally {
-      setIsGenerating(false);
+      console.error('Error enriching profile:', error);
+      toast.error("Impossible d'enrichir le profil");
     }
   };
 
@@ -244,10 +206,10 @@ export function ImprovedFishermenTab() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleGenerateSitePrompt(fisherman)}
+                        onClick={() => handleEnrichProfile(fisherman)}
                       >
                         <Globe className="h-4 w-4 mr-1" />
-                        Générer site
+                        Enrichir profil
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -258,13 +220,6 @@ export function ImprovedFishermenTab() {
         </CardContent>
       </Card>
 
-      <GenerateSitePromptDialog
-        open={promptDialogOpen}
-        onOpenChange={setPromptDialogOpen}
-        prompt={generatedPrompt}
-        metadata={promptMetadata}
-        isLoading={isGenerating}
-      />
     </div>
   );
 }
