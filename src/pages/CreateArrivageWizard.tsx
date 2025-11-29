@@ -8,7 +8,7 @@ import { Step1LieuHoraire } from "@/components/arrivage-wizard/Step1LieuHoraire"
 import { Step2EspecesQuantites } from "@/components/arrivage-wizard/Step2EspecesQuantites";
 import { Step3Recapitulatif } from "@/components/arrivage-wizard/Step3Recapitulatif";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/lib/supabase-client";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Package } from "lucide-react";
 
@@ -125,7 +125,11 @@ export default function CreateArrivageWizard() {
         .eq("user_id", user.id)
         .single();
 
-      if (fishermanError) throw fishermanError;
+      if (fishermanError || !fishermanData) {
+        toast.error("Ton profil pêcheur n'est pas encore complet. Termine l'onboarding pour pouvoir publier un arrivage.");
+        navigate("/pecheur/onboarding");
+        return;
+      }
 
       // Convert time slot to actual times
       const timeSlotMap: Record<string, { start: string; end: string }> = {
