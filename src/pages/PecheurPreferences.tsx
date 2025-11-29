@@ -110,7 +110,7 @@ export default function PecheurPreferences() {
         <Button
           variant="ghost"
           className="mb-4"
-          onClick={() => navigate("/pecheur/dashboard")}
+          onClick={() => navigate("/dashboard/pecheur")}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Retour au tableau de bord

@@ -15,24 +15,37 @@ const AmbassadorPartner = () => {
   const { data: ambassador, isLoading } = useQuery({
     queryKey: ['ambassador-partner'],
     queryFn: async () => {
-      // First, get the user_id from auth.users
-      const { data: userData } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', 'seb.zadeyan.leboncoin@gmail.com')
-        .maybeSingle();
+      let fisherData = null;
 
-      if (!userData?.id) {
-        console.error('Ambassador partner user not found');
-        return null;
-      }
-
-      // Then get fisherman by user_id
-      const { data: fisherData } = await supabase
+      // Method 1: Try to find by ambassador_slot = 1 (most robust)
+      const { data: ambassadorBySlot } = await supabase
         .from('fishermen')
-        .select('id')
-        .eq('user_id', userData.id)
+        .select('id, user_id')
+        .eq('ambassador_slot', 1)
         .maybeSingle();
+
+      if (ambassadorBySlot) {
+        fisherData = ambassadorBySlot;
+      } else {
+        // Method 2: Fallback to email lookup
+        const { data: userData } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', 'seb.zadeyan.leboncoin@gmail.com')
+          .maybeSingle();
+
+        if (userData?.id) {
+          const { data: fisherByEmail } = await supabase
+            .from('fishermen')
+            .select('id, user_id')
+            .eq('user_id', userData.id)
+            .maybeSingle();
+
+          if (fisherByEmail) {
+            fisherData = fisherByEmail;
+          }
+        }
+      }
 
       if (!fisherData?.id) {
         console.error('Ambassador partner fisherman not found');

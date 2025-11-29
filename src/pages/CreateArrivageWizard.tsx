@@ -215,7 +215,7 @@ export default function CreateArrivageWizard() {
       }
 
       toast.success("Arrivage publié avec succès !");
-      navigate("/pecheur/dashboard");
+      navigate("/dashboard/pecheur");
     } catch (error) {
       console.error("Error publishing arrivage:", error);
       toast.error("Erreur lors de la publication de l'arrivage");
@@ -300,7 +300,7 @@ export default function CreateArrivageWizard() {
                 timeSlot: arrivageData.timeSlot,
               }}
               onComplete={handleStep1Complete}
-              onCancel={() => navigate("/pecheur/dashboard")}
+              onCancel={() => navigate("/dashboard/pecheur")}
             />
           )}
 
