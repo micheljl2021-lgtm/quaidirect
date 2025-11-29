@@ -8,7 +8,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 
 export function ImprovedDropsTab() {
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "scheduled" | "landed" | "completed" | "cancelled">("all");
   const [page, setPage] = useState(0);
   const pageSize = 50;
 
@@ -85,7 +85,7 @@ export function ImprovedDropsTab() {
         <CardHeader>
           <CardTitle>Tous les arrivages</CardTitle>
           <div className="flex gap-4 mt-4 items-center">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as typeof statusFilter)}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue />
               </SelectTrigger>
