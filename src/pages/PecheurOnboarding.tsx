@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Save, X } from "lucide-react";
+import { usePortFile } from "@/hooks/usePortFile";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -103,6 +104,8 @@ const PecheurOnboarding = () => {
     salePoint2Address: "",
     salePoint2Description: "",
   });
+  
+  const { basin, portFile } = usePortFile(formData.postalCode?.substring(0, 2));
 
   // Load existing data on mount
   useEffect(() => {
@@ -449,6 +452,29 @@ const PecheurOnboarding = () => {
           )}
           {currentStep === 6 && (
             <Step6PointsVente formData={formData} onChange={handleFieldChange} />
+          )}
+
+          {/* Port file info */}
+          {portFile && currentStep === 1 && (
+            <div className="mt-4 p-4 bg-muted/30 rounded-lg">
+              <p className="font-medium text-sm mb-2">
+                Ports disponibles (
+                {basin === 'MEDITERRANEE'
+                  ? 'Méditerranée'
+                  : basin === 'MANCHE'
+                  ? 'Manche'
+                  : 'Atlantique'}
+                )
+              </p>
+              <a
+                href={portFile}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary underline text-sm hover:text-primary/80"
+              >
+                Ouvrir la liste des ports
+              </a>
+            </div>
           )}
 
           {/* Footer Navigation */}

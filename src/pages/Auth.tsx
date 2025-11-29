@@ -12,6 +12,29 @@ import { Mail, Anchor, Lock, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getRedirectPathByRole } from '@/lib/authRedirect';
 
+// Helper functions for role management
+const getPrimaryRole = (userRoles: string[] = []) => {
+  if (userRoles.includes('admin')) return 'admin';
+  if (userRoles.includes('fisherman')) return 'fisherman';
+  if (userRoles.includes('premium')) return 'premium';
+  return 'user';
+};
+
+const fetchPrimaryRole = async (userId: string) => {
+  const { data: roles, error } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('Error fetching user roles:', error);
+    return 'user';
+  }
+
+  const userRoles = roles?.map((r: { role: string }) => r.role) || [];
+  return getPrimaryRole(userRoles);
+};
+
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,6 +45,16 @@ const Auth = () => {
   const { signIn, signInWithPassword, verifyOtp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const handlePostAuthRedirect = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const primaryRole = await fetchPrimaryRole(user.id);
+    navigate(getRedirectPathByRole(primaryRole));
+  };
 
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -38,31 +71,13 @@ const Auth = () => {
       
       if (error) throw error;
       
-      // Get user roles and redirect intelligently
       if (data.user) {
-        const { data: roles } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', data.user.id);
-        
-        const userRoles = roles?.map(r => r.role) || [];
-        let primaryRole = null;
-        
-        if (userRoles.includes('admin')) {
-          primaryRole = 'admin';
-        } else if (userRoles.includes('fisherman')) {
-          primaryRole = 'fisherman';
-        } else if (userRoles.includes('premium')) {
-          primaryRole = 'premium';
-        } else {
-          primaryRole = 'user';
-        }
-        
         toast({
           title: 'Compte créé',
           description: 'Connexion automatique en cours...',
         });
-        
+
+        const primaryRole = await fetchPrimaryRole(data.user.id);
         navigate(getRedirectPathByRole(primaryRole));
       }
     } catch (error: any) {
@@ -81,30 +96,7 @@ const Auth = () => {
     setLoading(true);
     try {
       await signInWithPassword(email, password);
-      
-      // Get user role and redirect to appropriate dashboard
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: roles } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id);
-        
-        const userRoles = roles?.map(r => r.role) || [];
-        let primaryRole = null;
-        
-        if (userRoles.includes('admin')) {
-          primaryRole = 'admin';
-        } else if (userRoles.includes('fisherman')) {
-          primaryRole = 'fisherman';
-        } else if (userRoles.includes('premium')) {
-          primaryRole = 'premium';
-        } else {
-          primaryRole = 'user';
-        }
-        
-        navigate(getRedirectPathByRole(primaryRole));
-      }
+      await handlePostAuthRedirect();
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -132,30 +124,7 @@ const Auth = () => {
     setLoading(true);
     try {
       await verifyOtp(email, otp);
-      
-      // Get user roles and redirect intelligently
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: roles } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id);
-        
-        const userRoles = roles?.map(r => r.role) || [];
-        let primaryRole = null;
-        
-        if (userRoles.includes('admin')) {
-          primaryRole = 'admin';
-        } else if (userRoles.includes('fisherman')) {
-          primaryRole = 'fisherman';
-        } else if (userRoles.includes('premium')) {
-          primaryRole = 'premium';
-        } else {
-          primaryRole = 'user';
-        }
-        
-        navigate(getRedirectPathByRole(primaryRole));
-      }
+      await handlePostAuthRedirect();
     } catch (error) {
       console.error('Error verifying OTP:', error);
     } finally {
