@@ -9,7 +9,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 
 export function SalesTab() {
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "completed" | "refunded">("all");
   const [search, setSearch] = useState("");
 
   const { data: sales, isLoading } = useQuery({
@@ -88,7 +88,7 @@ export function SalesTab() {
               onChange={(e) => setSearch(e.target.value)}
               className="max-w-sm"
             />
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as typeof statusFilter)}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue />
               </SelectTrigger>

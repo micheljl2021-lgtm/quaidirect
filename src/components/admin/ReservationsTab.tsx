@@ -8,7 +8,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 
 export function ReservationsTab() {
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "confirmed" | "cancelled" | "completed">("all");
 
   const { data: reservations, isLoading } = useQuery({
     queryKey: ['admin-reservations', statusFilter],
@@ -84,7 +84,7 @@ export function ReservationsTab() {
         <CardHeader>
           <CardTitle>Toutes les réservations</CardTitle>
           <div className="mt-4">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as typeof statusFilter)}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue />
               </SelectTrigger>

@@ -74,7 +74,7 @@ export function TemplatesRapides({ onTemplateSelect }: TemplatesRapidesProps) {
         .limit(3);
 
       if (presets) {
-        setCustomPresets(presets);
+        setCustomPresets(presets as SavedPreset[]);
       }
     };
 
