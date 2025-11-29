@@ -29,6 +29,7 @@ const statusLabels = {
 const statusIcons = {
   pending: Clock,
   in_progress: AlertCircle,
+  link_sent: Link2,
   resolved: CheckCircle,
   rejected: XCircle
 };
