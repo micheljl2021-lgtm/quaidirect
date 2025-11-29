@@ -45,9 +45,22 @@ export default function PecheurSupport() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [category, setCategory] = useState<string>("");
+  const [requestTypeCode, setRequestTypeCode] = useState<string>("");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
+
+  // Fetch request types
+  const { data: requestTypes } = useQuery({
+    queryKey: ["request-types"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("request_type_definitions")
+        .select("*")
+        .eq("is_active", true)
+        .order("code");
+      return data || [];
+    }
+  });
 
   // Fetch fisherman ID
   const { data: fishermanData } = useQuery({
@@ -80,12 +93,23 @@ export default function PecheurSupport() {
   });
 
   const createRequestMutation = useMutation({
-    mutationFn: async (newRequest: { category: string; subject: string; message: string }) => {
+    mutationFn: async (newRequest: { requestTypeCode: string; subject: string; message: string }) => {
       if (!fishermanData?.id) throw new Error("Fisherman ID not found");
       
+      // Map requestTypeCode to legacy category for backward compatibility
+      const categoryMap = {
+        'EDIT_PROFILE_AFTER_STRIPE': 'profile_modification' as const,
+        'TECHNICAL_ISSUE': 'technical' as const,
+        'STRIPE_BILLING_UPDATE': 'commercial' as const,
+        'GENERAL_SUPPORT': 'other' as const
+      };
+
+      const category = categoryMap[newRequest.requestTypeCode as keyof typeof categoryMap] || 'other' as const;
+
       const { error } = await supabase.from("support_requests").insert([{
         fisherman_id: fishermanData.id,
-        category: newRequest.category as any,
+        category,
+        request_type_code: newRequest.requestTypeCode,
         subject: newRequest.subject,
         message: newRequest.message
       }]);
@@ -95,7 +119,7 @@ export default function PecheurSupport() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["support-requests"] });
       toast.success("Demande envoyée avec succès");
-      setCategory("");
+      setRequestTypeCode("");
       setSubject("");
       setMessage("");
     },
@@ -106,11 +130,11 @@ export default function PecheurSupport() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!category || !subject.trim() || !message.trim()) {
+    if (!requestTypeCode || !subject.trim() || !message.trim()) {
       toast.error("Veuillez remplir tous les champs");
       return;
     }
-    createRequestMutation.mutate({ category, subject, message });
+    createRequestMutation.mutate({ requestTypeCode, subject, message });
   };
 
   return (
@@ -141,14 +165,19 @@ export default function PecheurSupport() {
                   <label className="text-sm font-medium mb-2 block">
                     Type de demande
                   </label>
-                  <Select value={category} onValueChange={setCategory}>
+                  <Select value={requestTypeCode} onValueChange={setRequestTypeCode}>
                     <SelectTrigger>
                       <SelectValue placeholder="Sélectionnez un type de demande" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.entries(categoryLabels).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
+                      {requestTypes?.map((type: any) => (
+                        <SelectItem key={type.code} value={type.code}>
+                          <div>
+                            <div className="font-medium">{type.label}</div>
+                            {type.description && (
+                              <div className="text-xs text-muted-foreground">{type.description}</div>
+                            )}
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>

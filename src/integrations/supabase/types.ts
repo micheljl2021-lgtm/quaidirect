@@ -1322,6 +1322,64 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_edit_logs: {
+        Row: {
+          created_at: string | null
+          fields_changed: string[] | null
+          fisherman_id: string
+          id: string
+          ip_address: string | null
+          new_data: Json | null
+          old_data: Json | null
+          token_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          fields_changed?: string[] | null
+          fisherman_id: string
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+          token_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          fields_changed?: string[] | null
+          fisherman_id?: string
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+          token_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_edit_logs_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_edit_logs_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "public_fishermen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_edit_logs_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "secure_edit_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           address: string | null
@@ -1540,6 +1598,39 @@ export type Database = {
         }
         Relationships: []
       }
+      request_type_definitions: {
+        Row: {
+          action_admin: string
+          action_button_label: string
+          code: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          label: string
+        }
+        Insert: {
+          action_admin: string
+          action_button_label: string
+          code: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          label: string
+        }
+        Update: {
+          action_admin?: string
+          action_button_label?: string
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          label?: string
+        }
+        Relationships: []
+      }
       reservations: {
         Row: {
           cancelled_at: string | null
@@ -1676,6 +1767,70 @@ export type Database = {
           },
         ]
       }
+      secure_edit_tokens: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          fisherman_id: string
+          id: string
+          revoked_at: string | null
+          sent_at: string | null
+          sent_via: string | null
+          support_request_id: string | null
+          token: string
+          token_type: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at: string
+          fisherman_id: string
+          id?: string
+          revoked_at?: string | null
+          sent_at?: string | null
+          sent_via?: string | null
+          support_request_id?: string | null
+          token: string
+          token_type?: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          fisherman_id?: string
+          id?: string
+          revoked_at?: string | null
+          sent_at?: string | null
+          sent_via?: string | null
+          support_request_id?: string | null
+          token?: string
+          token_type?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "secure_edit_tokens_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secure_edit_tokens_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "public_fishermen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secure_edit_tokens_support_request_id_fkey"
+            columns: ["support_request_id"]
+            isOneToOne: false
+            referencedRelation: "support_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       species: {
         Row: {
           created_at: string
@@ -1771,6 +1926,7 @@ export type Database = {
           fisherman_id: string
           id: string
           message: string
+          request_type_code: string | null
           status: Database["public"]["Enums"]["support_status"]
           subject: string
           updated_at: string
@@ -1782,6 +1938,7 @@ export type Database = {
           fisherman_id: string
           id?: string
           message: string
+          request_type_code?: string | null
           status?: Database["public"]["Enums"]["support_status"]
           subject: string
           updated_at?: string
@@ -1793,6 +1950,7 @@ export type Database = {
           fisherman_id?: string
           id?: string
           message?: string
+          request_type_code?: string | null
           status?: Database["public"]["Enums"]["support_status"]
           subject?: string
           updated_at?: string
@@ -1811,6 +1969,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_fishermen"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_requests_request_type_code_fkey"
+            columns: ["request_type_code"]
+            isOneToOne: false
+            referencedRelation: "request_type_definitions"
+            referencedColumns: ["code"]
           },
         ]
       }
@@ -2073,7 +2238,12 @@ export type Database = {
         | "technical"
         | "commercial"
         | "other"
-      support_status: "pending" | "in_progress" | "resolved" | "rejected"
+      support_status:
+        | "pending"
+        | "in_progress"
+        | "resolved"
+        | "rejected"
+        | "link_sent"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2223,7 +2393,13 @@ export const Constants = {
         "commercial",
         "other",
       ],
-      support_status: ["pending", "in_progress", "resolved", "rejected"],
+      support_status: [
+        "pending",
+        "in_progress",
+        "resolved",
+        "rejected",
+        "link_sent",
+      ],
     },
   },
 } as const

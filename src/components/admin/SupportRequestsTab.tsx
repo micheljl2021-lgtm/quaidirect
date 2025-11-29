@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Clock, CheckCircle, XCircle, AlertCircle, MessageSquare } from "lucide-react";
+import { Clock, CheckCircle, XCircle, AlertCircle, MessageSquare, Link2, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 
 const categoryLabels = {
@@ -21,6 +21,7 @@ const categoryLabels = {
 const statusLabels = {
   pending: "En attente",
   in_progress: "En cours",
+  link_sent: "Lien envoyé",
   resolved: "Résolue",
   rejected: "Refusée"
 };
@@ -35,6 +36,7 @@ const statusIcons = {
 const statusColors = {
   pending: "bg-yellow-100 text-yellow-800",
   in_progress: "bg-blue-100 text-blue-800",
+  link_sent: "bg-purple-100 text-purple-800",
   resolved: "bg-green-100 text-green-800",
   rejected: "bg-red-100 text-red-800"
 };
@@ -47,7 +49,18 @@ export function SupportRequestsTab() {
   const [adminResponse, setAdminResponse] = useState("");
   const [newStatus, setNewStatus] = useState("");
 
-  // Fetch all support requests with fisherman details
+  // Fetch request types
+  const { data: requestTypes } = useQuery({
+    queryKey: ["request-types"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("request_type_definitions")
+        .select("*");
+      return data || [];
+    }
+  });
+
+  // Fetch all support requests with fisherman details and type definitions
   const { data: requests, isLoading } = useQuery({
     queryKey: ["admin-support-requests"],
     queryFn: async () => {
@@ -59,7 +72,8 @@ export function SupportRequestsTab() {
             id,
             boat_name,
             company_name,
-            email
+            email,
+            siret
           )
         `)
         .order("created_at", { ascending: false });
@@ -120,6 +134,27 @@ export function SupportRequestsTab() {
     setSelectedRequest(request);
     setAdminResponse(request.admin_response || "");
     setNewStatus(request.status);
+  };
+
+  const handleSendSecureLink = async (requestId: string, actionType: string) => {
+    try {
+      const functionName = actionType === 'SEND_PROFILE_EDIT_LINK' 
+        ? 'generate-secure-edit-link'
+        : 'send-billing-portal-link';
+
+      const { data, error } = await supabase.functions.invoke(functionName, {
+        body: { supportRequestId: requestId }
+      });
+
+      if (error) throw error;
+
+      toast.success(data.message || "Lien envoyé avec succès");
+      queryClient.invalidateQueries({ queryKey: ["admin-support-requests"] });
+      setSelectedRequest(null);
+    } catch (error: any) {
+      console.error("Erreur envoi lien:", error);
+      toast.error(error.message || "Erreur lors de l'envoi du lien");
+    }
   };
 
   const handleSubmitResponse = () => {
@@ -302,11 +337,38 @@ export function SupportRequestsTab() {
           </DialogHeader>
 
           <div className="space-y-4">
+            {/* Afficher le type prédéfini si disponible */}
+            {selectedRequest?.request_type_code && (
+              <div>
+                <p className="text-sm font-medium mb-2">Type de demande :</p>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="font-mono text-xs">
+                    {selectedRequest.request_type_code}
+                  </Badge>
+                  <span className="text-sm">
+                    {requestTypes?.find((t: any) => t.code === selectedRequest.request_type_code)?.label}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div>
               <p className="text-sm font-medium mb-2">Catégorie :</p>
               <Badge variant="outline">
                 {selectedRequest && categoryLabels[selectedRequest.category as keyof typeof categoryLabels]}
               </Badge>
+            </div>
+
+            {/* Identité pêcheur complète */}
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <p className="text-sm font-medium mb-2">Identité du pêcheur :</p>
+              <div className="text-sm space-y-1">
+                <p><strong>Bateau :</strong> {selectedRequest?.fishermen?.boat_name}</p>
+                <p><strong>Entreprise :</strong> {selectedRequest?.fishermen?.company_name || "N/A"}</p>
+                <p><strong>Email :</strong> {selectedRequest?.fishermen?.email}</p>
+                <p><strong>SIRET :</strong> {selectedRequest?.fishermen?.siret || "N/A"}</p>
+                <p className="text-xs text-muted-foreground mt-2">ID: {selectedRequest?.fishermen?.id}</p>
+              </div>
             </div>
 
             <div>
@@ -316,8 +378,60 @@ export function SupportRequestsTab() {
 
             <div>
               <p className="text-sm font-medium mb-2">Message :</p>
-              <p className="text-sm text-muted-foreground">{selectedRequest?.message}</p>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{selectedRequest?.message}</p>
             </div>
+
+            {/* Actions contextuelles selon le type */}
+            {selectedRequest?.request_type_code && (() => {
+              const requestType = requestTypes?.find((t: any) => t.code === selectedRequest.request_type_code);
+              const actionAdmin = requestType?.action_admin;
+
+              if (actionAdmin === 'SEND_PROFILE_EDIT_LINK') {
+                return (
+                  <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                    <p className="text-sm font-medium mb-3 flex items-center gap-2">
+                      <Link2 className="h-4 w-4" />
+                      Action recommandée
+                    </p>
+                    <Button
+                      onClick={() => handleSendSecureLink(selectedRequest.id, actionAdmin)}
+                      className="w-full"
+                      variant="default"
+                    >
+                      <Link2 className="mr-2 h-4 w-4" />
+                      {requestType?.action_button_label}
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Génère un lien sécurisé valide 24h permettant au pêcheur de modifier son profil lui-même
+                    </p>
+                  </div>
+                );
+              }
+
+              if (actionAdmin === 'SEND_BILLING_PORTAL_LINK') {
+                return (
+                  <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                    <p className="text-sm font-medium mb-3 flex items-center gap-2">
+                      <CreditCard className="h-4 w-4" />
+                      Action recommandée
+                    </p>
+                    <Button
+                      onClick={() => handleSendSecureLink(selectedRequest.id, actionAdmin)}
+                      className="w-full"
+                      variant="default"
+                    >
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      {requestType?.action_button_label}
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Envoie un lien vers le portail Stripe pour gérer paiement et facturation
+                    </p>
+                  </div>
+                );
+              }
+
+              return null;
+            })()}
 
             <div>
               <label className="text-sm font-medium mb-2 block">Nouveau statut</label>
