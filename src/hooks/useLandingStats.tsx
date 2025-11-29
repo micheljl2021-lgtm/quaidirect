@@ -2,30 +2,25 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useLandingStats = () => {
-  // Fetch verified fishermen count
+  // Fetch verified fishermen count using RPC
   const { data: fishermenCount } = useQuery({
     queryKey: ['fishermen-count'],
     queryFn: async () => {
-      const { count, error } = await supabase
-        .from('fishermen')
-        .select('*', { count: 'exact', head: true })
-        .not('verified_at', 'is', null);
+      const { data, error } = await supabase.rpc('count_verified_fishermen');
       
       if (error) throw error;
-      return count || 0;
+      return data || 0;
     },
   });
 
-  // Fetch total users count
+  // Fetch total users count using RPC
   const { data: usersCount } = useQuery({
     queryKey: ['users-count'],
     queryFn: async () => {
-      const { count, error } = await supabase
-        .from('user_roles')
-        .select('user_id', { count: 'exact', head: true });
+      const { data, error } = await supabase.rpc('count_users');
       
       if (error) throw error;
-      return count || 0;
+      return data || 0;
     },
   });
 
