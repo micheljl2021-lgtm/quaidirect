@@ -486,6 +486,13 @@ export type Database = {
           photo_dock_sale: string | null
           photo_url: string | null
           postal_code: string | null
+          seo_enriched_at: string | null
+          seo_hours_location: string | null
+          seo_how_to_order: Json | null
+          seo_keywords: string[] | null
+          seo_long_content: string | null
+          seo_meta_description: string | null
+          seo_title: string | null
           siret: string
           slug: string | null
           updated_at: string
@@ -536,6 +543,13 @@ export type Database = {
           photo_dock_sale?: string | null
           photo_url?: string | null
           postal_code?: string | null
+          seo_enriched_at?: string | null
+          seo_hours_location?: string | null
+          seo_how_to_order?: Json | null
+          seo_keywords?: string[] | null
+          seo_long_content?: string | null
+          seo_meta_description?: string | null
+          seo_title?: string | null
           siret: string
           slug?: string | null
           updated_at?: string
@@ -586,6 +600,13 @@ export type Database = {
           photo_dock_sale?: string | null
           photo_url?: string | null
           postal_code?: string | null
+          seo_enriched_at?: string | null
+          seo_hours_location?: string | null
+          seo_how_to_order?: Json | null
+          seo_keywords?: string[] | null
+          seo_long_content?: string | null
+          seo_meta_description?: string | null
+          seo_title?: string | null
           siret?: string
           slug?: string | null
           updated_at?: string

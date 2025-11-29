@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { Helmet } from 'react-helmet';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +21,9 @@ import {
   Facebook,
   Instagram,
   Globe,
-  Loader2
+  Loader2,
+  ShoppingCart,
+  Clock
 } from 'lucide-react';
 import PushNotificationToggle from '@/components/PushNotificationToggle';
 import AmbassadorBadge from '@/components/AmbassadorBadge';
@@ -34,7 +37,6 @@ const FisherProfile = () => {
   // Detect if slug is UUID (ID) or actual slug
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug || '');
 
-  // Fetch fisherman by slug or ID
   const { data: fisherman, isLoading } = useQuery({
     queryKey: ['fisherman', slug],
     queryFn: async () => {
@@ -51,6 +53,21 @@ const FisherProfile = () => {
       if (publicError) throw publicError;
       if (!publicData) throw new Error('Pêcheur introuvable');
       
+      // Get full fisherman data with SEO fields
+      const { data: fullData, error: fullError } = await supabase
+        .from('fishermen')
+        .select(`
+          *,
+          seo_title,
+          seo_meta_description,
+          seo_keywords,
+          seo_long_content,
+          seo_how_to_order,
+          seo_hours_location
+        `)
+        .eq('id', publicData.id)
+        .maybeSingle();
+      
       // Fetch associated species separately
       const { data: speciesData } = await supabase
         .from('fishermen_species')
@@ -62,6 +79,7 @@ const FisherProfile = () => {
       
       return {
         ...publicData,
+        ...(fullData || {}),
         fishermen_species: speciesData || []
       };
     },
@@ -212,6 +230,41 @@ const FisherProfile = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* SEO Meta Tags */}
+      {(fisherman as any).seo_title && (
+        <Helmet>
+          <title>{(fisherman as any).seo_title}</title>
+          {(fisherman as any).seo_meta_description && (
+            <meta name="description" content={(fisherman as any).seo_meta_description} />
+          )}
+          {(fisherman as any).seo_keywords && (fisherman as any).seo_keywords.length > 0 && (
+            <meta name="keywords" content={(fisherman as any).seo_keywords.join(', ')} />
+          )}
+          <meta property="og:title" content={(fisherman as any).seo_title} />
+          <meta property="og:description" content={(fisherman as any).seo_meta_description || ''} />
+          {fisherman.photo_boat_1 && <meta property="og:image" content={fisherman.photo_boat_1} />}
+          <meta property="og:type" content="website" />
+          <link rel="canonical" href={`https://quaidirect.fr/boutique/${fisherman.slug}`} />
+          
+          {/* JSON-LD Structured Data */}
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "LocalBusiness",
+              "name": fisherman.boat_name,
+              "image": fisherman.photo_boat_1 || "",
+              "description": (fisherman as any).seo_meta_description || fisherman.generated_description || "",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": fisherman.main_fishing_zone
+              },
+              "url": `https://quaidirect.fr/boutique/${fisherman.slug}`,
+              "telephone": fullFishermanData?.phone || ""
+            })}
+          </script>
+        </Helmet>
+      )}
+
       <Header />
 
       {/* Hero Header */}
@@ -301,6 +354,76 @@ const FisherProfile = () => {
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
+          {/* Contenu Long SEO - Nouvelle section */}
+          {(fisherman as any).seo_long_content && (
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Fish className="h-5 w-5" />
+                  Pêche artisanale et vente directe
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="whitespace-pre-line text-muted-foreground leading-relaxed">
+                  {(fisherman as any).seo_long_content}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Comment commander - Nouvelle section */}
+          {(fisherman as any).seo_how_to_order?.steps && (
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5" />
+                  Comment commander
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {(fisherman as any).seo_how_to_order.steps.map((step: any) => (
+                    <div key={step.number} className="flex flex-col items-center text-center p-4 bg-accent/50 rounded-lg">
+                      <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xl mb-3">
+                        {step.number}
+                      </div>
+                      <h3 className="font-semibold mb-2">{step.title}</h3>
+                      <p className="text-sm text-muted-foreground">{step.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Horaires & Lieu - Nouvelle section */}
+          {(fisherman as any).seo_hours_location && (
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Horaires & Lieu de vente
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground leading-relaxed">
+                  {(fisherman as any).seo_hours_location}
+                </p>
+                {fisherman.main_fishing_zone && (
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=Port+de+${encodeURIComponent(fisherman.main_fishing_zone)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition"
+                  >
+                    <MapPin className="h-4 w-4" />
+                    Voir sur Google Maps
+                  </a>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Qui je suis */}
           {fisherman.generated_description && (
             <Card>

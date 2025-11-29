@@ -123,6 +123,7 @@ const App = () => (
             <Route path="/poisson-frais-la-rochelle" element={<PoissonFraisLaRochelle />} />
             <Route path="/pecheur/:id" element={<FisherProfile />} />
             <Route path="/pecheurs/:slug" element={<FisherProfile />} />
+            <Route path="/boutique/:slug" element={<FisherProfile />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
