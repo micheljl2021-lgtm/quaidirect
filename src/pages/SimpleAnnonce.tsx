@@ -197,7 +197,7 @@ export default function SimpleAnnonce() {
       }
 
       toast.success('Annonce publiée !');
-      navigate('/pecheur/dashboard');
+      navigate('/dashboard/pecheur');
     } catch (error: any) {
       console.error('Error publishing:', error);
       toast.error(error.message || 'Erreur lors de la publication');
@@ -214,7 +214,7 @@ export default function SimpleAnnonce() {
         <div className="mb-6">
           <Button
             variant="ghost"
-            onClick={() => navigate('/pecheur/dashboard')}
+            onClick={() => navigate('/dashboard/pecheur')}
             className="mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -391,7 +391,7 @@ export default function SimpleAnnonce() {
           <div className="flex gap-3 sticky bottom-4">
             <Button
               variant="outline"
-              onClick={() => navigate('/pecheur/dashboard')}
+              onClick={() => navigate('/dashboard/pecheur')}
               className="flex-1"
             >
               Annuler
