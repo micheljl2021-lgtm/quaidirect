@@ -49,6 +49,14 @@ serve(async (req) => {
       logStep('No existing customer');
     }
 
+    const { priceId, planType } = await req.json();
+    
+    if (!priceId || !planType) {
+      throw new Error('Missing priceId or planType');
+    }
+
+    logStep('Request data', { priceId, planType });
+
     const origin = req.headers.get('origin') || 'http://localhost:3000';
     
     const session = await stripe.checkout.sessions.create({
@@ -56,7 +64,7 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price: 'price_1SYEZfH0VhS1yyE0EIqnJlrW', // Abonnement annuel 150€/an
+          price: priceId,
           quantity: 1,
         },
       ],
@@ -65,12 +73,14 @@ serve(async (req) => {
       cancel_url: `${origin}/pecheur/payment?canceled=true`,
       metadata: {
         user_id: user.id,
-        payment_type: 'fisherman_annual_subscription',
+        payment_type: 'fisherman_onboarding',
+        plan_type: planType,
       },
       subscription_data: {
         metadata: {
           user_id: user.id,
-          payment_type: 'fisherman_annual_subscription',
+          payment_type: 'fisherman_onboarding',
+          plan_type: planType,
         },
       },
     });
