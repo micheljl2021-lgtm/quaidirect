@@ -173,6 +173,7 @@ export default function CreateArrivageWizard() {
           sale_start_time: saleStartDate.toISOString(),
           visible_at: new Date().toISOString(),
           status: "scheduled" as const,
+          port_id: null,
         }])
         .select()
         .single();

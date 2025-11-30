@@ -324,7 +324,7 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           notes: string | null
-          port_id: string
+          port_id: string | null
           public_visible_at: string | null
           sale_point_id: string | null
           sale_start_time: string
@@ -343,7 +343,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           notes?: string | null
-          port_id: string
+          port_id?: string | null
           public_visible_at?: string | null
           sale_point_id?: string | null
           sale_start_time: string
@@ -362,7 +362,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           notes?: string | null
-          port_id?: string
+          port_id?: string | null
           public_visible_at?: string | null
           sale_point_id?: string | null
           sale_start_time?: string
