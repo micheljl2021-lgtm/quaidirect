@@ -12,7 +12,7 @@ import { Loader2, MapPin, Plus, Trash2, ArrowLeft } from 'lucide-react';
 import Header from '@/components/Header';
 import { geocodeAddress } from '@/lib/google-geocode';
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
-import { getGoogleMapsApiKey } from '@/lib/google-maps';
+import { googleMapsLoaderConfig } from '@/lib/google-maps';
 
 interface SalePoint {
   id?: string;
@@ -38,9 +38,7 @@ export default function EditSalePoints() {
   const [salePoints, setSalePoints] = useState<SalePoint[]>([]);
   const [geocoding, setGeocoding] = useState<{ [key: number]: boolean }>({});
 
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: getGoogleMapsApiKey(),
-  });
+  const { isLoaded } = useJsApiLoader(googleMapsLoaderConfig);
 
   useEffect(() => {
     if (user) {

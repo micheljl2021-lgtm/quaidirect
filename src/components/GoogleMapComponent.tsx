@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-maps/api';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import { MapPin } from 'lucide-react';
-import { getGoogleMapsApiKey, defaultMapConfig, quaiDirectMapStyles } from '@/lib/google-maps';
+import { googleMapsLoaderConfig, defaultMapConfig, quaiDirectMapStyles } from '@/lib/google-maps';
 
 interface Port {
   id: string;
@@ -45,10 +45,7 @@ const GoogleMapComponent = ({
   onSalePointClick,
   userLocation,
 }: GoogleMapComponentProps) => {
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: getGoogleMapsApiKey(),
-  });
+  const { isLoaded, loadError } = useJsApiLoader(googleMapsLoaderConfig);
 
   const mapOptions = useMemo(() => ({
     styles: quaiDirectMapStyles,
