@@ -12,16 +12,16 @@ import Header from "@/components/Header";
 const PLANS = {
   premiumMonthly: {
     name: "Premium Mensuel",
-    price: "2€",
-    priceId: "price_PREMIUM_MONTHLY_2",
+    price: "2,50€",
+    priceId: "price_1SZ489H0VhS1yyE0Nc9KZhy1",
     plan: "premium_monthly",
     period: "par mois",
     tier: "premium",
   },
   premiumAnnual: {
     name: "Premium Annuel",
-    price: "20€",
-    priceId: "price_PREMIUM_ANNUAL_20",
+    price: "25€",
+    priceId: "price_1SZ48UH0VhS1yyE0iYmXen3H",
     plan: "premium_annual",
     period: "par an",
     badge: "2 mois offerts",
@@ -30,7 +30,7 @@ const PLANS = {
   premiumPlusMonthly: {
     name: "Premium+ Mensuel",
     price: "4€",
-    priceId: "price_PREMIUM_PLUS_MONTHLY_4",
+    priceId: "price_1SZ48yH0VhS1yyE0bijfw3y7",
     plan: "premium_plus_monthly",
     period: "par mois",
     tier: "premium_plus",
@@ -38,7 +38,7 @@ const PLANS = {
   premiumPlusAnnual: {
     name: "Premium+ Annuel",
     price: "40€",
-    priceId: "price_PREMIUM_PLUS_ANNUAL_40",
+    priceId: "price_1SZ49DH0VhS1yyE06HJyLC65",
     plan: "premium_plus_annual",
     period: "par an",
     badge: "2 mois offerts",
@@ -214,9 +214,9 @@ export default function PremiumPaywall() {
                     <span className="text-4xl font-bold">{PLANS.premiumAnnual.price}</span>
                     <span className="text-muted-foreground">/{PLANS.premiumAnnual.period}</span>
                   </div>
-                  <p className="text-sm text-primary font-semibold mt-1">
-                    Soit 1,67€/mois
-                  </p>
+                  <div className="text-sm text-primary font-semibold mt-1">
+                    Soit 2,08€/mois
+                  </div>
                 </div>
                 
                 <ul className="space-y-3">

@@ -10,8 +10,9 @@ export function PremiumSubscriptionsTab() {
     queryKey: ['admin-premium-subscriptions'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('premium_subscriptions')
+        .from('payments')
         .select('*')
+        .in('plan', ['premium_monthly', 'premium_annual', 'premium_plus_monthly', 'premium_plus_annual', 'premium'])
         .order('created_at', { ascending: false });
 
       if (error) throw error;

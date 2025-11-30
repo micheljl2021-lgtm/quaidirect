@@ -128,7 +128,7 @@ serve(async (req) => {
           const dropId = session.metadata?.drop_id || null;
           
           // Create basket order record
-          const { error: orderError } = await supabaseClient
+          const { data: newOrder, error: orderError } = await supabaseClient
             .from('basket_orders')
             .insert({
               user_id: userId,
@@ -137,13 +137,27 @@ serve(async (req) => {
               drop_id: dropId,
               total_price_cents: session.amount_total || 0,
               stripe_payment_id: session.payment_intent as string,
-              status: 'pending',
-            });
+              status: 'paid',
+            })
+            .select('id')
+            .single();
 
           if (orderError) {
             logStep('ERROR creating basket order', { error: orderError });
           } else {
-            logStep('Basket order created successfully', { basketId, fishermanId, dropId });
+            logStep('Basket order created successfully', { basketId, fishermanId, dropId, orderId: newOrder?.id });
+            
+            // Send notification to fisherman
+            if (newOrder?.id && fishermanId) {
+              try {
+                await supabaseClient.functions.invoke('send-basket-order-notification', {
+                  body: { orderId: newOrder.id }
+                });
+                logStep('Fisherman notification sent for basket order', { orderId: newOrder.id });
+              } catch (notifError) {
+                logStep('ERROR sending fisherman notification', { error: notifError });
+              }
+            }
           }
           break;
         }
@@ -284,6 +298,23 @@ serve(async (req) => {
           logStep('ERROR adding premium role', { error: roleError });
         } else {
           logStep('Premium role added successfully');
+          
+          // Send welcome email to new premium user
+          try {
+            const { data: { user: premiumUser } } = await supabaseClient.auth.admin.getUserById(userId);
+            if (premiumUser?.email) {
+              await supabaseClient.functions.invoke('send-premium-welcome-email', {
+                body: { 
+                  userEmail: premiumUser.email,
+                  userName: premiumUser.user_metadata?.full_name,
+                  plan: plan
+                }
+              });
+              logStep('Premium welcome email sent', { email: premiumUser.email });
+            }
+          } catch (emailError) {
+            logStep('ERROR sending premium welcome email', { error: emailError });
+          }
         }
         break;
       }

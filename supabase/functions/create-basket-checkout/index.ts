@@ -40,6 +40,16 @@ serve(async (req) => {
     if (!basketId || !priceId) throw new Error('Missing basketId or priceId');
     logStep('Request data validated', { basketId, priceId, fishermanId, dropId });
 
+    // Get basket price from Stripe to calculate commission
+    const price = await stripe.prices.retrieve(priceId);
+    if (!price.unit_amount) throw new Error('Price has no unit_amount');
+    
+    const basketPrice = price.unit_amount; // in cents
+    const commission = Math.round(basketPrice * 0.08); // 8% commission
+    const totalPrice = basketPrice + commission;
+    
+    logStep('Commission calculated', { basketPrice, commission, totalPrice });
+
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2025-08-27.basil',
     });
@@ -55,14 +65,21 @@ serve(async (req) => {
       logStep('No existing customer, will create during checkout');
     }
 
-    // Create checkout session for one-time payment
+    // Create checkout session for one-time payment with 8% commission
     const origin = req.headers.get('origin') || 'http://localhost:3000';
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price: priceId,
+          price_data: {
+            currency: 'eur',
+            unit_amount: totalPrice,
+            product_data: {
+              name: 'Panier de poisson frais',
+              description: `Panier incluant frais de service plateforme (8%)`,
+            },
+          },
           quantity: 1,
         },
       ],
@@ -74,6 +91,9 @@ serve(async (req) => {
         basket_id: basketId,
         fisherman_id: fishermanId || '',
         drop_id: dropId || '',
+        basket_price_cents: basketPrice.toString(),
+        commission_cents: commission.toString(),
+        total_price_cents: totalPrice.toString(),
       },
     });
 
