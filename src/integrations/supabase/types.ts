@@ -2111,12 +2111,16 @@ export type Database = {
     Views: {
       public_fishermen: {
         Row: {
+          ambassador_slot: number | null
           bio: string | null
           boat_name: string | null
           boat_registration: string | null
           company_name: string | null
           created_at: string | null
+          default_sale_point_id: string | null
+          default_time_slot: string | null
           description: string | null
+          display_name_preference: string | null
           facebook_url: string | null
           fishing_methods:
             | Database["public"]["Enums"]["fishing_method"][]
@@ -2128,23 +2132,38 @@ export type Database = {
           instagram_url: string | null
           is_ambassador: boolean | null
           main_fishing_zone: string | null
+          passion_quote: string | null
           photo_boat_1: string | null
           photo_boat_2: string | null
           photo_dock_sale: string | null
           photo_url: string | null
+          seo_enriched_at: string | null
+          seo_hours_location: string | null
+          seo_how_to_order: Json | null
+          seo_keywords: string[] | null
+          seo_long_content: string | null
+          seo_meta_description: string | null
+          seo_title: string | null
           slug: string | null
           updated_at: string | null
           user_id: string | null
           verified_at: string | null
           website_url: string | null
+          work_philosophy: string | null
+          years_experience: string | null
+          zone_id: string | null
         }
         Insert: {
+          ambassador_slot?: number | null
           bio?: string | null
           boat_name?: string | null
           boat_registration?: string | null
           company_name?: string | null
           created_at?: string | null
+          default_sale_point_id?: string | null
+          default_time_slot?: string | null
           description?: string | null
+          display_name_preference?: string | null
           facebook_url?: string | null
           fishing_methods?:
             | Database["public"]["Enums"]["fishing_method"][]
@@ -2156,23 +2175,38 @@ export type Database = {
           instagram_url?: string | null
           is_ambassador?: boolean | null
           main_fishing_zone?: string | null
+          passion_quote?: string | null
           photo_boat_1?: string | null
           photo_boat_2?: string | null
           photo_dock_sale?: string | null
           photo_url?: string | null
+          seo_enriched_at?: string | null
+          seo_hours_location?: string | null
+          seo_how_to_order?: Json | null
+          seo_keywords?: string[] | null
+          seo_long_content?: string | null
+          seo_meta_description?: string | null
+          seo_title?: string | null
           slug?: string | null
           updated_at?: string | null
           user_id?: string | null
           verified_at?: string | null
           website_url?: string | null
+          work_philosophy?: string | null
+          years_experience?: string | null
+          zone_id?: string | null
         }
         Update: {
+          ambassador_slot?: number | null
           bio?: string | null
           boat_name?: string | null
           boat_registration?: string | null
           company_name?: string | null
           created_at?: string | null
+          default_sale_point_id?: string | null
+          default_time_slot?: string | null
           description?: string | null
+          display_name_preference?: string | null
           facebook_url?: string | null
           fishing_methods?:
             | Database["public"]["Enums"]["fishing_method"][]
@@ -2184,17 +2218,43 @@ export type Database = {
           instagram_url?: string | null
           is_ambassador?: boolean | null
           main_fishing_zone?: string | null
+          passion_quote?: string | null
           photo_boat_1?: string | null
           photo_boat_2?: string | null
           photo_dock_sale?: string | null
           photo_url?: string | null
+          seo_enriched_at?: string | null
+          seo_hours_location?: string | null
+          seo_how_to_order?: Json | null
+          seo_keywords?: string[] | null
+          seo_long_content?: string | null
+          seo_meta_description?: string | null
+          seo_title?: string | null
           slug?: string | null
           updated_at?: string | null
           user_id?: string | null
           verified_at?: string | null
           website_url?: string | null
+          work_philosophy?: string | null
+          years_experience?: string | null
+          zone_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fishermen_default_sale_point_id_fkey"
+            columns: ["default_sale_point_id"]
+            isOneToOne: false
+            referencedRelation: "fisherman_sale_points"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fishermen_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones_peche"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
