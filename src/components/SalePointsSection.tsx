@@ -55,10 +55,10 @@ export const SalePointsSection = ({ fishermanId }: SalePointsSectionProps) => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate('/pecheur/edit-profile')}
+            onClick={() => navigate('/pecheur/points-de-vente')}
           >
             <Edit className="h-4 w-4 mr-2" />
-            Modifier
+            Modifier mon point de vente
           </Button>
         </div>
       </CardHeader>
@@ -71,14 +71,14 @@ export const SalePointsSection = ({ fishermanId }: SalePointsSectionProps) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate('/pecheur/edit-profile')}
+              onClick={() => navigate('/pecheur/points-de-vente')}
             >
               Ajouter un point de vente
             </Button>
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
-            {salePoints.map((point, index) => (
+            {salePoints.map((point) => (
               <div
                 key={point.id}
                 className="p-4 border rounded-lg space-y-2"

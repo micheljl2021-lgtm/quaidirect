@@ -168,8 +168,46 @@ const Panier = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
+      
+      {/* How it works section */}
+      <div className="bg-gradient-ocean text-white py-12">
+        <div className="container px-4">
+          <h2 className="text-3xl font-bold text-center mb-8">Comment ça marche ?</h2>
+          <div className="grid md:grid-cols-4 gap-6 max-w-5xl mx-auto">
+            <div className="text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mx-auto text-2xl font-bold">
+                1
+              </div>
+              <h3 className="font-semibold text-lg">Choisissez votre port</h3>
+              <p className="text-white/90 text-sm">Sélectionnez le point de vente le plus proche de chez vous</p>
+            </div>
+            <div className="text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mx-auto text-2xl font-bold">
+                2
+              </div>
+              <h3 className="font-semibold text-lg">Choisissez un panier</h3>
+              <p className="text-white/90 text-sm">Découverte, Famille, Grillade ou Surprise du pêcheur</p>
+            </div>
+            <div className="text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mx-auto text-2xl font-bold">
+                3
+              </div>
+              <h3 className="font-semibold text-lg">Le pêcheur ajuste</h3>
+              <p className="text-white/90 text-sm">Composition adaptée selon la pêche du jour</p>
+            </div>
+            <div className="text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mx-auto text-2xl font-bold">
+                4
+              </div>
+              <h3 className="font-semibold text-lg">Récupérez en direct</h3>
+              <p className="text-white/90 text-sm">Retirez votre commande au point de vente</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <div className="container px-4 py-8 max-w-6xl mx-auto flex-1">
+      <div className="container px-4 py-12 max-w-6xl mx-auto">
+        {/* Header already in "How it works" above */}
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">

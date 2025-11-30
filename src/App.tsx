@@ -50,6 +50,7 @@ import PoissonFraisToulon from "./pages/seo/PoissonFraisToulon";
 import PoissonFraisLaRochelle from "./pages/seo/PoissonFraisLaRochelle";
 import PecheurSupport from "./pages/PecheurSupport";
 import SecureProfileEdit from "./pages/SecureProfileEdit";
+import EditSalePoints from "./pages/EditSalePoints";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +84,11 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/pecheur/payment" element={<PecheurPayment />} />
             <Route path="/pecheur/payment-success" element={<PecheurPaymentSuccess />} />
+            <Route path="/pecheur/points-de-vente" element={
+              <ProtectedFisherRoute>
+                <EditSalePoints />
+              </ProtectedFisherRoute>
+            } />
             <Route path="/pecheur/contacts" element={<PecheurContacts />} />
             <Route path="/pecheur/onboarding" element={
               <ProtectedFisherRoute>

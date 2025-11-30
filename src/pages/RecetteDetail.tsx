@@ -224,7 +224,26 @@ const RecetteDetail = () => {
             </Card>
           </div>
 
-          {/* CTA */}
+          {/* CTA - Besoin de poisson frais */}
+          <Card className="bg-gradient-ocean text-white mb-8">
+            <CardContent className="pt-6 pb-6 text-center">
+              <h3 className="text-2xl font-bold mb-2">
+                Où acheter ce poisson aujourd'hui?
+              </h3>
+              <p className="text-white/90 mb-4">
+                Trouvez les points de vente proposant {recipe.species[0]?.name || "ce poisson"}
+              </p>
+              <Button
+                variant="secondary"
+                size="lg"
+                onClick={() => navigate("/carte")}
+              >
+                Voir sur la carte
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* CTA - Besoin de poisson frais */}
           <Card className="bg-gradient-ocean text-white">
             <CardContent className="pt-6 pb-6 text-center">
               <h3 className="text-2xl font-bold mb-2">
