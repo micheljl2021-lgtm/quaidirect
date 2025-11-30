@@ -1,0 +1,277 @@
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { MapPin, Clock, Fish, User, Loader2, ArrowLeft } from 'lucide-react';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+
+const DropDetail = () => {
+  const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const { data: drop, isLoading, error } = useQuery({
+    queryKey: ['drop', id],
+    queryFn: async () => {
+      if (!id) throw new Error('ID manquant');
+
+      const { data, error } = await supabase
+        .from('drops')
+        .select(`
+          *,
+          fishermen (
+            id,
+            boat_name,
+            company_name,
+            display_name_preference,
+            photo_url,
+            main_fishing_zone,
+            is_ambassador,
+            slug
+          ),
+          ports (
+            id,
+            name,
+            city,
+            latitude,
+            longitude
+          ),
+          drop_photos (
+            id,
+            photo_url,
+            display_order
+          ),
+          offers (
+            id,
+            title,
+            description,
+            unit_price,
+            available_units,
+            total_units,
+            indicative_weight_kg,
+            price_type,
+            species (
+              id,
+              name,
+              scientific_name
+            ),
+            offer_photos (
+              photo_url,
+              display_order
+            )
+          )
+        `)
+        .eq('id', id)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) throw new Error('Arrivage introuvable');
+      
+      return data;
+    },
+    enabled: !!id && !!user,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error || !drop) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container max-w-4xl mx-auto px-4 py-8">
+          <Card>
+            <CardContent className="pt-6 text-center">
+              <p className="text-muted-foreground mb-4">Arrivage introuvable</p>
+              <Button onClick={() => navigate('/arrivages')}>
+                Retour aux arrivages
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  const displayName = drop.fishermen.display_name_preference === 'company_name'
+    ? (drop.fishermen.company_name || drop.fishermen.boat_name)
+    : drop.fishermen.boat_name;
+
+  const photos = drop.drop_photos
+    ?.sort((a, b) => a.display_order - b.display_order)
+    .map(p => p.photo_url) || [];
+
+  const saleDateTime = drop.sale_start_time ? new Date(drop.sale_start_time) : null;
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <div className="container max-w-4xl mx-auto px-4 py-8 space-y-6">
+        <Button
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour
+        </Button>
+
+        {/* Photos */}
+        {photos.length > 0 && (
+          <Card>
+            <CardContent className="p-0">
+              <Carousel className="w-full">
+                <CarouselContent>
+                  {photos.map((photo, idx) => (
+                    <CarouselItem key={idx}>
+                      <img
+                        src={photo}
+                        alt={`Photo ${idx + 1}`}
+                        className="w-full h-80 object-cover rounded-t-lg"
+                      />
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                {photos.length > 1 && (
+                  <>
+                    <CarouselPrevious className="left-4" />
+                    <CarouselNext className="right-4" />
+                  </>
+                )}
+              </Carousel>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Informations principales */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                <CardTitle className="text-2xl">Arrivage de {displayName}</CardTitle>
+                {drop.fishermen.is_ambassador && (
+                  <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500">
+                    🏆 Ambassadeur
+                  </Badge>
+                )}
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/pecheurs/${drop.fishermen.slug || drop.fishermen.id}`)}
+                className="gap-2"
+              >
+                <User className="h-4 w-4" />
+                Voir le profil
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <MapPin className="h-5 w-5" />
+              <span>{drop.ports.name}, {drop.ports.city}</span>
+            </div>
+            {saleDateTime && (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Clock className="h-5 w-5" />
+                <span>
+                  Vente le {format(saleDateTime, "EEEE d MMMM 'à' HH'h'mm", { locale: fr })}
+                </span>
+              </div>
+            )}
+            {drop.notes && (
+              <div className="p-4 bg-muted rounded-lg">
+                <p className="text-sm text-muted-foreground whitespace-pre-line">{drop.notes}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Offres */}
+        {drop.offers && drop.offers.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <Fish className="h-5 w-5" />
+              Produits disponibles
+            </h2>
+            {drop.offers.map((offer) => {
+              const offerPhotos = offer.offer_photos
+                ?.sort((a, b) => a.display_order - b.display_order)
+                .map(p => p.photo_url) || [];
+
+              return (
+                <Card key={offer.id}>
+                  <CardContent className="pt-6">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {offerPhotos.length > 0 && (
+                        <div className="relative h-48 rounded-lg overflow-hidden">
+                          <img
+                            src={offerPhotos[0]}
+                            alt={offer.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+                      <div className="space-y-3">
+                        <div>
+                          <h3 className="text-lg font-semibold">{offer.title}</h3>
+                          {offer.species && (
+                            <p className="text-sm text-muted-foreground">
+                              {offer.species.name}
+                              {offer.species.scientific_name && ` (${offer.species.scientific_name})`}
+                            </p>
+                          )}
+                        </div>
+                        {offer.description && (
+                          <p className="text-sm text-muted-foreground">{offer.description}</p>
+                        )}
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Prix unitaire</span>
+                            <span className="text-lg font-semibold text-primary">
+                              {offer.unit_price.toFixed(2)} €
+                              {offer.price_type && ` / ${offer.price_type}`}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Disponible</span>
+                            <Badge variant="secondary">
+                              {offer.available_units} / {offer.total_units} unités
+                            </Badge>
+                          </div>
+                          {offer.indicative_weight_kg && (
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-muted-foreground">Poids indicatif</span>
+                              <span className="text-sm">{offer.indicative_weight_kg} kg</span>
+                            </div>
+                          )}
+                        </div>
+                        <Button className="w-full" disabled={offer.available_units === 0}>
+                          {offer.available_units === 0 ? 'Épuisé' : 'Réserver'}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      <Footer />
+    </div>
+  );
+};
+
+export default DropDetail;
