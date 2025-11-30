@@ -67,7 +67,7 @@ export function Step3Recapitulatif({
             <div className="bg-muted/50 rounded-lg p-4 space-y-2">
               <div className="flex items-center gap-2">
                 <MapPin className="h-5 w-5 text-primary" />
-                <span className="font-medium">{arrivageData.portName}</span>
+                <span className="font-medium">{arrivageData.salePointLabel}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Calendar className="h-5 w-5 text-primary" />

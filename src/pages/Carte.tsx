@@ -205,12 +205,13 @@ const Carte = () => {
 
         {/* Google Map */}
         <div className="mb-8 aspect-video md:aspect-[21/9] rounded-lg overflow-hidden border border-border shadow-lg">
-          <GoogleMapComponent 
-            ports={ports || []}
-            selectedPortId={selectedPort}
-            onPortClick={setSelectedPort}
-            userLocation={userLocation}
-          />
+            <GoogleMapComponent 
+              ports={ports || []}
+              salePoints={salePoints || []}
+              selectedPortId={selectedPort}
+              onPortClick={setSelectedPort}
+              userLocation={userLocation}
+            />
         </div>
 
         {/* Sale Point Drawer */}

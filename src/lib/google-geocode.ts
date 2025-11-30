@@ -7,32 +7,19 @@ export interface GeocodeResult {
 }
 
 /**
- * Géocode un port via l'Edge Function Supabase
+ * Géocode une adresse complète via l'Edge Function Supabase
  * 
- * @param portName - Nom du port (ex: "Hyères")
- * @param city - Ville (ex: "Hyères")
+ * @param address - Adresse complète (ex: "Quai Gabriel Péri, 83400 Hyères, France")
  * @returns Les coordonnées géographiques et l'adresse formatée, ou null en cas d'erreur
- * 
- * @example
- * ```typescript
- * const result = await geocodePort("Hyères", "Hyères");
- * if (result) {
- *   console.log(`Port location: ${result.lat}, ${result.lng}`);
- * }
- * ```
  */
-export async function geocodePort(
-  portName: string,
-  city: string
+export async function geocodeAddress(
+  address: string
 ): Promise<GeocodeResult | null> {
   try {
-    console.log(`[Geocode Client] Requesting geocode for: ${portName}, ${city}`);
+    console.log(`[Geocode Client] Requesting geocode for: ${address}`);
 
-    const { data, error } = await supabase.functions.invoke('google-geocode-port', {
-      body: {
-        port_name: portName,
-        city: city,
-      },
+    const { data, error } = await supabase.functions.invoke('geocode-address', {
+      body: { address },
     });
 
     if (error) {
@@ -52,4 +39,15 @@ export async function geocodePort(
     console.error('[Geocode Client] Unexpected error:', error);
     return null;
   }
+}
+
+/**
+ * Géocode un port via l'Edge Function Supabase (backward compatibility)
+ */
+export async function geocodePort(
+  portName: string,
+  city: string
+): Promise<GeocodeResult | null> {
+  const address = `Port ${portName}, ${city}, France`;
+  return geocodeAddress(address);
 }

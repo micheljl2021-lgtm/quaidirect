@@ -22,11 +22,14 @@ export interface ArrivageSpecies {
   remark?: string;
 }
 
-export interface ArrivageData {
-  portId: string;
-  portName: string;
+export interface Step1Data {
+  salePointId: string;
+  salePointLabel: string;
   date: Date;
   timeSlot: string;
+}
+
+export interface ArrivageData extends Step1Data {
   species: ArrivageSpecies[];
 }
 
@@ -41,8 +44,8 @@ export default function CreateArrivageWizard() {
   const [loadingTemplates, setLoadingTemplates] = useState(true);
 
   const [arrivageData, setArrivageData] = useState<ArrivageData>({
-    portId: "",
-    portName: "",
+    salePointId: "",
+    salePointLabel: "",
     date: new Date(),
     timeSlot: "matin",
     species: [],
@@ -85,8 +88,8 @@ export default function CreateArrivageWizard() {
     const payload = template.payload;
     
     setArrivageData({
-      portId: payload.portId || "",
-      portName: payload.portName || "",
+      salePointId: payload.salePointId || "",
+      salePointLabel: payload.salePointLabel || "",
       date: new Date(),
       timeSlot: payload.timeSlot || "matin",
       species: payload.species || [],
@@ -102,7 +105,7 @@ export default function CreateArrivageWizard() {
     toast.success(`Modèle "${template.name}" chargé !`);
   };
 
-  const handleStep1Complete = (data: { portId: string; portName: string; date: Date; timeSlot: string }) => {
+  const handleStep1Complete = (data: Step1Data) => {
     setArrivageData((prev) => ({ ...prev, ...data }));
     setStep(2);
   };
@@ -131,6 +134,18 @@ export default function CreateArrivageWizard() {
         return;
       }
 
+      // Get sale point coordinates
+      const { data: salePointData } = await supabase
+        .from('fisherman_sale_points')
+        .select('*')
+        .eq('id', arrivageData.salePointId)
+        .single();
+
+      if (!salePointData) {
+        toast.error('Point de vente introuvable');
+        return;
+      }
+
       // Convert time slot to actual times
       const timeSlotMap: Record<string, { start: string; end: string }> = {
         matin: { start: "07:00", end: "09:00" },
@@ -141,24 +156,24 @@ export default function CreateArrivageWizard() {
 
       const slot = timeSlotMap[arrivageData.timeSlot] || timeSlotMap.matin;
       
-      // Create ETA and sale start time
       const etaDate = new Date(arrivageData.date);
       etaDate.setHours(parseInt(slot.start.split(":")[0]), parseInt(slot.start.split(":")[1]));
       
       const saleStartDate = new Date(etaDate);
       saleStartDate.setMinutes(saleStartDate.getMinutes() + 30);
 
-      // Insert drop
       const { data: dropData, error: dropError } = await supabase
         .from("drops")
-        .insert({
+        .insert([{
           fisherman_id: fishermanData.id,
-          port_id: arrivageData.portId,
+          sale_point_id: arrivageData.salePointId,
+          latitude: salePointData.latitude,
+          longitude: salePointData.longitude,
           eta_at: etaDate.toISOString(),
           sale_start_time: saleStartDate.toISOString(),
           visible_at: new Date().toISOString(),
-          status: "scheduled",
-        })
+          status: "scheduled" as const,
+        }])
         .select()
         .single();
 
@@ -294,8 +309,8 @@ export default function CreateArrivageWizard() {
           {step === 1 && (
             <Step1LieuHoraire
               initialData={{
-                portId: arrivageData.portId,
-                portName: arrivageData.portName,
+                salePointId: arrivageData.salePointId,
+                salePointLabel: arrivageData.salePointLabel,
                 date: arrivageData.date,
                 timeSlot: arrivageData.timeSlot,
               }}
