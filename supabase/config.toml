@@ -70,3 +70,12 @@ verify_jwt = false  # Public endpoint - submits profile changes via token
 
 [functions.send-billing-portal-link]
 verify_jwt = true  # Admin only - sends Stripe billing portal link
+
+[functions.send-premium-welcome-email]
+verify_jwt = false  # Called by webhook after payment
+
+[functions.send-fisherman-approved-email]
+verify_jwt = true  # Admin only - sends approval email
+
+[functions.send-basket-order-notification]
+verify_jwt = false  # Called by webhook after basket order

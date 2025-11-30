@@ -160,6 +160,29 @@ serve(async (req) => {
 
     console.log(`✅ Free access approved for ${emailLower}`);
 
+    // Send approval confirmation email
+    try {
+      const { data: fishermanData } = await supabaseAdmin
+        .from('fishermen')
+        .select('boat_name, onboarding_payment_status')
+        .eq('id', newFisherman.id)
+        .single();
+      
+      const plan = fishermanData?.onboarding_payment_status === 'free' ? 'basic' : 'basic';
+      
+      await supabaseAdmin.functions.invoke('send-fisherman-approved-email', {
+        body: { 
+          userEmail: emailLower,
+          boatName: fishermanData?.boat_name || 'À compléter',
+          plan: plan
+        }
+      });
+      console.log(`Approval email sent to ${emailLower}`);
+    } catch (emailError) {
+      console.error('ERROR sending approval email:', emailError);
+      // Don't fail the approval if email fails
+    }
+
     return new Response(
       JSON.stringify({
         success: true,

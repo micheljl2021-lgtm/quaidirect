@@ -15,7 +15,7 @@ export function OverviewTab() {
         supabase.from('offers').select('id', { count: 'exact', head: true }),
         supabase.from('sales').select('total_price, created_at').eq('status', 'completed'),
         supabase.from('reservations').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-        supabase.from('premium_subscriptions').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+        supabase.from('payments').select('id', { count: 'exact', head: true }).eq('status', 'active').in('plan', ['premium_monthly', 'premium_annual', 'premium_plus_monthly', 'premium_plus_annual', 'premium']),
         supabase.from('notifications').select('id, created_at'),
       ]);
 
