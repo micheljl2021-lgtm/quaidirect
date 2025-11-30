@@ -40,6 +40,10 @@ serve(async (req) => {
     if (!basketId || !priceId) throw new Error('Missing basketId or priceId');
     logStep('Request data validated', { basketId, priceId, fishermanId, dropId });
 
+    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+      apiVersion: '2025-08-27.basil',
+    });
+
     // Get basket price from Stripe to calculate commission
     const price = await stripe.prices.retrieve(priceId);
     if (!price.unit_amount) throw new Error('Price has no unit_amount');
@@ -49,10 +53,6 @@ serve(async (req) => {
     const totalPrice = basketPrice + commission;
     
     logStep('Commission calculated', { basketPrice, commission, totalPrice });
-
-    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
-      apiVersion: '2025-08-27.basil',
-    });
 
     // Check if customer exists
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
