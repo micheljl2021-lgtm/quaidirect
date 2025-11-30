@@ -18,6 +18,21 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Verify internal secret to prevent unauthorized calls
+    const internalSecret = req.headers.get('x-internal-secret');
+    const expectedSecret = Deno.env.get('INTERNAL_FUNCTION_SECRET');
+    
+    if (!expectedSecret || internalSecret !== expectedSecret) {
+      console.error('Unauthorized call to send-reservation-notification');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { 
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
