@@ -38,6 +38,21 @@ serve(async (req) => {
   }
 
   try {
+    // Verify internal secret to prevent unauthorized calls
+    const internalSecret = req.headers.get('x-internal-secret');
+    const expectedSecret = Deno.env.get('INTERNAL_FUNCTION_SECRET');
+    
+    if (!expectedSecret || internalSecret !== expectedSecret) {
+      console.error('Unauthorized call to send-drop-notification');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { 
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
     const { dropId } = await req.json();
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
