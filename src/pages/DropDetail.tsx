@@ -76,7 +76,7 @@ const DropDetail = () => {
       
       return data;
     },
-    enabled: !!id && !!user,
+    enabled: !!id,
   });
 
   if (isLoading) {

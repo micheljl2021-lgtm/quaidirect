@@ -165,7 +165,7 @@ const CommentCaMarche = () => {
           </div>
 
           <div className="mt-12 text-center">
-            <Link to="/pecheur/payment">
+            <Link to="/devenir-pecheur?plan=basic">
               <Button size="lg" className="gap-2">
                 <Fish className="h-5 w-5" />
                 Devenir pêcheur partenaire
