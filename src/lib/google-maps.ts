@@ -17,6 +17,19 @@ export function getGoogleMapsApiKey(): string {
 }
 
 /**
+ * Configuration centralisée pour useJsApiLoader
+ * CRITICAL: Doit être utilisée partout pour éviter les conflits de loader
+ */
+export const googleMapsLoaderConfig = {
+  id: "google-map-script",
+  googleMapsApiKey: getGoogleMapsApiKey(),
+  libraries: ["places", "geometry"] as ("places" | "geometry")[],
+  version: "weekly",
+  language: "fr",
+  region: "FR",
+};
+
+/**
  * Configuration par défaut pour les cartes Google Maps
  */
 export const defaultMapConfig = {
