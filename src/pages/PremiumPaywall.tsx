@@ -46,26 +46,41 @@ const PLANS = {
   },
 };
 
-const FEATURES = [
+const FEATURES_PREMIUM = [
   {
     icon: MapPin,
     title: "Soutenez les points de vente",
-    description: "Une partie de votre abonnement aide à financer et améliorer les stands à quai",
   },
   {
     icon: Bell,
-    title: "Alertes sur vos poissons favoris",
-    description: "Choisissez vos espèces préférées, soyez notifié dès qu'un point de vente les propose",
+    title: "Alertes mail sur vos poissons favoris",
   },
   {
     icon: Bell,
-    title: "Notifications prioritaires",
-    description: "Infos en priorité sur les nouveaux points de vente près de chez vous",
+    title: "Notifications prioritaires par mail",
   },
   {
     icon: Star,
-    title: "Badge Premium",
-    description: "Mise en avant dans votre compte & accès aux futures fonctionnalités réservées",
+    title: "Badge Premium visible",
+  },
+];
+
+const FEATURES_PREMIUM_PLUS = [
+  {
+    icon: MapPin,
+    title: "Tous les avantages Premium",
+  },
+  {
+    icon: Bell,
+    title: "Notifications SMS incluses",
+  },
+  {
+    icon: Bell,
+    title: "Alertes 'dernières pièces' par SMS",
+  },
+  {
+    icon: Star,
+    title: "Badge Premium+ distinctif",
   },
 ];
 
@@ -140,122 +155,179 @@ export default function PremiumPaywall() {
           </p>
         </div>
 
-        {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 gap-6 mb-16 max-w-4xl mx-auto">
-          {/* Monthly Plan */}
-          <Card className="relative hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>{PLANS.premiumMonthly.name}</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-6">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold">{PLANS.premiumMonthly.price}</span>
-                  <span className="text-muted-foreground">/{PLANS.premiumMonthly.period}</span>
+        {/* Section Premium */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold text-center mb-6">Premium</h2>
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {/* Premium Mensuel */}
+            <Card className="relative hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>{PLANS.premiumMonthly.name}</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-6">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-bold">{PLANS.premiumMonthly.price}</span>
+                    <span className="text-muted-foreground">/{PLANS.premiumMonthly.period}</span>
+                  </div>
                 </div>
-              </div>
-              
-              <ul className="space-y-3">
-                {FEATURES.map((feature, index) => (
-                  <li key={index} className="flex items-start gap-2">
-                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                    <span className="text-sm">{feature.title}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-            <CardFooter className="flex-col gap-2">
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={() => handleSubscribe(PLANS.premiumMonthly.priceId, PLANS.premiumMonthly.plan)}
-                disabled={loading === PLANS.premiumMonthly.plan}
-              >
-                {loading === PLANS.premiumMonthly.plan ? "Chargement..." : "S'abonner à 2€/mois"}
-              </Button>
-              <p className="text-xs text-center text-muted-foreground">
-                Aidez-nous à développer les points de vente de vos marins pêcheurs préférés
-              </p>
-            </CardFooter>
-          </Card>
+                
+                <ul className="space-y-3">
+                  {FEATURES_PREMIUM.map((feature, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm">{feature.title}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+              <CardFooter>
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={() => handleSubscribe(PLANS.premiumMonthly.priceId, PLANS.premiumMonthly.plan)}
+                  disabled={loading === PLANS.premiumMonthly.plan}
+                >
+                  {loading === PLANS.premiumMonthly.plan ? "Chargement..." : "S'abonner"}
+                </Button>
+              </CardFooter>
+            </Card>
 
-          {/* Annual Plan */}
-          <Card className="relative border-primary shadow-lg hover:shadow-xl transition-shadow">
-            {PLANS.premiumAnnual.badge && (
-              <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
-                {PLANS.premiumAnnual.badge}
-              </Badge>
-            )}
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>{PLANS.premiumAnnual.name}</span>
-                <Crown className="h-5 w-5 text-primary" />
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-6">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold">{PLANS.premiumAnnual.price}</span>
-                  <span className="text-muted-foreground">/{PLANS.premiumAnnual.period}</span>
+            {/* Premium Annuel */}
+            <Card className="relative border-primary shadow-lg hover:shadow-xl transition-shadow">
+              {PLANS.premiumAnnual.badge && (
+                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  {PLANS.premiumAnnual.badge}
+                </Badge>
+              )}
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>{PLANS.premiumAnnual.name}</span>
+                  <Crown className="h-5 w-5 text-primary" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-6">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-bold">{PLANS.premiumAnnual.price}</span>
+                    <span className="text-muted-foreground">/{PLANS.premiumAnnual.period}</span>
+                  </div>
+                  <p className="text-sm text-primary font-semibold mt-1">
+                    Soit 1,67€/mois
+                  </p>
                 </div>
-                <p className="text-sm text-primary font-semibold mt-1">
-                  Soit 1,67€/mois
-                </p>
-              </div>
-              
-              <ul className="space-y-3">
-                {FEATURES.map((feature, index) => (
-                  <li key={index} className="flex items-start gap-2">
-                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                    <span className="text-sm">{feature.title}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-            <CardFooter className="flex-col gap-2">
-              <Button
-                className="w-full"
-                size="lg"
-                variant="default"
-                onClick={() => handleSubscribe(PLANS.premiumAnnual.priceId, PLANS.premiumAnnual.plan)}
-                disabled={loading === PLANS.premiumAnnual.plan}
-              >
-                {loading === PLANS.premiumAnnual.plan ? "Chargement..." : "S'abonner à 20€/an"}
-              </Button>
-              <p className="text-xs text-center text-muted-foreground">
-                Économisez 2 mois • Soit 1,67€ / mois
-              </p>
-            </CardFooter>
-          </Card>
+                
+                <ul className="space-y-3">
+                  {FEATURES_PREMIUM.map((feature, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm">{feature.title}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+              <CardFooter>
+                <Button
+                  className="w-full"
+                  size="lg"
+                  variant="default"
+                  onClick={() => handleSubscribe(PLANS.premiumAnnual.priceId, PLANS.premiumAnnual.plan)}
+                  disabled={loading === PLANS.premiumAnnual.plan}
+                >
+                  {loading === PLANS.premiumAnnual.plan ? "Chargement..." : "S'abonner"}
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
         </div>
 
-        {/* Features Details */}
+        {/* Section Premium+ */}
         <div className="mb-16">
-          <h2 className="text-3xl font-bold text-center mb-8">
-            Tout ce qu'inclut Premium
-          </h2>
-          
+          <h2 className="text-2xl font-bold text-center mb-6">Premium+ <Badge className="ml-2">SMS inclus</Badge></h2>
           <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {FEATURES.map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <Card key={index}>
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <Icon className="h-5 w-5 text-primary" />
-                      </div>
-                      <CardTitle className="text-lg">{feature.title}</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">{feature.description}</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
+            {/* Premium+ Mensuel */}
+            <Card className="relative hover:shadow-lg transition-shadow border-2 border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>{PLANS.premiumPlusMonthly.name}</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-6">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-bold">{PLANS.premiumPlusMonthly.price}</span>
+                    <span className="text-muted-foreground">/{PLANS.premiumPlusMonthly.period}</span>
+                  </div>
+                </div>
+                
+                <ul className="space-y-3">
+                  {FEATURES_PREMIUM_PLUS.map((feature, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm">{feature.title}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+              <CardFooter>
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={() => handleSubscribe(PLANS.premiumPlusMonthly.priceId, PLANS.premiumPlusMonthly.plan)}
+                  disabled={loading === PLANS.premiumPlusMonthly.plan}
+                >
+                  {loading === PLANS.premiumPlusMonthly.plan ? "Chargement..." : "S'abonner"}
+                </Button>
+              </CardFooter>
+            </Card>
+
+            {/* Premium+ Annuel */}
+            <Card className="relative border-2 border-primary shadow-lg hover:shadow-xl transition-shadow">
+              {PLANS.premiumPlusAnnual.badge && (
+                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  {PLANS.premiumPlusAnnual.badge}
+                </Badge>
+              )}
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>{PLANS.premiumPlusAnnual.name}</span>
+                  <Crown className="h-5 w-5 text-primary" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-6">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-bold">{PLANS.premiumPlusAnnual.price}</span>
+                    <span className="text-muted-foreground">/{PLANS.premiumPlusAnnual.period}</span>
+                  </div>
+                  <p className="text-sm text-primary font-semibold mt-1">
+                    Soit 3,33€/mois
+                  </p>
+                </div>
+                
+                <ul className="space-y-3">
+                  {FEATURES_PREMIUM_PLUS.map((feature, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm">{feature.title}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+              <CardFooter>
+                <Button
+                  className="w-full"
+                  size="lg"
+                  variant="default"
+                  onClick={() => handleSubscribe(PLANS.premiumPlusAnnual.priceId, PLANS.premiumPlusAnnual.plan)}
+                  disabled={loading === PLANS.premiumPlusAnnual.plan}
+                >
+                  {loading === PLANS.premiumPlusAnnual.plan ? "Chargement..." : "S'abonner"}
+                </Button>
+              </CardFooter>
+            </Card>
           </div>
         </div>
 
@@ -263,10 +335,10 @@ export default function PremiumPaywall() {
         <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border-primary/20">
           <CardContent className="pt-6 pb-6 text-center">
             <h3 className="text-2xl font-bold mb-3">
-              Essai gratuit de 7 jours
+              Soutenez la pêche locale
             </h3>
             <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-              Testez QuaiDirect Premium sans engagement. Annulez à tout moment pendant la période d'essai.
+              Chaque abonnement Premium aide à financer et développer les points de vente à quai.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
