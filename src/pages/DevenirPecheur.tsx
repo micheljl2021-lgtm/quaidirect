@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
@@ -17,6 +17,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 const DevenirPecheur = () => {
+  const [searchParams] = useSearchParams();
+  const preselectedPlan = searchParams.get('plan') || null;
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -67,7 +69,12 @@ const DevenirPecheur = () => {
 
           <div className="grid md:grid-cols-2 gap-8">
             {/* Plan Basic */}
-            <Card className="border-2">
+            <Card className={`border-2 ${preselectedPlan === 'basic' ? 'border-primary shadow-lg' : ''}`}>
+              {preselectedPlan === 'basic' && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-white text-sm font-medium rounded-full">
+                  Plan sélectionné
+                </div>
+              )}
               <CardContent className="pt-8 space-y-6">
                 <div>
                   <h3 className="text-2xl font-bold text-foreground mb-2">Plan Basic</h3>
@@ -100,18 +107,18 @@ const DevenirPecheur = () => {
                   </li>
                 </ul>
 
-                <Link to="/pecheur/payment" className="block">
+                <Link to="/pecheur/payment?plan=basic" className="block">
                   <Button className="w-full" size="lg">
-                    Choisir Basic
+                    Choisir Basic - 99€/an
                   </Button>
                 </Link>
               </CardContent>
             </Card>
 
             {/* Plan Pro */}
-            <Card className="border-2 border-primary relative">
+            <Card className={`border-2 relative ${preselectedPlan === 'pro' ? 'border-primary shadow-lg' : 'border-primary'}`}>
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-white text-sm font-medium rounded-full">
-                Recommandé
+                {preselectedPlan === 'pro' ? 'Plan sélectionné' : 'Recommandé'}
               </div>
               <CardContent className="pt-8 space-y-6">
                 <div>
@@ -145,9 +152,9 @@ const DevenirPecheur = () => {
                   </li>
                 </ul>
 
-                <Link to="/pecheur/payment" className="block">
+                <Link to="/pecheur/payment?plan=pro" className="block">
                   <Button className="w-full" size="lg" variant="default">
-                    Choisir Pro
+                    Choisir Pro - 199€/an
                   </Button>
                 </Link>
               </CardContent>
