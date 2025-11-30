@@ -167,6 +167,7 @@ export default function SimpleAnnonce() {
           notes: `${formData.description}\n\nLieu: ${salePoint?.label} - ${salePoint?.address}`,
           latitude: salePoint?.latitude,
           longitude: salePoint?.longitude,
+          port_id: null,
         }])
         .select()
         .single();
