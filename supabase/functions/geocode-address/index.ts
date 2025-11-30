@@ -21,9 +21,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const apiKey = Deno.env.get('GOOGLE_MAPS_API_KEY_SERVER');
+    const apiKey = Deno.env.get('serveur_google_map_clee_api');
     if (!apiKey) {
-      throw new Error('GOOGLE_MAPS_API_KEY_SERVER not configured');
+      throw new Error('serveur_google_map_clee_api not configured');
     }
 
     const { address }: GeocodeRequest = await req.json();
