@@ -40,9 +40,9 @@ import PecheurPaymentSuccess from "./pages/PecheurPaymentSuccess";
 import PecheurContacts from "./pages/PecheurContacts";
 import AmbassadorPartner from "./pages/AmbassadorPartner";
 import PecheurAmbassadorStatus from "./pages/PecheurAmbassadorStatus";
-import MarineAI from "./pages/MarineAI";
 import MarineAIRefactored from "./pages/MarineAIRefactored";
 import PecheurPreferences from "./pages/PecheurPreferences";
+import DropDetail from "./pages/DropDetail";
 import CommentCaMarche from "./pages/CommentCaMarche";
 import DevenirPecheur from "./pages/DevenirPecheur";
 import PoissonFraisHyeres from "./pages/seo/PoissonFraisHyeres";
@@ -89,14 +89,22 @@ const App = () => (
                 <EditSalePoints />
               </ProtectedFisherRoute>
             } />
-            <Route path="/pecheur/contacts" element={<PecheurContacts />} />
+            <Route path="/pecheur/contacts" element={
+              <ProtectedFisherRoute>
+                <PecheurContacts />
+              </ProtectedFisherRoute>
+            } />
             <Route path="/pecheur/onboarding" element={
               <ProtectedFisherRoute>
                 <PecheurOnboarding />
               </ProtectedFisherRoute>
             } />
             <Route path="/onboarding/confirmation" element={<OnboardingConfirmation />} />
-            <Route path="/pecheur/nouvel-arrivage" element={<CreateArrivage />} />
+            <Route path="/pecheur/nouvel-arrivage" element={
+              <ProtectedFisherRoute>
+                <CreateArrivage />
+              </ProtectedFisherRoute>
+            } />
             <Route path="/pecheur/annonce-simple" element={
               <ProtectedFisherRoute>
                 <SimpleAnnonce />
@@ -117,9 +125,13 @@ const App = () => (
                 <DuplicateArrivage />
               </ProtectedFisherRoute>
             } />
-            <Route path="/pecheur/edit-profile" element={<EditFisherProfile />} />
+            <Route path="/pecheur/edit-profile" element={
+              <ProtectedFisherRoute>
+                <EditFisherProfile />
+              </ProtectedFisherRoute>
+            } />
             <Route path="/pecheur/ambassadeur" element={<PecheurAmbassadorStatus />} />
-          <Route path="/pecheur/ia-marin" element={<MarineAIRefactored />} />
+            <Route path="/pecheur/ia-marin" element={<MarineAIRefactored />} />
             <Route path="/pecheur/support" element={<PecheurSupport />} />
             <Route path="/secure/profile/edit" element={<SecureProfileEdit />} />
             <Route path="/pecheur/preferences" element={<PecheurPreferences />} />
@@ -129,9 +141,8 @@ const App = () => (
             <Route path="/poisson-frais-hyeres" element={<PoissonFraisHyeres />} />
             <Route path="/poisson-frais-toulon" element={<PoissonFraisToulon />} />
             <Route path="/poisson-frais-la-rochelle" element={<PoissonFraisLaRochelle />} />
-            <Route path="/pecheur/:id" element={<FisherProfile />} />
+            <Route path="/drop/:id" element={<DropDetail />} />
             <Route path="/pecheurs/:slug" element={<FisherProfile />} />
-            <Route path="/boutique/:slug" element={<FisherProfile />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

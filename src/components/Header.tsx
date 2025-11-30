@@ -45,7 +45,7 @@ const Header = () => {
           <Link to="/recettes" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Recettes
           </Link>
-          <Link to="/pecheur/ambassadeur" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+          <Link to="/ambassadeur-partenaire" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
             <Award className="h-4 w-4" />
             Ambassadeur
           </Link>
@@ -166,7 +166,7 @@ const Header = () => {
                 Recettes
               </Link>
               <Link 
-                to="/pecheur/ambassadeur" 
+                to="/ambassadeur-partenaire" 
                 className="text-base font-medium text-foreground hover:text-primary transition-colors py-2 flex items-center gap-2"
                 onClick={() => setIsMenuOpen(false)}
               >
