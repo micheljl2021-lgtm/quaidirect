@@ -46,10 +46,10 @@ export const SalePointsSection = ({ fishermanId }: SalePointsSectionProps) => {
           <div>
             <CardTitle className="flex items-center gap-2">
               <MapPin className="h-5 w-5" />
-              Mes points de vente
+              Mes points de vente (max 2)
             </CardTitle>
             <CardDescription>
-              Les lieux où tu vends habituellement ta pêche
+              Tes lieux de vente apparaissent sur la carte publique
             </CardDescription>
           </div>
           <Button
@@ -105,6 +105,12 @@ export const SalePointsSection = ({ fishermanId }: SalePointsSectionProps) => {
               </div>
             ))}
           </div>
+        )}
+        
+        {salePoints.length === 2 && (
+          <p className="text-sm text-muted-foreground text-center mt-4">
+            Maximum de 2 points de vente atteint
+          </p>
         )}
       </CardContent>
     </Card>

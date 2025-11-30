@@ -5,28 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, MapPin, Navigation } from "lucide-react";
+import { CalendarIcon, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { useNearestPort } from "@/hooks/useNearestPort";
+import { toast } from "sonner";
 
-interface Step1Props {
-  initialData: {
-    portId: string;
-    portName: string;
-    date: Date;
-    timeSlot: string;
-  };
-  onComplete: (data: { portId: string; portName: string; date: Date; timeSlot: string }) => void;
-  onCancel: () => void;
+interface Step1Data {
+  salePointId: string;
+  salePointLabel: string;
+  date: Date;
+  timeSlot: string;
 }
 
-interface Port {
-  id: string;
-  name: string;
-  city: string;
-  latitude: number;
-  longitude: number;
+interface Step1Props {
+  initialData: Partial<Step1Data>;
+  onComplete: (data: Step1Data) => void;
+  onCancel: () => void;
 }
 
 const TIME_SLOTS = [
@@ -38,83 +32,79 @@ const TIME_SLOTS = [
 
 export function Step1LieuHoraire({ initialData, onComplete, onCancel }: Step1Props) {
   const { user } = useAuth();
-  const [selectedPort, setSelectedPort] = useState(initialData.portId);
-  const [selectedPortName, setSelectedPortName] = useState(initialData.portName);
-  const [selectedDate, setSelectedDate] = useState<Date>(initialData.date);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState(initialData.timeSlot || "matin");
-  const [ports, setPorts] = useState<Port[]>([]);
-  const [favoritePortId, setFavoritePortId] = useState<string | null>(null);
-  
-  const { nearestPort, isLoading: geoLoading } = useNearestPort(ports);
+  const [salePoints, setSalePoints] = useState<any[]>([]);
+  const [selectedSalePoint, setSelectedSalePoint] = useState<any>(null);
+  const [selectedDate, setSelectedDate] = useState<Date>(initialData.date || new Date());
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>(initialData.timeSlot || 'matin');
 
-  // Load favorite port and sale points
   useEffect(() => {
     const fetchData = async () => {
-      if (!user) return;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
 
-      // Fetch fisherman's preferences
-      const { data: fishermanData } = await supabase
-        .from("fishermen")
-        .select("zone_id, default_sale_point_id, default_time_slot")
-        .eq("user_id", user.id)
-        .single();
+        const { data: fishermenData } = await supabase
+          .from('fishermen')
+          .select('id, default_time_slot')
+          .eq('user_id', user.id)
+          .single();
 
-      if (fishermanData) {
-        // Set favorite port
-        if (fishermanData.zone_id) {
-          setFavoritePortId(fishermanData.zone_id);
-          if (!selectedPort) {
-            setSelectedPort(fishermanData.zone_id);
+        if (!fishermenData) return;
+
+        // Pre-fill default time slot
+        if (fishermenData.default_time_slot && !initialData.timeSlot) {
+          setSelectedTimeSlot(fishermenData.default_time_slot);
+        }
+
+        // Fetch fisherman's sale points (max 2)
+        const { data: salePointsData } = await supabase
+          .from('fisherman_sale_points')
+          .select('*')
+          .eq('fisherman_id', fishermenData.id)
+          .order('is_primary', { ascending: false });
+
+        if (salePointsData && salePointsData.length > 0) {
+          setSalePoints(salePointsData);
+          
+          // Pre-select primary or from initial data
+          if (initialData.salePointId) {
+            const initialSalePoint = salePointsData.find(sp => sp.id === initialData.salePointId);
+            if (initialSalePoint) {
+              setSelectedSalePoint(initialSalePoint);
+            }
+          } else {
+            const primaryPoint = salePointsData.find(sp => sp.is_primary);
+            if (primaryPoint) {
+              setSelectedSalePoint(primaryPoint);
+            }
           }
         }
-
-        // Pre-select default time slot
-        if (fishermanData.default_time_slot && !initialData.timeSlot) {
-          setSelectedTimeSlot(fishermanData.default_time_slot);
-        }
-      }
-
-      // Fetch all ports with coordinates
-      const { data: portsData } = await supabase
-        .from("ports")
-        .select("id, name, city, latitude, longitude")
-        .order("name");
-
-      if (portsData) {
-        setPorts(portsData);
-        // Pre-select favorite port if not already selected
-        if (!selectedPort && fishermanData?.zone_id) {
-          const favoritePort = portsData.find(p => p.id === fishermanData.zone_id);
-          if (favoritePort) {
-            setSelectedPort(favoritePort.id);
-            setSelectedPortName(`${favoritePort.name} - ${favoritePort.city}`);
-          }
-        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
       }
     };
 
     fetchData();
-  }, [user, selectedPort, initialData.timeSlot]);
+  }, [initialData.salePointId, initialData.timeSlot]);
 
-  // Auto-select nearest port if no selection and geolocation available
-  useEffect(() => {
-    if (!selectedPort && !favoritePortId && nearestPort && !geoLoading) {
-      setSelectedPort(nearestPort.id);
-      setSelectedPortName(`${nearestPort.name} - ${nearestPort.city}`);
-    }
-  }, [nearestPort, geoLoading, selectedPort, favoritePortId]);
-
-  const handlePortSelect = (port: Port) => {
-    setSelectedPort(port.id);
-    setSelectedPortName(`${port.name} - ${port.city}`);
+  const handleSalePointSelect = (salePoint: any) => {
+    setSelectedSalePoint(salePoint);
   };
 
   const handleContinue = () => {
-    if (!selectedPort) return;
-    
+    if (!selectedSalePoint) {
+      toast.error('Veuillez configurer au moins un point de vente');
+      return;
+    }
+
+    if (!selectedDate || !selectedTimeSlot) {
+      toast.error('Veuillez sélectionner une date et un créneau horaire');
+      return;
+    }
+
     onComplete({
-      portId: selectedPort,
-      portName: selectedPortName,
+      salePointId: selectedSalePoint.id,
+      salePointLabel: selectedSalePoint.label,
       date: selectedDate,
       timeSlot: selectedTimeSlot,
     });
@@ -124,42 +114,58 @@ export function Step1LieuHoraire({ initialData, onComplete, onCancel }: Step1Pro
     <div className="space-y-6 pb-24">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Où et quand vends-tu ta pêche ?</CardTitle>
+          <CardTitle className="text-2xl">Où et quand vends-tu ?</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Port Selection */}
-          <div>
-            <label className="block text-sm font-medium mb-3">Port de vente</label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {ports.slice(0, 6).map((port) => (
-                <Button
-                  key={port.id}
-                  type="button"
-                  variant={selectedPort === port.id ? "default" : "outline"}
-                  size="lg"
-                  className="h-auto py-4 justify-start"
-                  onClick={() => handlePortSelect(port)}
-                >
-                  <MapPin className="mr-2 h-5 w-5" />
-                  <div className="text-left">
-                    <div className="font-semibold">{port.name}</div>
-                    <div className="text-xs opacity-70">{port.city}</div>
-                  </div>
-                  {port.id === favoritePortId && (
-                    <span className="ml-auto text-xs bg-primary/20 px-2 py-1 rounded">
-                      Favori
-                    </span>
-                  )}
-                  {port.id === nearestPort?.id && port.id !== favoritePortId && (
-                    <span className="ml-auto text-xs bg-green-500/20 text-green-700 dark:text-green-300 px-2 py-1 rounded flex items-center gap-1">
-                      <Navigation className="h-3 w-3" />
-                      Le plus proche
-                    </span>
-                  )}
-                </Button>
-              ))}
+          {/* Sale Point Selection */}
+          {salePoints.length > 0 ? (
+            <div>
+              <label className="block text-sm font-medium mb-3">Point de vente</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {salePoints.map((salePoint) => {
+                  const isSelected = selectedSalePoint?.id === salePoint.id;
+
+                  return (
+                    <Button
+                      key={salePoint.id}
+                      type="button"
+                      variant={isSelected ? 'default' : 'outline'}
+                      className={`h-auto py-4 px-4 justify-start text-left ${
+                        salePoint.is_primary ? 'border-primary border-2' : ''
+                      }`}
+                      onClick={() => handleSalePointSelect(salePoint)}
+                    >
+                      <div className="flex items-start gap-3 w-full">
+                        <MapPin className="h-5 w-5 mt-1 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold flex items-center gap-2 flex-wrap">
+                            {salePoint.label}
+                            {salePoint.is_primary && (
+                              <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
+                                Principal
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground">{salePoint.address}</div>
+                        </div>
+                      </div>
+                    </Button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-muted p-6 rounded-lg text-center">
+              <MapPin className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+              <p className="font-semibold mb-2">Aucun point de vente configuré</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Configure tes points de vente pour créer des arrivages
+              </p>
+              <Button onClick={() => window.location.href = '/pecheur/points-de-vente'}>
+                Configurer mes points de vente
+              </Button>
+            </div>
+          )}
 
           {/* Date Selection */}
           <div>
@@ -230,7 +236,7 @@ export function Step1LieuHoraire({ initialData, onComplete, onCancel }: Step1Pro
             size="lg"
             className="flex-1 h-14 text-lg"
             onClick={handleContinue}
-            disabled={!selectedPort}
+            disabled={!selectedSalePoint}
           >
             Continuer (Étape 2)
           </Button>

@@ -326,6 +326,7 @@ export type Database = {
           notes: string | null
           port_id: string
           public_visible_at: string | null
+          sale_point_id: string | null
           sale_start_time: string
           status: Database["public"]["Enums"]["drop_status"]
           updated_at: string
@@ -344,6 +345,7 @@ export type Database = {
           notes?: string | null
           port_id: string
           public_visible_at?: string | null
+          sale_point_id?: string | null
           sale_start_time: string
           status?: Database["public"]["Enums"]["drop_status"]
           updated_at?: string
@@ -362,6 +364,7 @@ export type Database = {
           notes?: string | null
           port_id?: string
           public_visible_at?: string | null
+          sale_point_id?: string | null
           sale_start_time?: string
           status?: Database["public"]["Enums"]["drop_status"]
           updated_at?: string
@@ -387,6 +390,13 @@ export type Database = {
             columns: ["port_id"]
             isOneToOne: false
             referencedRelation: "ports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drops_sale_point_id_fkey"
+            columns: ["sale_point_id"]
+            isOneToOne: false
+            referencedRelation: "fisherman_sale_points"
             referencedColumns: ["id"]
           },
         ]

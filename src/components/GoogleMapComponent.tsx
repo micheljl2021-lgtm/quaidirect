@@ -12,10 +12,22 @@ interface Port {
   longitude: number;
 }
 
+interface SalePoint {
+  id: string;
+  label: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  fisherman_id: string;
+}
+
 interface GoogleMapComponentProps {
   ports: Port[];
+  salePoints?: SalePoint[];
   selectedPortId: string | null;
+  selectedSalePointId?: string | null;
   onPortClick: (portId: string | null) => void;
+  onSalePointClick?: (salePointId: string | null) => void;
   userLocation?: { lat: number; lng: number } | null;
 }
 
@@ -24,18 +36,20 @@ const mapContainerStyle = {
   height: '100%',
 };
 
-const GoogleMapComponent = ({ 
-  ports, 
-  selectedPortId, 
+const GoogleMapComponent = ({
+  ports,
+  salePoints = [],
+  selectedPortId,
+  selectedSalePointId,
   onPortClick,
-  userLocation 
+  onSalePointClick,
+  userLocation,
 }: GoogleMapComponentProps) => {
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: getGoogleMapsApiKey(),
   });
 
-  // Mémoïser les options de la carte pour éviter les re-renders
   const mapOptions = useMemo(() => ({
     styles: quaiDirectMapStyles,
     disableDefaultUI: false,
@@ -47,6 +61,7 @@ const GoogleMapComponent = ({
 
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [activeInfoWindow, setActiveInfoWindow] = useState<string | null>(null);
+  const [activeType, setActiveType] = useState<'port' | 'salePoint' | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const clustererRef = useRef<MarkerClusterer | null>(null);
 
@@ -55,32 +70,27 @@ const GoogleMapComponent = ({
   }, []);
 
   const onUnmount = useCallback(() => {
-    // Nettoyer le clusterer
     if (clustererRef.current) {
       clustererRef.current.clearMarkers();
     }
     setMap(null);
   }, []);
 
-  // Centrage automatique sur la position de l'utilisateur (PRIORITAIRE)
+  // Auto-center on user location (PRIORITY)
   useEffect(() => {
     if (!map) return;
 
     const bounds = new google.maps.LatLngBounds();
     let hasPoints = false;
 
-    // PRIORITÉ 1 : Position utilisateur
     if (userLocation) {
       bounds.extend(new google.maps.LatLng(userLocation.lat, userLocation.lng));
       hasPoints = true;
-      
-      // Zoom serré sur l'utilisateur si on a sa position
       map.setCenter(userLocation);
       map.setZoom(12);
-      return; // On s'arrête ici pour prioriser la géolocalisation
+      return;
     }
 
-    // PRIORITÉ 2 : Ports (seulement si pas de position utilisateur)
     if (ports && ports.length > 0) {
       ports.forEach(port => {
         bounds.extend(new google.maps.LatLng(port.latitude, port.longitude));
@@ -90,8 +100,6 @@ const GoogleMapComponent = ({
 
     if (hasPoints) {
       map.fitBounds(bounds);
-      
-      // Ajuster le zoom si trop proche
       const listener = google.maps.event.addListener(map, 'idle', () => {
         const currentZoom = map.getZoom();
         if (currentZoom && currentZoom > 15) {
@@ -100,38 +108,49 @@ const GoogleMapComponent = ({
         google.maps.event.removeListener(listener);
       });
     } else {
-      // PRIORITÉ 3 : Centre par défaut (Hyères)
       map.setCenter(defaultMapConfig.center);
       map.setZoom(defaultMapConfig.zoom);
     }
   }, [map, ports, userLocation]);
 
-  // Gestion du port sélectionné
+  // Handle selected port/sale point
   useEffect(() => {
-    if (!map || !selectedPortId) return;
+    if (!map) return;
 
-    const selectedPort = ports.find(p => p.id === selectedPortId);
-    if (selectedPort) {
-      map.panTo({ lat: selectedPort.latitude, lng: selectedPort.longitude });
-      map.setZoom(14);
-      setActiveInfoWindow(selectedPortId);
+    if (selectedPortId) {
+      const selectedPort = ports.find(p => p.id === selectedPortId);
+      if (selectedPort) {
+        map.panTo({ lat: selectedPort.latitude, lng: selectedPort.longitude });
+        map.setZoom(14);
+        setActiveInfoWindow(selectedPortId);
+        setActiveType('port');
+      }
+    } else if (selectedSalePointId) {
+      const selectedSalePoint = salePoints.find(sp => sp.id === selectedSalePointId);
+      if (selectedSalePoint) {
+        map.panTo({ lat: selectedSalePoint.latitude, lng: selectedSalePoint.longitude });
+        map.setZoom(14);
+        setActiveInfoWindow(selectedSalePointId);
+        setActiveType('salePoint');
+      }
     }
-  }, [map, selectedPortId, ports]);
+  }, [map, selectedPortId, selectedSalePointId, ports, salePoints]);
 
-  // Créer les marqueurs et le clusterer pour les ports
+  // Create markers and clusterer
   useEffect(() => {
-    if (!map || !ports || ports.length === 0) return;
+    if (!map || !isLoaded) return;
 
-    // Nettoyer les anciens marqueurs
     markersRef.current.forEach(marker => marker.setMap(null));
     markersRef.current = [];
-    
+
     if (clustererRef.current) {
       clustererRef.current.clearMarkers();
     }
 
-    // Créer les nouveaux marqueurs
-    const newMarkers = ports.map((port) => {
+    const allMarkers: google.maps.Marker[] = [];
+
+    // Port markers (blue circles)
+    const portMarkers = ports.map((port) => {
       const marker = new google.maps.Marker({
         position: { lat: port.latitude, lng: port.longitude },
         map: map,
@@ -149,17 +168,45 @@ const GoogleMapComponent = ({
       marker.addListener('click', () => {
         onPortClick(port.id);
         setActiveInfoWindow(port.id);
+        setActiveType('port');
       });
 
       return marker;
     });
 
-    markersRef.current = newMarkers;
+    // Sale point markers (orange)
+    const salePointMarkers = salePoints.map((salePoint) => {
+      const marker = new google.maps.Marker({
+        position: { lat: salePoint.latitude, lng: salePoint.longitude },
+        map: map,
+        title: salePoint.label,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          fillColor: selectedSalePointId === salePoint.id ? '#ff6b35' : '#f97316',
+          fillOpacity: 0.9,
+          strokeColor: '#FFFFFF',
+          strokeWeight: 2,
+          scale: selectedSalePointId === salePoint.id ? 12 : 10,
+        },
+      });
 
-    // Créer le clusterer avec les nouveaux marqueurs
+      marker.addListener('click', () => {
+        if (onSalePointClick) {
+          onSalePointClick(salePoint.id);
+        }
+        setActiveInfoWindow(salePoint.id);
+        setActiveType('salePoint');
+      });
+
+      return marker;
+    });
+
+    allMarkers.push(...portMarkers, ...salePointMarkers);
+    markersRef.current = allMarkers;
+
     clustererRef.current = new MarkerClusterer({
       map,
-      markers: newMarkers,
+      markers: allMarkers,
       renderer: {
         render: ({ count, position }) => {
           return new google.maps.Marker({
@@ -173,7 +220,6 @@ const GoogleMapComponent = ({
               `)}`,
               scaledSize: new google.maps.Size(50, 50),
             },
-            label: undefined,
             zIndex: Number(google.maps.Marker.MAX_ZINDEX) + count,
           });
         },
@@ -181,12 +227,12 @@ const GoogleMapComponent = ({
     });
 
     return () => {
-      newMarkers.forEach(marker => marker.setMap(null));
+      allMarkers.forEach(marker => marker.setMap(null));
       if (clustererRef.current) {
         clustererRef.current.clearMarkers();
       }
     };
-  }, [map, ports, selectedPortId, onPortClick]);
+  }, [map, ports, salePoints, selectedPortId, selectedSalePointId, onPortClick, onSalePointClick, isLoaded]);
 
   if (loadError) {
     return (
@@ -199,7 +245,7 @@ const GoogleMapComponent = ({
   if (!isLoaded) {
     return (
       <div className="flex items-center justify-center h-full bg-muted rounded-lg">
-        <p className="text-muted-foreground">Chargement de la carte...</p>
+        <p className="text-muted-foreground">Chargement...</p>
       </div>
     );
   }
@@ -213,7 +259,6 @@ const GoogleMapComponent = ({
       onUnmount={onUnmount}
       options={mapOptions}
     >
-      {/* Marqueur position utilisateur */}
       {userLocation && (
         <Marker
           position={userLocation}
@@ -230,8 +275,7 @@ const GoogleMapComponent = ({
         />
       )}
 
-      {/* InfoWindows pour les ports (affichées séparément du clustering) */}
-      {activeInfoWindow && ports.find(p => p.id === activeInfoWindow) && (
+      {activeInfoWindow && activeType === 'port' && ports.find(p => p.id === activeInfoWindow) && (
         <InfoWindow
           position={{
             lat: ports.find(p => p.id === activeInfoWindow)!.latitude,
@@ -239,19 +283,38 @@ const GoogleMapComponent = ({
           }}
           onCloseClick={() => {
             setActiveInfoWindow(null);
+            setActiveType(null);
             onPortClick(null);
           }}
         >
           <div className="p-2">
             <div className="flex items-center gap-2 mb-1">
               <MapPin className="h-4 w-4 text-primary" />
-              <h3 className="font-semibold text-foreground">
-                {ports.find(p => p.id === activeInfoWindow)!.name}
-              </h3>
+              <h3 className="font-semibold">{ports.find(p => p.id === activeInfoWindow)!.name}</h3>
             </div>
-            <p className="text-sm text-muted-foreground">
-              {ports.find(p => p.id === activeInfoWindow)!.city}
-            </p>
+            <p className="text-sm text-muted-foreground">{ports.find(p => p.id === activeInfoWindow)!.city}</p>
+          </div>
+        </InfoWindow>
+      )}
+
+      {activeInfoWindow && activeType === 'salePoint' && salePoints.find(sp => sp.id === activeInfoWindow) && (
+        <InfoWindow
+          position={{
+            lat: salePoints.find(sp => sp.id === activeInfoWindow)!.latitude,
+            lng: salePoints.find(sp => sp.id === activeInfoWindow)!.longitude,
+          }}
+          onCloseClick={() => {
+            setActiveInfoWindow(null);
+            setActiveType(null);
+            if (onSalePointClick) onSalePointClick(null);
+          }}
+        >
+          <div className="p-2">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">🐟</span>
+              <h3 className="font-semibold">{salePoints.find(sp => sp.id === activeInfoWindow)!.label}</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">{salePoints.find(sp => sp.id === activeInfoWindow)!.address}</p>
           </div>
         </InfoWindow>
       )}

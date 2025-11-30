@@ -1,144 +1,217 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import Header from "@/components/Header";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Loader2, Save } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useAuth } from "@/hooks/useAuth";
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+import { Loader2, MapPin, Plus, Trash2, ArrowLeft } from 'lucide-react';
+import Header from '@/components/Header';
+import { geocodeAddress } from '@/lib/google-geocode';
+import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
+import { getGoogleMapsApiKey } from '@/lib/google-maps';
 
-const SALE_POINT_TYPES = [
-  { value: "etal", label: "Étal" },
-  { value: "marche", label: "Marché" },
-  { value: "vivier", label: "Vivier" },
-  { value: "drive", label: "Drive" },
-  { value: "autre", label: "Autre" },
-];
+interface SalePoint {
+  id?: string;
+  label: string;
+  address: string;
+  description: string;
+  latitude: number | null;
+  longitude: number | null;
+  is_primary: boolean;
+}
 
-const EditSalePoints = () => {
+const mapContainerStyle = {
+  width: '100%',
+  height: '200px',
+};
+
+export default function EditSalePoints() {
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [salePoint, setSalePoint] = useState<any>(null);
-  const [formData, setFormData] = useState({
-    label: "",
-    type: "etal",
-    address: "",
-    city: "",
-    phone: "",
-    schedule: "",
-    description: "",
-    photo_url: "",
+  const [fishermanId, setFishermanId] = useState<string | null>(null);
+  const [salePoints, setSalePoints] = useState<SalePoint[]>([]);
+  const [geocoding, setGeocoding] = useState<{ [key: number]: boolean }>({});
+
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: getGoogleMapsApiKey(),
   });
 
   useEffect(() => {
-    if (!authLoading && user) {
-      loadSalePoint();
+    if (user) {
+      loadSalePoints();
     }
-  }, [user, authLoading]);
+  }, [user]);
 
-  const loadSalePoint = async () => {
+  const loadSalePoints = async () => {
     try {
-      // Récupérer le fisherman_id de l'utilisateur connecté
-      const { data: fisherData, error: fisherError } = await supabase
-        .from("fishermen")
-        .select("id")
-        .eq("user_id", user?.id)
+      setLoading(true);
+
+      const { data: fisherman, error: fishermanError } = await supabase
+        .from('fishermen')
+        .select('id')
+        .eq('user_id', user?.id)
         .single();
 
-      if (fisherError) throw fisherError;
+      if (fishermanError) throw fishermanError;
+      setFishermanId(fisherman.id);
 
-      // Récupérer le point de vente principal
-      const { data: salePointData, error: salePointError } = await supabase
-        .from("fisherman_sale_points")
-        .select("*")
-        .eq("fisherman_id", fisherData.id)
-        .eq("is_primary", true)
-        .single();
+      const { data: points, error: pointsError } = await supabase
+        .from('fisherman_sale_points')
+        .select('*')
+        .eq('fisherman_id', fisherman.id)
+        .order('is_primary', { ascending: false });
 
-      if (salePointData) {
-        setSalePoint(salePointData);
-        setFormData({
-          label: salePointData.label || "",
-          type: "etal", // Type non stocké actuellement
-          address: salePointData.address || "",
-          city: "", // Ville non stockée séparément
-          phone: "", // Téléphone non stocké
-          schedule: "", // Horaires non stockés
-          description: salePointData.description || "",
-          photo_url: "", // Photo non stockée
-        });
+      if (pointsError) throw pointsError;
+
+      if (points && points.length > 0) {
+        setSalePoints(points.map(p => ({
+          id: p.id,
+          label: p.label,
+          address: p.address,
+          description: p.description || '',
+          latitude: p.latitude,
+          longitude: p.longitude,
+          is_primary: p.is_primary || false,
+        })));
+      } else {
+        setSalePoints([{
+          label: '',
+          address: '',
+          description: '',
+          latitude: null,
+          longitude: null,
+          is_primary: true,
+        }]);
       }
     } catch (error: any) {
-      console.error("Erreur:", error);
-      toast.error("Erreur lors du chargement du point de vente");
+      console.error('Error loading sale points:', error);
+      toast.error('Erreur lors du chargement');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleAddPoint = () => {
+    if (salePoints.length >= 2) {
+      toast.error('Maximum 2 points de vente autorisés');
+      return;
+    }
+    setSalePoints([...salePoints, {
+      label: '',
+      address: '',
+      description: '',
+      latitude: null,
+      longitude: null,
+      is_primary: false,
+    }]);
+  };
+
+  const handleRemovePoint = (index: number) => {
+    if (salePoints.length === 1) {
+      toast.error('Vous devez avoir au moins 1 point de vente');
+      return;
+    }
+    setSalePoints(salePoints.filter((_, i) => i !== index));
+  };
+
+  const handleChange = (index: number, field: keyof SalePoint, value: any) => {
+    const newPoints = [...salePoints];
+    newPoints[index] = { ...newPoints[index], [field]: value };
+    setSalePoints(newPoints);
+  };
+
+  const handleGeocode = async (index: number) => {
+    const point = salePoints[index];
+    if (!point.address) {
+      toast.error('Veuillez saisir une adresse');
+      return;
+    }
+
+    setGeocoding({ ...geocoding, [index]: true });
+    try {
+      const result = await geocodeAddress(point.address);
+      if (result) {
+        handleChange(index, 'latitude', result.lat);
+        handleChange(index, 'longitude', result.lng);
+        handleChange(index, 'address', result.formattedAddress);
+        toast.success('Adresse localisée avec succès');
+      } else {
+        toast.error('Impossible de localiser cette adresse');
+      }
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      toast.error('Erreur lors de la localisation');
+    } finally {
+      setGeocoding({ ...geocoding, [index]: false });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!fishermanId) return;
+
+    const invalidPoints = salePoints.filter(p => !p.label || !p.address);
+    if (invalidPoints.length > 0) {
+      toast.error('Veuillez remplir tous les champs obligatoires');
+      return;
+    }
+
+    const notGeocodedPoints = salePoints.filter(p => !p.latitude || !p.longitude);
+    if (notGeocodedPoints.length > 0) {
+      toast.error('Veuillez localiser toutes les adresses (bouton "Localiser")');
+      return;
+    }
+
     setSaving(true);
-
     try {
-      const { data: fisherData } = await supabase
-        .from("fishermen")
-        .select("id")
-        .eq("user_id", user?.id)
-        .single();
+      const { error: deleteError } = await supabase
+        .from('fisherman_sale_points')
+        .delete()
+        .eq('fisherman_id', fishermanId);
 
-      if (!fisherData) throw new Error("Pêcheur non trouvé");
+      if (deleteError) throw deleteError;
 
-      const updateData = {
-        label: formData.label,
-        address: formData.address,
-        description: formData.description,
-      };
+      const pointsToInsert = salePoints.map((p, index) => ({
+        fisherman_id: fishermanId,
+        label: p.label,
+        address: p.address,
+        description: p.description || null,
+        latitude: p.latitude,
+        longitude: p.longitude,
+        is_primary: index === 0,
+      }));
 
-      if (salePoint) {
-        // Mise à jour du point de vente existant
-        const { error } = await supabase
-          .from("fisherman_sale_points")
-          .update(updateData)
-          .eq("id", salePoint.id);
+      const { error: insertError } = await supabase
+        .from('fisherman_sale_points')
+        .insert(pointsToInsert);
 
-        if (error) throw error;
-        toast.success("Point de vente mis à jour avec succès");
-      } else {
-        // Création d'un nouveau point de vente
-        const { error } = await supabase
-          .from("fisherman_sale_points")
-          .insert({
-            ...updateData,
-            fisherman_id: fisherData.id,
-            is_primary: true,
-          });
+      if (insertError) throw insertError;
 
-        if (error) throw error;
-        toast.success("Point de vente créé avec succès");
-      }
-
-      navigate("/dashboard/pecheur");
+      toast.success('Points de vente enregistrés');
+      navigate('/dashboard/pecheur');
     } catch (error: any) {
-      console.error("Erreur:", error);
-      toast.error("Erreur lors de l'enregistrement");
+      console.error('Error:', error);
+      if (error.message?.includes('2 points de vente maximum')) {
+        toast.error('Maximum 2 points de vente autorisés');
+      } else {
+        toast.error('Erreur lors de l\'enregistrement');
+      }
     } finally {
       setSaving(false);
     }
   };
 
-  if (authLoading || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="container px-4 py-8 flex items-center justify-center">
+        <div className="flex items-center justify-center h-[80vh]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </div>
@@ -148,145 +221,153 @@ const EditSalePoints = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-
-      <div className="container px-4 py-8 max-w-2xl mx-auto">
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
         <Button
           variant="ghost"
-          onClick={() => navigate("/dashboard/pecheur")}
-          className="mb-6 gap-2"
+          onClick={() => navigate('/dashboard/pecheur')}
+          className="mb-6"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Retour au tableau de bord
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Retour
         </Button>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">
-              {salePoint ? "Modifier mon point de vente" : "Créer mon point de vente"}
-            </CardTitle>
+            <CardTitle className="text-2xl">Mes points de vente</CardTitle>
+            <p className="text-sm text-muted-foreground mt-2">
+              Configure jusqu'à 2 points de vente. Ils apparaîtront sur la carte publique.
+            </p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="label">Nom du point de vente *</Label>
-                <Input
-                  id="label"
-                  value={formData.label}
-                  onChange={(e) => setFormData({ ...formData, label: e.target.value })}
-                  placeholder="Ex: Étal du Port de Hyères"
-                  required
-                />
-              </div>
+              {salePoints.map((point, index) => (
+                <Card key={index} className="border-2">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <MapPin className="h-5 w-5" />
+                        Point {index + 1}
+                        {point.is_primary && <span className="text-sm text-primary">(Principal)</span>}
+                      </CardTitle>
+                      {salePoints.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemovePoint(index)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor={`label-${index}`}>Nom *</Label>
+                      <Input
+                        id={`label-${index}`}
+                        placeholder="Ex: Marché du port"
+                        value={point.label}
+                        onChange={(e) => handleChange(index, 'label', e.target.value)}
+                        required
+                      />
+                    </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="type">Type de point de vente</Label>
-                <Select
-                  value={formData.type}
-                  onValueChange={(value) => setFormData({ ...formData, type: value })}
-                >
-                  <SelectTrigger id="type">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SALE_POINT_TYPES.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {type.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`address-${index}`}>Adresse complète *</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id={`address-${index}`}
+                          placeholder="Quai Cronstadt, 83400 Hyères"
+                          value={point.address}
+                          onChange={(e) => handleChange(index, 'address', e.target.value)}
+                          required
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={() => handleGeocode(index)}
+                          disabled={!point.address || geocoding[index]}
+                        >
+                          {geocoding[index] ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            'Localiser'
+                          )}
+                        </Button>
+                      </div>
+                      {point.latitude && point.longitude && (
+                        <p className="text-xs text-muted-foreground">
+                          ✓ Localisé: {point.latitude.toFixed(6)}, {point.longitude.toFixed(6)}
+                        </p>
+                      )}
+                    </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="address">Adresse complète *</Label>
-                <Input
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="Ex: Quai Gabriel Péri, 83400 Hyères"
-                  required
-                />
-              </div>
+                    {isLoaded && point.latitude && point.longitude && (
+                      <div className="space-y-2">
+                        <Label>Aperçu</Label>
+                        <GoogleMap
+                          mapContainerStyle={mapContainerStyle}
+                          center={{ lat: point.latitude, lng: point.longitude }}
+                          zoom={15}
+                        >
+                          <Marker position={{ lat: point.latitude, lng: point.longitude }} />
+                        </GoogleMap>
+                      </div>
+                    )}
 
-              <div className="space-y-2">
-                <Label htmlFor="city">Ville</Label>
-                <Input
-                  id="city"
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  placeholder="Ex: Hyères"
-                />
-              </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`desc-${index}`}>Description</Label>
+                      <Textarea
+                        id={`desc-${index}`}
+                        placeholder="Ex: À côté de la glacière bleue..."
+                        value={point.description}
+                        onChange={(e) => handleChange(index, 'description', e.target.value)}
+                        rows={2}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
 
-              <div className="space-y-2">
-                <Label htmlFor="phone">Téléphone de contact</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="Ex: 06 12 34 56 78"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="schedule">Horaires</Label>
-                <Textarea
-                  id="schedule"
-                  value={formData.schedule}
-                  onChange={(e) => setFormData({ ...formData, schedule: e.target.value })}
-                  placeholder="Ex: Lundi-Vendredi: 8h-10h, Samedi: 7h-12h"
-                  rows={3}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Décrivez votre point de vente..."
-                  rows={4}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="photo_url">URL de la photo principale</Label>
-                <Input
-                  id="photo_url"
-                  type="url"
-                  value={formData.photo_url}
-                  onChange={(e) => setFormData({ ...formData, photo_url: e.target.value })}
-                  placeholder="https://..."
-                />
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <Button
-                  type="submit"
-                  disabled={saving}
-                  className="flex-1"
-                  size="lg"
-                >
-                  {saving ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Enregistrement...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="mr-2 h-5 w-5" />
-                      Enregistrer les modifications
-                    </>
-                  )}
-                </Button>
+              {salePoints.length < 2 && (
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate("/dashboard/pecheur")}
+                  className="w-full"
+                  onClick={handleAddPoint}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Ajouter un 2ème point
+                </Button>
+              )}
+
+              {salePoints.length === 2 && (
+                <p className="text-sm text-muted-foreground text-center">
+                  Maximum 2 points atteint
+                </p>
+              )}
+
+              <div className="flex gap-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate('/dashboard/pecheur')}
+                  disabled={saving}
+                  className="flex-1"
                 >
                   Annuler
+                </Button>
+                <Button type="submit" disabled={saving} className="flex-1">
+                  {saving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Enregistrement...
+                    </>
+                  ) : (
+                    'Enregistrer'
+                  )}
                 </Button>
               </div>
             </form>
@@ -295,6 +376,4 @@ const EditSalePoints = () => {
       </div>
     </div>
   );
-};
-
-export default EditSalePoints;
+}

@@ -126,15 +126,14 @@ export default function SimpleAnnonce() {
     setLoading(true);
 
     try {
-      // Get fisherman ID and favorite port
+      // Get fisherman
       const { data: fisherman } = await supabase
         .from('fishermen')
-        .select('id, zone_id')
+        .select('id')
         .eq('user_id', user?.id)
         .single();
 
       if (!fisherman) throw new Error('Pêcheur non trouvé');
-      if (!fisherman.zone_id) throw new Error('Port favori non configuré. Complétez votre profil.');
 
       // Get sale point details
       const { data: salePoint } = await supabase
@@ -155,21 +154,20 @@ export default function SimpleAnnonce() {
       const etaDate = new Date(formData.date);
       etaDate.setHours(parseInt(slot.start.split(':')[0]), parseInt(slot.start.split(':')[1]));
 
-      // Insert drop (simple type) - use fisherman's favorite port as reference
       const { data: drop, error: dropError } = await supabase
         .from('drops')
-        .insert({
+        .insert([{
           fisherman_id: fisherman.id,
-          port_id: fisherman.zone_id, // Use favorite port as reference
+          sale_point_id: formData.salePointId,
           eta_at: etaDate.toISOString(),
           sale_start_time: etaDate.toISOString(),
           visible_at: new Date().toISOString(),
-          status: 'scheduled',
+          status: 'scheduled' as const,
           drop_type: 'simple',
           notes: `${formData.description}\n\nLieu: ${salePoint?.label} - ${salePoint?.address}`,
           latitude: salePoint?.latitude,
           longitude: salePoint?.longitude,
-        })
+        }])
         .select()
         .single();
 
