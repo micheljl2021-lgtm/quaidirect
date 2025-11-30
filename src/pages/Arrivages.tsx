@@ -26,7 +26,7 @@ interface Drop {
     name: string;
     city: string;
   };
-  fishermen: {
+  public_fishermen: {
     id: string;
     boat_name: string;
     company_name: string | null;
@@ -34,7 +34,7 @@ interface Drop {
     photo_url: string | null;
     main_fishing_zone: string | null;
     is_ambassador?: boolean;
-  };
+  } | null;
   drop_photos?: Array<{
     id: string;
     photo_url: string;
@@ -87,7 +87,7 @@ const Arrivages = () => {
         .from('drops')
       .select(`
         *,
-        fishermen (
+        public_fishermen!fisherman_id (
           id,
           boat_name,
           company_name,
@@ -200,7 +200,7 @@ const Arrivages = () => {
   const uniqueZones = useMemo(() => {
     if (!drops) return [];
     const zones = drops
-      .map(d => d.fishermen?.main_fishing_zone)
+      .map(d => d.public_fishermen?.main_fishing_zone)
       .filter((zone): zone is string => !!zone);
     return Array.from(new Set(zones));
   }, [drops]);
@@ -230,12 +230,12 @@ const Arrivages = () => {
   const uniqueFishermen = useMemo(() => {
     if (!drops) return [];
     const fishermen = drops
-      .filter(d => d.fishermen?.id)
+      .filter(d => d.public_fishermen?.id)
       .map(d => ({
-        id: d.fishermen.id,
-        name: d.fishermen.display_name_preference === 'company_name'
-          ? (d.fishermen.company_name || d.fishermen.boat_name)
-          : d.fishermen.boat_name
+        id: d.public_fishermen!.id,
+        name: d.public_fishermen!.display_name_preference === 'company_name'
+          ? (d.public_fishermen!.company_name || d.public_fishermen!.boat_name)
+          : d.public_fishermen!.boat_name
       }));
     const uniqueMap = new Map(fishermen.map(f => [f.id, f.name]));
     return Array.from(uniqueMap, ([id, name]) => ({ id, name }));
@@ -246,7 +246,7 @@ const Arrivages = () => {
     if (!drops) return [];
     return drops.filter(drop => {
       // Filtre zone
-      if (filterZone !== 'all' && drop.fishermen?.main_fishing_zone !== filterZone) {
+      if (filterZone !== 'all' && drop.public_fishermen?.main_fishing_zone !== filterZone) {
         return false;
       }
       
@@ -262,7 +262,7 @@ const Arrivages = () => {
       }
       
       // Filtre pêcheur
-      if (filterFisherman !== 'all' && drop.fishermen?.id !== filterFisherman) {
+      if (filterFisherman !== 'all' && drop.public_fishermen?.id !== filterFisherman) {
         return false;
       }
       
@@ -478,12 +478,14 @@ const Arrivages = () => {
         {/* Liste des drops */}
         <div className="space-y-4">
           {filteredDrops?.map((drop) => {
+            if (!drop.public_fishermen) return null;
+            
             const etaDate = drop.eta_at ? new Date(drop.eta_at) : null;
             const saleDate = drop.sale_start_time ? new Date(drop.sale_start_time) : null;
             const portName = `${drop.ports.name}, ${drop.ports.city}`;
-            const displayName = drop.fishermen.display_name_preference === 'company_name' 
-              ? (drop.fishermen.company_name || drop.fishermen.boat_name)
-              : drop.fishermen.boat_name;
+            const displayName = drop.public_fishermen.display_name_preference === 'company_name' 
+              ? (drop.public_fishermen.company_name || drop.public_fishermen.boat_name)
+              : drop.public_fishermen.boat_name;
             
             // Pour chaque drop, créer une card par offre (ou une seule si pas d'offres)
             if (drop.offers && drop.offers.length > 0) {
@@ -506,8 +508,8 @@ const Arrivages = () => {
                       dropPhotos={drop.drop_photos}
                       fisherman={{
                         name: displayName,
-                        boat: drop.fishermen.boat_name,
-                        isAmbassador: drop.fishermen.is_ambassador
+                        boat: drop.public_fishermen.boat_name,
+                        isAmbassador: drop.public_fishermen.is_ambassador
                       }}
                     />
                   </div>
@@ -531,8 +533,8 @@ const Arrivages = () => {
                   dropPhotos={drop.drop_photos}
                   fisherman={{
                     name: displayName,
-                    boat: drop.fishermen.boat_name,
-                    isAmbassador: drop.fishermen.is_ambassador
+                    boat: drop.public_fishermen.boat_name,
+                    isAmbassador: drop.public_fishermen.is_ambassador
                   }}
                 />
               </div>
