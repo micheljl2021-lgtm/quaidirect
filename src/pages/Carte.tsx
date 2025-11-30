@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { Filter, Search, MapPin } from "lucide-react";
+import { Filter, Search, MapPin, Fish } from "lucide-react";
 
 const Carte = () => {
   const [selectedPort, setSelectedPort] = useState<string | null>(null);
@@ -228,10 +228,32 @@ const Carte = () => {
         </div>
 
         {filteredArrivages.length === 0 && (
-          <div className="text-center py-16">
-            <p className="text-lg text-muted-foreground">
-              Aucun arrivage ne correspond à votre recherche
-            </p>
+          <div className="text-center py-16 space-y-4">
+            <Fish className="h-16 w-16 mx-auto text-muted-foreground/50" />
+            <div>
+              <p className="text-lg font-medium text-foreground mb-2">
+                {arrivages && arrivages.length > 0 
+                  ? "Aucun arrivage ne correspond à votre recherche"
+                  : "Aucun arrivage disponible pour le moment"
+                }
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {arrivages && arrivages.length > 0
+                  ? "Essayez de modifier vos filtres ou votre recherche"
+                  : "Les pêcheurs publient leurs arrivages régulièrement. Revenez bientôt !"
+                }
+              </p>
+            </div>
+            {(!arrivages || arrivages.length === 0) && (
+              <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+                <Button onClick={() => window.location.href = '/auth'}>
+                  Créer un compte pour être alerté
+                </Button>
+                <Button variant="outline" onClick={() => window.location.href = '/premium'}>
+                  Découvrir Premium
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

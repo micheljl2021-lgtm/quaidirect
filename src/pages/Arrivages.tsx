@@ -128,14 +128,11 @@ const Arrivages = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!user,
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
   // Set up realtime subscription for drops
   useEffect(() => {
-    if (!user) return;
-
     const channel = supabase
       .channel('drops-changes')
       .on(
@@ -155,7 +152,7 @@ const Arrivages = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, queryClient]);
+  }, [queryClient]);
 
   const getTimeUntil = (date: Date) => {
     const diff = date.getTime() - currentTime.getTime();
@@ -451,14 +448,29 @@ const Arrivages = () => {
 
         {!isLoading && !error && drops && drops.length === 0 && (
           <Card>
-            <CardContent className="pt-6 text-center py-12">
+            <CardContent className="pt-6 text-center py-12 space-y-4">
               <Fish className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-              <p className="text-muted-foreground">
-                Aucun arrivage prévu pour le moment.
+              <p className="text-lg font-medium text-foreground">
+                Aucun arrivage prévu pour le moment
               </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Revenez plus tard ou activez les notifications pour être alerté !
+              <p className="text-sm text-muted-foreground">
+                Les pêcheurs publient leurs arrivages régulièrement. Revenez bientôt ou inscrivez-vous aux alertes pour ne rien manquer !
               </p>
+              {!user && (
+                <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+                  <Button onClick={() => navigate('/auth')}>
+                    Créer un compte gratuit
+                  </Button>
+                  <Button variant="outline" onClick={() => navigate('/premium')}>
+                    Découvrir Premium
+                  </Button>
+                </div>
+              )}
+              {user && userRole !== 'premium' && (
+                <Button onClick={() => navigate('/premium')}>
+                  Passer Premium pour être alerté en priorité
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}
