@@ -11,6 +11,7 @@ interface AuthContextType {
   isVerifiedFisherman: boolean;
   signIn: (email: string) => Promise<void>;
   signInWithPassword: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   verifyOtp: (email: string, token: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -157,6 +158,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const signInWithGoogle = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth`,
+        },
+      });
+      
+      if (error) throw error;
+    } catch (error: any) {
+      toast({
+        title: 'Erreur de connexion',
+        description: error.message,
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  };
+
   const verifyOtp = async (email: string, token: string) => {
     try {
       const { error } = await supabase.auth.verifyOtp({
@@ -211,6 +232,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isVerifiedFisherman,
       signIn,
       signInWithPassword,
+      signInWithGoogle,
       verifyOtp, 
       signOut 
     }}>
