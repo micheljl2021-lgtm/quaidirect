@@ -146,15 +146,14 @@ export default function PremiumPaywall() {
           <Card className="relative hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span>{PLANS.monthly.name}</span>
+                <span>{PLANS.premiumMonthly.name}</span>
               </CardTitle>
-              <CardDescription>{PLANS.monthly.description}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold">{PLANS.monthly.price}</span>
-                  <span className="text-muted-foreground">/{PLANS.monthly.period}</span>
+                  <span className="text-4xl font-bold">{PLANS.premiumMonthly.price}</span>
+                  <span className="text-muted-foreground">/{PLANS.premiumMonthly.period}</span>
                 </div>
               </div>
               
@@ -171,10 +170,10 @@ export default function PremiumPaywall() {
               <Button
                 className="w-full"
                 size="lg"
-                onClick={() => handleSubscribe(PLANS.monthly.priceId, PLANS.monthly.plan)}
-                disabled={loading === PLANS.monthly.plan}
+                onClick={() => handleSubscribe(PLANS.premiumMonthly.priceId, PLANS.premiumMonthly.plan)}
+                disabled={loading === PLANS.premiumMonthly.plan}
               >
-                {loading === PLANS.monthly.plan ? "Chargement..." : "Essai gratuit 7 jours puis 2,50€/mois"}
+                {loading === PLANS.premiumMonthly.plan ? "Chargement..." : "S'abonner à 2€/mois"}
               </Button>
               <p className="text-xs text-center text-muted-foreground">
                 Aidez-nous à développer les points de vente de vos marins pêcheurs préférés
@@ -184,26 +183,25 @@ export default function PremiumPaywall() {
 
           {/* Annual Plan */}
           <Card className="relative border-primary shadow-lg hover:shadow-xl transition-shadow">
-            {PLANS.annual.badge && (
+            {PLANS.premiumAnnual.badge && (
               <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
-                {PLANS.annual.badge}
+                {PLANS.premiumAnnual.badge}
               </Badge>
             )}
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span>{PLANS.annual.name}</span>
+                <span>{PLANS.premiumAnnual.name}</span>
                 <Crown className="h-5 w-5 text-primary" />
               </CardTitle>
-              <CardDescription>{PLANS.annual.description}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold">{PLANS.annual.price}</span>
-                  <span className="text-muted-foreground">/{PLANS.annual.period}</span>
+                  <span className="text-4xl font-bold">{PLANS.premiumAnnual.price}</span>
+                  <span className="text-muted-foreground">/{PLANS.premiumAnnual.period}</span>
                 </div>
                 <p className="text-sm text-primary font-semibold mt-1">
-                  Soit 2,08€/mois
+                  Soit 1,67€/mois
                 </p>
               </div>
               
@@ -221,13 +219,13 @@ export default function PremiumPaywall() {
                 className="w-full"
                 size="lg"
                 variant="default"
-                onClick={() => handleSubscribe(PLANS.annual.priceId, PLANS.annual.plan)}
-                disabled={loading === PLANS.annual.plan}
+                onClick={() => handleSubscribe(PLANS.premiumAnnual.priceId, PLANS.premiumAnnual.plan)}
+                disabled={loading === PLANS.premiumAnnual.plan}
               >
-                {loading === PLANS.annual.plan ? "Chargement..." : "Essai gratuit 7 jours puis 25€/an"}
+                {loading === PLANS.premiumAnnual.plan ? "Chargement..." : "S'abonner à 20€/an"}
               </Button>
               <p className="text-xs text-center text-muted-foreground">
-                Économisez 2 mois • Soit 2,08€ / mois
+                Économisez 2 mois • Soit 1,67€ / mois
               </p>
             </CardFooter>
           </Card>
@@ -273,11 +271,11 @@ export default function PremiumPaywall() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
                 size="lg"
-                onClick={() => handleSubscribe(PLANS.annual.priceId, PLANS.annual.plan)}
+                onClick={() => handleSubscribe(PLANS.premiumAnnual.priceId, PLANS.premiumAnnual.plan)}
                 disabled={!!loading}
               >
                 <Crown className="mr-2 h-5 w-5" />
-                Commencer l'essai gratuit
+                Commencer Premium
               </Button>
               <Button
                 size="lg"
