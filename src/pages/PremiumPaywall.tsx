@@ -10,22 +10,39 @@ import { useAuth } from "@/hooks/useAuth";
 import Header from "@/components/Header";
 
 const PLANS = {
-  monthly: {
+  premiumMonthly: {
     name: "Premium Mensuel",
-    price: "2,50€",
-    priceId: "price_1SYfFZH0VhS1yyE0e66gI70j",
-    plan: "monthly_2_50",
+    price: "2€",
+    priceId: "price_PREMIUM_MONTHLY_2",
+    plan: "premium_monthly",
     period: "par mois",
-    description: "Engagement mensuel",
+    tier: "premium",
   },
-  annual: {
+  premiumAnnual: {
     name: "Premium Annuel",
-    price: "25€",
-    priceId: "price_1SYfFIH0VhS1yyE0xKuHgfhF",
-    plan: "annual_25",
+    price: "20€",
+    priceId: "price_PREMIUM_ANNUAL_20",
+    plan: "premium_annual",
     period: "par an",
-    description: "Économisez 2 mois",
-    badge: "Meilleur prix",
+    badge: "2 mois offerts",
+    tier: "premium",
+  },
+  premiumPlusMonthly: {
+    name: "Premium+ Mensuel",
+    price: "4€",
+    priceId: "price_PREMIUM_PLUS_MONTHLY_4",
+    plan: "premium_plus_monthly",
+    period: "par mois",
+    tier: "premium_plus",
+  },
+  premiumPlusAnnual: {
+    name: "Premium+ Annuel",
+    price: "40€",
+    priceId: "price_PREMIUM_PLUS_ANNUAL_40",
+    plan: "premium_plus_annual",
+    period: "par an",
+    badge: "2 mois offerts",
+    tier: "premium_plus",
   },
 };
 

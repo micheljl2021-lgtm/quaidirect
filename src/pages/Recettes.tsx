@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Clock, Users, ChefHat, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -28,6 +29,9 @@ const Recettes = () => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [durationFilter, setDurationFilter] = useState("all");
+  const [speciesFilter, setSpeciesFilter] = useState("all");
+  const [allSpecies, setAllSpecies] = useState<string[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -65,6 +69,12 @@ const Recettes = () => {
         );
 
         setRecipes(recipesWithSpecies);
+        
+        // Extract unique species for filter
+        const uniqueSpecies = Array.from(
+          new Set(recipesWithSpecies.flatMap(r => r.species.map(s => s.name)))
+        ).sort();
+        setAllSpecies(uniqueSpecies);
       }
     } catch (error: any) {
       toast.error("Erreur lors du chargement des recettes");
@@ -74,14 +84,22 @@ const Recettes = () => {
     }
   };
 
-  const filteredRecipes = recipes.filter(
-    (recipe) =>
+  const filteredRecipes = recipes.filter((recipe) => {
+    const matchesSearch = !searchQuery ||
       recipe.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       recipe.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      recipe.species.some((s) =>
-        s.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-  );
+      recipe.species.some(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const totalTime = recipe.preparation_time + recipe.cooking_time;
+    const matchesDuration = durationFilter === "all" ||
+      (durationFilter === "quick" && totalTime <= 30) ||
+      (durationFilter === "long" && totalTime > 30);
+
+    const matchesSpecies = speciesFilter === "all" ||
+      recipe.species.some(s => s.name === speciesFilter);
+
+    return matchesSearch && matchesDuration && matchesSpecies;
+  });
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -111,14 +129,39 @@ const Recettes = () => {
             </p>
           </div>
 
-          <div className="relative max-w-xl">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher une recette ou un poisson..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+          <div className="flex flex-col sm:flex-row gap-4 max-w-4xl">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher une recette ou un poisson..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={durationFilter} onValueChange={setDurationFilter}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Durée" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes durées</SelectItem>
+                <SelectItem value="quick">{"Rapide (≤30 min)"}</SelectItem>
+                <SelectItem value="long">{"Long (>30 min)"}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={speciesFilter} onValueChange={setSpeciesFilter}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Type de poisson" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les poissons</SelectItem>
+                {allSpecies.map(species => (
+                  <SelectItem key={species} value={species}>
+                    {species}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ArrivageCard from "@/components/ArrivageCard";
 import GoogleMapComponent from "@/components/GoogleMapComponent";
+import SalePointDrawer from "@/components/SalePointDrawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,8 @@ import { Filter, Search, MapPin } from "lucide-react";
 
 const Carte = () => {
   const [selectedPort, setSelectedPort] = useState<string | null>(null);
+  const [selectedSalePoint, setSelectedSalePoint] = useState<any | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
@@ -33,6 +36,31 @@ const Carte = () => {
     }
   }, []);
 
+  // Fetch sale points with fisherman data
+  const { data: salePoints } = useQuery({
+    queryKey: ['sale-points'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('fisherman_sale_points')
+        .select(`
+          *,
+          fishermen (
+            id,
+            boat_name,
+            photo_url,
+            bio,
+            fishing_methods,
+            company_name,
+            slug
+          )
+        `)
+        .order('label');
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Fetch real ports from database
   const { data: ports } = useQuery({
     queryKey: ['ports'],
@@ -46,6 +74,14 @@ const Carte = () => {
       return data;
     },
   });
+
+  const handleSalePointClick = (salePointId: string) => {
+    const salePoint = salePoints?.find(sp => sp.id === salePointId);
+    if (salePoint) {
+      setSelectedSalePoint(salePoint);
+      setDrawerOpen(true);
+    }
+  };
 
   // Fetch real arrivages from database
   const { data: arrivages } = useQuery({
@@ -176,6 +212,13 @@ const Carte = () => {
             userLocation={userLocation}
           />
         </div>
+
+        {/* Sale Point Drawer */}
+        <SalePointDrawer
+          open={drawerOpen}
+          onOpenChange={setDrawerOpen}
+          salePoint={selectedSalePoint}
+        />
 
         {/* Arrivages grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
