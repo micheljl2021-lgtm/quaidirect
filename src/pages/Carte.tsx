@@ -94,10 +94,22 @@ const Carte = () => {
           eta_at,
           sale_start_time,
           is_premium,
+          latitude,
+          longitude,
+          sale_point_id,
+          port_id,
           ports (
             id,
             name,
-            city
+            city,
+            latitude,
+            longitude
+          ),
+          fisherman_sale_points (
+            id,
+            label,
+            latitude,
+            longitude
           ),
           offers (
             unit_price,
@@ -139,6 +151,23 @@ const Carte = () => {
       isAmbassador: arrivage.fishermen?.is_ambassador || false,
       isPartnerAmbassador: arrivage.fishermen?.is_ambassador && arrivage.fishermen?.ambassador_slot === 1
     }
+  })) || [];
+
+  // Transform arrivages for map markers
+  const mapDrops = arrivages?.filter(arrivage => {
+    // Vérifier qu'on a des coordonnées (priorité: drop coords > sale point > port)
+    const lat = arrivage.latitude || arrivage.fisherman_sale_points?.latitude || arrivage.ports?.latitude;
+    const lng = arrivage.longitude || arrivage.fisherman_sale_points?.longitude || arrivage.ports?.longitude;
+    return lat && lng && arrivage.offers && arrivage.offers.length > 0;
+  }).map(arrivage => ({
+    id: arrivage.id,
+    latitude: arrivage.latitude || arrivage.fisherman_sale_points?.latitude || arrivage.ports?.latitude || 0,
+    longitude: arrivage.longitude || arrivage.fisherman_sale_points?.longitude || arrivage.ports?.longitude || 0,
+    species: arrivage.offers[0]?.species?.name || 'Poisson',
+    price: arrivage.offers[0]?.unit_price || 0,
+    saleTime: arrivage.sale_start_time ? new Date(arrivage.sale_start_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : 'À confirmer',
+    fishermanName: arrivage.fishermen?.boat_name || 'Pêcheur',
+    availableUnits: arrivage.offers[0]?.available_units || 0,
   })) || [];
 
   const filteredArrivages = transformedArrivages.filter(arrivage => {
@@ -212,8 +241,10 @@ const Carte = () => {
             <GoogleMapComponent 
               ports={ports || []}
               salePoints={salePoints || []}
+              drops={mapDrops}
               selectedPortId={selectedPort}
               onPortClick={setSelectedPort}
+              onSalePointClick={handleSalePointClick}
               userLocation={userLocation}
             />
         </div>
