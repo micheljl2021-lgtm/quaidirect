@@ -88,3 +88,6 @@ verify_jwt = false  # Called by webhook 3 days before trial end
 
 [functions.send-payment-confirmation-email]
 verify_jwt = false  # Called by webhook after invoice paid
+
+[functions.send-user-welcome-email]
+verify_jwt = false  # Called after user signup

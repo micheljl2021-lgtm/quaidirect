@@ -125,10 +125,23 @@ const PecheurOnboarding = () => {
         .maybeSingle();
       
       const isWhitelisted = !!whitelistData;
+      
       if (!isWhitelisted && (!fisherman || fisherman.onboarding_payment_status !== 'paid')) {
-        toast.error("Vous devez d'abord compléter le paiement de 150€");
-        navigate('/pecheur/payment');
-        return;
+        // Attendre 5 secondes pour que le webhook traite le paiement
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        
+        // Re-vérifier le statut de paiement
+        const { data: updatedFisherman } = await supabase
+          .from('fishermen')
+          .select('onboarding_payment_status')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (!updatedFisherman || updatedFisherman.onboarding_payment_status !== 'paid') {
+          toast.error("Vous devez d'abord compléter votre abonnement pêcheur");
+          navigate('/pecheur/payment');
+          return;
+        }
       }
 
       if (fisherman) {

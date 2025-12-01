@@ -73,6 +73,16 @@ const Auth = () => {
       if (error) throw error;
       
       if (data.user) {
+        // Envoyer l'email de bienvenue (ne pas bloquer l'inscription si ça échoue)
+        try {
+          await supabase.functions.invoke('send-user-welcome-email', {
+            body: { email: data.user.email }
+          });
+        } catch (emailError) {
+          console.error('Email sending failed:', emailError);
+          // Continue anyway
+        }
+
         toast({
           title: 'Compte créé',
           description: 'Connexion automatique en cours...',

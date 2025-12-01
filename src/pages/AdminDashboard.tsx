@@ -6,13 +6,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Shield, Loader2 } from "lucide-react";
 import { OverviewTab } from "@/components/admin/OverviewTab";
+import { ImprovedUsersTab } from "@/components/admin/ImprovedUsersTab";
+import { ImprovedFishermenTab } from "@/components/admin/ImprovedFishermenTab";
+import { ImprovedDropsTab } from "@/components/admin/ImprovedDropsTab";
 import { SalesTab } from "@/components/admin/SalesTab";
 import { ReservationsTab } from "@/components/admin/ReservationsTab";
-import { PremiumSubscriptionsTab } from "@/components/admin/PremiumSubscriptionsTab";
 import { OffersTab } from "@/components/admin/OffersTab";
-import { ImprovedUsersTab } from "@/components/admin/ImprovedUsersTab";
-import { ImprovedDropsTab } from "@/components/admin/ImprovedDropsTab";
-import { ImprovedFishermenTab } from "@/components/admin/ImprovedFishermenTab";
+import { PremiumSubscriptionsTab } from "@/components/admin/PremiumSubscriptionsTab";
+import { FishermanSubscriptionsTab } from "@/components/admin/FishermanSubscriptionsTab";
 import { ContactsTab } from "@/components/admin/ContactsTab";
 import { SupportRequestsTab } from "@/components/admin/SupportRequestsTab";
 import { getRedirectPathByRole } from "@/lib/authRedirect";
@@ -65,7 +66,7 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 gap-2">
+          <TabsList className="grid w-full grid-cols-5 lg:grid-cols-11 gap-2">
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
             <TabsTrigger value="users">Utilisateurs</TabsTrigger>
             <TabsTrigger value="fishermen">Pêcheurs</TabsTrigger>
@@ -74,6 +75,7 @@ const AdminDashboard = () => {
             <TabsTrigger value="reservations">Réservations</TabsTrigger>
             <TabsTrigger value="offers">Offres</TabsTrigger>
             <TabsTrigger value="premium">Premium</TabsTrigger>
+            <TabsTrigger value="fisherman-subs">Pêcheurs Abo</TabsTrigger>
             <TabsTrigger value="contacts">Contacts</TabsTrigger>
             <TabsTrigger value="support">Demandes</TabsTrigger>
           </TabsList>
@@ -108,6 +110,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="premium" className="space-y-6">
             <PremiumSubscriptionsTab />
+          </TabsContent>
+
+          <TabsContent value="fisherman-subs" className="space-y-6">
+            <FishermanSubscriptionsTab />
           </TabsContent>
 
           <TabsContent value="contacts" className="space-y-6">

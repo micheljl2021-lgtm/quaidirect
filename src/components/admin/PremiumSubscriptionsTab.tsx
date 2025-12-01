@@ -16,7 +16,19 @@ export function PremiumSubscriptionsTab() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+
+      // Récupérer les emails des utilisateurs
+      const enrichedData = await Promise.all(
+        data.map(async (payment) => {
+          const { data: userData } = await supabase.auth.admin.getUserById(payment.user_id);
+          return {
+            ...payment,
+            user_email: userData.user?.email || null
+          };
+        })
+      );
+
+      return enrichedData;
     },
   });
 
@@ -61,21 +73,27 @@ export function PremiumSubscriptionsTab() {
             <div className="text-center py-8 text-muted-foreground">Chargement...</div>
           ) : (
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User ID</TableHead>
-                  <TableHead>Stripe Customer</TableHead>
-                  <TableHead>Stripe Subscription</TableHead>
-                  <TableHead>Début période</TableHead>
-                  <TableHead>Fin période</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Créé le</TableHead>
-                </TableRow>
-              </TableHeader>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Email</TableHead>
+                <TableHead>Plan</TableHead>
+                <TableHead>Stripe Customer</TableHead>
+                <TableHead>Stripe Subscription</TableHead>
+                <TableHead>Début période</TableHead>
+                <TableHead>Fin période</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead>Créé le</TableHead>
+              </TableRow>
+            </TableHeader>
               <TableBody>
-                {subscriptions?.map((sub) => (
+                {subscriptions?.map((sub: any) => (
                   <TableRow key={sub.id}>
-                    <TableCell className="font-mono text-xs">{sub.user_id.slice(0, 8)}...</TableCell>
+                    <TableCell className="text-sm">{sub.user_email || '-'}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">
+                        {sub.plan === 'premium_monthly' ? 'Mensuel (2,50€)' : 'Annuel (25€)'}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="font-mono text-xs">{sub.stripe_customer_id?.slice(0, 12)}...</TableCell>
                     <TableCell className="font-mono text-xs">{sub.stripe_subscription_id?.slice(0, 12)}...</TableCell>
                     <TableCell>

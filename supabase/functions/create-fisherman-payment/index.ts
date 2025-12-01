@@ -69,7 +69,7 @@ serve(async (req) => {
         },
       ],
       mode: 'subscription',
-      success_url: `${origin}/pecheur/payment-success`,
+      success_url: `${origin}/pecheur/payment-success?plan=${planType}`,
       cancel_url: `${origin}/pecheur/payment?canceled=true`,
       metadata: {
         user_id: user.id,
