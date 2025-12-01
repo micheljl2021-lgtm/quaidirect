@@ -32,7 +32,7 @@ serve(async (req) => {
         latitude,
         longitude,
         fisherman_id,
-        fishermen (
+        fishermen!fisherman_sale_points_fisherman_id_fkey (
           id,
           boat_name,
           photo_url,
