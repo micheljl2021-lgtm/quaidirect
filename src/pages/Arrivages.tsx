@@ -101,6 +101,11 @@ const Arrivages = () => {
           name,
           city
         ),
+        fisherman_sale_points (
+          id,
+          label,
+          address
+        ),
         drop_photos (
           id,
           photo_url,
@@ -221,10 +226,17 @@ const Arrivages = () => {
 
   const uniquePorts = useMemo(() => {
     if (!drops) return [];
-    const ports = drops
-      .filter(d => d.ports?.id)
-      .map(d => ({ id: d.ports.id, name: `${d.ports.name}, ${d.ports.city}` }));
-    const uniqueMap = new Map(ports.map(p => [p.id, p.name]));
+    const locations = drops
+      .map(d => {
+        if (d.ports?.id) {
+          return { id: d.ports.id, name: `${d.ports.name}, ${d.ports.city}` };
+        } else if (d.fisherman_sale_points?.id) {
+          return { id: d.fisherman_sale_points.id, name: d.fisherman_sale_points.label };
+        }
+        return null;
+      })
+      .filter(Boolean);
+    const uniqueMap = new Map(locations.map(p => [p.id, p.name]));
     return Array.from(uniqueMap, ([id, name]) => ({ id, name }));
   }, [drops]);
 
@@ -483,8 +495,10 @@ const Arrivages = () => {
             
             const etaDate = drop.eta_at ? new Date(drop.eta_at) : null;
             const saleDate = drop.sale_start_time ? new Date(drop.sale_start_time) : null;
-            const portName = `${drop.ports.name}, ${drop.ports.city}`;
-            const displayName = drop.public_fishermen.display_name_preference === 'company_name' 
+            const portName = drop.ports?.name 
+              ? `${drop.ports.name}, ${drop.ports.city}` 
+              : drop.fisherman_sale_points?.label || 'Point de vente';
+            const displayName = drop.public_fishermen.display_name_preference === 'company_name'
               ? (drop.public_fishermen.company_name || drop.public_fishermen.boat_name)
               : drop.public_fishermen.boat_name;
             
