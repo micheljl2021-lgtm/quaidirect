@@ -253,6 +253,37 @@ serve(async (req) => {
           } else {
             logStep('Fisherman role added successfully');
           }
+
+          // Send welcome email
+          try {
+            const { data: fishermenData } = await supabaseClient
+              .from('fishermen')
+              .select('boat_name')
+              .eq('user_id', userId)
+              .single();
+
+            const welcomeResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-fisherman-welcome-email`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+                'x-internal-secret': Deno.env.get('INTERNAL_FUNCTION_SECRET') || '',
+              },
+              body: JSON.stringify({
+                userEmail: session.customer_details?.email,
+                boatName: fishermenData?.boat_name,
+                plan: planType,
+              }),
+            });
+
+            if (!welcomeResponse.ok) {
+              logStep('WARNING: Failed to send welcome email', await welcomeResponse.text());
+            } else {
+              logStep('Welcome email sent successfully');
+            }
+          } catch (emailError) {
+            logStep('WARNING: Error sending welcome email', emailError);
+          }
           break;
         }
 
@@ -334,19 +365,58 @@ serve(async (req) => {
         if (invoice.subscription) {
           const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
           
-          const { error } = await supabaseClient
+          const { data: paymentData, error: updateError } = await supabaseClient
             .from('payments')
             .update({
               status: 'active',
               current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
               current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
             })
-            .eq('stripe_subscription_id', subscription.id);
+            .eq('stripe_subscription_id', subscription.id)
+            .select('user_id, plan')
+            .single();
 
-          if (error) {
-            logStep('ERROR updating payment status', { error });
+          if (updateError) {
+            logStep('ERROR updating payment status', { error: updateError });
           } else {
             logStep('Payment status updated to active');
+
+            // Send payment confirmation email
+            if (paymentData) {
+              try {
+                const { data: userData } = await supabaseClient.auth.admin.getUserById(paymentData.user_id);
+                const { data: fishermenData } = await supabaseClient
+                  .from('fishermen')
+                  .select('boat_name')
+                  .eq('user_id', paymentData.user_id)
+                  .single();
+
+                const confirmationResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-payment-confirmation-email`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+                    'x-internal-secret': Deno.env.get('INTERNAL_FUNCTION_SECRET') || '',
+                  },
+                  body: JSON.stringify({
+                    userEmail: userData?.user?.email,
+                    boatName: fishermenData?.boat_name,
+                    plan: paymentData.plan,
+                    amountPaid: invoice.amount_paid,
+                    invoiceUrl: invoice.hosted_invoice_url,
+                    nextBillingDate: new Date(subscription.current_period_end * 1000).toISOString(),
+                  }),
+                });
+
+                if (!confirmationResponse.ok) {
+                  logStep('WARNING: Failed to send payment confirmation', await confirmationResponse.text());
+                } else {
+                  logStep('Payment confirmation email sent successfully');
+                }
+              } catch (emailError) {
+                logStep('WARNING: Error sending payment confirmation', emailError);
+              }
+            }
           }
         }
         break;
@@ -451,6 +521,59 @@ serve(async (req) => {
           logStep('ERROR updating subscription', { error });
         } else {
           logStep('Subscription updated successfully');
+        }
+        break;
+      }
+
+      case 'customer.subscription.trial_will_end': {
+        const subscription = event.data.object as Stripe.Subscription;
+        logStep('Trial will end event received', { subscriptionId: subscription.id, trialEnd: subscription.trial_end });
+
+        const { data: trialPayment } = await supabaseClient
+          .from('payments')
+          .select('user_id, plan')
+          .eq('stripe_subscription_id', subscription.id)
+          .single();
+
+        if (trialPayment) {
+          try {
+            const { data: trialUserData } = await supabaseClient.auth.admin.getUserById(trialPayment.user_id);
+            const { data: trialFishermenData } = await supabaseClient
+              .from('fishermen')
+              .select('boat_name')
+              .eq('user_id', trialPayment.user_id)
+              .single();
+
+            // Create customer portal session for management link
+            const portalSession = await stripe.billingPortal.sessions.create({
+              customer: subscription.customer as string,
+              return_url: 'https://quaidirect.fr/dashboard/pecheur',
+            });
+
+            const reminderResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-trial-ending-reminder`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+                'x-internal-secret': Deno.env.get('INTERNAL_FUNCTION_SECRET') || '',
+              },
+              body: JSON.stringify({
+                userEmail: trialUserData?.user?.email,
+                boatName: trialFishermenData?.boat_name,
+                plan: trialPayment.plan.replace('fisherman_', ''),
+                trialEndDate: new Date(subscription.trial_end * 1000).toISOString(),
+                customerPortalUrl: portalSession.url,
+              }),
+            });
+
+            if (!reminderResponse.ok) {
+              logStep('WARNING: Failed to send trial ending reminder', await reminderResponse.text());
+            } else {
+              logStep('Trial ending reminder sent successfully');
+            }
+          } catch (emailError) {
+            logStep('WARNING: Error sending trial ending reminder', emailError);
+          }
         }
         break;
       }

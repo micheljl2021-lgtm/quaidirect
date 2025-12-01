@@ -400,8 +400,16 @@ const Panier = () => {
 
                       <CardContent className="space-y-6">
                         <div className="text-center">
-                          <div className="text-4xl font-bold text-primary">
-                            {(basket.price_cents / 100).toFixed(0)}€
+                          <div className="space-y-1">
+                            <div className="text-sm text-muted-foreground line-through">
+                              Prix pêcheur : {(basket.price_cents / 100 / 1.08).toFixed(2)}€
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              + {(basket.price_cents / 100 * 0.08 / 1.08).toFixed(2)}€ frais de service (8%)
+                            </div>
+                            <div className="text-4xl font-bold text-primary">
+                              {(basket.price_cents / 100).toFixed(2)}€
+                            </div>
                           </div>
                           <p className="text-sm text-muted-foreground mt-1">
                             ~{basket.weight_kg}kg de poisson

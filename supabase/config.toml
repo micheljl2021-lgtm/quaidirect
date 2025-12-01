@@ -79,3 +79,12 @@ verify_jwt = true  # Admin only - sends approval email
 
 [functions.send-basket-order-notification]
 verify_jwt = false  # Called by webhook after basket order
+
+[functions.send-fisherman-welcome-email]
+verify_jwt = false  # Called by webhook after fisherman subscription
+
+[functions.send-trial-ending-reminder]
+verify_jwt = false  # Called by webhook 3 days before trial end
+
+[functions.send-payment-confirmation-email]
+verify_jwt = false  # Called by webhook after invoice paid
