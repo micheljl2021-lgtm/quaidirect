@@ -150,8 +150,12 @@ serve(async (req) => {
             // Send notification to fisherman
             if (newOrder?.id && fishermanId) {
               try {
+                const internalSecret = Deno.env.get('INTERNAL_FUNCTION_SECRET');
                 await supabaseClient.functions.invoke('send-basket-order-notification', {
-                  body: { orderId: newOrder.id }
+                  body: { orderId: newOrder.id },
+                  headers: {
+                    'x-internal-secret': internalSecret || ''
+                  }
                 });
                 logStep('Fisherman notification sent for basket order', { orderId: newOrder.id });
               } catch (notifError) {
@@ -299,22 +303,26 @@ serve(async (req) => {
         } else {
           logStep('Premium role added successfully');
           
-          // Send welcome email to new premium user
-          try {
-            const { data: { user: premiumUser } } = await supabaseClient.auth.admin.getUserById(userId);
-            if (premiumUser?.email) {
-              await supabaseClient.functions.invoke('send-premium-welcome-email', {
-                body: { 
-                  userEmail: premiumUser.email,
-                  userName: premiumUser.user_metadata?.full_name,
-                  plan: plan
-                }
-              });
-              logStep('Premium welcome email sent', { email: premiumUser.email });
+            // Send welcome email to new premium user
+            try {
+              const { data: { user: premiumUser } } = await supabaseClient.auth.admin.getUserById(userId);
+              if (premiumUser?.email) {
+                const internalSecret = Deno.env.get('INTERNAL_FUNCTION_SECRET');
+                await supabaseClient.functions.invoke('send-premium-welcome-email', {
+                  body: { 
+                    userEmail: premiumUser.email,
+                    userName: premiumUser.user_metadata?.full_name,
+                    plan: plan
+                  },
+                  headers: {
+                    'x-internal-secret': internalSecret || ''
+                  }
+                });
+                logStep('Premium welcome email sent', { email: premiumUser.email });
+              }
+            } catch (emailError) {
+              logStep('ERROR sending premium welcome email', { error: emailError });
             }
-          } catch (emailError) {
-            logStep('ERROR sending premium welcome email', { error: emailError });
-          }
         }
         break;
       }

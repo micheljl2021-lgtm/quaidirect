@@ -4,7 +4,7 @@ import { Resend } from "https://esm.sh/resend@4.0.0";
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://quaidirect.fr",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
@@ -20,6 +20,18 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Verify internal secret for webhook calls
+    const internalSecret = req.headers.get('x-internal-secret');
+    const expectedSecret = Deno.env.get('INTERNAL_FUNCTION_SECRET');
+    
+    if (!expectedSecret || internalSecret !== expectedSecret) {
+      console.error('[PREMIUM-WELCOME] Unauthorized: Invalid or missing internal secret');
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { userEmail, userName, plan }: PremiumWelcomeRequest = await req.json();
 
     const planLabel = plan.includes('annual') ? 'Annuel' : 'Mensuel';
