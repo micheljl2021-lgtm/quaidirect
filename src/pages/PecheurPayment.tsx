@@ -12,9 +12,10 @@ import Header from '@/components/Header';
 const PLANS = {
   basic: {
     name: "Pêcheur Basic",
-    price: "99€",
-    priceId: "price_1SYfUYH0VhS1yyE0d3c5GQLA",
+    price: "150€",
+    priceId: "price_1SZYAXH0VhS1yyE0FqJ0imbu",
     period: "par an",
+    trial: "🎁 1 mois offert",
     features: [
       "Fiche pêcheur + points de vente",
       "Emails illimités aux clients",
@@ -29,6 +30,7 @@ const PLANS = {
     priceId: "price_1SYgOuH0VhS1yyE0XINPVQdm",
     period: "par an",
     badge: "Recommandé",
+    trial: "🎁 1 mois offert",
     features: [
       "Tout le plan Basic inclus",
       "IA avancée : prix, mise en avant, météo/marée",
@@ -139,6 +141,11 @@ const PecheurPayment = () => {
                     <span>{PLANS.basic.name}</span>
                   </CardTitle>
                   <CardDescription>Pour démarrer la vente en direct</CardDescription>
+                  {PLANS.basic.trial && (
+                    <Badge className="bg-green-500 text-white mt-2 w-fit">
+                      {PLANS.basic.trial}
+                    </Badge>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <div className="mb-6">
@@ -146,6 +153,9 @@ const PecheurPayment = () => {
                       <span className="text-4xl font-bold">{PLANS.basic.price}</span>
                       <span className="text-muted-foreground">/{PLANS.basic.period}</span>
                     </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      puis {PLANS.basic.price}/{PLANS.basic.period}
+                    </p>
                   </div>
                   
                   <ul className="space-y-3 mb-6">
@@ -164,7 +174,7 @@ const PecheurPayment = () => {
                     variant="outline"
                     className="w-full"
                   >
-                    {loading === 'basic' ? 'Chargement...' : 'Choisir Basic'}
+                    {loading === 'basic' ? 'Chargement...' : 'Démarrer l\'essai gratuit'}
                   </Button>
                 </CardContent>
               </Card>
@@ -182,6 +192,11 @@ const PecheurPayment = () => {
                     <Crown className="h-5 w-5 text-primary" />
                   </CardTitle>
                   <CardDescription>Pour maximiser vos ventes</CardDescription>
+                  {PLANS.pro.trial && (
+                    <Badge className="bg-green-500 text-white mt-2 w-fit">
+                      {PLANS.pro.trial}
+                    </Badge>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <div className="mb-6">
@@ -189,6 +204,9 @@ const PecheurPayment = () => {
                       <span className="text-4xl font-bold">{PLANS.pro.price}</span>
                       <span className="text-muted-foreground">/{PLANS.pro.period}</span>
                     </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      puis {PLANS.pro.price}/{PLANS.pro.period}
+                    </p>
                   </div>
                   
                   <ul className="space-y-3 mb-6">
@@ -206,11 +224,32 @@ const PecheurPayment = () => {
                     size="lg"
                     className="w-full"
                   >
-                    {loading === 'pro' ? 'Chargement...' : 'Choisir Pro'}
+                    {loading === 'pro' ? 'Chargement...' : 'Démarrer l\'essai gratuit'}
                   </Button>
                 </CardContent>
               </Card>
             </div>
+
+            {/* Trial Info Card */}
+            <Card className="mb-8 max-w-5xl mx-auto bg-green-50 border-green-200">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-3">
+                  <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-green-900 mb-2">
+                      🎁 Profitez de 1 mois d'essai gratuit
+                    </p>
+                    <p className="text-sm text-green-800">
+                      Votre carte bancaire sera vérifiée mais <strong>pas débitée</strong> pendant 30 jours. 
+                      Vous pouvez annuler à tout moment avant la fin de l'essai sans frais.
+                    </p>
+                    <p className="text-sm text-green-800 mt-2">
+                      Après 30 jours : facturation automatique selon le plan choisi.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* SMS Options Info */}
             <Card className="mb-8 max-w-5xl mx-auto bg-blue-50 border-blue-200">
