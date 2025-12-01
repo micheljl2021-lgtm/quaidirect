@@ -23,6 +23,7 @@ const categoryLabels = {
 const statusLabels = {
   pending: "En attente",
   in_progress: "En cours",
+  link_sent: "Lien envoyé",
   resolved: "Résolue",
   rejected: "Refusée"
 };
@@ -30,6 +31,7 @@ const statusLabels = {
 const statusIcons = {
   pending: Clock,
   in_progress: AlertCircle,
+  link_sent: Send,
   resolved: CheckCircle,
   rejected: XCircle
 };
@@ -37,6 +39,7 @@ const statusIcons = {
 const statusColors = {
   pending: "bg-yellow-100 text-yellow-800",
   in_progress: "bg-blue-100 text-blue-800",
+  link_sent: "bg-purple-100 text-purple-800",
   resolved: "bg-green-100 text-green-800",
   rejected: "bg-red-100 text-red-800"
 };
