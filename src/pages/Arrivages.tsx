@@ -79,7 +79,19 @@ const Arrivages = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch drops with RLS enforced server-side
+  // Fetch sale points via Edge Function to bypass RLS
+  const { data: salePoints } = useQuery({
+    queryKey: ['sale-points-public'],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-public-sale-points`);
+      if (!response.ok) {
+        throw new Error('Erreur lors du chargement des points de vente');
+      }
+      return response.json();
+    },
+  });
+
+  // Fetch drops with RLS enforced server-side (without sale points join)
   const { data: drops, isLoading, error } = useQuery({
     queryKey: ['drops', user?.id],
     queryFn: async () => {
@@ -100,11 +112,6 @@ const Arrivages = () => {
           id,
           name,
           city
-        ),
-        fisherman_sale_points (
-          id,
-          label,
-          address
         ),
         drop_photos (
           id,
@@ -225,20 +232,23 @@ const Arrivages = () => {
   }, [drops]);
 
   const uniquePorts = useMemo(() => {
-    if (!drops) return [];
+    if (!drops || !salePoints) return [];
     const locations = drops
       .map(d => {
         if (d.ports?.id) {
           return { id: d.ports.id, name: `${d.ports.name}, ${d.ports.city}` };
-        } else if (d.fisherman_sale_points?.id) {
-          return { id: d.fisherman_sale_points.id, name: d.fisherman_sale_points.label };
+        } else if (d.sale_point_id) {
+          const salePoint = salePoints.find((sp: any) => sp.id === d.sale_point_id);
+          if (salePoint) {
+            return { id: salePoint.id, name: salePoint.address || salePoint.label };
+          }
         }
         return null;
       })
       .filter(Boolean);
     const uniqueMap = new Map(locations.map(p => [p.id, p.name]));
     return Array.from(uniqueMap, ([id, name]) => ({ id, name }));
-  }, [drops]);
+  }, [drops, salePoints]);
 
   const uniqueFishermen = useMemo(() => {
     if (!drops) return [];
@@ -490,15 +500,18 @@ const Arrivages = () => {
 
         {/* Liste des drops */}
         <div className="space-y-4">
-          {filteredDrops?.map((drop) => {
+        {filteredDrops?.map((drop) => {
             if (!drop.public_fishermen) return null;
             
             const etaDate = drop.eta_at ? new Date(drop.eta_at) : null;
             const saleDate = drop.sale_start_time ? new Date(drop.sale_start_time) : null;
-            // On ne joint plus fisherman_sale_points côté base (RLS), on récupère donc l'adresse via les données déjà enrichies dans drop
+            
+            // Joindre côté client les sale points (chargés via Edge Function)
+            const salePoint = salePoints?.find((sp: any) => sp.id === drop.sale_point_id);
             const portName = drop.ports?.name 
               ? `${drop.ports.name}, ${drop.ports.city}` 
-              : (drop.fisherman_sale_points?.address || drop.fisherman_sale_points?.label || 'Point de vente');
+              : (salePoint?.address || salePoint?.label || 'Point de vente');
+            
             const displayName = drop.public_fishermen.display_name_preference === 'company_name'
               ? (drop.public_fishermen.company_name || drop.public_fishermen.boat_name)
               : drop.public_fishermen.boat_name;
