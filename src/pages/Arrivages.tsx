@@ -497,7 +497,7 @@ const Arrivages = () => {
             const saleDate = drop.sale_start_time ? new Date(drop.sale_start_time) : null;
             const portName = drop.ports?.name 
               ? `${drop.ports.name}, ${drop.ports.city}` 
-              : drop.fisherman_sale_points?.label || 'Point de vente';
+              : (drop.fisherman_sale_points?.address || drop.fisherman_sale_points?.label || 'Point de vente');
             const displayName = drop.public_fishermen.display_name_preference === 'company_name'
               ? (drop.public_fishermen.company_name || drop.public_fishermen.boat_name)
               : drop.public_fishermen.boat_name;
