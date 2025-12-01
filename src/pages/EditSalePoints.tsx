@@ -135,9 +135,17 @@ export default function EditSalePoints() {
     try {
       const result = await geocodeAddress(point.address);
       if (result) {
-        handleChange(index, 'latitude', result.lat);
-        handleChange(index, 'longitude', result.lng);
-        handleChange(index, 'address', result.formattedAddress);
+        // Mise à jour atomique de tous les champs pour éviter le stale state
+        setSalePoints(prevPoints => {
+          const newPoints = [...prevPoints];
+          newPoints[index] = {
+            ...newPoints[index],
+            latitude: result.lat,
+            longitude: result.lng,
+            address: result.formattedAddress
+          };
+          return newPoints;
+        });
         toast.success('Adresse localisée avec succès');
       } else {
         toast.error('Impossible de localiser cette adresse');
