@@ -77,6 +77,7 @@ serve(async (req) => {
         plan_type: planType,
       },
       subscription_data: {
+        trial_period_days: 30, // 🎁 30 jours d'essai gratuit
         metadata: {
           user_id: user.id,
           payment_type: 'fisherman_onboarding',
