@@ -53,6 +53,7 @@ const Landing = () => {
           )
         `)
         .eq('status', 'scheduled')
+        .gte('sale_start_time', new Date().toISOString())
         .order('eta_at', { ascending: true })
         .limit(3);
 
