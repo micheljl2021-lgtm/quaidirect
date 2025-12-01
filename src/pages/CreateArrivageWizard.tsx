@@ -116,33 +116,58 @@ export default function CreateArrivageWizard() {
   };
 
   const handlePublish = async () => {
-    if (!user) return;
+    console.log("🚀 [handlePublish] Démarrage publication arrivage");
+    
+    if (!user) {
+      console.error("❌ [handlePublish] Pas d'utilisateur connecté");
+      toast.error("Vous devez être connecté pour publier un arrivage");
+      return;
+    }
 
+    console.log("✅ [handlePublish] User:", user.id);
     setIsPublishing(true);
 
     try {
       // Get fisherman ID
+      console.log("📡 [handlePublish] Récupération profil pêcheur...");
       const { data: fishermanData, error: fishermanError } = await supabase
         .from("fishermen")
-        .select("id")
+        .select("id, verified_at")
         .eq("user_id", user.id)
         .single();
 
+      console.log("📊 [handlePublish] Fisherman data:", fishermanData, "Error:", fishermanError);
+
       if (fishermanError || !fishermanData) {
+        console.error("❌ [handlePublish] Profil pêcheur introuvable");
         toast.error("Ton profil pêcheur n'est pas encore complet. Termine l'onboarding pour pouvoir publier un arrivage.");
         navigate("/pecheur/onboarding");
         return;
       }
 
+      if (!fishermanData.verified_at) {
+        console.error("❌ [handlePublish] Pêcheur non vérifié");
+        toast.error("Ton compte pêcheur est en attente de validation par l'administrateur. Tu recevras un email une fois validé.");
+        setIsPublishing(false);
+        return;
+      }
+
+      console.log("✅ [handlePublish] Pêcheur vérifié:", fishermanData.id);
+
       // Get sale point coordinates
-      const { data: salePointData } = await supabase
+      console.log("📡 [handlePublish] Récupération point de vente:", arrivageData.salePointId);
+      const { data: salePointData, error: salePointError } = await supabase
         .from('fisherman_sale_points')
         .select('*')
         .eq('id', arrivageData.salePointId)
         .single();
 
+      console.log("📊 [handlePublish] Sale point data:", salePointData, "Error:", salePointError);
+
       if (!salePointData) {
+        console.error("❌ [handlePublish] Point de vente introuvable");
         toast.error('Point de vente introuvable');
+        setIsPublishing(false);
         return;
       }
 
@@ -162,40 +187,64 @@ export default function CreateArrivageWizard() {
       const saleStartDate = new Date(etaDate);
       saleStartDate.setMinutes(saleStartDate.getMinutes() + 30);
 
+      console.log("📅 [handlePublish] Dates calculées - ETA:", etaDate.toISOString(), "Sale start:", saleStartDate.toISOString());
+
+      const dropPayload = {
+        fisherman_id: fishermanData.id,
+        sale_point_id: arrivageData.salePointId,
+        latitude: salePointData.latitude,
+        longitude: salePointData.longitude,
+        eta_at: etaDate.toISOString(),
+        sale_start_time: saleStartDate.toISOString(),
+        visible_at: new Date().toISOString(),
+        status: "scheduled" as const,
+        port_id: null,
+      };
+
+      console.log("📦 [handlePublish] Payload drop:", dropPayload);
+      console.log("📡 [handlePublish] Insertion drop...");
+
       const { data: dropData, error: dropError } = await supabase
         .from("drops")
-        .insert([{
-          fisherman_id: fishermanData.id,
-          sale_point_id: arrivageData.salePointId,
-          latitude: salePointData.latitude,
-          longitude: salePointData.longitude,
-          eta_at: etaDate.toISOString(),
-          sale_start_time: saleStartDate.toISOString(),
-          visible_at: new Date().toISOString(),
-          status: "scheduled" as const,
-          port_id: null,
-        }])
+        .insert([dropPayload])
         .select()
         .single();
 
-      if (dropError) throw dropError;
+      console.log("📊 [handlePublish] Drop result:", dropData, "Error:", dropError);
+
+      if (dropError) {
+        console.error("❌ [handlePublish] Erreur insertion drop:", dropError);
+        toast.error(`Erreur lors de la création du drop: ${dropError.message}`);
+        throw dropError;
+      }
+
+      console.log("✅ [handlePublish] Drop créé:", dropData.id);
 
       // Insert species associations
+      console.log("📡 [handlePublish] Insertion associations espèces...");
       const speciesIds = [...new Set(arrivageData.species.map((s) => s.speciesId))];
       const dropSpeciesData = speciesIds.map((speciesId) => ({
         drop_id: dropData.id,
         species_id: speciesId,
       }));
 
+      console.log("📦 [handlePublish] Species data:", dropSpeciesData);
+
       if (dropSpeciesData.length > 0) {
         const { error: speciesError } = await supabase
           .from("drop_species")
           .insert(dropSpeciesData);
 
-        if (speciesError) throw speciesError;
+        if (speciesError) {
+          console.error("❌ [handlePublish] Erreur insertion species:", speciesError);
+          toast.error(`Erreur lors de l'ajout des espèces: ${speciesError.message}`);
+          throw speciesError;
+        }
+        console.log("✅ [handlePublish] Espèces associées");
       }
 
       // Insert offers
+      console.log("📡 [handlePublish] Insertion offres...");
       const offersData = arrivageData.species.map((species) => ({
         drop_id: dropData.id,
         species_id: species.speciesId,
@@ -207,35 +256,52 @@ export default function CreateArrivageWizard() {
         price_type: species.unit === "kg" ? "per_kg" : "per_piece",
       }));
 
+      console.log("📦 [handlePublish] Offers data:", offersData);
+
       const { error: offersError } = await supabase
         .from("offers")
         .insert(offersData);
 
-      if (offersError) throw offersError;
+      if (offersError) {
+        console.error("❌ [handlePublish] Erreur insertion offers:", offersError);
+        toast.error(`Erreur lors de l'ajout des offres: ${offersError.message}`);
+        throw offersError;
+      }
+
+      console.log("✅ [handlePublish] Offres créées");
 
       // Insert photos if any
       if (photos.length > 0) {
+        console.log("📡 [handlePublish] Insertion photos...");
         const photosData = photos.map((url, index) => ({
           drop_id: dropData.id,
           photo_url: url,
           display_order: index,
         }));
 
+        console.log("📦 [handlePublish] Photos data:", photosData);
+
         const { error: photosError } = await supabase
           .from("drop_photos")
           .insert(photosData);
 
         if (photosError) {
-          console.error("Error inserting photos:", photosError);
+          console.error("❌ [handlePublish] Erreur insertion photos:", photosError);
+          toast.error(`Erreur lors de l'ajout des photos: ${photosError.message}`);
+        } else {
+          console.log("✅ [handlePublish] Photos ajoutées");
         }
       }
 
+      console.log("🎉 [handlePublish] Publication réussie!");
       toast.success("Arrivage publié avec succès !");
       navigate("/dashboard/pecheur");
-    } catch (error) {
-      console.error("Error publishing arrivage:", error);
-      toast.error("Erreur lors de la publication de l'arrivage");
+    } catch (error: any) {
+      console.error("💥 [handlePublish] Erreur fatale:", error);
+      const errorMessage = error?.message || error?.error_description || "Erreur inconnue";
+      toast.error(`Erreur lors de la publication: ${errorMessage}`);
     } finally {
+      console.log("🏁 [handlePublish] Fin du processus");
       setIsPublishing(false);
     }
   };
