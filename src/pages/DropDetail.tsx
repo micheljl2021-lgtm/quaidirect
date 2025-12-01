@@ -43,6 +43,11 @@ const DropDetail = () => {
             latitude,
             longitude
           ),
+          fisherman_sale_points!sale_point_id (
+            id,
+            label,
+            address
+          ),
           drop_photos (
             id,
             photo_url,
@@ -180,7 +185,11 @@ const DropDetail = () => {
           <CardContent className="space-y-4">
             <div className="flex items-center gap-2 text-muted-foreground">
               <MapPin className="h-5 w-5" />
-              <span>{drop.ports.name}, {drop.ports.city}</span>
+              <span>
+                {drop.ports 
+                  ? `${drop.ports.name}, ${drop.ports.city}`
+                  : drop.fisherman_sale_points?.label || 'Point de vente'}
+              </span>
             </div>
             {saleDateTime && (
               <div className="flex items-center gap-2 text-muted-foreground">

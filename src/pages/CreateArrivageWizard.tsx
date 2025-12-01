@@ -124,7 +124,23 @@ export default function CreateArrivageWizard() {
       return;
     }
 
+    // Validation stricte UUID
+    if (!arrivageData.salePointId || arrivageData.salePointId.trim() === '') {
+      console.error("❌ [handlePublish] Sale point ID vide");
+      toast.error("Tu dois sélectionner un point de vente valide");
+      setStep(1); // Retour à l'étape 1
+      return;
+    }
+
+    if (arrivageData.species.length === 0) {
+      console.error("❌ [handlePublish] Aucune espèce sélectionnée");
+      toast.error("Tu dois ajouter au moins une espèce");
+      setStep(2);
+      return;
+    }
+
     console.log("✅ [handlePublish] User:", user.id);
+    console.log("✅ [handlePublish] Sale point ID:", arrivageData.salePointId);
     setIsPublishing(true);
 
     try {

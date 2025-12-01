@@ -123,6 +123,7 @@ const Arrivages = () => {
         )
       `)
         .in('status', ['scheduled', 'landed'])
+        .gte('sale_start_time', new Date().toISOString())
         .order('sale_start_time', { ascending: true });
 
       if (error) throw error;
