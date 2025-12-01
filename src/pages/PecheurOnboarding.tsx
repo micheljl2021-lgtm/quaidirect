@@ -25,7 +25,6 @@ import { Step3ZonesMethodes } from "@/components/onboarding/Step3ZonesMethodes";
 import { Step4Especes } from "@/components/onboarding/Step4Especes";
 import { Step5Photos } from "@/components/onboarding/Step5Photos";
 import { Step6PointsVente } from "@/components/onboarding/Step6PointsVente";
-import { isWhitelistedFisher } from "@/config/fisherWhitelist";
 
 interface FormData {
   // Step 1
@@ -119,7 +118,13 @@ const PecheurOnboarding = () => {
         .single();
 
       // Check payment status (skip for whitelisted users)
-      const isWhitelisted = isWhitelistedFisher(user.email, user.id);
+      const { data: whitelistData } = await supabase
+        .from('fisherman_whitelist')
+        .select('id')
+        .eq('email', user.email?.toLowerCase())
+        .maybeSingle();
+      
+      const isWhitelisted = !!whitelistData;
       if (!isWhitelisted && (!fisherman || fisherman.onboarding_payment_status !== 'paid')) {
         toast.error("Vous devez d'abord compléter le paiement de 150€");
         navigate('/pecheur/payment');

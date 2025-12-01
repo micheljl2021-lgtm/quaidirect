@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Mail, Store, Zap, Brain, ArrowLeft, Crown, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Header from '@/components/Header';
-import { isWhitelistedFisher } from '@/config/fisherWhitelist';
 
 const PLANS = {
   basic: {
@@ -48,9 +47,19 @@ const PecheurPayment = () => {
   const [isWhitelisted, setIsWhitelisted] = useState(false);
 
   useEffect(() => {
-    if (user && isWhitelistedFisher(user.email, user.id)) {
-      setIsWhitelisted(true);
-    }
+    const checkWhitelist = async () => {
+      if (!user?.email) return;
+      
+      const { data } = await supabase
+        .from('fisherman_whitelist')
+        .select('id')
+        .eq('email', user.email.toLowerCase())
+        .maybeSingle();
+      
+      setIsWhitelisted(!!data);
+    };
+    
+    checkWhitelist();
   }, [user]);
 
   const handlePayment = async (priceId: string, planType: string) => {
