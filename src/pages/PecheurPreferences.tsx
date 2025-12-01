@@ -47,7 +47,7 @@ export default function PecheurPreferences() {
       if (fishermanError) throw fishermanError;
 
       setFishermanId(fishermanData.id);
-      setDefaultSalePointId(fishermanData.default_sale_point_id || "");
+      setDefaultSalePointId(fishermanData.default_sale_point_id || "none");
       setDefaultTimeSlot(fishermanData.default_time_slot || "matin");
 
       // Load sale points
@@ -75,7 +75,7 @@ export default function PecheurPreferences() {
       const { error } = await supabase
         .from("fishermen")
         .update({
-          default_sale_point_id: defaultSalePointId || null,
+          default_sale_point_id: defaultSalePointId === "none" ? null : defaultSalePointId,
           default_time_slot: defaultTimeSlot,
         })
         .eq("id", fishermanId);
@@ -137,7 +137,7 @@ export default function PecheurPreferences() {
                     <SelectValue placeholder="Sélectionner un point de vente" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Aucun (choisir à chaque fois)</SelectItem>
+                    <SelectItem value="none">Aucun (choisir à chaque fois)</SelectItem>
                     {salePoints.map((point) => (
                       <SelectItem key={point.id} value={point.id}>
                         {point.label} - {point.address}
