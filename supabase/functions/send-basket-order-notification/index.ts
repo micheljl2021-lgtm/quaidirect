@@ -5,7 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://quaidirect.fr",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
@@ -17,6 +17,26 @@ const logStep = (step: string, details?: any) => {
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    // Verify internal secret for webhook calls
+    const internalSecret = req.headers.get('x-internal-secret');
+    const expectedSecret = Deno.env.get('INTERNAL_FUNCTION_SECRET');
+    
+    if (!expectedSecret || internalSecret !== expectedSecret) {
+      logStep('ERROR', 'Unauthorized: Invalid or missing internal secret');
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+  } catch (authError) {
+    logStep('ERROR', 'Authentication check failed');
+    return new Response(JSON.stringify({ error: 'Authentication failed' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 
   const supabaseClient = createClient(

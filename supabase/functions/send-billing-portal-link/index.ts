@@ -4,7 +4,7 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://quaidirect.fr",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
