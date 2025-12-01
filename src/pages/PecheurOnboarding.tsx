@@ -130,15 +130,35 @@ const PecheurOnboarding = () => {
         // Attendre 5 secondes pour que le webhook traite le paiement
         await new Promise(resolve => setTimeout(resolve, 5000));
         
-        // Re-vérifier le statut de paiement
-        const { data: updatedFisherman } = await supabase
-          .from('fishermen')
-          .select('onboarding_payment_status')
-          .eq('user_id', user.id)
-          .single();
+        // Vérifier à la fois la table payments ET fishermen
+        const [updatedFishermanResult, paymentsResult] = await Promise.all([
+          supabase
+            .from('fishermen')
+            .select('onboarding_payment_status')
+            .eq('user_id', user.id)
+            .single(),
+          supabase
+            .from('payments')
+            .select('status, plan')
+            .eq('user_id', user.id)
+            .in('plan', ['fisherman_basic', 'fisherman_pro'])
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+        ]);
         
-        if (!updatedFisherman || updatedFisherman.onboarding_payment_status !== 'paid') {
-          toast.error("Vous devez d'abord compléter votre abonnement pêcheur");
+        const updatedFisherman = updatedFishermanResult.data;
+        const payment = paymentsResult.data;
+        
+        // Si un paiement existe dans la table payments avec status active
+        const hasActivePayment = payment && payment.status === 'active';
+        const hasPaidStatus = updatedFisherman && updatedFisherman.onboarding_payment_status === 'paid';
+        
+        if (!hasActivePayment && !hasPaidStatus) {
+          toast.error(
+            "Votre paiement est en cours de traitement. Si le problème persiste après quelques minutes, contactez support@quaidirect.fr",
+            { duration: 6000 }
+          );
           navigate('/pecheur/payment');
           return;
         }

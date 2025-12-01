@@ -1,11 +1,12 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Check, Home, Loader2 } from 'lucide-react';
+import { Check, Home, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import Header from '@/components/Header';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const PecheurPaymentSuccess = () => {
   const navigate = useNavigate();
@@ -17,25 +18,32 @@ const PecheurPaymentSuccess = () => {
   const plan = searchParams.get('plan') || 'basic';
   const amount = plan === 'pro' ? '199€' : '150€';
 
+  const checkPaymentStatus = async () => {
+    if (!user) return false;
+    
+    const { data, error } = await supabase
+      .from('payments')
+      .select('status, plan')
+      .eq('user_id', user.id)
+      .in('plan', ['fisherman_basic', 'fisherman_pro'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (!error && data?.status === 'active') {
+      setPaymentStatus('confirmed');
+      return true;
+    }
+    return false;
+  };
+
+  const handleRetry = () => {
+    setPaymentStatus('checking');
+    setPollingAttempts(0);
+  };
+
   useEffect(() => {
     if (!user) return;
-
-    const checkPaymentStatus = async () => {
-      const { data, error } = await supabase
-        .from('payments')
-        .select('status, plan')
-        .eq('user_id', user.id)
-        .in('plan', ['fisherman_basic', 'fisherman_pro'])
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (!error && data?.status === 'active') {
-        setPaymentStatus('confirmed');
-        return true;
-      }
-      return false;
-    };
 
     // Polling toutes les 2 secondes pendant max 30 secondes
     const pollInterval = setInterval(async () => {
@@ -70,6 +78,67 @@ const PecheurPaymentSuccess = () => {
               <p className="text-sm text-muted-foreground mt-2">
                 Nous vérifions votre paiement, cela peut prendre quelques secondes.
               </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (paymentStatus === 'timeout') {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+        <Header />
+        <div className="container max-w-2xl mx-auto px-4 py-12">
+          <Card className="text-center">
+            <CardHeader>
+              <div className="flex justify-center mb-4">
+                <div className="p-4 rounded-full bg-orange-100">
+                  <AlertCircle className="h-16 w-16 text-orange-600" />
+                </div>
+              </div>
+              <CardTitle className="text-3xl">Paiement en cours de traitement</CardTitle>
+              <CardDescription className="text-lg">
+                Votre paiement de <strong>{amount}</strong> est en cours de traitement
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Vérification en cours</AlertTitle>
+                <AlertDescription>
+                  La confirmation de votre paiement prend plus de temps que prévu. 
+                  Cela peut arriver si notre système de paiement est en cours de synchronisation avec Stripe.
+                </AlertDescription>
+              </Alert>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left space-y-2">
+                <p className="font-medium text-blue-900">📋 Que faire maintenant ?</p>
+                <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
+                  <li>Patientez 2-3 minutes puis réessayez la vérification</li>
+                  <li>Vérifiez vos emails pour la confirmation de paiement</li>
+                  <li>Si le problème persiste, contactez support@quaidirect.fr</li>
+                </ul>
+              </div>
+              
+              <Button 
+                onClick={handleRetry} 
+                size="lg" 
+                className="w-full"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Réessayer la vérification
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/')} 
+                size="lg" 
+                className="w-full"
+              >
+                <Home className="h-4 w-4 mr-2" />
+                Retour à l'accueil
+              </Button>
             </CardContent>
           </Card>
         </div>
