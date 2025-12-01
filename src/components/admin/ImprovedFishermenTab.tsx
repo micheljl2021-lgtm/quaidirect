@@ -154,7 +154,8 @@ export function ImprovedFishermenTab() {
                   <TableHead>Entreprise</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>SIRET</TableHead>
-                  <TableHead>Immatriculation</TableHead>
+                  <TableHead>Statut paiement</TableHead>
+                  <TableHead>Date paiement</TableHead>
                   <TableHead>Date création</TableHead>
                   <TableHead>Vérifié</TableHead>
               <TableHead>Ambassadeur</TableHead>
@@ -169,7 +170,23 @@ export function ImprovedFishermenTab() {
                     <TableCell>{fisherman.company_name || '-'}</TableCell>
                     <TableCell className="text-sm">{fisherman.email || '-'}</TableCell>
                     <TableCell className="font-mono text-xs">{fisherman.siret}</TableCell>
-                    <TableCell>{fisherman.boat_registration}</TableCell>
+                    <TableCell>
+                      <Badge variant={
+                        fisherman.onboarding_payment_status === 'paid' ? 'default' :
+                        fisherman.onboarding_payment_status === 'pending' ? 'secondary' :
+                        'outline'
+                      }>
+                        {fisherman.onboarding_payment_status === 'paid' ? 'Payé' :
+                         fisherman.onboarding_payment_status === 'pending' ? 'En attente' :
+                         'Non payé'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {fisherman.onboarding_paid_at ? 
+                        format(new Date(fisherman.onboarding_paid_at), 'dd/MM/yyyy') : 
+                        '-'
+                      }
+                    </TableCell>
                     <TableCell>{format(new Date(fisherman.created_at), 'dd/MM/yyyy')}</TableCell>
                     <TableCell>
                       <Badge variant={fisherman.verified_at ? 'default' : 'secondary'}>
