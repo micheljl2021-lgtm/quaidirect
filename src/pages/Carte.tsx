@@ -126,6 +126,7 @@ const Carte = () => {
           )
         `)
         .in('status', ['scheduled', 'landed'])
+        .gte('sale_start_time', new Date().toISOString())
         .order('eta_at', { ascending: true });
 
       if (error) throw error;
