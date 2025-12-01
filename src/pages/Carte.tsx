@@ -36,28 +36,15 @@ const Carte = () => {
     }
   }, []);
 
-  // Fetch sale points with fisherman data
+  // Fetch sale points with fisherman data via Edge Function (bypass RLS for public map)
   const { data: salePoints } = useQuery({
-    queryKey: ['sale-points'],
+    queryKey: ['sale-points-public'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('fisherman_sale_points')
-        .select(`
-          *,
-          fishermen (
-            id,
-            boat_name,
-            photo_url,
-            bio,
-            fishing_methods,
-            company_name,
-            slug
-          )
-        `)
-        .order('label');
-
-      if (error) throw error;
-      return data;
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-public-sale-points`);
+      if (!response.ok) {
+        throw new Error('Erreur lors du chargement des points de vente');
+      }
+      return response.json();
     },
   });
 
@@ -83,7 +70,7 @@ const Carte = () => {
     }
   };
 
-  // Fetch real arrivages from database
+  // Fetch real arrivages from database (without joining sale points to avoid RLS)
   const { data: arrivages } = useQuery({
     queryKey: ['arrivages-map'],
     queryFn: async () => {
@@ -105,13 +92,6 @@ const Carte = () => {
             latitude,
             longitude
           ),
-        fisherman_sale_points (
-          id,
-          label,
-          address,
-          latitude,
-          longitude
-        ),
           offers (
             unit_price,
             available_units,
@@ -136,43 +116,54 @@ const Carte = () => {
     refetchInterval: 30000,
   });
 
-  // Transform to match ArrivageCard props
-  const transformedArrivages = arrivages?.map(arrivage => ({
-    id: arrivage.id,
-    species: arrivage.offers[0]?.species?.name || 'Poisson',
-    scientificName: arrivage.offers[0]?.species?.scientific_name || '',
-        port: arrivage.ports?.name 
-          ? arrivage.ports.name 
-          : (arrivage.fisherman_sale_points?.address || arrivage.fisherman_sale_points?.label || 'Point de vente'),
-    eta: new Date(arrivage.eta_at),
-    saleStartTime: arrivage.sale_start_time ? new Date(arrivage.sale_start_time) : undefined,
-    pricePerPiece: arrivage.offers[0]?.unit_price || 0,
-    quantity: arrivage.offers[0]?.available_units || 0,
-    isPremium: arrivage.is_premium,
-    fisherman: {
-      name: arrivage.fishermen?.boat_name || 'Pêcheur',
-      boat: arrivage.fishermen?.boat_name || '',
-      isAmbassador: arrivage.fishermen?.is_ambassador || false,
-      isPartnerAmbassador: arrivage.fishermen?.is_ambassador && arrivage.fishermen?.ambassador_slot === 1
-    }
-  })) || [];
+  // Trouver le point de vente associé pour chaque arrivage
+  const transformedArrivages = arrivages?.map(arrivage => {
+    const salePoint = salePoints?.find((sp: any) => sp.id === arrivage.sale_point_id);
+    return {
+      id: arrivage.id,
+      species: arrivage.offers[0]?.species?.name || 'Poisson',
+      scientificName: arrivage.offers[0]?.species?.scientific_name || '',
+      port: arrivage.ports?.name
+        ? arrivage.ports.name
+        : (salePoint?.address || salePoint?.label || 'Point de vente'),
+      eta: new Date(arrivage.eta_at),
+      saleStartTime: arrivage.sale_start_time ? new Date(arrivage.sale_start_time) : undefined,
+      pricePerPiece: arrivage.offers[0]?.unit_price || 0,
+      quantity: arrivage.offers[0]?.available_units || 0,
+      isPremium: arrivage.is_premium,
+      fisherman: {
+        name: arrivage.fishermen?.boat_name || 'Pêcheur',
+        boat: arrivage.fishermen?.boat_name || '',
+        isAmbassador: arrivage.fishermen?.is_ambassador || false,
+        isPartnerAmbassador: arrivage.fishermen?.is_ambassador && arrivage.fishermen?.ambassador_slot === 1,
+      },
+    };
+  }) || [];
 
   // Transform arrivages for map markers
   const mapDrops = arrivages?.filter(arrivage => {
+    const salePoint = salePoints?.find((sp: any) => sp.id === arrivage.sale_point_id);
+
     // Vérifier qu'on a des coordonnées (priorité: drop coords > sale point > port)
-    const lat = arrivage.latitude || arrivage.fisherman_sale_points?.latitude || arrivage.ports?.latitude;
-    const lng = arrivage.longitude || arrivage.fisherman_sale_points?.longitude || arrivage.ports?.longitude;
+    const lat = arrivage.latitude || salePoint?.latitude || arrivage.ports?.latitude;
+    const lng = arrivage.longitude || salePoint?.longitude || arrivage.ports?.longitude;
     return lat && lng && arrivage.offers && arrivage.offers.length > 0;
-  }).map(arrivage => ({
-    id: arrivage.id,
-    latitude: arrivage.latitude || arrivage.fisherman_sale_points?.latitude || arrivage.ports?.latitude || 0,
-    longitude: arrivage.longitude || arrivage.fisherman_sale_points?.longitude || arrivage.ports?.longitude || 0,
-    species: arrivage.offers[0]?.species?.name || 'Poisson',
-    price: arrivage.offers[0]?.unit_price || 0,
-    saleTime: arrivage.sale_start_time ? new Date(arrivage.sale_start_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : 'À confirmer',
-    fishermanName: arrivage.fishermen?.boat_name || 'Pêcheur',
-    availableUnits: arrivage.offers[0]?.available_units || 0,
-  })) || [];
+  }).map(arrivage => {
+    const salePoint = salePoints?.find((sp: any) => sp.id === arrivage.sale_point_id);
+
+    return {
+      id: arrivage.id,
+      latitude: arrivage.latitude || salePoint?.latitude || arrivage.ports?.latitude || 0,
+      longitude: arrivage.longitude || salePoint?.longitude || arrivage.ports?.longitude || 0,
+      species: arrivage.offers[0]?.species?.name || 'Poisson',
+      price: arrivage.offers[0]?.unit_price || 0,
+      saleTime: arrivage.sale_start_time
+        ? new Date(arrivage.sale_start_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+        : 'À confirmer',
+      fishermanName: arrivage.fishermen?.boat_name || 'Pêcheur',
+      availableUnits: arrivage.offers[0]?.available_units || 0,
+    };
+  }) || [];
 
   const filteredArrivages = transformedArrivages.filter(arrivage => {
     const matchesPort = !selectedPort || arrivage.port.includes(

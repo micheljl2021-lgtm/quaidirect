@@ -495,6 +495,7 @@ const Arrivages = () => {
             
             const etaDate = drop.eta_at ? new Date(drop.eta_at) : null;
             const saleDate = drop.sale_start_time ? new Date(drop.sale_start_time) : null;
+            // On ne joint plus fisherman_sale_points côté base (RLS), on récupère donc l'adresse via les données déjà enrichies dans drop
             const portName = drop.ports?.name 
               ? `${drop.ports.name}, ${drop.ports.city}` 
               : (drop.fisherman_sale_points?.address || drop.fisherman_sale_points?.label || 'Point de vente');

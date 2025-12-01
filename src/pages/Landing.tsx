@@ -33,14 +33,11 @@ const Landing = () => {
           eta_at,
           sale_start_time,
           is_premium,
+          sale_point_id,
           ports (
             id,
             name,
             city
-          ),
-          fisherman_sale_points (
-            label,
-            address
           ),
           offers (
             unit_price,
@@ -62,24 +59,35 @@ const Landing = () => {
         .limit(3);
 
       if (error) throw error;
-      
-      return data?.map(arrivage => ({
-        id: arrivage.id,
-        species: arrivage.offers[0]?.species?.name || 'Poisson',
-        scientificName: arrivage.offers[0]?.species?.scientific_name || '',
-        port: arrivage.ports?.name || arrivage.fisherman_sale_points?.address || arrivage.fisherman_sale_points?.label || 'Point de vente',
-        eta: new Date(arrivage.eta_at),
-        saleStartTime: arrivage.sale_start_time ? new Date(arrivage.sale_start_time) : undefined,
-        pricePerPiece: arrivage.offers[0]?.unit_price || 0,
-        quantity: arrivage.offers[0]?.available_units || 0,
-        isPremium: arrivage.is_premium,
-        fisherman: {
-          name: arrivage.fishermen?.boat_name || 'Pêcheur',
-          boat: arrivage.fishermen?.boat_name || '',
-          isAmbassador: arrivage.fishermen?.is_ambassador || false,
-          isPartnerAmbassador: arrivage.fishermen?.is_ambassador && arrivage.fishermen?.ambassador_slot === 1
-        }
-      })) || [];
+
+      // Charge les points de vente publics via l'Edge Function
+      const salePointsResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-public-sale-points`);
+      if (!salePointsResponse.ok) {
+        throw new Error('Erreur lors du chargement des points de vente');
+      }
+      const salePoints = await salePointsResponse.json();
+
+      return data?.map(arrivage => {
+        const salePoint = salePoints.find((sp: any) => sp.id === arrivage.sale_point_id);
+
+        return {
+          id: arrivage.id,
+          species: arrivage.offers[0]?.species?.name || 'Poisson',
+          scientificName: arrivage.offers[0]?.species?.scientific_name || '',
+          port: arrivage.ports?.name || salePoint?.address || salePoint?.label || 'Point de vente',
+          eta: new Date(arrivage.eta_at),
+          saleStartTime: arrivage.sale_start_time ? new Date(arrivage.sale_start_time) : undefined,
+          pricePerPiece: arrivage.offers[0]?.unit_price || 0,
+          quantity: arrivage.offers[0]?.available_units || 0,
+          isPremium: arrivage.is_premium,
+          fisherman: {
+            name: arrivage.fishermen?.boat_name || 'Pêcheur',
+            boat: arrivage.fishermen?.boat_name || '',
+            isAmbassador: arrivage.fishermen?.is_ambassador || false,
+            isPartnerAmbassador: arrivage.fishermen?.is_ambassador && arrivage.fishermen?.ambassador_slot === 1,
+          },
+        };
+      }) || [];
     },
   });
 
