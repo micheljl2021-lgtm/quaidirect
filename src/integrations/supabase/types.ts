@@ -455,6 +455,33 @@ export type Database = {
           },
         ]
       }
+      fisherman_whitelist: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          reason: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          reason?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          reason?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       fishermen: {
         Row: {
           address: string | null

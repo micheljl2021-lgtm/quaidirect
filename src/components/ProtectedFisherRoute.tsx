@@ -3,7 +3,6 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
-import { isWhitelistedFisher } from '@/config/fisherWhitelist';
 
 export const ProtectedFisherRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
@@ -17,14 +16,21 @@ export const ProtectedFisherRoute = ({ children }: { children: React.ReactNode }
         return;
       }
       
-      // Check whitelist first
-      if (isWhitelistedFisher(user.email, user.id)) {
-        setIsPaid(true);
-        setLoading(false);
-        return;
-      }
-      
       try {
+        // Check whitelist in database first
+        const { data: whitelistData } = await supabase
+          .from('fisherman_whitelist')
+          .select('id')
+          .eq('email', user.email?.toLowerCase())
+          .maybeSingle();
+        
+        if (whitelistData) {
+          setIsPaid(true);
+          setLoading(false);
+          return;
+        }
+        
+        // Check regular payment status
         const { data } = await supabase
           .from('fishermen')
           .select('onboarding_payment_status')
