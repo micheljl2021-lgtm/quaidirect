@@ -415,6 +415,15 @@ const PremiumDashboard = () => {
             {/* Settings Panel */}
             {showSettings && (
               <div className="mt-6 pt-6 border-t space-y-6">
+                {favoritePorts.length === 0 && favoriteSpecies.length === 0 && (
+                  <div className="bg-muted/50 rounded-lg p-6 text-center mb-4">
+                    <Bell className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+                    <h3 className="font-semibold mb-2">Configurez vos préférences</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Sélectionnez vos ports et espèces favoris pour recevoir des alertes ciblées
+                    </p>
+                  </div>
+                )}
                 <div className="space-y-3">
                   <Label>Ports favoris (maximum 2)</Label>
                   <div className="grid grid-cols-2 gap-2">
