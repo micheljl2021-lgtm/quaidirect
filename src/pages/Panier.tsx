@@ -60,7 +60,8 @@ const Panier = () => {
         .select(`
           *,
           fishermen!inner(id, boat_name, company_name, slug),
-          ports!inner(id, name, city)
+          ports(id, name, city),
+          fisherman_sale_points(id, label, address)
         `)
         .in('status', ['scheduled', 'landed'])
         .gte('sale_start_time', new Date().toISOString())
@@ -326,7 +327,11 @@ const Panier = () => {
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <MapPin className="h-4 w-4" />
-                        <span className="font-medium">{drop.ports.name} - {drop.ports.city}</span>
+                        <span className="font-medium">
+                          {drop.ports 
+                            ? `${drop.ports.name} - ${drop.ports.city}` 
+                            : drop.fisherman_sale_points?.label || 'Point de vente'}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Calendar className="h-4 w-4" />
@@ -349,7 +354,11 @@ const Panier = () => {
           <div>
             <h2 className="text-2xl font-bold mb-2">Choisissez votre panier</h2>
             <p className="text-muted-foreground mb-4">
-              Retrait : <strong>{selectedDrop?.ports.name}</strong> le{' '}
+              Retrait : <strong>
+                {selectedDrop?.ports 
+                  ? selectedDrop.ports.name 
+                  : selectedDrop?.fisherman_sale_points?.label}
+              </strong> le{' '}
               <strong>{format(new Date(selectedDrop?.sale_start_time), "d MMMM 'à' HH:mm", { locale: fr })}</strong>
             </p>
             {basketsLoading ? (
