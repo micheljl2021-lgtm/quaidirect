@@ -21,13 +21,27 @@ interface SalePoint {
   fisherman_id: string;
 }
 
+interface Drop {
+  id: string;
+  latitude: number;
+  longitude: number;
+  species: string;
+  price: number;
+  saleTime: string;
+  fishermanName: string;
+  availableUnits: number;
+}
+
 interface GoogleMapComponentProps {
   ports: Port[];
   salePoints?: SalePoint[];
+  drops?: Drop[];
   selectedPortId: string | null;
   selectedSalePointId?: string | null;
+  selectedDropId?: string | null;
   onPortClick: (portId: string | null) => void;
   onSalePointClick?: (salePointId: string | null) => void;
+  onDropClick?: (dropId: string | null) => void;
   userLocation?: { lat: number; lng: number } | null;
 }
 
@@ -39,10 +53,13 @@ const mapContainerStyle = {
 const GoogleMapComponent = ({
   ports,
   salePoints = [],
+  drops = [],
   selectedPortId,
   selectedSalePointId,
+  selectedDropId,
   onPortClick,
   onSalePointClick,
+  onDropClick,
   userLocation,
 }: GoogleMapComponentProps) => {
   const { isLoaded, loadError } = useJsApiLoader(googleMapsLoaderConfig);
@@ -58,7 +75,7 @@ const GoogleMapComponent = ({
 
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [activeInfoWindow, setActiveInfoWindow] = useState<string | null>(null);
-  const [activeType, setActiveType] = useState<'port' | 'salePoint' | null>(null);
+  const [activeType, setActiveType] = useState<'port' | 'salePoint' | 'drop' | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const clustererRef = useRef<MarkerClusterer | null>(null);
 
@@ -110,7 +127,7 @@ const GoogleMapComponent = ({
     }
   }, [map, ports, userLocation]);
 
-  // Handle selected port/sale point
+  // Handle selected port/sale point/drop
   useEffect(() => {
     if (!map) return;
 
@@ -130,8 +147,16 @@ const GoogleMapComponent = ({
         setActiveInfoWindow(selectedSalePointId);
         setActiveType('salePoint');
       }
+    } else if (selectedDropId) {
+      const selectedDrop = drops.find(d => d.id === selectedDropId);
+      if (selectedDrop) {
+        map.panTo({ lat: selectedDrop.latitude, lng: selectedDrop.longitude });
+        map.setZoom(14);
+        setActiveInfoWindow(selectedDropId);
+        setActiveType('drop');
+      }
     }
-  }, [map, selectedPortId, selectedSalePointId, ports, salePoints]);
+  }, [map, selectedPortId, selectedSalePointId, selectedDropId, ports, salePoints, drops]);
 
   // Create markers and clusterer
   useEffect(() => {
@@ -198,7 +223,37 @@ const GoogleMapComponent = ({
       return marker;
     });
 
-    allMarkers.push(...portMarkers, ...salePointMarkers);
+    // Drop markers (green with fish icon)
+    const dropMarkers = drops.map((drop) => {
+      const marker = new google.maps.Marker({
+        position: { lat: drop.latitude, lng: drop.longitude },
+        map: map,
+        title: `${drop.species} - ${drop.fishermanName}`,
+        icon: {
+          url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+            <svg width="40" height="40" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="20" cy="20" r="16" fill="${selectedDropId === drop.id ? '#10b981' : '#22c55e'}" opacity="${selectedDropId === drop.id ? '1' : '0.9'}" stroke="#FFFFFF" stroke-width="3"/>
+              <text x="20" y="26" font-size="16" fill="#FFFFFF" text-anchor="middle" font-family="Arial">🐟</text>
+            </svg>
+          `)}`,
+          scaledSize: new google.maps.Size(40, 40),
+          anchor: new google.maps.Point(20, 20),
+        },
+        zIndex: 1000,
+      });
+
+      marker.addListener('click', () => {
+        if (onDropClick) {
+          onDropClick(drop.id);
+        }
+        setActiveInfoWindow(drop.id);
+        setActiveType('drop');
+      });
+
+      return marker;
+    });
+
+    allMarkers.push(...portMarkers, ...salePointMarkers, ...dropMarkers);
     markersRef.current = allMarkers;
 
     clustererRef.current = new MarkerClusterer({
@@ -229,7 +284,7 @@ const GoogleMapComponent = ({
         clustererRef.current.clearMarkers();
       }
     };
-  }, [map, ports, salePoints, selectedPortId, selectedSalePointId, onPortClick, onSalePointClick, isLoaded]);
+  }, [map, ports, salePoints, drops, selectedPortId, selectedSalePointId, selectedDropId, onPortClick, onSalePointClick, onDropClick, isLoaded]);
 
   if (loadError) {
     return (
@@ -312,6 +367,41 @@ const GoogleMapComponent = ({
               <h3 className="font-semibold">{salePoints.find(sp => sp.id === activeInfoWindow)!.label}</h3>
             </div>
             <p className="text-sm text-muted-foreground">{salePoints.find(sp => sp.id === activeInfoWindow)!.address}</p>
+          </div>
+        </InfoWindow>
+      )}
+
+      {activeInfoWindow && activeType === 'drop' && drops.find(d => d.id === activeInfoWindow) && (
+        <InfoWindow
+          position={{
+            lat: drops.find(d => d.id === activeInfoWindow)!.latitude,
+            lng: drops.find(d => d.id === activeInfoWindow)!.longitude,
+          }}
+          onCloseClick={() => {
+            setActiveInfoWindow(null);
+            setActiveType(null);
+            if (onDropClick) onDropClick(null);
+          }}
+        >
+          <div className="p-3 min-w-[200px]">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-2xl">🐟</span>
+              <div>
+                <h3 className="font-bold text-base">{drops.find(d => d.id === activeInfoWindow)!.species}</h3>
+                <p className="text-xs text-muted-foreground">{drops.find(d => d.id === activeInfoWindow)!.fishermanName}</p>
+              </div>
+            </div>
+            <div className="space-y-1 mb-3">
+              <p className="text-sm"><strong>Prix:</strong> {drops.find(d => d.id === activeInfoWindow)!.price.toFixed(2)}€</p>
+              <p className="text-sm"><strong>Horaire:</strong> {drops.find(d => d.id === activeInfoWindow)!.saleTime}</p>
+              <p className="text-sm"><strong>Dispo:</strong> {drops.find(d => d.id === activeInfoWindow)!.availableUnits} unités</p>
+            </div>
+            <button
+              onClick={() => window.location.href = `/arrivage/${drops.find(d => d.id === activeInfoWindow)!.id}`}
+              className="w-full bg-primary text-primary-foreground px-3 py-1.5 rounded text-sm font-medium hover:bg-primary/90 transition-colors"
+            >
+              Voir détails
+            </button>
           </div>
         </InfoWindow>
       )}
