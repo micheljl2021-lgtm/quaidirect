@@ -140,7 +140,7 @@ const Carte = () => {
     id: arrivage.id,
     species: arrivage.offers[0]?.species?.name || 'Poisson',
     scientificName: arrivage.offers[0]?.species?.scientific_name || '',
-    port: `${arrivage.ports?.name}`,
+    port: arrivage.ports?.name || arrivage.fisherman_sale_points?.label || 'Point de vente',
     eta: new Date(arrivage.eta_at),
     saleStartTime: arrivage.sale_start_time ? new Date(arrivage.sale_start_time) : undefined,
     pricePerPiece: arrivage.offers[0]?.unit_price || 0,
