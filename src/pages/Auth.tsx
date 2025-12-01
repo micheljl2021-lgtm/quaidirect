@@ -73,13 +73,39 @@ const Auth = () => {
       if (error) throw error;
       
       if (data.user) {
+        console.log('[SIGNUP] User created:', data.user.id);
+        
+        // Assigner le rôle 'user' de base
+        try {
+          const { error: roleError } = await supabase
+            .from('user_roles')
+            .insert({ user_id: data.user.id, role: 'user' });
+
+          if (roleError) {
+            console.error('[SIGNUP] Error assigning user role:', roleError);
+            // Continue anyway, le rôle peut être assigné par un trigger
+          } else {
+            console.log('[SIGNUP] User role assigned successfully');
+          }
+        } catch (roleError) {
+          console.error('[SIGNUP] Exception assigning role:', roleError);
+          // Continue anyway
+        }
+
         // Envoyer l'email de bienvenue (ne pas bloquer l'inscription si ça échoue)
         try {
-          await supabase.functions.invoke('send-user-welcome-email', {
+          console.log('[SIGNUP] Sending welcome email to:', data.user.email);
+          const { data: emailData, error: emailError } = await supabase.functions.invoke('send-user-welcome-email', {
             body: { email: data.user.email }
           });
+          
+          if (emailError) {
+            console.error('[SIGNUP] Email function error:', emailError);
+          } else {
+            console.log('[SIGNUP] Email sent successfully:', emailData);
+          }
         } catch (emailError) {
-          console.error('Email sending failed:', emailError);
+          console.error('[SIGNUP] Email sending exception:', emailError);
           // Continue anyway
         }
 

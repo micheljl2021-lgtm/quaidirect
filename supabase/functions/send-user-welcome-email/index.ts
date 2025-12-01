@@ -16,14 +16,25 @@ interface UserWelcomeRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  console.log("[WELCOME-EMAIL] Function invoked");
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { email, name }: UserWelcomeRequest = await req.json();
+    const body = await req.json();
+    console.log("[WELCOME-EMAIL] Request body:", JSON.stringify(body));
+    
+    const { email, name }: UserWelcomeRequest = body;
 
-    console.log("Sending welcome email to:", email);
+    if (!email) {
+      console.error("[WELCOME-EMAIL] Email is missing from request");
+      throw new Error("Email is required");
+    }
+
+    console.log("[WELCOME-EMAIL] Sending welcome email to:", email);
+    console.log("[WELCOME-EMAIL] RESEND_API_KEY configured:", !!Deno.env.get("RESEND_API_KEY"));
 
     const emailResponse = await resend.emails.send({
       from: "QuaiDirect <support@quaidirect.fr>",
@@ -84,9 +95,13 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    console.log("Welcome email sent successfully:", emailResponse);
+    console.log("[WELCOME-EMAIL] Email sent successfully:", JSON.stringify(emailResponse));
 
-    return new Response(JSON.stringify(emailResponse), {
+    return new Response(JSON.stringify({ 
+      success: true, 
+      emailResponse,
+      message: "Welcome email sent successfully"
+    }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
@@ -94,9 +109,18 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
   } catch (error: any) {
-    console.error("Error in send-user-welcome-email function:", error);
+    console.error("[WELCOME-EMAIL] Error details:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        success: false,
+        error: error.message,
+        details: error.stack
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
