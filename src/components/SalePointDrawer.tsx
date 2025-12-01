@@ -13,7 +13,7 @@ interface SalePoint {
   address: string;
   description: string | null;
   is_primary: boolean;
-  fisherman: {
+  fishermen: {
     id: string;
     boat_name: string;
     photo_url: string | null;
@@ -42,7 +42,7 @@ const SalePointDrawer = ({ open, onOpenChange, salePoint }: SalePointDrawerProps
   };
 
   const handleViewArrivals = () => {
-    navigate(`/arrivages?fisherman=${salePoint.fisherman.id}`);
+    navigate(`/arrivages?fisherman=${salePoint.fishermen.id}`);
     onOpenChange(false);
   };
 
@@ -62,10 +62,10 @@ const SalePointDrawer = ({ open, onOpenChange, salePoint }: SalePointDrawerProps
           <TabsContent value="fisherman" className="space-y-4 mt-4">
             {/* Photo du pêcheur */}
             <div className="aspect-video rounded-lg overflow-hidden bg-gradient-ocean flex items-center justify-center">
-              {salePoint.fisherman.photo_url ? (
+              {salePoint.fishermen.photo_url ? (
                 <img
-                  src={salePoint.fisherman.photo_url}
-                  alt={salePoint.fisherman.boat_name}
+                  src={salePoint.fishermen.photo_url}
+                  alt={salePoint.fishermen.boat_name}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -76,23 +76,23 @@ const SalePointDrawer = ({ open, onOpenChange, salePoint }: SalePointDrawerProps
             {/* Nom du bateau */}
             <div>
               <h3 className="text-xl font-bold text-foreground">
-                {salePoint.fisherman.boat_name}
+                {salePoint.fishermen.boat_name}
               </h3>
-              {salePoint.fisherman.company_name && (
+              {salePoint.fishermen.company_name && (
                 <p className="text-sm text-muted-foreground">
-                  {salePoint.fisherman.company_name}
+                  {salePoint.fishermen.company_name}
                 </p>
               )}
             </div>
 
             {/* Méthodes de pêche */}
-            {salePoint.fisherman.fishing_methods && salePoint.fisherman.fishing_methods.length > 0 && (
+            {salePoint.fishermen.fishing_methods && salePoint.fishermen.fishing_methods.length > 0 && (
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-2">
                   Méthodes de pêche
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {salePoint.fisherman.fishing_methods.map((method) => (
+                  {salePoint.fishermen.fishing_methods.map((method) => (
                     <Badge key={method} variant="secondary">
                       {method}
                     </Badge>
@@ -102,13 +102,13 @@ const SalePointDrawer = ({ open, onOpenChange, salePoint }: SalePointDrawerProps
             )}
 
             {/* Bio */}
-            {salePoint.fisherman.bio && (
+            {salePoint.fishermen.bio && (
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-2">
                   À propos
                 </p>
                 <p className="text-sm text-foreground leading-relaxed">
-                  {salePoint.fisherman.bio}
+                  {salePoint.fishermen.bio}
                 </p>
               </div>
             )}
