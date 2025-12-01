@@ -481,20 +481,25 @@ const PecheurDashboard = () => {
               </CardHeader>
               <CardContent>
                 {drops.length === 0 ? (
-                  <div className="text-center py-12 space-y-4">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted">
-                      <Anchor className="h-8 w-8 text-muted-foreground" />
+                  <div className="text-center py-16 space-y-6">
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-primary/10 to-accent/10">
+                      <Anchor className="h-10 w-10 text-primary" />
                     </div>
-                    <div className="space-y-2">
-                      <p className="text-lg font-medium">Aucun arrivage</p>
-                      <p className="text-sm text-muted-foreground">
-                        Créez votre premier drop pour commencer à vendre
+                    <div className="space-y-3 max-w-md mx-auto">
+                      <h3 className="text-xl font-bold">Aucun arrivage en cours</h3>
+                      <p className="text-muted-foreground">
+                        Créez votre premier arrivage pour commencer à vendre votre pêche directement aux clients en quelques clics.
                       </p>
                     </div>
-                    <Button onClick={() => navigate('/pecheur/nouvel-arrivage')}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Créer un arrivage
-                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <Button onClick={() => navigate('/pecheur/nouvel-arrivage-v2')} size="lg" className="gap-2">
+                        <Plus className="h-5 w-5" />
+                        Créer mon premier arrivage
+                      </Button>
+                      <Button onClick={() => navigate('/comment-ca-marche')} variant="outline" size="lg">
+                        Comment ça marche ?
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-4">
