@@ -47,7 +47,9 @@ const Landing = () => {
             )
           ),
           fishermen (
-            boat_name
+            boat_name,
+            is_ambassador,
+            ambassador_slot
           )
         `)
         .eq('status', 'scheduled')
@@ -68,7 +70,9 @@ const Landing = () => {
         isPremium: arrivage.is_premium,
         fisherman: {
           name: arrivage.fishermen?.boat_name || 'Pêcheur',
-          boat: arrivage.fishermen?.boat_name || ''
+          boat: arrivage.fishermen?.boat_name || '',
+          isAmbassador: arrivage.fishermen?.is_ambassador || false,
+          isPartnerAmbassador: arrivage.fishermen?.is_ambassador && arrivage.fishermen?.ambassador_slot === 1
         }
       })) || [];
     },

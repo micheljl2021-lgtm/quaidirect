@@ -304,15 +304,25 @@ const UserDashboard = () => {
               })}
             </div>
           ) : (
-            <Card>
-              <CardContent className="pt-6 text-center py-12">
-                <Fish className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-                <p className="text-muted-foreground">
-                  Aucun arrivage disponible pour le moment.
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Revenez plus tard ou passez Premium pour voir les drops en avant-première !
-                </p>
+            <Card className="text-center py-16 bg-gradient-to-br from-primary/5 to-accent/5">
+              <CardContent className="space-y-6">
+                <Fish className="h-16 w-16 mx-auto text-primary/30" />
+                <div className="space-y-2">
+                  <h3 className="text-xl font-semibold">Aucun arrivage disponible</h3>
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    Les pêcheurs publient leurs arrivages régulièrement. 
+                    Explorez la carte ou passez Premium pour être alerté en priorité !
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button onClick={() => navigate('/carte')}>
+                    <MapPin className="mr-2 h-4 w-4" />
+                    Voir la carte
+                  </Button>
+                  <Button variant="outline" onClick={() => navigate('/premium')}>
+                    Découvrir Premium
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           )}
