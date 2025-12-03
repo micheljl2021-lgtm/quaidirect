@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedFisherRoute } from "@/components/ProtectedFisherRoute";
+import PageLoader from "@/components/PageLoader";
 import Landing from "./pages/Landing";
 import Carte from "./pages/Carte";
 import PremiumPaywall from "./pages/PremiumPaywall";
@@ -18,7 +20,6 @@ import PecheurOnboarding from "./pages/PecheurOnboarding";
 import PecheurPayment from "./pages/PecheurPayment";
 import PecheurDashboard from "./pages/PecheurDashboard";
 import CreateArrivage from "./pages/CreateArrivage";
-import CreateArrivageWizard from "./pages/CreateArrivageWizard";
 import SimpleAnnonce from "./pages/SimpleAnnonce";
 import EditArrivage from "./pages/EditArrivage";
 import DuplicateArrivage from "./pages/DuplicateArrivage";
@@ -31,7 +32,6 @@ import PanierSuccess from "./pages/PanierSuccess";
 import Arrivages from "./pages/Arrivages";
 import UserDashboard from "./pages/UserDashboard";
 import PremiumDashboard from "./pages/PremiumDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
 import DemoTracabilite from "./pages/DemoTracabilite";
 import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
@@ -40,7 +40,6 @@ import PecheurPaymentSuccess from "./pages/PecheurPaymentSuccess";
 import PecheurContacts from "./pages/PecheurContacts";
 import AmbassadorPartner from "./pages/AmbassadorPartner";
 import PecheurAmbassadorStatus from "./pages/PecheurAmbassadorStatus";
-import MarineAIRefactored from "./pages/MarineAIRefactored";
 import PecheurPreferences from "./pages/PecheurPreferences";
 import DropDetail from "./pages/DropDetail";
 import CommentCaMarche from "./pages/CommentCaMarche";
@@ -51,6 +50,11 @@ import PoissonFraisLaRochelle from "./pages/seo/PoissonFraisLaRochelle";
 import PecheurSupport from "./pages/PecheurSupport";
 import SecureProfileEdit from "./pages/SecureProfileEdit";
 import EditSalePoints from "./pages/EditSalePoints";
+
+// Lazy-loaded components (LOT 2 - Performance)
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const MarineAIRefactored = lazy(() => import("./pages/MarineAIRefactored"));
+const CreateArrivageWizard = lazy(() => import("./pages/CreateArrivageWizard"));
 
 const queryClient = new QueryClient();
 
@@ -77,7 +81,7 @@ const App = () => (
           <Route path="/arrivages" element={<Arrivages />} />
             <Route path="/dashboard/user" element={<UserDashboard />} />
             <Route path="/dashboard/premium" element={<PremiumDashboard />} />
-            <Route path="/dashboard/admin" element={<AdminDashboard />} />
+            <Route path="/dashboard/admin" element={<Suspense fallback={<PageLoader />}><AdminDashboard /></Suspense>} />
             <Route path="/dashboard/pecheur" element={<PecheurDashboard />} />
             <Route path="/compte" element={<Compte />} />
             <Route path="/auth" element={<Auth />} />
@@ -112,7 +116,9 @@ const App = () => (
             } />
             <Route path="/pecheur/nouvel-arrivage-v2" element={
               <ProtectedFisherRoute>
-                <CreateArrivageWizard />
+                <Suspense fallback={<PageLoader />}>
+                  <CreateArrivageWizard />
+                </Suspense>
               </ProtectedFisherRoute>
             } />
             <Route path="/pecheur/modifier-arrivage/:dropId" element={
@@ -131,7 +137,7 @@ const App = () => (
               </ProtectedFisherRoute>
             } />
             <Route path="/pecheur/ambassadeur" element={<PecheurAmbassadorStatus />} />
-            <Route path="/pecheur/ia-marin" element={<MarineAIRefactored />} />
+            <Route path="/pecheur/ia-marin" element={<Suspense fallback={<PageLoader />}><MarineAIRefactored /></Suspense>} />
             <Route path="/pecheur/support" element={<PecheurSupport />} />
             <Route path="/secure/profile/edit" element={<SecureProfileEdit />} />
             <Route path="/pecheur/preferences" element={<PecheurPreferences />} />
