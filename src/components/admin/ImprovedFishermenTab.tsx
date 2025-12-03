@@ -5,17 +5,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle, XCircle, Globe } from "lucide-react";
+import { CheckCircle, Globe, Eye, ExternalLink, Info } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-
+import { FishermanDetailSheet } from "./FishermanDetailSheet";
 
 export function ImprovedFishermenTab() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [paymentFilter, setPaymentFilter] = useState<string>("all");
+  const [selectedFisherman, setSelectedFisherman] = useState<any>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const { data: fishermen, isLoading, refetch } = useQuery({
-    queryKey: ['admin-fishermen-improved', statusFilter],
+    queryKey: ['admin-fishermen-improved', statusFilter, paymentFilter],
     queryFn: async () => {
       let query = supabase
         .from('fishermen')
@@ -28,6 +31,14 @@ export function ImprovedFishermenTab() {
         query = query.is('verified_at', null);
       } else if (statusFilter === 'ambassadors') {
         query = query.eq('is_ambassador', true);
+      }
+
+      if (paymentFilter === 'paid') {
+        query = query.eq('onboarding_payment_status', 'paid');
+      } else if (paymentFilter === 'pending') {
+        query = query.eq('onboarding_payment_status', 'pending');
+      } else if (paymentFilter === 'unpaid') {
+        query = query.or('onboarding_payment_status.is.null,onboarding_payment_status.neq.paid');
       }
 
       const { data, error } = await query;
@@ -77,12 +88,16 @@ export function ImprovedFishermenTab() {
       toast.success("Profil enrichi avec succès !");
       refetch();
       
-      // Afficher un aperçu du contenu généré
       toast.info(`SEO Title: ${data.data.seo_title}`, { duration: 5000 });
     } catch (error) {
       console.error('Error enriching profile:', error);
       toast.error("Impossible d'enrichir le profil");
     }
+  };
+
+  const handleOpenDetails = (fisherman: any) => {
+    setSelectedFisherman(fisherman);
+    setSheetOpen(true);
   };
 
   const verifiedCount = fishermen?.filter(f => f.verified_at).length || 0;
@@ -129,10 +144,10 @@ export function ImprovedFishermenTab() {
       <Card>
         <CardHeader>
           <CardTitle>Tous les pêcheurs</CardTitle>
-          <div className="mt-4">
+          <div className="flex flex-wrap gap-4 mt-4">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue />
+                <SelectValue placeholder="Statut vérification" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous</SelectItem>
@@ -141,102 +156,128 @@ export function ImprovedFishermenTab() {
                 <SelectItem value="ambassadors">Ambassadeurs</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Statut paiement" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous paiements</SelectItem>
+                <SelectItem value="paid">Payé</SelectItem>
+                <SelectItem value="pending">En attente</SelectItem>
+                <SelectItem value="unpaid">Non payé</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">Chargement...</div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nom du bateau</TableHead>
-                  <TableHead>Entreprise</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>SIRET</TableHead>
-                  <TableHead>Statut paiement</TableHead>
-                  <TableHead>Date paiement</TableHead>
-                  <TableHead>Date création</TableHead>
-                  <TableHead>Vérifié</TableHead>
-              <TableHead>Ambassadeur</TableHead>
-              <TableHead>Actions</TableHead>
-              <TableHead>Site web</TableHead>
-            </TableRow>
-          </TableHeader>
-              <TableBody>
-                {fishermen?.map((fisherman) => (
-                  <TableRow key={fisherman.id}>
-                    <TableCell className="font-medium">{fisherman.boat_name}</TableCell>
-                    <TableCell>{fisherman.company_name || '-'}</TableCell>
-                    <TableCell className="text-sm">{fisherman.email || '-'}</TableCell>
-                    <TableCell className="font-mono text-xs">{fisherman.siret}</TableCell>
-                    <TableCell>
-                      <Badge variant={
-                        fisherman.onboarding_payment_status === 'paid' ? 'default' :
-                        fisherman.onboarding_payment_status === 'pending' ? 'secondary' :
-                        'outline'
-                      }>
-                        {fisherman.onboarding_payment_status === 'paid' ? 'Payé' :
-                         fisherman.onboarding_payment_status === 'pending' ? 'En attente' :
-                         'Non payé'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {fisherman.onboarding_paid_at ? 
-                        format(new Date(fisherman.onboarding_paid_at), 'dd/MM/yyyy') : 
-                        '-'
-                      }
-                    </TableCell>
-                    <TableCell>{format(new Date(fisherman.created_at), 'dd/MM/yyyy')}</TableCell>
-                    <TableCell>
-                      <Badge variant={fisherman.verified_at ? 'default' : 'secondary'}>
-                        {fisherman.verified_at ? 'Oui' : 'Non'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={fisherman.is_ambassador ? 'default' : 'outline'}>
-                        {fisherman.is_ambassador ? 'Oui' : 'Non'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        {!fisherman.verified_at && (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nom du bateau</TableHead>
+                    <TableHead>Entreprise</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>SIRET</TableHead>
+                    <TableHead>Paiement</TableHead>
+                    <TableHead>Vérifié</TableHead>
+                    <TableHead>Ambassadeur</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {fishermen?.map((fisherman) => (
+                    <TableRow key={fisherman.id}>
+                      <TableCell className="font-medium">{fisherman.boat_name}</TableCell>
+                      <TableCell>{fisherman.company_name || '-'}</TableCell>
+                      <TableCell className="text-sm">{fisherman.email || '-'}</TableCell>
+                      <TableCell className="font-mono text-xs">{fisherman.siret}</TableCell>
+                      <TableCell>
+                        <Badge variant={
+                          fisherman.onboarding_payment_status === 'paid' ? 'default' :
+                          fisherman.onboarding_payment_status === 'pending' ? 'secondary' :
+                          'outline'
+                        }>
+                          {fisherman.onboarding_payment_status === 'paid' ? 'Payé' :
+                           fisherman.onboarding_payment_status === 'pending' ? 'En attente' :
+                           'Non payé'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={fisherman.verified_at ? 'default' : 'secondary'}>
+                          {fisherman.verified_at ? 'Oui' : 'Non'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={fisherman.is_ambassador ? 'default' : 'outline'}>
+                          {fisherman.is_ambassador ? 'Oui' : 'Non'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
                           <Button
                             size="sm"
-                            onClick={() => handleVerify(fisherman.id)}
-                            className="gap-1"
+                            variant="outline"
+                            onClick={() => handleOpenDetails(fisherman)}
+                            title="Voir les détails"
                           >
-                            <CheckCircle className="h-4 w-4" />
-                            Vérifier
+                            <Info className="h-4 w-4" />
                           </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant={fisherman.is_ambassador ? 'destructive' : 'default'}
-                          onClick={() => handleToggleAmbassador(fisherman.id, fisherman.is_ambassador || false)}
-                        >
-                          {fisherman.is_ambassador ? 'Retirer' : 'Ambassadeur'}
-                        </Button>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleEnrichProfile(fisherman)}
-                      >
-                        <Globe className="h-4 w-4 mr-1" />
-                        Enrichir profil
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                          {fisherman.slug && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              asChild
+                              title="Voir la vitrine"
+                            >
+                              <a href={`/boutique/${fisherman.slug}`} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="h-4 w-4" />
+                              </a>
+                            </Button>
+                          )}
+                          {!fisherman.verified_at && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleVerify(fisherman.id)}
+                              title="Vérifier"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant={fisherman.is_ambassador ? 'destructive' : 'secondary'}
+                            onClick={() => handleToggleAmbassador(fisherman.id, fisherman.is_ambassador || false)}
+                            title={fisherman.is_ambassador ? 'Retirer ambassadeur' : 'Nommer ambassadeur'}
+                          >
+                            {fisherman.is_ambassador ? '−' : '★'}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEnrichProfile(fisherman)}
+                            title="Enrichir profil SEO"
+                          >
+                            <Globe className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
 
+      <FishermanDetailSheet
+        fisherman={selectedFisherman}
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+      />
     </div>
   );
 }
