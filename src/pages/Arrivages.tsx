@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -89,6 +89,7 @@ const Arrivages = () => {
       }
       return response.json();
     },
+    staleTime: 10 * 60 * 1000, // 10 minutes - sale points rarely change
   });
 
   // Fetch drops with RLS enforced server-side (without sale points join)
@@ -141,7 +142,8 @@ const Arrivages = () => {
       if (error) throw error;
       return data;
     },
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 60000, // Refetch every 60 seconds (reduced from 30s)
+    staleTime: 30 * 1000, // 30 seconds stale time for drops
   });
 
   // Set up realtime subscription for drops
@@ -202,12 +204,20 @@ const Arrivages = () => {
     return null;
   };
 
-  const handleReserve = async (offerId: string) => {
+  const handleReserve = useCallback((offerId: string) => {
     toast({
       title: 'Réservation',
       description: 'Fonctionnalité de réservation bientôt disponible',
     });
-  };
+  }, [toast]);
+
+  // Memoized reset filters function
+  const resetFilters = useCallback(() => {
+    setFilterZone('all');
+    setFilterSpecies('all');
+    setFilterPort('all');
+    setFilterFisherman('all');
+  }, []);
 
   // Extraire les options uniques pour les filtres
   const uniqueZones = useMemo(() => {
@@ -401,12 +411,7 @@ const Arrivages = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    setFilterZone('all');
-                    setFilterSpecies('all');
-                    setFilterPort('all');
-                    setFilterFisherman('all');
-                  }}
+                  onClick={resetFilters}
                 >
                   Réinitialiser les filtres
                 </Button>

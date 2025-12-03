@@ -1,12 +1,38 @@
-const CACHE_NAME = 'quaidirect-v1';
+const CACHE_NAME = 'quaidirect-v2';
 const RUNTIME_CACHE = 'quaidirect-runtime';
+const STATIC_CACHE = 'quaidirect-static';
+const API_CACHE = 'quaidirect-api';
 
 // Assets à mettre en cache lors de l'installation
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/arrivages',
+  '/carte',
+  '/premium',
 ];
+
+// Patterns pour les stratégies de cache
+const CACHE_STRATEGIES = {
+  // Cache First - pour les assets statiques (images, fonts, CSS)
+  cacheFirst: [
+    /\.(png|jpg|jpeg|gif|webp|svg|ico)$/,
+    /\.(woff|woff2|ttf|eot)$/,
+    /\.css$/,
+  ],
+  // Network First - pour les données API dynamiques
+  networkFirst: [
+    /\/functions\/v1\//,
+    /\/rest\/v1\//,
+    /supabase\.co/,
+  ],
+  // Stale While Revalidate - pour les données semi-statiques
+  staleWhileRevalidate: [
+    /\/assets\//,
+    /\.js$/,
+  ],
+};
 
 // Installation du service worker
 self.addEventListener('install', (event) => {
@@ -19,48 +45,136 @@ self.addEventListener('install', (event) => {
 
 // Activation et nettoyage des anciens caches
 self.addEventListener('activate', (event) => {
+  const validCaches = [CACHE_NAME, RUNTIME_CACHE, STATIC_CACHE, API_CACHE];
+  
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((name) => name !== CACHE_NAME && name !== RUNTIME_CACHE)
+          .filter((name) => !validCaches.includes(name))
           .map((name) => caches.delete(name))
       );
     }).then(() => self.clients.claim())
   );
 });
 
-// Stratégie de mise en cache : Network First avec fallback
+// Déterminer la stratégie de cache pour une URL
+function getCacheStrategy(url) {
+  for (const pattern of CACHE_STRATEGIES.cacheFirst) {
+    if (pattern.test(url)) return 'cacheFirst';
+  }
+  for (const pattern of CACHE_STRATEGIES.networkFirst) {
+    if (pattern.test(url)) return 'networkFirst';
+  }
+  for (const pattern of CACHE_STRATEGIES.staleWhileRevalidate) {
+    if (pattern.test(url)) return 'staleWhileRevalidate';
+  }
+  return 'networkFirst'; // Default
+}
+
+// Cache First Strategy - pour les assets statiques
+async function cacheFirstStrategy(request) {
+  const cache = await caches.open(STATIC_CACHE);
+  const cachedResponse = await cache.match(request);
+  
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+  
+  try {
+    const networkResponse = await fetch(request);
+    if (networkResponse.status === 200) {
+      cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  } catch (error) {
+    // Return offline fallback for images
+    if (request.destination === 'image') {
+      return new Response(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="#f0f0f0" width="100" height="100"/><text x="50%" y="50%" text-anchor="middle" fill="#999" font-size="12">Hors ligne</text></svg>',
+        { headers: { 'Content-Type': 'image/svg+xml' } }
+      );
+    }
+    throw error;
+  }
+}
+
+// Network First Strategy - pour les données API
+async function networkFirstStrategy(request) {
+  const cache = await caches.open(API_CACHE);
+  
+  try {
+    const networkResponse = await fetch(request);
+    if (networkResponse.status === 200) {
+      // Clone et mettre en cache avec un TTL de 5 minutes
+      cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  } catch (error) {
+    const cachedResponse = await cache.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    return new Response(
+      JSON.stringify({ error: 'Offline', message: 'Données non disponibles hors ligne' }),
+      { status: 503, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+}
+
+// Stale While Revalidate Strategy
+async function staleWhileRevalidateStrategy(request) {
+  const cache = await caches.open(RUNTIME_CACHE);
+  const cachedResponse = await cache.match(request);
+  
+  const fetchPromise = fetch(request).then((networkResponse) => {
+    if (networkResponse.status === 200) {
+      cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  }).catch(() => cachedResponse);
+  
+  return cachedResponse || fetchPromise;
+}
+
+// Gestion des requêtes fetch
 self.addEventListener('fetch', (event) => {
-  // Ignorer les requêtes non-GET et les requêtes vers des domaines externes
-  if (event.request.method !== 'GET' || !event.request.url.startsWith(self.location.origin)) {
+  // Ignorer les requêtes non-GET et les requêtes vers des domaines tiers non-API
+  if (event.request.method !== 'GET') {
     return;
   }
-
+  
+  const url = event.request.url;
+  
+  // Ignorer les requêtes chrome-extension et autres protocoles non-http
+  if (!url.startsWith('http')) {
+    return;
+  }
+  
+  const strategy = getCacheStrategy(url);
+  
   event.respondWith(
-    caches.open(RUNTIME_CACHE).then((cache) => {
-      return fetch(event.request)
-        .then((response) => {
-          // Mettre en cache la réponse réussie
-          if (response.status === 200) {
-            cache.put(event.request, response.clone());
-          }
-          return response;
-        })
-        .catch(() => {
-          // En cas d'échec réseau, chercher dans le cache
-          return cache.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) {
-              return cachedResponse;
-            }
-            // Fallback pour les pages HTML
-            if (event.request.headers.get('accept').includes('text/html')) {
-              return cache.match('/index.html');
-            }
-            return new Response('Offline', { status: 503 });
-          });
-        });
-    })
+    (async () => {
+      try {
+        switch (strategy) {
+          case 'cacheFirst':
+            return await cacheFirstStrategy(event.request);
+          case 'networkFirst':
+            return await networkFirstStrategy(event.request);
+          case 'staleWhileRevalidate':
+            return await staleWhileRevalidateStrategy(event.request);
+          default:
+            return await networkFirstStrategy(event.request);
+        }
+      } catch (error) {
+        // Fallback pour les pages HTML
+        if (event.request.headers.get('accept')?.includes('text/html')) {
+          const cache = await caches.open(CACHE_NAME);
+          return cache.match('/index.html') || new Response('Hors ligne', { status: 503 });
+        }
+        return new Response('Offline', { status: 503 });
+      }
+    })()
   );
 });
 
@@ -81,6 +195,12 @@ async function syncOfflineDrops() {
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+  }
+  
+  // Clear specific cache
+  if (event.data && event.data.type === 'CLEAR_CACHE') {
+    const cacheName = event.data.cacheName || RUNTIME_CACHE;
+    caches.delete(cacheName);
   }
 });
 

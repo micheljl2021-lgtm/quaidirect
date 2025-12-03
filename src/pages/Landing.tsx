@@ -89,6 +89,7 @@ const Landing = () => {
         };
       }) || [];
     },
+    staleTime: 2 * 60 * 1000, // 2 minutes for arrivals
   });
 
   // Fetch latest offer photos for carousel
@@ -118,6 +119,7 @@ const Landing = () => {
         speciesName: photo.offers?.species?.name || 'Poisson frais'
       })) || [];
     },
+    staleTime: 10 * 60 * 1000, // 10 minutes for photos (rarely change)
   });
 
   // Fetch ambassadors
@@ -134,6 +136,7 @@ const Landing = () => {
       if (error) throw error;
       return data || [];
     },
+    staleTime: 30 * 60 * 1000, // 30 minutes for ambassadors (rarely change)
   });
   return (
     <div className="min-h-screen bg-gradient-sky">
