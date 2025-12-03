@@ -16,15 +16,19 @@ import pecheDurableLogo from "@/assets/logo-peche-durable.png";
 
 import { useLandingStats } from "@/hooks/useLandingStats";
 import { useAmbassadorStats } from "@/hooks/useAmbassadorStats";
+import { useSalePoints, findSalePointById } from "@/hooks/useSalePoints";
 
 const Landing = () => {
   const navigate = useNavigate();
   const { fishermenCount, usersCount } = useLandingStats();
   const { data: ambassadorStats } = useAmbassadorStats();
+  
+  // Fetch sale points via centralized hook (cached 10 min)
+  const { data: salePoints } = useSalePoints();
 
   // Fetch latest arrivages for preview
   const { data: latestArrivages } = useQuery({
-    queryKey: ['latest-arrivages'],
+    queryKey: ['latest-arrivages', salePoints?.length],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('drops')
@@ -60,15 +64,8 @@ const Landing = () => {
 
       if (error) throw error;
 
-      // Charge les points de vente publics via l'Edge Function
-      const salePointsResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-public-sale-points`);
-      if (!salePointsResponse.ok) {
-        throw new Error('Erreur lors du chargement des points de vente');
-      }
-      const salePoints = await salePointsResponse.json();
-
       return data?.map(arrivage => {
-        const salePoint = salePoints.find((sp: any) => sp.id === arrivage.sale_point_id);
+        const salePoint = findSalePointById(salePoints, arrivage.sale_point_id);
 
         return {
           id: arrivage.id,
@@ -90,6 +87,7 @@ const Landing = () => {
       }) || [];
     },
     staleTime: 2 * 60 * 1000, // 2 minutes for arrivals
+    enabled: !!salePoints, // Wait for sale points to be loaded
   });
 
   // Fetch latest offer photos for carousel
