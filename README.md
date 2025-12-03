@@ -1,73 +1,208 @@
-# Welcome to your Lovable project
+# QuaiDirect - Plateforme de vente directe pour pêcheurs artisanaux
 
-## Project info
+QuaiDirect est une web-app qui permet aux marins-pêcheurs artisanaux de **vendre leur pêche en direct à quai**, en circuit ultra-court, sans intermédiaire.
 
-**URL**: https://lovable.dev/projects/5fe1539d-c778-4ccb-9ecf-f7807d511a03
+## 🎯 Objectifs
 
-## How can I edit this code?
+- Permettre aux pêcheurs de publier leurs arrivages **en quelques secondes**
+- Offrir aux clients un accès aux **paniers de poissons frais** (25€ / 45€ / 75€)
+- **100% traçable**, circuit ultra-court, pêche responsable
 
-There are several ways of editing your application.
+## 🛠 Technologies utilisées
 
-**Use Lovable**
+- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS
+- **UI Components**: shadcn/ui, Radix UI
+- **Backend**: Supabase (PostgreSQL, Auth, Edge Functions, Storage)
+- **Paiements**: Stripe (subscriptions, one-time payments)
+- **Cartographie**: Google Maps API
+- **Emails**: Resend
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/5fe1539d-c778-4ccb-9ecf-f7807d511a03) and start prompting.
+## 📦 Installation
 
-Changes made via Lovable will be committed automatically to this repo.
+```bash
+# Cloner le repository
+git clone https://github.com/micheljl2021-lgtm/secretarit.git
+cd secretarit
 
-**Use your preferred IDE**
+# Installer les dépendances
+npm install
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Lancer en développement
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 🔐 Variables d'environnement
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Créer un fichier `.env` à la racine avec :
 
-**Use GitHub Codespaces**
+```env
+# Supabase
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
+VITE_SUPABASE_PROJECT_ID=your_project_id
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# Google Maps
+VITE_GOOGLE_MAPS_API_KEY=your_google_maps_key
+```
 
-## What technologies are used for this project?
+### Variables backend (Supabase Edge Functions)
 
-This project is built with:
+Ces secrets sont configurés dans Supabase Dashboard :
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- `STRIPE_SECRET_KEY` - Clé secrète Stripe
+- `STRIPE_WEBHOOK_SECRET` - Secret du webhook Stripe
+- `RESEND_API_KEY` - Clé API Resend pour les emails
+- `OPENAI_API_KEY` - Clé API OpenAI (IA du Marin)
+- `LOVABLE_API_KEY` - Clé API Lovable AI
+- `INTERNAL_FUNCTION_SECRET` - Secret pour les appels internes
 
-## How can I deploy this project?
+## 🧪 Tests
 
-Simply open [Lovable](https://lovable.dev/projects/5fe1539d-c778-4ccb-9ecf-f7807d511a03) and click on Share -> Publish.
+### Infrastructure de tests
 
-## Can I connect a custom domain to my Lovable project?
+Le projet utilise :
+- **Vitest** - Framework de test
+- **React Testing Library** - Tests de composants React
+- **MSW** (Mock Service Worker) - Mock des API
 
-Yes, you can!
+### Lancer les tests
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```bash
+# Tests unitaires
+npm run test
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+# Tests en mode watch
+npm run test:watch
+
+# Tests avec couverture
+npm run test:coverage
+```
+
+### Structure des tests
+
+```
+src/
+├── test/
+│   ├── setup.ts           # Configuration globale des tests
+│   ├── utils.tsx          # Utilitaires de rendu avec providers
+│   └── mocks/
+│       ├── supabase.ts    # Mocks du client Supabase
+│       └── handlers.ts    # Handlers MSW pour les API
+├── components/__tests__/
+│   ├── ArrivageCard.test.tsx
+│   └── PhotoUpload.test.tsx
+├── pages/__tests__/
+│   ├── Carte.test.tsx
+│   ├── Arrivages.test.tsx
+│   ├── PecheurDashboard.messaging.test.tsx
+│   ├── PecheurPreferences.test.tsx
+│   ├── PecheurPayment.test.tsx
+│   └── PecheurPaymentSuccess.test.tsx
+└── components/admin/__tests__/
+    └── ImprovedFishermenTab.test.tsx
+
+supabase/functions/
+├── send-fisherman-message/__tests__/
+│   └── index.test.ts
+└── stripe-webhook/__tests__/
+    └── fisherman-onboarding.test.ts
+```
+
+## 📁 Structure du projet
+
+```
+src/
+├── components/           # Composants réutilisables
+│   ├── ui/              # Composants shadcn/ui
+│   ├── admin/           # Composants du dashboard admin
+│   ├── arrivage-wizard/ # Wizard de création d'arrivage
+│   └── onboarding/      # Étapes d'onboarding pêcheur
+├── pages/               # Pages de l'application
+├── hooks/               # Hooks React personnalisés
+├── lib/                 # Utilitaires et fonctions
+├── integrations/        # Intégrations (Supabase)
+└── test/                # Infrastructure de tests
+
+supabase/
+├── functions/           # Edge Functions
+│   ├── create-fisherman-payment/
+│   ├── stripe-webhook/
+│   ├── send-fisherman-message/
+│   └── ...
+└── config.toml          # Configuration Supabase
+```
+
+## 🚀 Fonctionnalités principales
+
+### Côté Pêcheur
+- **Création d'arrivages** (standard & premium)
+- **Gestion des points de vente** (2 max par pêcheur)
+- **Messagerie** vers contacts clients
+- **IA du Marin** (assistant IA spécialisé)
+- **Micro-site public** avec SEO optimisé
+
+### Côté Client
+- **Consultation des arrivages** sur carte et liste
+- **Commande de paniers** (Découverte 25€, Famille 45€, Gourmet 75€)
+- **Abonnement Premium** pour alertes prioritaires
+
+### Côté Admin
+- **Validation des pêcheurs**
+- **Suivi des paiements/abonnements**
+- **Gestion des demandes support**
+
+## 💳 Flux d'abonnement Pêcheur
+
+1. L'utilisateur choisit un plan (Basic 150€/an ou Pro 199€/an)
+2. Redirection vers Stripe Checkout (30 jours d'essai)
+3. Webhook Stripe → création du paiement en base
+4. Redirection vers formulaire d'onboarding
+5. Validation admin → accès au dashboard pêcheur
+
+## 🔒 Sécurité
+
+- **RLS (Row Level Security)** sur toutes les tables sensibles
+- **Vérification JWT** sur les Edge Functions protégées
+- **CORS** restreint aux domaines autorisés
+- **Tokens sécurisés** pour les modifications de profil
+
+## 📧 Emails transactionnels
+
+- Bienvenue utilisateur
+- Bienvenue pêcheur (après paiement)
+- Rappel fin d'essai (3 jours avant)
+- Confirmation de paiement
+- Validation du compte pêcheur par admin
+- Notifications d'arrivage
+
+## 🗺 Cartographie
+
+La carte interactive affiche :
+- **Ports** avec arrivages actifs
+- **Points de vente** des pêcheurs
+- **Position utilisateur** (géolocalisation)
+
+## 📱 PWA
+
+L'application est installable comme PWA avec :
+- Manifest.json configuré
+- Service Worker pour le cache
+- Icônes et splash screens
+
+## 🤝 Contribution
+
+1. Fork le repository
+2. Créer une branche feature (`git checkout -b feature/amazing-feature`)
+3. Commit les changements (`git commit -m 'Add amazing feature'`)
+4. Push sur la branche (`git push origin feature/amazing-feature`)
+5. Ouvrir une Pull Request
+
+## 📄 Licence
+
+Propriétaire - QuaiDirect © 2024
+
+## 📞 Contact
+
+- **CEO**: Jean-Louis Michel
+- **Email**: CEO@quaidirect.fr
+- **Site**: [quaidirect.fr](https://quaidirect.fr)
