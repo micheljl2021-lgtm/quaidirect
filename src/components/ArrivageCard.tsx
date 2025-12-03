@@ -33,6 +33,7 @@ interface ArrivageCardProps {
 }
 
 const ArrivageCard = ({ 
+  id,
   species, 
   scientificName,
   port,
@@ -51,6 +52,7 @@ const ArrivageCard = ({
   canReserve = false,
   variant = 'compact'
 }: ArrivageCardProps) => {
+  // id is used for memo comparison and future click handlers
   const [imgError, setImgError] = useState(false);
   const displayTime = saleStartTime || eta;
   const timeToSale = formatDistanceToNow(displayTime, { addSuffix: true, locale: fr });
