@@ -7,56 +7,63 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedFisherRoute } from "@/components/ProtectedFisherRoute";
 import PageLoader from "@/components/PageLoader";
-import Landing from "./pages/Landing";
-import Carte from "./pages/Carte";
-import PremiumPaywall from "./pages/PremiumPaywall";
-import PremiumSuccess from "./pages/PremiumSuccess";
-import PremiumSettings from "./pages/PremiumSettings";
-import CGV from "./pages/CGV";
-import MentionsLegales from "./pages/MentionsLegales";
-import Compte from "./pages/Compte";
-import Auth from "./pages/Auth";
-import PecheurOnboarding from "./pages/PecheurOnboarding";
-import PecheurPayment from "./pages/PecheurPayment";
-import PecheurDashboard from "./pages/PecheurDashboard";
-import CreateArrivage from "./pages/CreateArrivage";
-import SimpleAnnonce from "./pages/SimpleAnnonce";
-import EditArrivage from "./pages/EditArrivage";
-import DuplicateArrivage from "./pages/DuplicateArrivage";
-import FisherProfile from "./pages/FisherProfile";
-import EditFisherProfile from "./pages/EditFisherProfile";
-import Recettes from "./pages/Recettes";
-import RecetteDetail from "./pages/RecetteDetail";
-import Panier from "./pages/Panier";
-import PanierSuccess from "./pages/PanierSuccess";
-import Arrivages from "./pages/Arrivages";
-import UserDashboard from "./pages/UserDashboard";
-import PremiumDashboard from "./pages/PremiumDashboard";
-import DemoTracabilite from "./pages/DemoTracabilite";
-import NotFound from "./pages/NotFound";
-import ResetPassword from "./pages/ResetPassword";
-import OnboardingConfirmation from "./pages/OnboardingConfirmation";
-import PecheurPaymentSuccess from "./pages/PecheurPaymentSuccess";
-import PecheurContacts from "./pages/PecheurContacts";
-import AmbassadorPartner from "./pages/AmbassadorPartner";
-import PecheurAmbassadorStatus from "./pages/PecheurAmbassadorStatus";
-import PecheurPreferences from "./pages/PecheurPreferences";
-import DropDetail from "./pages/DropDetail";
-import CommentCaMarche from "./pages/CommentCaMarche";
-import DevenirPecheur from "./pages/DevenirPecheur";
-import PoissonFraisHyeres from "./pages/seo/PoissonFraisHyeres";
-import PoissonFraisToulon from "./pages/seo/PoissonFraisToulon";
-import PoissonFraisLaRochelle from "./pages/seo/PoissonFraisLaRochelle";
-import PecheurSupport from "./pages/PecheurSupport";
-import SecureProfileEdit from "./pages/SecureProfileEdit";
-import EditSalePoints from "./pages/EditSalePoints";
 
-// Lazy-loaded components (LOT 2 - Performance)
+// Critical pages - loaded immediately
+import Landing from "./pages/Landing";
+import Auth from "./pages/Auth";
+import NotFound from "./pages/NotFound";
+
+// Lazy-loaded pages for better performance
+const Carte = lazy(() => import("./pages/Carte"));
+const PremiumPaywall = lazy(() => import("./pages/PremiumPaywall"));
+const PremiumSuccess = lazy(() => import("./pages/PremiumSuccess"));
+const PremiumSettings = lazy(() => import("./pages/PremiumSettings"));
+const CGV = lazy(() => import("./pages/CGV"));
+const MentionsLegales = lazy(() => import("./pages/MentionsLegales"));
+const Compte = lazy(() => import("./pages/Compte"));
+const PecheurOnboarding = lazy(() => import("./pages/PecheurOnboarding"));
+const PecheurPayment = lazy(() => import("./pages/PecheurPayment"));
+const PecheurDashboard = lazy(() => import("./pages/PecheurDashboard"));
+const CreateArrivage = lazy(() => import("./pages/CreateArrivage"));
+const SimpleAnnonce = lazy(() => import("./pages/SimpleAnnonce"));
+const EditArrivage = lazy(() => import("./pages/EditArrivage"));
+const DuplicateArrivage = lazy(() => import("./pages/DuplicateArrivage"));
+const FisherProfile = lazy(() => import("./pages/FisherProfile"));
+const EditFisherProfile = lazy(() => import("./pages/EditFisherProfile"));
+const Recettes = lazy(() => import("./pages/Recettes"));
+const RecetteDetail = lazy(() => import("./pages/RecetteDetail"));
+const Panier = lazy(() => import("./pages/Panier"));
+const PanierSuccess = lazy(() => import("./pages/PanierSuccess"));
+const Arrivages = lazy(() => import("./pages/Arrivages"));
+const UserDashboard = lazy(() => import("./pages/UserDashboard"));
+const PremiumDashboard = lazy(() => import("./pages/PremiumDashboard"));
+const DemoTracabilite = lazy(() => import("./pages/DemoTracabilite"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const OnboardingConfirmation = lazy(() => import("./pages/OnboardingConfirmation"));
+const PecheurPaymentSuccess = lazy(() => import("./pages/PecheurPaymentSuccess"));
+const PecheurContacts = lazy(() => import("./pages/PecheurContacts"));
+const AmbassadorPartner = lazy(() => import("./pages/AmbassadorPartner"));
+const PecheurAmbassadorStatus = lazy(() => import("./pages/PecheurAmbassadorStatus"));
+const PecheurPreferences = lazy(() => import("./pages/PecheurPreferences"));
+const DropDetail = lazy(() => import("./pages/DropDetail"));
+const CommentCaMarche = lazy(() => import("./pages/CommentCaMarche"));
+const DevenirPecheur = lazy(() => import("./pages/DevenirPecheur"));
+const PoissonFraisHyeres = lazy(() => import("./pages/seo/PoissonFraisHyeres"));
+const PoissonFraisToulon = lazy(() => import("./pages/seo/PoissonFraisToulon"));
+const PoissonFraisLaRochelle = lazy(() => import("./pages/seo/PoissonFraisLaRochelle"));
+const PecheurSupport = lazy(() => import("./pages/PecheurSupport"));
+const SecureProfileEdit = lazy(() => import("./pages/SecureProfileEdit"));
+const EditSalePoints = lazy(() => import("./pages/EditSalePoints"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const MarineAIRefactored = lazy(() => import("./pages/MarineAIRefactored"));
 const CreateArrivageWizard = lazy(() => import("./pages/CreateArrivageWizard"));
 
 const queryClient = new QueryClient();
+
+// Wrapper for lazy-loaded routes
+const LazyRoute = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<PageLoader />}>{children}</Suspense>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -66,90 +73,100 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            {/* Critical routes - no lazy loading */}
             <Route path="/" element={<Landing />} />
-            <Route path="/carte" element={<Carte />} />
-            <Route path="/premium" element={<PremiumPaywall />} />
-            <Route path="/premium/success" element={<PremiumSuccess />} />
-            <Route path="/premium/reglages" element={<PremiumSettings />} />
-            <Route path="/cgv" element={<CGV />} />
-            <Route path="/mentions-legales" element={<MentionsLegales />} />
-            <Route path="/demo-tracabilite" element={<DemoTracabilite />} />
-          <Route path="/recettes" element={<Recettes />} />
-          <Route path="/recettes/:id" element={<RecetteDetail />} />
-          <Route path="/panier" element={<Panier />} />
-          <Route path="/panier/success" element={<PanierSuccess />} />
-          <Route path="/arrivages" element={<Arrivages />} />
-            <Route path="/dashboard/user" element={<UserDashboard />} />
-            <Route path="/dashboard/premium" element={<PremiumDashboard />} />
-            <Route path="/dashboard/admin" element={<Suspense fallback={<PageLoader />}><AdminDashboard /></Suspense>} />
-            <Route path="/dashboard/pecheur" element={<PecheurDashboard />} />
-            <Route path="/compte" element={<Compte />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/pecheur/payment" element={<PecheurPayment />} />
-            <Route path="/pecheur/payment-success" element={<PecheurPaymentSuccess />} />
+
+            {/* Lazy-loaded public routes */}
+            <Route path="/carte" element={<LazyRoute><Carte /></LazyRoute>} />
+            <Route path="/premium" element={<LazyRoute><PremiumPaywall /></LazyRoute>} />
+            <Route path="/premium/success" element={<LazyRoute><PremiumSuccess /></LazyRoute>} />
+            <Route path="/premium/reglages" element={<LazyRoute><PremiumSettings /></LazyRoute>} />
+            <Route path="/cgv" element={<LazyRoute><CGV /></LazyRoute>} />
+            <Route path="/mentions-legales" element={<LazyRoute><MentionsLegales /></LazyRoute>} />
+            <Route path="/demo-tracabilite" element={<LazyRoute><DemoTracabilite /></LazyRoute>} />
+            <Route path="/recettes" element={<LazyRoute><Recettes /></LazyRoute>} />
+            <Route path="/recettes/:id" element={<LazyRoute><RecetteDetail /></LazyRoute>} />
+            <Route path="/panier" element={<LazyRoute><Panier /></LazyRoute>} />
+            <Route path="/panier/success" element={<LazyRoute><PanierSuccess /></LazyRoute>} />
+            <Route path="/arrivages" element={<LazyRoute><Arrivages /></LazyRoute>} />
+            <Route path="/comment-ca-marche" element={<LazyRoute><CommentCaMarche /></LazyRoute>} />
+            <Route path="/devenir-pecheur" element={<LazyRoute><DevenirPecheur /></LazyRoute>} />
+            <Route path="/ambassadeur-partenaire" element={<LazyRoute><AmbassadorPartner /></LazyRoute>} />
+            <Route path="/drop/:id" element={<LazyRoute><DropDetail /></LazyRoute>} />
+            <Route path="/pecheurs/:slug" element={<LazyRoute><FisherProfile /></LazyRoute>} />
+            <Route path="/reset-password" element={<LazyRoute><ResetPassword /></LazyRoute>} />
+            <Route path="/onboarding/confirmation" element={<LazyRoute><OnboardingConfirmation /></LazyRoute>} />
+            <Route path="/secure/profile/edit" element={<LazyRoute><SecureProfileEdit /></LazyRoute>} />
+
+            {/* SEO pages */}
+            <Route path="/poisson-frais-hyeres" element={<LazyRoute><PoissonFraisHyeres /></LazyRoute>} />
+            <Route path="/poisson-frais-toulon" element={<LazyRoute><PoissonFraisToulon /></LazyRoute>} />
+            <Route path="/poisson-frais-la-rochelle" element={<LazyRoute><PoissonFraisLaRochelle /></LazyRoute>} />
+
+            {/* User dashboard routes */}
+            <Route path="/dashboard/user" element={<LazyRoute><UserDashboard /></LazyRoute>} />
+            <Route path="/dashboard/premium" element={<LazyRoute><PremiumDashboard /></LazyRoute>} />
+            <Route path="/dashboard/admin" element={<LazyRoute><AdminDashboard /></LazyRoute>} />
+            <Route path="/dashboard/pecheur" element={<LazyRoute><PecheurDashboard /></LazyRoute>} />
+            <Route path="/compte" element={<LazyRoute><Compte /></LazyRoute>} />
+
+            {/* Pecheur payment routes */}
+            <Route path="/pecheur/payment" element={<LazyRoute><PecheurPayment /></LazyRoute>} />
+            <Route path="/pecheur/payment-success" element={<LazyRoute><PecheurPaymentSuccess /></LazyRoute>} />
+
+            {/* Protected pecheur routes */}
             <Route path="/pecheur/points-de-vente" element={
               <ProtectedFisherRoute>
-                <EditSalePoints />
+                <LazyRoute><EditSalePoints /></LazyRoute>
               </ProtectedFisherRoute>
             } />
             <Route path="/pecheur/contacts" element={
               <ProtectedFisherRoute>
-                <PecheurContacts />
+                <LazyRoute><PecheurContacts /></LazyRoute>
               </ProtectedFisherRoute>
             } />
             <Route path="/pecheur/onboarding" element={
               <ProtectedFisherRoute>
-                <PecheurOnboarding />
+                <LazyRoute><PecheurOnboarding /></LazyRoute>
               </ProtectedFisherRoute>
             } />
-            <Route path="/onboarding/confirmation" element={<OnboardingConfirmation />} />
             <Route path="/pecheur/nouvel-arrivage" element={
               <ProtectedFisherRoute>
-                <CreateArrivage />
+                <LazyRoute><CreateArrivage /></LazyRoute>
               </ProtectedFisherRoute>
             } />
             <Route path="/pecheur/annonce-simple" element={
               <ProtectedFisherRoute>
-                <SimpleAnnonce />
+                <LazyRoute><SimpleAnnonce /></LazyRoute>
               </ProtectedFisherRoute>
             } />
             <Route path="/pecheur/nouvel-arrivage-v2" element={
               <ProtectedFisherRoute>
-                <Suspense fallback={<PageLoader />}>
-                  <CreateArrivageWizard />
-                </Suspense>
+                <LazyRoute><CreateArrivageWizard /></LazyRoute>
               </ProtectedFisherRoute>
             } />
             <Route path="/pecheur/modifier-arrivage/:dropId" element={
               <ProtectedFisherRoute>
-                <EditArrivage />
+                <LazyRoute><EditArrivage /></LazyRoute>
               </ProtectedFisherRoute>
             } />
             <Route path="/pecheur/dupliquer-arrivage/:dropId" element={
               <ProtectedFisherRoute>
-                <DuplicateArrivage />
+                <LazyRoute><DuplicateArrivage /></LazyRoute>
               </ProtectedFisherRoute>
             } />
             <Route path="/pecheur/edit-profile" element={
               <ProtectedFisherRoute>
-                <EditFisherProfile />
+                <LazyRoute><EditFisherProfile /></LazyRoute>
               </ProtectedFisherRoute>
             } />
-            <Route path="/pecheur/ambassadeur" element={<PecheurAmbassadorStatus />} />
-            <Route path="/pecheur/ia-marin" element={<Suspense fallback={<PageLoader />}><MarineAIRefactored /></Suspense>} />
-            <Route path="/pecheur/support" element={<PecheurSupport />} />
-            <Route path="/secure/profile/edit" element={<SecureProfileEdit />} />
-            <Route path="/pecheur/preferences" element={<PecheurPreferences />} />
-            <Route path="/ambassadeur-partenaire" element={<AmbassadorPartner />} />
-            <Route path="/comment-ca-marche" element={<CommentCaMarche />} />
-            <Route path="/devenir-pecheur" element={<DevenirPecheur />} />
-            <Route path="/poisson-frais-hyeres" element={<PoissonFraisHyeres />} />
-            <Route path="/poisson-frais-toulon" element={<PoissonFraisToulon />} />
-            <Route path="/poisson-frais-la-rochelle" element={<PoissonFraisLaRochelle />} />
-            <Route path="/drop/:id" element={<DropDetail />} />
-            <Route path="/pecheurs/:slug" element={<FisherProfile />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/pecheur/ambassadeur" element={<LazyRoute><PecheurAmbassadorStatus /></LazyRoute>} />
+            <Route path="/pecheur/ia-marin" element={<LazyRoute><MarineAIRefactored /></LazyRoute>} />
+            <Route path="/pecheur/support" element={<LazyRoute><PecheurSupport /></LazyRoute>} />
+            <Route path="/pecheur/preferences" element={<LazyRoute><PecheurPreferences /></LazyRoute>} />
+
+            {/* Catch-all 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
