@@ -3,11 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ArrivageCard from "@/components/ArrivageCard";
+import { ArrivageCardSkeletonGrid } from "@/components/ArrivageCardSkeleton";
 import GoogleMapComponent from "@/components/GoogleMapComponent";
 import SalePointDrawer from "@/components/SalePointDrawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { Filter, Search, MapPin, Fish } from "lucide-react";
 import { useSalePoints } from "@/hooks/useSalePoints";
@@ -63,7 +65,7 @@ const Carte = () => {
   };
 
   // Fetch real arrivages from database (without joining sale points to avoid RLS)
-  const { data: arrivages } = useQuery({
+  const { data: arrivages, isLoading: arrivagesLoading } = useQuery({
     queryKey: ['arrivages-map'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -251,11 +253,15 @@ const Carte = () => {
         />
 
         {/* Arrivages grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredArrivages.map(arrivage => (
-            <ArrivageCard key={arrivage.id} {...arrivage} dropPhotos={arrivage.dropPhotos} />
-          ))}
-        </div>
+        {arrivagesLoading ? (
+          <ArrivageCardSkeletonGrid count={6} />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredArrivages.map(arrivage => (
+              <ArrivageCard key={arrivage.id} {...arrivage} dropPhotos={arrivage.dropPhotos} />
+            ))}
+          </div>
+        )}
 
         {filteredArrivages.length === 0 && (
           <div className="text-center py-16 space-y-4">
