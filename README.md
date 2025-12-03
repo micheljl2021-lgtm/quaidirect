@@ -81,25 +81,29 @@ npm run test:coverage
 ### Structure des tests
 
 ```
-src/
-├── test/
-│   ├── setup.ts           # Configuration globale des tests
-│   ├── utils.tsx          # Utilitaires de rendu avec providers
-│   └── mocks/
-│       ├── supabase.ts    # Mocks du client Supabase
-│       └── handlers.ts    # Handlers MSW pour les API
-├── components/__tests__/
+tests/
+├── setup.ts               # Configuration globale des tests
+├── utils.tsx              # Utilitaires de rendu avec providers
+├── mocks/
+│   ├── supabase.ts        # Mocks du client Supabase
+│   └── handlers.ts        # Handlers MSW pour les API
+├── components/
 │   ├── ArrivageCard.test.tsx
-│   └── PhotoUpload.test.tsx
-├── pages/__tests__/
+│   ├── PhotoUpload.test.tsx
+│   └── admin/
+│       └── ImprovedFishermenTab.test.tsx
+├── pages/
 │   ├── Carte.test.tsx
 │   ├── Arrivages.test.tsx
 │   ├── PecheurDashboard.messaging.test.tsx
 │   ├── PecheurPreferences.test.tsx
 │   ├── PecheurPayment.test.tsx
 │   └── PecheurPaymentSuccess.test.tsx
-└── components/admin/__tests__/
-    └── ImprovedFishermenTab.test.tsx
+└── flows/                 # Tests de flux E2E
+    ├── user-to-fisherman.test.tsx   # Flux User → PRO+ → Pêcheur
+    ├── arrivages.test.tsx           # Arrivages standard & premium
+    ├── messaging.test.tsx           # Messagerie pêcheur
+    └── fisherman-preferences.test.tsx # Préférences & photos
 
 supabase/functions/
 ├── send-fisherman-message/__tests__/
@@ -107,6 +111,40 @@ supabase/functions/
 └── stripe-webhook/__tests__/
     └── fisherman-onboarding.test.ts
 ```
+
+### Tests de flux principaux
+
+#### 1. Flux User → Pêcheur PRO+
+```bash
+npx vitest run tests/flows/user-to-fisherman.test.tsx
+```
+Teste: création compte, paiement Stripe, onboarding, validation admin.
+
+#### 2. Arrivages (Standard & Premium)
+```bash
+npx vitest run tests/flows/arrivages.test.tsx
+```
+Teste: création arrivages, photos, affichage prix (ou "Prix sur place" si non défini).
+
+#### 3. Messagerie
+```bash
+npx vitest run tests/flows/messaging.test.tsx
+```
+Teste: envoi aux contacts sélectionnés uniquement (jamais à tous par défaut).
+
+#### 4. Préférences Pêcheur (Photos)
+```bash
+npx vitest run tests/flows/fisherman-preferences.test.tsx
+```
+Teste: upload, preview, suppression, persistance des photos.
+
+### Simuler Stripe en mode TEST
+
+1. Utiliser les clés de test Stripe (`sk_test_...`, `pk_test_...`)
+2. Cartes de test :
+   - Succès: `4242 4242 4242 4242`
+   - Échec: `4000 0000 0000 0002`
+3. Configurer le webhook en mode test vers `/functions/v1/stripe-webhook`
 
 ## 📁 Structure du projet
 
