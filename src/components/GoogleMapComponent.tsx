@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-maps/api';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
-import { MapPin } from 'lucide-react';
-import { googleMapsLoaderConfig, defaultMapConfig, quaiDirectMapStyles } from '@/lib/google-maps';
+import { MapPin, AlertTriangle } from 'lucide-react';
+import { googleMapsLoaderConfig, defaultMapConfig, quaiDirectMapStyles, isGoogleMapsConfigured } from '@/lib/google-maps';
 
 interface Port {
   id: string;
@@ -274,10 +274,32 @@ const GoogleMapComponent = ({
     };
   }, [map, salePoints, drops, selectedSalePointId, selectedDropId, onSalePointClick, onDropClick, isLoaded]);
 
+  // Check if API key is configured
+  if (!isGoogleMapsConfigured()) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full bg-muted rounded-lg p-6 text-center">
+        <AlertTriangle className="h-12 w-12 text-warning mb-4" />
+        <h3 className="text-lg font-semibold text-foreground mb-2">
+          Carte non disponible
+        </h3>
+        <p className="text-muted-foreground text-sm max-w-sm">
+          La clé API Google Maps n'est pas configurée. 
+          Veuillez contacter l'administrateur.
+        </p>
+      </div>
+    );
+  }
+
   if (loadError) {
     return (
-      <div className="flex items-center justify-center h-full bg-muted rounded-lg">
-        <p className="text-destructive">Erreur de chargement de la carte</p>
+      <div className="flex flex-col items-center justify-center h-full bg-muted rounded-lg p-6 text-center">
+        <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+        <h3 className="text-lg font-semibold text-foreground mb-2">
+          Erreur de chargement
+        </h3>
+        <p className="text-muted-foreground text-sm">
+          Impossible de charger la carte. Veuillez réessayer.
+        </p>
       </div>
     );
   }
@@ -285,7 +307,10 @@ const GoogleMapComponent = ({
   if (!isLoaded) {
     return (
       <div className="flex items-center justify-center h-full bg-muted rounded-lg">
-        <p className="text-muted-foreground">Chargement...</p>
+        <div className="flex flex-col items-center gap-2">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <p className="text-muted-foreground">Chargement de la carte...</p>
+        </div>
       </div>
     );
   }
