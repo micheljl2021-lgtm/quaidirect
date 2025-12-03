@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrivageData } from "@/pages/CreateArrivageWizard";
 import { DropPhotosUpload } from "@/components/DropPhotosUpload";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { MapPin, Calendar, Clock, Edit, CheckCircle2, Loader2, Camera } from "lucide-react";
+import { MapPin, Calendar, Clock, Edit, CheckCircle2, Loader2, Camera, Star } from "lucide-react";
 
 interface Step3Props {
   arrivageData: ArrivageData;
@@ -15,6 +17,8 @@ interface Step3Props {
   isPublishing: boolean;
   photos: string[];
   onPhotosChange: (photos: string[]) => void;
+  isPremium: boolean;
+  onPremiumChange: (isPremium: boolean) => void;
 }
 
 const TIME_SLOT_LABELS: Record<string, string> = {
@@ -32,6 +36,8 @@ export function Step3Recapitulatif({
   isPublishing,
   photos,
   onPhotosChange,
+  isPremium,
+  onPremiumChange,
 }: Step3Props) {
   const [showPhotos, setShowPhotos] = useState(false);
 
@@ -144,6 +150,28 @@ export function Step3Recapitulatif({
                 </p>
               </div>
             )}
+          </div>
+
+          {/* Premium Toggle Section */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-4 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Star className="h-5 w-5 text-amber-500" />
+                <div>
+                  <Label htmlFor="premium-toggle" className="font-semibold cursor-pointer">
+                    Arrivage Premium
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Les abonnés Premium verront l'arrivage 30 min avant les autres
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="premium-toggle"
+                checked={isPremium}
+                onCheckedChange={onPremiumChange}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
