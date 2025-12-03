@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, Check, Loader2, Package, Anchor, MapPin, Calendar, ChevronRight, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -51,6 +51,22 @@ const Panier = () => {
     },
   });
 
+  // Fetch verified fishermen (even without active drops)
+  const { data: verifiedFishermen, isLoading: fishermenLoading } = useQuery({
+    queryKey: ['verified-fishermen-panier'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('fishermen')
+        .select('id, boat_name, company_name, slug, photo_url')
+        .not('verified_at', 'is', null)
+        .order('boat_name');
+
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Fetch available drops with fishermen and port info
   const { data: drops, isLoading: dropsLoading } = useQuery({
     queryKey: ['available-drops'],
@@ -84,6 +100,33 @@ const Panier = () => {
     acc[fishermanId].drops.push(drop);
     return acc;
   }, {});
+
+  // Combine verified fishermen with those who have drops
+  const allFishermenForDisplay = useMemo(() => {
+    const fishermenMap = new Map();
+    
+    // Add fishermen with drops first
+    if (fishermenWithDrops) {
+      Object.values(fishermenWithDrops).forEach((fd: any) => {
+        fishermenMap.set(fd.fisherman.id, fd);
+      });
+    }
+    
+    // Add verified fishermen without drops
+    if (verifiedFishermen) {
+      verifiedFishermen.forEach((f) => {
+        if (!fishermenMap.has(f.id)) {
+          fishermenMap.set(f.id, {
+            fisherman: f,
+            drops: [],
+            noDrops: true,
+          });
+        }
+      });
+    }
+    
+    return Array.from(fishermenMap.values());
+  }, [fishermenWithDrops, verifiedFishermen]);
 
   const handleSelectFisherman = (fishermanData: any) => {
     if (!user) {
@@ -266,18 +309,18 @@ const Panier = () => {
         {currentStep === 1 && (
           <div>
             <h2 className="text-2xl font-bold mb-4">Choisissez votre pêcheur</h2>
-            {dropsLoading ? (
+            {(dropsLoading || fishermenLoading) ? (
               <div className="text-center py-12">
                 <Loader2 className="h-12 w-12 mx-auto text-primary animate-spin mb-4" />
                 <p className="text-muted-foreground">Chargement des pêcheurs...</p>
               </div>
-            ) : fishermenWithDrops && Object.keys(fishermenWithDrops).length > 0 ? (
+            ) : allFishermenForDisplay.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {Object.values(fishermenWithDrops).map((fishermanData: any) => (
+                {allFishermenForDisplay.map((fishermanData: any) => (
                   <Card
                     key={fishermanData.fisherman.id}
-                    className="hover:border-primary cursor-pointer transition-all hover:shadow-lg"
-                    onClick={() => handleSelectFisherman(fishermanData)}
+                    className={`hover:border-primary cursor-pointer transition-all hover:shadow-lg ${fishermanData.noDrops ? 'opacity-75' : ''}`}
+                    onClick={() => fishermanData.noDrops ? null : handleSelectFisherman(fishermanData)}
                   >
                     <CardHeader>
                       <div className="flex items-center gap-2 mb-2">
@@ -287,14 +330,23 @@ const Panier = () => {
                         </CardTitle>
                       </div>
                       <CardDescription>
-                        {fishermanData.drops.length} arrivage{fishermanData.drops.length > 1 ? 's' : ''} disponible{fishermanData.drops.length > 1 ? 's' : ''}
+                        {fishermanData.noDrops 
+                          ? 'Aucun arrivage prévu actuellement' 
+                          : `${fishermanData.drops.length} arrivage${fishermanData.drops.length > 1 ? 's' : ''} disponible${fishermanData.drops.length > 1 ? 's' : ''}`
+                        }
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <Button className="w-full gap-2">
-                        Sélectionner
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
+                      {fishermanData.noDrops ? (
+                        <Button variant="outline" className="w-full gap-2" disabled>
+                          Bientôt disponible
+                        </Button>
+                      ) : (
+                        <Button className="w-full gap-2">
+                          Sélectionner
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      )}
                     </CardContent>
                   </Card>
                 ))}

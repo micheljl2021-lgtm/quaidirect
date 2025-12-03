@@ -255,7 +255,7 @@ export function FishermanDetailSheet({ fisherman, open, onOpenChange }: Fisherma
           {/* Bouton vitrine */}
           {fisherman.slug && (
             <Button asChild className="w-full">
-              <a href={`/boutique/${fisherman.slug}`} target="_blank" rel="noopener noreferrer">
+              <a href={`/pecheurs/${fisherman.slug}`} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Voir la vitrine publique
               </a>
