@@ -2,36 +2,25 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/Header';
 import CaisseModule from '@/components/CaisseModule';
-import { ContactSelector } from '@/components/ContactSelector';
 import { SalePointsSection } from '@/components/SalePointsSection';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import DashboardHeader from '@/components/dashboard/DashboardHeader';
+import DashboardStats from '@/components/dashboard/DashboardStats';
+import MessagingSection from '@/components/dashboard/MessagingSection';
+import ArrivalsList from '@/components/dashboard/ArrivalsList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CheckCircle, Anchor, Plus, Send, MessageSquare, Loader2, Package, Calculator, Edit, Copy, AlertCircle, Settings, Users, Crown, Bot, Mail, ShoppingCart, Pencil, History, HelpCircle } from "lucide-react";
+import { Anchor, Loader2, ShoppingCart, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getRedirectPathByRole } from '@/lib/authRedirect';
 
 const PecheurDashboard = () => {
   const { user, userRole, isVerifiedFisherman, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [drops, setDrops] = useState<any[]>([]);
   const [archivedDrops, setArchivedDrops] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [fishermanId, setFishermanId] = useState<string | null>(null);
-  const [messageType, setMessageType] = useState<'invitation_initiale' | 'new_drop' | 'custom'>('invitation_initiale');
-  const [customMessage, setCustomMessage] = useState('');
-  const [selectedGroup, setSelectedGroup] = useState('all');
-  const [selectedContacts, setSelectedContacts] = useState<any[]>([]);
-  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (authLoading) return;
@@ -56,7 +45,7 @@ const PecheurDashboard = () => {
     }
   }, [user, userRole, isVerifiedFisherman, authLoading, navigate]);
 
-  // Set up realtime subscription for drops
+  // Realtime subscription for drops
   useEffect(() => {
     if (!user || !isVerifiedFisherman) return;
 
@@ -64,14 +53,8 @@ const PecheurDashboard = () => {
       .channel('fisherman-drops-changes')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'drops',
-        },
-        () => {
-          fetchDrops();
-        }
+        { event: '*', schema: 'public', table: 'drops' },
+        () => fetchDrops()
       )
       .subscribe();
 
@@ -111,11 +94,7 @@ const PecheurDashboard = () => {
           .in('status', ['scheduled', 'landed'])
           .order('created_at', { ascending: false }) as { data: any[] | null; error: any };
 
-        if (activeError) {
-          console.error('Error fetching active drops:', activeError);
-        } else {
-          setDrops(activeData || []);
-        }
+        if (!activeError) setDrops(activeData || []);
 
         // Fetch archived drops
         const { data: archivedData, error: archivedError } = await supabase
@@ -132,79 +111,13 @@ const PecheurDashboard = () => {
           .order('created_at', { ascending: false })
           .limit(10) as { data: any[] | null; error: any };
 
-        if (archivedError) {
-          console.error('Error fetching archived drops:', archivedError);
-        } else {
-          setArchivedDrops(archivedData || []);
-        }
+        if (!archivedError) setArchivedDrops(archivedData || []);
       }
     } catch (error) {
       console.error('Error fetching drops:', error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const sendMessageMutation = useMutation({
-    mutationFn: async (data: { message_type: string; body: string; sent_to_group: string; contact_ids?: string[] }) => {
-      const { data: result, error } = await supabase.functions.invoke('send-fisherman-message', {
-        body: data
-      });
-      if (error) throw error;
-      return result;
-    },
-    onSuccess: (data) => {
-      toast({
-        title: 'Succès',
-        description: `Message envoyé à ${data.recipient_count} contact(s)`,
-      });
-      setCustomMessage('');
-      queryClient.invalidateQueries({ queryKey: ['fishermen-contacts'] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Erreur',
-        description: error.message || "Erreur lors de l'envoi",
-        variant: 'destructive',
-      });
-    }
-  });
-
-  const handleSendMessage = () => {
-    if (messageType === 'custom' && !customMessage.trim()) {
-      toast({
-        title: 'Erreur',
-        description: "Veuillez saisir un message",
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Vérifier qu'au moins un contact est sélectionné
-    if (selectedContacts.length === 0) {
-      toast({
-        title: 'Erreur',
-        description: "Veuillez sélectionner au moins un contact",
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const messageBody = messageType === 'custom' 
-      ? customMessage 
-      : messageType === 'invitation_initiale'
-      ? "Bonjour, je suis maintenant sur QuaiDirect ! Retrouvez tous mes arrivages et points de vente sur ma page."
-      : "Nouveau drop disponible ! Consultez les détails sur ma page QuaiDirect.";
-
-    // Extraire les IDs des contacts sélectionnés
-    const contactIds = selectedContacts.map(c => c.id);
-
-    sendMessageMutation.mutate({
-      message_type: messageType,
-      body: messageBody,
-      sent_to_group: selectedGroup,
-      contact_ids: contactIds
-    });
   };
 
   if (authLoading || loading) {
@@ -237,243 +150,14 @@ const PecheurDashboard = () => {
       <Header />
       
       <div className="container px-4 py-8">
-        {/* Header */}
-        <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">
-              Tableau de bord
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              Gérez vos arrivages et ventes
-            </p>
-          </div>
-          <div className="flex gap-3 flex-wrap">
-            {fishermanId && (
-              <>
-                <Button 
-                  size="lg" 
-                  variant="outline"
-                  className="gap-2"
-                  onClick={async () => {
-                    const { data } = await supabase
-                      .from('fishermen')
-                      .select('slug')
-                      .eq('id', fishermanId)
-                      .maybeSingle();
-                    if (data?.slug) {
-                      navigate(`/pecheurs/${data.slug}`);
-                    }
-                  }}
-                >
-                  <Anchor className="h-5 w-5" />
-                  Ma page vitrine
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline"
-                  className="gap-2"
-                  onClick={() => navigate('/pecheur/preferences')}
-                >
-                  <Settings className="h-5 w-5" />
-                  Préférences
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline"
-                  className="gap-2"
-                  onClick={() => navigate('/pecheur/edit-profile')}
-                >
-                  <Pencil className="h-5 w-5" />
-                  Ma vitrine
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline"
-                  className="gap-2"
-                  onClick={() => navigate('/pecheur/contacts')}
-                >
-                  <Users className="h-5 w-5" />
-                  Carnet de clients
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline"
-                  className="gap-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 border-0"
-                  onClick={() => navigate('/pecheur/ambassadeur')}
-                >
-                  <Crown className="h-5 w-5" />
-                  Ambassadeur
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline"
-                  className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 border-0"
-                  onClick={() => navigate('/pecheur/ia-marin')}
-                >
-                  <Bot className="h-5 w-5" />
-                  IA du Marin
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline"
-                  className="gap-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 border-0"
-                  onClick={() => navigate('/pecheur/support')}
-                >
-                  <HelpCircle className="h-5 w-5" />
-                  Contacter l'admin
-                </Button>
-              </>
-            )}
-            <Button 
-              size="lg" 
-              className="gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-              onClick={() => navigate('/pecheur/annonce-simple')}
-            >
-              <MessageSquare className="h-5 w-5" />
-              Arrivage
-            </Button>
-            <Button 
-              size="lg" 
-              className="gap-2"
-              onClick={() => navigate('/pecheur/nouvel-arrivage-v2')}
-            >
-              <Plus className="h-5 w-5" />
-              Arrivage premium
-            </Button>
-          </div>
-        </div>
+        <DashboardHeader fishermanId={fishermanId} />
 
-        {/* Section Messaging */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5" />
-              Envoyer un message groupé
-            </CardTitle>
-            <CardDescription>
-              Contactez vos clients pour les inviter ou les informer de vos arrivages
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Type de message</Label>
-              <RadioGroup value={messageType} onValueChange={(v: any) => setMessageType(v)}>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="invitation_initiale" id="invitation_initiale" />
-                  <Label htmlFor="invitation_initiale" className="font-normal cursor-pointer">
-                    Message d'invitation - "Je rejoins QuaiDirect"
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="new_drop" id="new_drop" />
-                  <Label htmlFor="new_drop" className="font-normal cursor-pointer">
-                    Annonce d'arrivage - "Nouveau drop disponible"
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="custom" id="custom" />
-                  <Label htmlFor="custom" className="font-normal cursor-pointer">
-                    Message personnalisé
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
+        {fishermanId && <MessagingSection fishermanId={fishermanId} />}
 
-            {messageType === 'custom' && (
-              <div className="space-y-2">
-                <Label htmlFor="message">Votre message</Label>
-                <Textarea
-                  id="message"
-                  placeholder="Rédigez votre message ici..."
-                  value={customMessage}
-                  onChange={(e) => setCustomMessage(e.target.value)}
-                  rows={4}
-                />
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="group">Groupe de contacts</Label>
-              <Select value={selectedGroup} onValueChange={setSelectedGroup}>
-                <SelectTrigger id="group">
-                  <SelectValue placeholder="Sélectionner un groupe" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous mes contacts</SelectItem>
-                  <SelectItem value="general">Groupe général</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                {selectedContacts.length} contact(s) sélectionné(s)
-              </p>
-            </div>
-
-            {/* Contact selector */}
-            {fishermanId && (
-              <ContactSelector
-                fishermanId={fishermanId}
-                selectedGroup={selectedGroup}
-                onSelectedContactsChange={setSelectedContacts}
-              />
-            )}
-
-            <Button 
-              onClick={handleSendMessage} 
-              disabled={sendMessageMutation.isPending || selectedContacts.length === 0}
-              className="w-full"
-            >
-              <Send className="h-4 w-4 mr-2" />
-              {sendMessageMutation.isPending ? 'Envoi en cours...' : `Envoyer à ${selectedContacts.length} contact(s)`}
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Section Points de vente */}
         {fishermanId && <SalePointsSection fishermanId={fishermanId} />}
 
-        {/* Stats rapides */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardDescription>Aujourd'hui</CardDescription>
-              <CardTitle className="text-3xl">
-                {drops.filter(d => {
-                  const today = new Date().toDateString();
-                  return new Date(d.eta_at).toDateString() === today;
-                }).length}
-              </CardTitle>
-            </CardHeader>
-          </Card>
+        <DashboardStats drops={drops} />
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardDescription>Actifs</CardDescription>
-              <CardTitle className="text-3xl">
-                {drops.length}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardDescription>Total offres</CardDescription>
-              <CardTitle className="text-3xl">
-                {drops.reduce((sum, d) => sum + (d.offers?.length || 0), 0)}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardDescription>Total arrivages</CardDescription>
-              <CardTitle className="text-3xl">
-                {drops.length}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-        </div>
-
-        {/* Onglets */}
         <Tabs defaultValue="arrivages" className="space-y-6">
           <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
             <TabsTrigger value="arrivages" className="gap-2">
@@ -486,259 +170,13 @@ const PecheurDashboard = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="arrivages" className="space-y-6">
-            {/* Liste des drops */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Mes arrivages</CardTitle>
-                <CardDescription>
-                  Historique de vos annonces
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {drops.length === 0 ? (
-                  <div className="text-center py-16 space-y-6">
-                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-primary/10 to-accent/10">
-                      <Anchor className="h-10 w-10 text-primary" />
-                    </div>
-                    <div className="space-y-3 max-w-md mx-auto">
-                      <h3 className="text-xl font-bold">Aucun arrivage en cours</h3>
-                      <p className="text-muted-foreground">
-                        Créez votre premier arrivage pour commencer à vendre votre pêche directement aux clients en quelques clics.
-                      </p>
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                      <Button onClick={() => navigate('/pecheur/nouvel-arrivage-v2')} size="lg" className="gap-2">
-                        <Plus className="h-5 w-5" />
-                        Créer mon premier arrivage
-                      </Button>
-                      <Button onClick={() => navigate('/comment-ca-marche')} variant="outline" size="lg">
-                        Comment ça marche ?
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {drops.map(drop => (
-                      <div 
-                        key={drop.id}
-                        className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div 
-                            className="space-y-1 flex-1 cursor-pointer"
-                            onClick={() => navigate(`/drop/${drop.id}`)}
-                          >
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-medium">
-                                {drop.sale_point?.label || drop.sale_point?.address || drop.port?.name || 'Point de vente'}
-                              </h3>
-                              <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                drop.status === 'scheduled' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' :
-                                drop.status === 'landed' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' :
-                                'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-                              }`}>
-                                {drop.status === 'scheduled' ? 'Programmé' : 'Arrivé'}
-                              </span>
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              ETA : {new Date(drop.eta_at).toLocaleString('fr-FR')}
-                            </p>
-                            {drop.offers?.length > 0 ? (
-                              <p className="text-sm text-muted-foreground">
-                                {drop.offers.length} offre(s) détaillée(s)
-                              </p>
-                            ) : drop.drop_species?.length > 0 ? (
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {drop.drop_species
-                                  .filter((ds: any) => ds.species && ds.species.id)
-                                  .slice(0, 3)
-                                  .map((ds: any) => (
-                                    <span key={ds.species.id} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                                      {ds.species.name}
-                                    </span>
-                                  ))}
-                                {drop.drop_species.length > 3 && (
-                                  <span className="text-xs text-muted-foreground">+{drop.drop_species.length - 3}</span>
-                                )}
-                              </div>
-                            ) : (
-                              <p className="text-sm text-muted-foreground">
-                                Présence au port
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="gap-1"
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                // Open save template dialog
-                                const arrivageData = {
-                                  salePointId: drop.sale_point_id || drop.port_id,
-                                  salePointName: drop.sale_point?.label || drop.port?.name,
-                                  timeSlot: "matin", // Default, could be extracted from times
-                                  species: drop.offers?.map((o: any) => ({
-                                    id: o.id,
-                                    speciesId: o.species_id,
-                                    speciesName: o.title,
-                                    quantity: o.total_units,
-                                    unit: o.price_type === 'per_kg' ? 'kg' : 'pieces',
-                                    price: o.unit_price,
-                                    remark: o.description,
-                                  })) || [],
-                                };
-                                
-                                // Create a dialog to save as template
-                                const name = prompt("Nom du modèle :");
-                                if (name) {
-                                  const { error } = await supabase
-                                    .from("drop_templates")
-                                    .insert({
-                                      fisherman_id: fishermanId,
-                                      name,
-                                      icon: "⭐",
-                                      payload: arrivageData,
-                                      usage_count: 0,
-                                    });
-                                  
-                                  if (error) {
-                                    toast({
-                                      title: 'Erreur',
-                                      description: 'Impossible de sauvegarder le modèle',
-                                      variant: 'destructive',
-                                    });
-                                  } else {
-                                    toast({
-                                      title: 'Modèle enregistré !',
-                                      description: `Tu pourras réutiliser "${name}" pour créer rapidement des arrivages similaires`,
-                                    });
-                                  }
-                                }
-                              }}
-                            >
-                              <Package className="h-3 w-3" />
-                              Modèle
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="gap-1"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/pecheur/dupliquer-arrivage/${drop.id}`);
-                              }}
-                            >
-                              <Copy className="h-3 w-3" />
-                              Dupliquer
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="gap-1"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/pecheur/modifier-arrivage/${drop.id}`);
-                              }}
-                            >
-                              <Pencil className="h-3 w-3" />
-                              Modifier
-                            </Button>
-                            <Button
-                              variant="default"
-                              size="sm"
-                              className="gap-2"
-                              onClick={async (e) => {
-                              e.stopPropagation();
-                              const { error } = await supabase
-                                .from('drops')
-                                .update({ status: 'completed' })
-                                .eq('id', drop.id);
-                              
-                              if (error) {
-                                toast({
-                                  title: 'Erreur',
-                                  description: 'Impossible de marquer comme terminé',
-                                  variant: 'destructive',
-                                });
-                              } else {
-                                toast({
-                                  title: 'Arrivage archivé',
-                                  description: 'L\'arrivage a été marqué comme terminé',
-                                });
-                                fetchDrops();
-                              }
-                             }}
-                           >
-                             <CheckCircle className="h-4 w-4" />
-                             Terminer
-                           </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* History section */}
-            {archivedDrops.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <History className="h-5 w-5" />
-                    Historique des arrivages
-                  </CardTitle>
-                  <CardDescription>
-                    Les 10 derniers arrivages terminés ou annulés
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {archivedDrops.map(drop => (
-                      <div key={drop.id} className="p-3 border-b last:border-0">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <p className="font-medium">
-                              {drop.sale_point?.label || drop.sale_point?.address || drop.port?.name || 'Point de vente'}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {new Date(drop.eta_at).toLocaleDateString('fr-FR', {
-                                day: 'numeric',
-                                month: 'long',
-                                year: 'numeric'
-                              })}
-                            </p>
-                            {drop.drop_species?.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {drop.drop_species.slice(0, 2).map((ds: any) => (
-                                  <span key={ds.species.id} className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded">
-                                    {ds.species.name}
-                                  </span>
-                                ))}
-                                {drop.drop_species.length > 2 && (
-                                  <span className="text-xs text-muted-foreground">+{drop.drop_species.length - 2}</span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                          <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ml-2 ${
-                            drop.status === 'completed' 
-                              ? 'bg-secondary text-secondary-foreground' 
-                              : 'bg-destructive/10 text-destructive'
-                          }`}>
-                            {drop.status === 'completed' ? 'Terminé' : 'Annulé'}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+          <TabsContent value="arrivages">
+            <ArrivalsList 
+              drops={drops} 
+              archivedDrops={archivedDrops} 
+              fishermanId={fishermanId}
+              onRefresh={fetchDrops}
+            />
           </TabsContent>
 
           <TabsContent value="caisse">
