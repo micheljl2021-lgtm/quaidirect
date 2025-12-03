@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { Filter, Search, MapPin, Fish } from "lucide-react";
+import { useSalePoints } from "@/hooks/useSalePoints";
 
 const Carte = () => {
   const [selectedPort, setSelectedPort] = useState<string | null>(null);
@@ -36,17 +37,8 @@ const Carte = () => {
     }
   }, []);
 
-  // Fetch sale points with fisherman data via Edge Function (bypass RLS for public map)
-  const { data: salePoints } = useQuery({
-    queryKey: ['sale-points-public'],
-    queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-public-sale-points`);
-      if (!response.ok) {
-        throw new Error('Erreur lors du chargement des points de vente');
-      }
-      return response.json();
-    },
-  });
+  // Fetch sale points via centralized hook (cached 10 min)
+  const { data: salePoints } = useSalePoints();
 
   // Fetch real ports from database
   const { data: ports } = useQuery({

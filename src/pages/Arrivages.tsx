@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ArrivageCard from '@/components/ArrivageCard';
@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Clock, Fish, Filter } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { useSalePoints } from '@/hooks/useSalePoints';
+import { useQuery } from '@tanstack/react-query';
 
 interface Drop {
   id: string;
@@ -71,26 +73,17 @@ const Arrivages = () => {
   const [filterFisherman, setFilterFisherman] = useState<string>('all');
 
   useEffect(() => {
-    // Update current time every second for countdown display
+    // Update current time every 60 seconds for countdown display
+    // (1 second was excessive for data that changes slowly)
     const timer = setInterval(() => {
       setCurrentTime(new Date());
-    }, 1000);
+    }, 60000);
 
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch sale points via Edge Function to bypass RLS
-  const { data: salePoints } = useQuery({
-    queryKey: ['sale-points-public'],
-    queryFn: async () => {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-public-sale-points`);
-      if (!response.ok) {
-        throw new Error('Erreur lors du chargement des points de vente');
-      }
-      return response.json();
-    },
-    staleTime: 10 * 60 * 1000, // 10 minutes - sale points rarely change
-  });
+  // Fetch sale points via centralized hook (cached 10 min)
+  const { data: salePoints } = useSalePoints();
 
   // Fetch drops with RLS enforced server-side (without sale points join)
   const { data: drops, isLoading, error } = useQuery({
