@@ -3,17 +3,29 @@
  * Garantit une utilisation cohérente de la clé API à travers l'application
  */
 
+// Flag to track if warning has been shown (avoid spam)
+let apiKeyWarningShown = false;
+
 export function getGoogleMapsApiKey(): string {
   const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   
-  if (!key) {
-    console.warn(
-      "[Google Maps] VITE_GOOGLE_MAPS_API_KEY is missing. " +
-      "Please add it to your .env.local file."
+  if (!key && !apiKeyWarningShown) {
+    apiKeyWarningShown = true;
+    console.error(
+      "[Google Maps] CRITICAL: VITE_GOOGLE_MAPS_API_KEY is missing. " +
+      "Map functionality will not work. " +
+      "Please configure this in Lovable Cloud secrets."
     );
   }
   
   return key || "";
+}
+
+/**
+ * Check if Google Maps API key is configured
+ */
+export function isGoogleMapsConfigured(): boolean {
+  return Boolean(import.meta.env.VITE_GOOGLE_MAPS_API_KEY);
 }
 
 /**
