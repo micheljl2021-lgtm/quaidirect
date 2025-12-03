@@ -151,7 +151,9 @@ export function Step2EspecesQuantites({ initialSpecies, onComplete, onBack }: St
 
     if (!fishermanData) return;
 
+    // IMPORTANT: Include speciesId for proper UUID handling when loading presets
     const speciesData = selectedSpecies.map((s) => ({
+      speciesId: s.speciesId, // Critical: include UUID for future loading
       speciesName: s.speciesName,
       quantity: s.quantity,
       unit: s.unit,
