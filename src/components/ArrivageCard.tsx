@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Crown, MapPin, Clock, Euro, ShoppingCart, Star } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
-import AmbassadorBadge from "@/components/AmbassadorBadge";
 
 interface ArrivageCardProps {
   id: string;
@@ -275,4 +274,19 @@ const ArrivageCard = ({
   );
 };
 
-export default ArrivageCard;
+// Wrap with React.memo for performance optimization
+// Only re-renders when props actually change
+export default memo(ArrivageCard, (prevProps, nextProps) => {
+  // Custom comparison for better memoization
+  return (
+    prevProps.id === nextProps.id &&
+    prevProps.species === nextProps.species &&
+    prevProps.port === nextProps.port &&
+    prevProps.pricePerPiece === nextProps.pricePerPiece &&
+    prevProps.quantity === nextProps.quantity &&
+    prevProps.isPremium === nextProps.isPremium &&
+    prevProps.availableUnits === nextProps.availableUnits &&
+    prevProps.eta.getTime() === nextProps.eta.getTime() &&
+    prevProps.saleStartTime?.getTime() === nextProps.saleStartTime?.getTime()
+  );
+});
