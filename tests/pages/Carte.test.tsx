@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
-import { render } from '@/test/utils';
+import { render } from '../utils';
 
 vi.mock('@/components/GoogleMapComponent', () => ({ default: () => <div data-testid="google-map">Map</div> }));
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: null, loading: false, role: null }) }));
@@ -14,7 +14,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 describe('Carte', () => {
   it('renders map', async () => {
-    const { default: Carte } = await import('../Carte');
+    const { default: Carte } = await import('@/pages/Carte');
     render(<Carte />);
     await waitFor(() => expect(screen.getByTestId('google-map')).toBeInTheDocument());
   });

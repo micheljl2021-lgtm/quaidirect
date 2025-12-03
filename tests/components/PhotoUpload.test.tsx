@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
-import { render } from '@/test/utils';
+import { render } from '../utils';
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -21,13 +21,13 @@ describe('PhotoUpload', () => {
   });
 
   it('renders correctly', async () => {
-    const { PhotoUpload } = await import('../PhotoUpload');
+    const { PhotoUpload } = await import('@/components/PhotoUpload');
     render(<PhotoUpload label="Photo" value={null} onChange={mockOnChange} />);
     expect(screen.getByText('Photo')).toBeInTheDocument();
   });
 
   it('displays image when value provided', async () => {
-    const { PhotoUpload } = await import('../PhotoUpload');
+    const { PhotoUpload } = await import('@/components/PhotoUpload');
     render(<PhotoUpload label="Photo" value="https://example.com/photo.jpg" onChange={mockOnChange} />);
     expect(screen.getByRole('img')).toHaveAttribute('src', 'https://example.com/photo.jpg');
   });

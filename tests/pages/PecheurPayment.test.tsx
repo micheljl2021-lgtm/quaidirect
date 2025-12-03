@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
-import { render } from '@/test/utils';
+import { render } from '../utils';
 
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: { id: 'u1' }, loading: false, role: 'user' }) }));
 vi.mock('@/integrations/supabase/client', () => ({
@@ -13,7 +13,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 describe('PecheurPayment', () => {
   it('renders payment page with plans', async () => {
-    const { default: PecheurPayment } = await import('../PecheurPayment');
+    const { default: PecheurPayment } = await import('@/pages/PecheurPayment');
     render(<PecheurPayment />);
     await waitFor(() => expect(screen.getByText(/Pêcheur/i)).toBeInTheDocument());
   });

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
-import { render } from '@/test/utils';
+import { render } from '../../utils';
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -21,7 +21,7 @@ describe('ImprovedFishermenTab', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('renders the tab', async () => {
-    const { ImprovedFishermenTab } = await import('../ImprovedFishermenTab');
+    const { ImprovedFishermenTab } = await import('@/components/admin/ImprovedFishermenTab');
     render(<ImprovedFishermenTab />);
     await waitFor(() => expect(screen.getByText(/Pêcheurs/i)).toBeInTheDocument());
   });

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
-import { render } from '@/test/utils';
-import ArrivageCard from '../ArrivageCard';
+import { render } from '../utils';
+import ArrivageCard from '@/components/ArrivageCard';
 
 const defaultProps = {
   id: 'drop-1',

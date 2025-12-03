@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
-import { render } from '@/test/utils';
+import { render } from '../utils';
 
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: { id: 'u1' }, loading: false, role: 'fisherman' }) }));
 vi.mock('@/integrations/supabase/client', () => ({
@@ -13,7 +13,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 describe('PecheurPreferences', () => {
   it('renders preferences page', async () => {
-    const { default: PecheurPreferences } = await import('../PecheurPreferences');
+    const { default: PecheurPreferences } = await import('@/pages/PecheurPreferences');
     render(<PecheurPreferences />);
     await waitFor(() => expect(screen.getByText(/préférences/i)).toBeInTheDocument());
   });
