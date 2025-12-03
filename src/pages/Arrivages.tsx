@@ -279,9 +279,13 @@ const Arrivages = () => {
         if (!hasSpecies) return false;
       }
       
-      // Filtre port
-      if (filterPort !== 'all' && drop.ports?.id !== filterPort) {
-        return false;
+      // Filtre port - Prendre en compte port_id ET sale_point_id
+      if (filterPort !== 'all') {
+        const matchesPort = drop.ports?.id === filterPort;
+        const matchesSalePoint = drop.sale_point_id === filterPort;
+        if (!matchesPort && !matchesSalePoint) {
+          return false;
+        }
       }
       
       // Filtre pêcheur

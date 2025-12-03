@@ -90,26 +90,38 @@ const GoogleMapComponent = ({
     setMap(null);
   }, []);
 
-  // Auto-center on user location (PRIORITY)
+  // Auto-center: userLocation > drops > salePoints > default (NOT all ports)
   useEffect(() => {
     if (!map) return;
 
-    const bounds = new google.maps.LatLngBounds();
-    let hasPoints = false;
-
+    // Priorité 1: Position utilisateur
     if (userLocation) {
-      bounds.extend(new google.maps.LatLng(userLocation.lat, userLocation.lng));
-      hasPoints = true;
       map.setCenter(userLocation);
       map.setZoom(12);
       return;
     }
 
-    if (ports && ports.length > 0) {
-      ports.forEach(port => {
-        bounds.extend(new google.maps.LatLng(port.latitude, port.longitude));
+    const bounds = new google.maps.LatLngBounds();
+    let hasPoints = false;
+
+    // Priorité 2: Centrer sur les drops actifs
+    if (drops && drops.length > 0) {
+      drops.forEach(drop => {
+        if (drop.latitude && drop.longitude) {
+          bounds.extend(new google.maps.LatLng(drop.latitude, drop.longitude));
+          hasPoints = true;
+        }
       });
-      hasPoints = true;
+    }
+
+    // Priorité 3: Centrer sur les points de vente (si pas de drops)
+    if (!hasPoints && salePoints && salePoints.length > 0) {
+      salePoints.forEach(sp => {
+        if (sp.latitude && sp.longitude) {
+          bounds.extend(new google.maps.LatLng(sp.latitude, sp.longitude));
+          hasPoints = true;
+        }
+      });
     }
 
     if (hasPoints) {
@@ -122,10 +134,11 @@ const GoogleMapComponent = ({
         google.maps.event.removeListener(listener);
       });
     } else {
+      // Priorité 4: Centre par défaut (Hyères)
       map.setCenter(defaultMapConfig.center);
       map.setZoom(defaultMapConfig.zoom);
     }
-  }, [map, ports, userLocation]);
+  }, [map, drops, salePoints, userLocation]);
 
   // Handle selected port/sale point/drop
   useEffect(() => {
