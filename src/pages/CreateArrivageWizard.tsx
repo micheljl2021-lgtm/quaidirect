@@ -139,6 +139,19 @@ export default function CreateArrivageWizard() {
       return;
     }
 
+    // Validation des UUIDs des espèces - évite l'erreur "invalid input syntax for type uuid"
+    const invalidSpecies = arrivageData.species.filter(
+      (s) => !s.speciesId || s.speciesId.trim() === '' || s.speciesId.length < 36
+    );
+    if (invalidSpecies.length > 0) {
+      console.error("❌ [handlePublish] Espèces avec UUID invalide:", invalidSpecies);
+      toast.error(
+        `${invalidSpecies.length} espèce(s) ont des références invalides. Veuillez les resélectionner.`
+      );
+      setStep(2);
+      return;
+    }
+
     console.log("✅ [handlePublish] User:", user.id);
     console.log("✅ [handlePublish] Sale point ID:", arrivageData.salePointId);
     setIsPublishing(true);

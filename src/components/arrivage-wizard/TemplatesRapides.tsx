@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrivageSpecies } from "@/pages/CreateArrivageWizard";
 import { Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
 interface TemplatesRapidesProps {
   onTemplateSelect: (species: ArrivageSpecies[]) => void;
@@ -53,6 +54,7 @@ interface SavedPreset {
 export function TemplatesRapides({ onTemplateSelect }: TemplatesRapidesProps) {
   const { user } = useAuth();
   const [customPresets, setCustomPresets] = useState<SavedPreset[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const fetchCustomPresets = async () => {
@@ -81,47 +83,149 @@ export function TemplatesRapides({ onTemplateSelect }: TemplatesRapidesProps) {
     fetchCustomPresets();
   }, [user]);
 
-  const handleTemplateClick = async (templateSpecies: typeof TEMPLATES[0]["species"], presetId?: string) => {
-    const formattedSpecies: ArrivageSpecies[] = templateSpecies.map((s) => ({
-      id: crypto.randomUUID(),
-      speciesId: "", // Will need to be matched with actual species IDs
-      speciesName: s.speciesName,
-      quantity: s.quantity,
-      unit: s.unit,
-      price: s.price,
-      remark: "",
-    }));
-    onTemplateSelect(formattedSpecies);
+  // Fetch real species UUIDs from database by name
+  const fetchSpeciesUUIDs = async (speciesNames: string[]): Promise<Map<string, { id: string; price: number }>> => {
+    const { data: speciesData, error } = await supabase
+      .from('species')
+      .select('id, name, indicative_price')
+      .in('name', speciesNames);
 
-    // Increment usage count if it's a custom preset
-    if (presetId && user) {
-      const { data: fishermanData } = await supabase
-        .from("fishermen")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
+    if (error) {
+      console.error("Error fetching species UUIDs:", error);
+      return new Map();
+    }
 
-      if (fishermanData) {
-        // Manually increment usage count
-        const currentPreset = customPresets.find(p => p.id === presetId);
-        if (currentPreset) {
-          await supabase
-            .from("fishermen_species_presets")
-            .update({ usage_count: currentPreset.usage_count + 1 })
-            .eq("id", presetId);
+    const speciesMap = new Map<string, { id: string; price: number }>();
+    speciesData?.forEach((species) => {
+      speciesMap.set(species.name, { 
+        id: species.id, 
+        price: species.indicative_price || 0 
+      });
+    });
+
+    return speciesMap;
+  };
+
+  const handleTemplateClick = async (
+    templateSpecies: typeof TEMPLATES[0]["species"], 
+    presetId?: string,
+    presetSpeciesData?: any[]
+  ) => {
+    setIsLoading(true);
+    
+    try {
+      // Get species names to fetch
+      const speciesNames = templateSpecies.map((s) => s.speciesName);
+      
+      // Fetch real UUIDs from database
+      const speciesMap = await fetchSpeciesUUIDs(speciesNames);
+      
+      // Map template species to ArrivageSpecies with real UUIDs
+      const formattedSpecies: ArrivageSpecies[] = [];
+      const notFoundSpecies: string[] = [];
+
+      for (const s of templateSpecies) {
+        const speciesInfo = speciesMap.get(s.speciesName);
+        
+        if (speciesInfo) {
+          formattedSpecies.push({
+            id: crypto.randomUUID(),
+            speciesId: speciesInfo.id, // Real UUID from database
+            speciesName: s.speciesName,
+            quantity: s.quantity,
+            unit: s.unit,
+            price: s.price || speciesInfo.price,
+            remark: "",
+          });
+        } else {
+          notFoundSpecies.push(s.speciesName);
         }
       }
+
+      // Warn if some species were not found
+      if (notFoundSpecies.length > 0) {
+        toast.warning(`${notFoundSpecies.length} espèce(s) non trouvée(s): ${notFoundSpecies.join(", ")}`);
+      }
+
+      if (formattedSpecies.length === 0) {
+        toast.error("Aucune espèce valide trouvée dans ce modèle");
+        return;
+      }
+
+      onTemplateSelect(formattedSpecies);
+
+      // Increment usage count if it's a custom preset
+      if (presetId && user) {
+        const { data: fishermanData } = await supabase
+          .from("fishermen")
+          .select("id")
+          .eq("user_id", user.id)
+          .single();
+
+        if (fishermanData) {
+          const currentPreset = customPresets.find(p => p.id === presetId);
+          if (currentPreset) {
+            await supabase
+              .from("fishermen_species_presets")
+              .update({ usage_count: currentPreset.usage_count + 1 })
+              .eq("id", presetId);
+          }
+        }
+      }
+
+      toast.success("Modèle chargé !");
+    } catch (error) {
+      console.error("Error loading template:", error);
+      toast.error("Erreur lors du chargement du modèle");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleCustomPresetClick = (preset: SavedPreset) => {
-    const templateSpecies = preset.species_data.map((s: any) => ({
-      speciesName: s.speciesName,
-      quantity: s.quantity,
-      unit: s.unit,
-      price: s.price,
-    }));
-    handleTemplateClick(templateSpecies, preset.id);
+  const handleCustomPresetClick = async (preset: SavedPreset) => {
+    setIsLoading(true);
+    
+    try {
+      // Check if preset has speciesId (newer format) or only speciesName (older format)
+      const hasValidUUIDs = preset.species_data.every((s: any) => s.speciesId && s.speciesId !== '');
+      
+      if (hasValidUUIDs) {
+        // Preset already has valid UUIDs - use directly
+        const formattedSpecies: ArrivageSpecies[] = preset.species_data.map((s: any) => ({
+          id: crypto.randomUUID(),
+          speciesId: s.speciesId,
+          speciesName: s.speciesName,
+          quantity: s.quantity,
+          unit: s.unit,
+          price: s.price,
+          remark: "",
+        }));
+        
+        onTemplateSelect(formattedSpecies);
+        
+        // Increment usage count
+        await supabase
+          .from("fishermen_species_presets")
+          .update({ usage_count: preset.usage_count + 1 })
+          .eq("id", preset.id);
+          
+        toast.success("Modèle chargé !");
+      } else {
+        // Old format without UUIDs - need to fetch from database
+        const templateSpecies = preset.species_data.map((s: any) => ({
+          speciesName: s.speciesName,
+          quantity: s.quantity,
+          unit: s.unit,
+          price: s.price,
+        }));
+        await handleTemplateClick(templateSpecies, preset.id, preset.species_data);
+      }
+    } catch (error) {
+      console.error("Error loading custom preset:", error);
+      toast.error("Erreur lors du chargement du modèle");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -143,6 +247,7 @@ export function TemplatesRapides({ onTemplateSelect }: TemplatesRapidesProps) {
             size="lg"
             className="h-auto py-4 flex-col items-start hover:scale-105 transition-transform"
             onClick={() => handleCustomPresetClick(preset)}
+            disabled={isLoading}
           >
             <div className="text-2xl mb-1">{preset.icon}</div>
             <div className="font-semibold">{preset.name}</div>
@@ -161,6 +266,7 @@ export function TemplatesRapides({ onTemplateSelect }: TemplatesRapidesProps) {
             size="lg"
             className="h-auto py-4 flex-col items-start bg-background hover:bg-accent"
             onClick={() => handleTemplateClick(template.species)}
+            disabled={isLoading}
           >
             <div className="text-2xl mb-1">{template.icon}</div>
             <div className="font-semibold">{template.name}</div>
