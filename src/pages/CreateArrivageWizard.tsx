@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Package } from "lucide-react";
+import { getUserFriendlyError } from "@/lib/errorMessages";
 
 export interface ArrivageSpecies {
   id: string;
@@ -327,8 +328,7 @@ export default function CreateArrivageWizard() {
       navigate("/dashboard/pecheur");
     } catch (error: any) {
       console.error("💥 [handlePublish] Erreur fatale:", error);
-      const errorMessage = error?.message || error?.error_description || "Erreur inconnue";
-      toast.error(`Erreur lors de la publication: ${errorMessage}`);
+      toast.error(getUserFriendlyError(error));
     } finally {
       console.log("🏁 [handlePublish] Fin du processus");
       setIsPublishing(false);
