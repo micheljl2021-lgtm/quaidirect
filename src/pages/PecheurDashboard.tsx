@@ -103,6 +103,7 @@ const PecheurDashboard = () => {
           .select(`
             *,
             port:ports(*),
+            sale_point:fisherman_sale_points(*),
             offers(*),
             drop_species(species:species(*))
           `)
@@ -122,6 +123,7 @@ const PecheurDashboard = () => {
           .select(`
             *,
             port:ports(*),
+            sale_point:fisherman_sale_points(*),
             offers(*),
             drop_species(species:species(*))
           `)
@@ -528,7 +530,9 @@ const PecheurDashboard = () => {
                             onClick={() => navigate(`/drop/${drop.id}`)}
                           >
                             <div className="flex items-center gap-2">
-                              <h3 className="font-medium">{drop.port?.name}</h3>
+                              <h3 className="font-medium">
+                                {drop.sale_point?.label || drop.sale_point?.address || drop.port?.name || 'Point de vente'}
+                              </h3>
                               <span className={`text-xs px-2 py-0.5 rounded-full ${
                                 drop.status === 'scheduled' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' :
                                 drop.status === 'landed' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' :
@@ -573,8 +577,8 @@ const PecheurDashboard = () => {
                                 e.stopPropagation();
                                 // Open save template dialog
                                 const arrivageData = {
-                                  portId: drop.port_id,
-                                  portName: drop.port?.name,
+                                  salePointId: drop.sale_point_id || drop.port_id,
+                                  salePointName: drop.sale_point?.label || drop.port?.name,
                                   timeSlot: "matin", // Default, could be extracted from times
                                   species: drop.offers?.map((o: any) => ({
                                     id: o.id,
@@ -698,7 +702,9 @@ const PecheurDashboard = () => {
                       <div key={drop.id} className="p-3 border-b last:border-0">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <p className="font-medium">{drop.port?.name}</p>
+                            <p className="font-medium">
+                              {drop.sale_point?.label || drop.sale_point?.address || drop.port?.name || 'Point de vente'}
+                            </p>
                             <p className="text-sm text-muted-foreground">
                               {new Date(drop.eta_at).toLocaleDateString('fr-FR', {
                                 day: 'numeric',

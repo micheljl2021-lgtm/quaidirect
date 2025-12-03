@@ -38,7 +38,7 @@ const EditArrivage = () => {
   const [loadingDrop, setLoadingDrop] = useState(true);
 
   // Form state
-  const [portId, setPortId] = useState('');
+  const [salePointId, setSalePointId] = useState('');
   const [etaDate, setEtaDate] = useState('');
   const [etaTime, setEtaTime] = useState('');
   const [saleDate, setSaleDate] = useState('');
@@ -96,7 +96,8 @@ const EditArrivage = () => {
   useEffect(() => {
     const loadDropData = async () => {
       if (existingDrop) {
-        setPortId(existingDrop.port_id);
+        // Priorité: sale_point_id, sinon port_id pour compatibilité
+        setSalePointId(existingDrop.sale_point_id || existingDrop.port_id || '');
         
         if (existingDrop.eta_at) {
           const etaDate = new Date(existingDrop.eta_at);
@@ -189,17 +190,20 @@ const EditArrivage = () => {
 
   const fishingAreaType = getFishingArea(fishermanData?.main_fishing_zone || null);
 
-  // Fetch ports
-  const { data: ports } = useQuery({
-    queryKey: ['ports'],
+  // Fetch fisherman sale points
+  const { data: salePoints } = useQuery({
+    queryKey: ['fisherman-sale-points', fishermanData?.id],
     queryFn: async () => {
+      if (!fishermanData?.id) return [];
       const { data, error } = await supabase
-        .from('ports')
+        .from('fisherman_sale_points')
         .select('*')
-        .order('name');
+        .eq('fisherman_id', fishermanData.id)
+        .order('is_primary', { ascending: false });
       if (error) throw error;
       return data;
     },
+    enabled: !!fishermanData?.id,
   });
 
   // Récupérer les espèces filtrées par zone
@@ -291,10 +295,10 @@ const EditArrivage = () => {
     setLoading(true);
 
     try {
-      if (!portId || !saleDate || !saleTime) {
+      if (!salePointId || !saleDate || !saleTime) {
         toast({
           title: 'Erreur',
-          description: 'Veuillez remplir tous les champs obligatoires',
+          description: 'Veuillez sélectionner un point de vente et remplir les horaires',
           variant: 'destructive',
         });
         setLoading(false);
@@ -306,11 +310,12 @@ const EditArrivage = () => {
       const visibleAt = new Date(saleStartTime.getTime() - (isPremium ? 2 : 1) * 60 * 60 * 1000);
       const publicVisibleAt = isPremium ? new Date(visibleAt.getTime() + 30 * 60 * 1000) : null;
 
-      // Mettre à jour l'arrivage
+      // Mettre à jour l'arrivage avec sale_point_id
       const { error: updateError } = await supabase
         .from('drops')
         .update({
-          port_id: portId,
+          sale_point_id: salePointId,
+          port_id: null, // Nettoyer l'ancien champ
           eta_at: etaAt?.toISOString(),
           sale_start_time: saleStartTime.toISOString(),
           visible_at: visibleAt.toISOString(),
@@ -472,19 +477,25 @@ const EditArrivage = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="port">Port d'arrivée *</Label>
-                <Select value={portId} onValueChange={setPortId}>
-                  <SelectTrigger id="port">
-                    <SelectValue placeholder="Sélectionnez un port" />
+                <Label htmlFor="sale-point">Point de vente *</Label>
+                <Select value={salePointId} onValueChange={setSalePointId}>
+                  <SelectTrigger id="sale-point">
+                    <SelectValue placeholder="Sélectionnez un point de vente" />
                   </SelectTrigger>
                   <SelectContent>
-                    {ports?.map((port) => (
-                      <SelectItem key={port.id} value={port.id}>
-                        {port.name}, {port.city}
+                    {salePoints?.map((sp) => (
+                      <SelectItem key={sp.id} value={sp.id}>
+                        {sp.label} - {sp.address}
+                        {sp.is_primary && ' (Principal)'}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {(!salePoints || salePoints.length === 0) && (
+                  <p className="text-sm text-amber-600">
+                    Aucun point de vente configuré. <Button variant="link" className="p-0 h-auto" onClick={() => navigate('/pecheur/edit-sale-points')}>Configurer</Button>
+                  </p>
+                )}
               </div>
 
               <div className="space-y-3">
