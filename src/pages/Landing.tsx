@@ -299,35 +299,66 @@ const Landing = () => {
       )}
 
       {/* Latest Arrivages Preview */}
-      {latestArrivages && latestArrivages.length > 0 && (
-        <section className="container px-4 py-16 border-t border-border">
-          <div className="mx-auto max-w-6xl">
-            <div className="text-center space-y-4 mb-12">
-              <h2 className="text-4xl font-bold text-foreground">
-                Arrivages du jour
-              </h2>
-              <p className="text-lg text-muted-foreground">
-                Découvrez les derniers arrivages de poisson frais
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {latestArrivages.map(arrivage => (
-                <ArrivageCard key={arrivage.id} {...arrivage} />
-              ))}
-            </div>
-
-            <div className="text-center">
-              <Link to="/carte">
-                <Button size="lg" variant="outline" className="gap-2">
-                  <MapPin className="h-5 w-5" />
-                  Voir tous les arrivages
-                </Button>
-              </Link>
-            </div>
+      <section className="container px-4 py-16 border-t border-border">
+        <div className="mx-auto max-w-6xl">
+          <div className="text-center space-y-4 mb-12">
+            <h2 className="text-4xl font-bold text-foreground">
+              Arrivages du jour
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              Découvrez les derniers arrivages de poisson frais
+            </p>
           </div>
-        </section>
-      )}
+
+          {latestArrivages && latestArrivages.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                {latestArrivages.map(arrivage => (
+                  <ArrivageCard key={arrivage.id} {...arrivage} />
+                ))}
+              </div>
+
+              <div className="text-center">
+                <Link to="/carte">
+                  <Button size="lg" variant="outline" className="gap-2">
+                    <MapPin className="h-5 w-5" />
+                    Voir tous les arrivages
+                  </Button>
+                </Link>
+              </div>
+            </>
+          ) : (
+            <Card className="bg-gradient-to-br from-primary/5 to-accent/5 border-primary/10">
+              <CardContent className="py-16 text-center space-y-6">
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10">
+                  <Anchor className="h-10 w-10 text-primary" />
+                </div>
+                <div className="space-y-3 max-w-lg mx-auto">
+                  <h3 className="text-2xl font-bold text-foreground">Pas d'arrivages pour le moment</h3>
+                  <p className="text-muted-foreground">
+                    Les pêcheurs publient leurs arrivages régulièrement selon la météo et leurs sorties en mer.
+                    Explorez la carte ou inscrivez-vous pour être alerté !
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+                  <Link to="/carte">
+                    <Button size="lg" className="gap-2">
+                      <MapPin className="h-5 w-5" />
+                      Explorer la carte
+                    </Button>
+                  </Link>
+                  <Link to="/premium">
+                    <Button size="lg" variant="outline" className="gap-2">
+                      <Bell className="h-5 w-5" />
+                      Recevoir les alertes
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </section>
 
       {/* Testimonials Section */}
       <section className="container px-4 py-16 border-t border-border bg-muted/30">
