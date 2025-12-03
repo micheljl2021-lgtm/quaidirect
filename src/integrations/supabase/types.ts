@@ -412,6 +412,7 @@ export type Database = {
           label: string
           latitude: number | null
           longitude: number | null
+          photo_url: string | null
           updated_at: string | null
         }
         Insert: {
@@ -424,6 +425,7 @@ export type Database = {
           label: string
           latitude?: number | null
           longitude?: number | null
+          photo_url?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -436,6 +438,7 @@ export type Database = {
           label?: string
           latitude?: number | null
           longitude?: number | null
+          photo_url?: string | null
           updated_at?: string | null
         }
         Relationships: [

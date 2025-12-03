@@ -59,7 +59,7 @@ const EditArrivage = () => {
   }, [user, isVerifiedFisherman, navigate]);
 
   // Charger l'arrivage existant
-  const { data: existingDrop, isLoading: isLoadingDrop } = useQuery({
+  const { data: existingDrop, isLoading: isLoadingDrop, error: dropError } = useQuery({
     queryKey: ['drop', dropId],
     queryFn: async () => {
       if (!dropId) throw new Error('Drop ID manquant');
@@ -91,6 +91,7 @@ const EditArrivage = () => {
       return data;
     },
     enabled: !!dropId && !!user,
+    retry: false,
   });
 
   // Pré-remplir le formulaire quand les données sont chargées
@@ -430,6 +431,25 @@ const EditArrivage = () => {
         <Header />
         <div className="container px-4 py-8">
           <p className="text-center text-muted-foreground">Chargement de l'arrivage...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (dropError) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container px-4 py-8 max-w-xl mx-auto">
+          <Alert variant="destructive" className="mb-6">
+            <AlertDescription className="text-base">
+              {dropError instanceof Error ? dropError.message : 'Arrivage introuvable ou accès non autorisé'}
+            </AlertDescription>
+          </Alert>
+          <Button onClick={() => navigate('/dashboard/pecheur')} className="w-full">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Retour au dashboard
+          </Button>
         </div>
       </div>
     );

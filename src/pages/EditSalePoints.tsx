@@ -8,12 +8,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Loader2, MapPin, Plus, Trash2, ArrowLeft } from 'lucide-react';
+import { Loader2, MapPin, Plus, Trash2, ArrowLeft, Camera } from 'lucide-react';
 import Header from '@/components/Header';
 import { geocodeAddress } from '@/lib/google-geocode';
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
 import { googleMapsLoaderConfig } from '@/lib/google-maps';
 import { getUserFriendlyError } from '@/lib/errorMessages';
+import { PhotoUpload } from '@/components/PhotoUpload';
 
 interface SalePoint {
   id?: string;
@@ -23,6 +24,7 @@ interface SalePoint {
   latitude: number | null;
   longitude: number | null;
   is_primary: boolean;
+  photo_url: string | null;
 }
 
 const mapContainerStyle = {
@@ -77,6 +79,7 @@ export default function EditSalePoints() {
           latitude: p.latitude,
           longitude: p.longitude,
           is_primary: p.is_primary || false,
+          photo_url: p.photo_url || null,
         })));
       } else {
         setSalePoints([{
@@ -86,6 +89,7 @@ export default function EditSalePoints() {
           latitude: null,
           longitude: null,
           is_primary: true,
+          photo_url: null,
         }]);
       }
     } catch (error: any) {
@@ -108,6 +112,7 @@ export default function EditSalePoints() {
       latitude: null,
       longitude: null,
       is_primary: false,
+      photo_url: null,
     }]);
   };
 
@@ -208,6 +213,7 @@ export default function EditSalePoints() {
           latitude: point.latitude,
           longitude: point.longitude,
           is_primary: index === 0,
+          photo_url: point.photo_url || null,
         };
 
         if (point.id) {
@@ -363,6 +369,22 @@ export default function EditSalePoints() {
                         onChange={(e) => handleChange(index, 'description', e.target.value)}
                         rows={2}
                       />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <Camera className="h-4 w-4" />
+                        Photo du point de vente
+                      </Label>
+                      <PhotoUpload
+                        label=""
+                        value={point.photo_url}
+                        onChange={(url) => handleChange(index, 'photo_url', url)}
+                        bucket="fishermen-photos"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Une photo aide les clients à vous trouver facilement
+                      </p>
                     </div>
                   </CardContent>
                 </Card>

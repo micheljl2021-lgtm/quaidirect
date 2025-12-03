@@ -51,6 +51,7 @@ export default function CreateArrivageWizard() {
     timeSlot: "matin",
     species: [],
   });
+  const [isPremium, setIsPremium] = useState(false);
 
   // Load templates on mount
   useEffect(() => {
@@ -219,6 +220,9 @@ export default function CreateArrivageWizard() {
 
       console.log("📅 [handlePublish] Dates calculées - ETA:", etaDate.toISOString(), "Sale start:", saleStartDate.toISOString());
 
+      const visibleAt = new Date();
+      const publicVisibleAt = isPremium ? new Date(visibleAt.getTime() + 30 * 60 * 1000) : null;
+
       const dropPayload = {
         fisherman_id: fishermanData.id,
         sale_point_id: arrivageData.salePointId,
@@ -226,7 +230,9 @@ export default function CreateArrivageWizard() {
         longitude: salePointData.longitude,
         eta_at: etaDate.toISOString(),
         sale_start_time: saleStartDate.toISOString(),
-        visible_at: new Date().toISOString(),
+        visible_at: visibleAt.toISOString(),
+        public_visible_at: publicVisibleAt?.toISOString() || null,
+        is_premium: isPremium,
         status: "scheduled" as const,
         port_id: null,
       };
@@ -432,6 +438,8 @@ export default function CreateArrivageWizard() {
               isPublishing={isPublishing}
               photos={photos}
               onPhotosChange={setPhotos}
+              isPremium={isPremium}
+              onPremiumChange={setIsPremium}
             />
           )}
         </div>
