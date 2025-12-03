@@ -176,37 +176,77 @@ export default function EditSalePoints() {
 
     setSaving(true);
     try {
-      const { error: deleteError } = await supabase
-        .from('fisherman_sale_points')
-        .delete()
-        .eq('fisherman_id', fishermanId);
+      // Récupérer les IDs existants pour déterminer les opérations UPSERT/DELETE
+      const existingIds = salePoints.filter(p => p.id).map(p => p.id);
+      const currentPointIds = salePoints.map(p => p.id).filter(Boolean);
 
-      if (deleteError) throw deleteError;
+      // Supprimer les points qui ne sont plus dans la liste (point supprimé par l'utilisateur)
+      if (existingIds.length > 0) {
+        const idsToDelete = existingIds.filter(id => !currentPointIds.includes(id));
+        if (idsToDelete.length > 0) {
+          const { error: deleteError } = await supabase
+            .from('fisherman_sale_points')
+            .delete()
+            .in('id', idsToDelete);
 
-      const pointsToInsert = salePoints.map((p, index) => ({
-        fisherman_id: fishermanId,
-        label: p.label,
-        address: p.address,
-        description: p.description || null,
-        latitude: p.latitude,
-        longitude: p.longitude,
-        is_primary: index === 0,
-      }));
+          if (deleteError) {
+            console.error('Delete error:', deleteError);
+            throw deleteError;
+          }
+        }
+      }
 
-      const { error: insertError } = await supabase
-        .from('fisherman_sale_points')
-        .insert(pointsToInsert);
+      // UPSERT chaque point individuellement
+      for (let index = 0; index < salePoints.length; index++) {
+        const point = salePoints[index];
+        const pointData = {
+          fisherman_id: fishermanId,
+          label: point.label,
+          address: point.address,
+          description: point.description || null,
+          latitude: point.latitude,
+          longitude: point.longitude,
+          is_primary: index === 0,
+        };
 
-      if (insertError) throw insertError;
+        if (point.id) {
+          // UPDATE existant
+          const { error: updateError } = await supabase
+            .from('fisherman_sale_points')
+            .update(pointData)
+            .eq('id', point.id);
+
+          if (updateError) {
+            console.error('Update error:', updateError);
+            throw updateError;
+          }
+        } else {
+          // INSERT nouveau
+          const { error: insertError } = await supabase
+            .from('fisherman_sale_points')
+            .insert(pointData);
+
+          if (insertError) {
+            console.error('Insert error:', insertError);
+            throw insertError;
+          }
+        }
+      }
 
       toast.success('Points de vente enregistrés');
       navigate('/dashboard/pecheur');
     } catch (error: any) {
-      console.error('Error:', error);
-      if (error.message?.includes('2 points de vente maximum')) {
+      console.error('Error saving sale points:', error);
+      
+      // Messages d'erreur spécifiques
+      if (error.message?.includes('2 points de vente maximum') || error.code === '23514') {
         toast.error('Maximum 2 points de vente autorisés');
+      } else if (error.code === '42501' || error.message?.includes('RLS')) {
+        toast.error('Session expirée. Veuillez vous reconnecter.');
+      } else if (error.code === '23503') {
+        toast.error('Erreur de référence. Veuillez réessayer.');
       } else {
-        toast.error('Erreur lors de l\'enregistrement');
+        toast.error(`Erreur: ${error.message || error.code || 'Inconnue'}`);
       }
     } finally {
       setSaving(false);
@@ -247,7 +287,7 @@ export default function EditSalePoints() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               {salePoints.map((point, index) => (
-                <Card key={index} className="border-2">
+                <Card key={point.id || `new-${index}`} className="border-2">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg flex items-center gap-2">
