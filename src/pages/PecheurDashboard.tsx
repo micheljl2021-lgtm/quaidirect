@@ -144,7 +144,7 @@ const PecheurDashboard = () => {
   };
 
   const sendMessageMutation = useMutation({
-    mutationFn: async (data: { message_type: string; body: string; sent_to_group: string }) => {
+    mutationFn: async (data: { message_type: string; body: string; sent_to_group: string; contact_ids?: string[] }) => {
       const { data: result, error } = await supabase.functions.invoke('send-fisherman-message', {
         body: data
       });
@@ -178,16 +178,30 @@ const PecheurDashboard = () => {
       return;
     }
 
+    // Vérifier qu'au moins un contact est sélectionné
+    if (selectedContacts.length === 0) {
+      toast({
+        title: 'Erreur',
+        description: "Veuillez sélectionner au moins un contact",
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const messageBody = messageType === 'custom' 
       ? customMessage 
       : messageType === 'invitation_initiale'
       ? "Bonjour, je suis maintenant sur QuaiDirect ! Retrouvez tous mes arrivages et points de vente sur ma page."
       : "Nouveau drop disponible ! Consultez les détails sur ma page QuaiDirect.";
 
+    // Extraire les IDs des contacts sélectionnés
+    const contactIds = selectedContacts.map(c => c.id);
+
     sendMessageMutation.mutate({
       message_type: messageType,
       body: messageBody,
-      sent_to_group: selectedGroup
+      sent_to_group: selectedGroup,
+      contact_ids: contactIds
     });
   };
 
@@ -314,7 +328,7 @@ const PecheurDashboard = () => {
               onClick={() => navigate('/pecheur/annonce-simple')}
             >
               <MessageSquare className="h-5 w-5" />
-              Annonce simple
+              Arrivage
             </Button>
             <Button 
               size="lg" 
@@ -322,7 +336,7 @@ const PecheurDashboard = () => {
               onClick={() => navigate('/pecheur/nouvel-arrivage-v2')}
             >
               <Plus className="h-5 w-5" />
-              Arrivage détaillé
+              Arrivage premium
             </Button>
           </div>
         </div>

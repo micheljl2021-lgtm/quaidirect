@@ -556,7 +556,7 @@ const Arrivages = () => {
                   port={portName}
                   eta={etaDate || saleDate!}
                   saleStartTime={saleDate}
-                  pricePerPiece={0}
+                  pricePerPiece={undefined}
                   quantity={0}
                   isPremium={drop.is_premium}
                   dropPhotos={drop.drop_photos}
