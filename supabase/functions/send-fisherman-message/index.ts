@@ -9,6 +9,50 @@ const corsHeaders = {
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
+// Rate limiting configuration
+const RATE_LIMIT = 3; // max messages
+const RATE_WINDOW_MINUTES = 1; // per minute
+
+const checkRateLimit = async (
+  supabase: any,
+  identifier: string,
+  endpoint: string
+): Promise<{ allowed: boolean; remaining: number }> => {
+  const windowStart = new Date(Date.now() - RATE_WINDOW_MINUTES * 60 * 1000).toISOString();
+  
+  const { data: existing, error: fetchError } = await supabase
+    .from('rate_limits')
+    .select('id, request_count')
+    .eq('identifier', identifier)
+    .eq('endpoint', endpoint)
+    .gte('window_start', windowStart)
+    .single();
+
+  if (fetchError && fetchError.code !== 'PGRST116') {
+    console.error('Rate limit check error:', fetchError);
+    return { allowed: true, remaining: RATE_LIMIT };
+  }
+
+  if (existing) {
+    if (existing.request_count >= RATE_LIMIT) {
+      return { allowed: false, remaining: 0 };
+    }
+    await supabase
+      .from('rate_limits')
+      .update({ request_count: existing.request_count + 1 })
+      .eq('id', existing.id);
+    return { allowed: true, remaining: RATE_LIMIT - existing.request_count - 1 };
+  }
+
+  await supabase.from('rate_limits').insert({
+    identifier,
+    endpoint,
+    request_count: 1,
+    window_start: new Date().toISOString(),
+  });
+  return { allowed: true, remaining: RATE_LIMIT - 1 };
+};
+
 // Security: HTML escape function to prevent XSS attacks
 const escapeHtml = (unsafe: string): string => {
   if (!unsafe) return '';
@@ -109,6 +153,25 @@ serve(async (req) => {
     if (fishermanError || !fisherman) throw new Error('Fisherman not found');
     logStep('Fisherman found', { fishermanId: fisherman.id });
 
+    // Rate limiting check
+    const { allowed, remaining } = await checkRateLimit(supabaseClient, user.id, 'send-fisherman-message');
+    if (!allowed) {
+      logStep('Rate limit exceeded', { userId: user.id });
+      return new Response(
+        JSON.stringify({ error: 'Limite de messages atteinte. Veuillez patienter 1 minute.' }),
+        {
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json',
+            'X-RateLimit-Remaining': '0',
+            'Retry-After': '60'
+          },
+          status: 429,
+        }
+      );
+    }
+    logStep('Rate limit check passed', { remaining });
+
     const { message_type, subject, body, sent_to_group, drop_id, drop_details, contact_ids } = await req.json();
 
     // Récupérer les contacts
@@ -199,7 +262,11 @@ serve(async (req) => {
         message: `${successCount} emails envoyés avec succès`
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json',
+          'X-RateLimit-Remaining': String(remaining)
+        },
         status: 200,
       }
     );

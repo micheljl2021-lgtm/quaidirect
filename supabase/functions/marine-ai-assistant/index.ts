@@ -9,6 +9,50 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Rate limiting configuration - stricter for AI endpoint
+const RATE_LIMIT = 5; // max requests
+const RATE_WINDOW_MINUTES = 1; // per minute
+
+const checkRateLimit = async (
+  supabase: any,
+  identifier: string,
+  endpoint: string
+): Promise<{ allowed: boolean; remaining: number }> => {
+  const windowStart = new Date(Date.now() - RATE_WINDOW_MINUTES * 60 * 1000).toISOString();
+  
+  const { data: existing, error: fetchError } = await supabase
+    .from('rate_limits')
+    .select('id, request_count')
+    .eq('identifier', identifier)
+    .eq('endpoint', endpoint)
+    .gte('window_start', windowStart)
+    .single();
+
+  if (fetchError && fetchError.code !== 'PGRST116') {
+    console.error('Rate limit check error:', fetchError);
+    return { allowed: true, remaining: RATE_LIMIT };
+  }
+
+  if (existing) {
+    if (existing.request_count >= RATE_LIMIT) {
+      return { allowed: false, remaining: 0 };
+    }
+    await supabase
+      .from('rate_limits')
+      .update({ request_count: existing.request_count + 1 })
+      .eq('id', existing.id);
+    return { allowed: true, remaining: RATE_LIMIT - existing.request_count - 1 };
+  }
+
+  await supabase.from('rate_limits').insert({
+    identifier,
+    endpoint,
+    request_count: 1,
+    window_start: new Date().toISOString(),
+  });
+  return { allowed: true, remaining: RATE_LIMIT - 1 };
+};
+
 const SYSTEM_PROMPT = `Tu es l'IA du Marin, un assistant spécialisé pour les marins-pêcheurs artisanaux français.
 
 Tu dois aider sur tous ces sujets:
@@ -77,6 +121,25 @@ serve(async (req) => {
 
     if (!fisherman) throw new Error('Fisherman not found');
 
+    // Rate limiting check
+    const { allowed, remaining } = await checkRateLimit(supabaseClient, user.id, 'marine-ai-assistant');
+    if (!allowed) {
+      console.log(`[MARINE-AI] Rate limit exceeded for user ${user.id}`);
+      return new Response(
+        JSON.stringify({ error: 'Limite de requêtes atteinte. Veuillez patienter 1 minute.' }),
+        {
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json',
+            'X-RateLimit-Remaining': '0',
+            'Retry-After': '60'
+          },
+          status: 429,
+        }
+      );
+    }
+    console.log(`[MARINE-AI] Rate limit OK for user ${user.id}, remaining: ${remaining}`);
+
     const { messages } = await req.json();
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -105,6 +168,7 @@ serve(async (req) => {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
+        'X-RateLimit-Remaining': String(remaining),
       },
     });
   } catch (error: any) {
