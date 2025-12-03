@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ interface ArrivageCardProps {
   city?: string;
   eta: Date;
   saleStartTime?: Date;
-  pricePerPiece: number;
+  pricePerPiece?: number;
   quantity: number;
   availableUnits?: number;
   totalUnits?: number;
@@ -51,13 +52,16 @@ const ArrivageCard = ({
   canReserve = false,
   variant = 'compact'
 }: ArrivageCardProps) => {
+  const [imgError, setImgError] = useState(false);
   const displayTime = saleStartTime || eta;
   const timeToSale = formatDistanceToNow(displayTime, { addSuffix: true, locale: fr });
   
   // Utiliser les photos du drop si disponibles, sinon l'image par défaut
-  const displayPhotos = dropPhotos && dropPhotos.length > 0 
+  const displayPhotos = dropPhotos && dropPhotos.length > 0 && !imgError
     ? dropPhotos.sort((a, b) => a.display_order - b.display_order)
     : null;
+  
+  const hasValidPrice = pricePerPiece !== undefined && pricePerPiece > 0;
   
   // Calculate stock percentage for full variant
   const stockPercentage = availableUnits && totalUnits 
@@ -75,6 +79,7 @@ const ArrivageCard = ({
               src={displayPhotos[0].photo_url} 
               alt="Point de vente"
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              onError={() => setImgError(true)}
             />
             {/* Badges Ambassador */}
             <div className="absolute top-3 left-3 flex flex-col gap-2">
@@ -203,10 +208,14 @@ const ArrivageCard = ({
         <div className="flex items-center justify-between pt-2 border-t border-border">
           {variant === 'full' ? (
             <>
-              <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold text-primary">{pricePerPiece.toFixed(2)}</span>
-                <span className="text-sm text-muted-foreground">€/pièce*</span>
-              </div>
+              {hasValidPrice ? (
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-bold text-primary">{pricePerPiece!.toFixed(2)}</span>
+                  <span className="text-sm text-muted-foreground">€/pièce*</span>
+                </div>
+              ) : (
+                <span className="text-sm text-muted-foreground italic">Prix sur place</span>
+              )}
               
               {canReserve && onReserve && (availableUnits ?? quantity) > 0 && (
                 <Button 
@@ -221,14 +230,18 @@ const ArrivageCard = ({
             </>
           ) : (
             <>
-              <div className="flex items-center gap-1">
-                <Euro className="h-4 w-4 text-accent" />
-                <span className="font-bold text-foreground">~{pricePerPiece.toFixed(2)}</span>
-                <span className="text-xs text-muted-foreground">/ pièce*</span>
-              </div>
+              {hasValidPrice ? (
+                <div className="flex items-center gap-1">
+                  <Euro className="h-4 w-4 text-accent" />
+                  <span className="font-bold text-foreground">~{pricePerPiece!.toFixed(2)}</span>
+                  <span className="text-xs text-muted-foreground">/ pièce*</span>
+                </div>
+              ) : (
+                <span className="text-sm text-muted-foreground italic">Prix sur place</span>
+              )}
               
               <span className="text-sm text-muted-foreground">
-                {quantity} pièce{quantity > 1 ? 's' : ''}
+                {quantity > 0 ? `${quantity} pièce${quantity > 1 ? 's' : ''}` : 'Stock limité'}
               </span>
             </>
           )}

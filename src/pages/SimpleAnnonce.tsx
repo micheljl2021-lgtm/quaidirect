@@ -219,7 +219,7 @@ export default function SimpleAnnonce() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour au dashboard
           </Button>
-          <h1 className="text-3xl font-bold mb-2">Annonce simple point de vente</h1>
+          <h1 className="text-3xl font-bold mb-2">Arrivage</h1>
           <p className="text-muted-foreground">
             Pour poisson de roche, mélange, vente au kilo sans détail par espèce
           </p>
@@ -401,7 +401,7 @@ export default function SimpleAnnonce() {
               className="flex-1"
               size="lg"
             >
-              {loading ? 'Publication...' : 'Publier l\'annonce'}
+              {loading ? 'Publication...' : "Publier l'arrivage"}
             </Button>
           </div>
         </div>

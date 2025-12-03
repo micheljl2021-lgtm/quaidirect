@@ -8,7 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Loader2, MapPin, Clock } from "lucide-react";
+import { ArrowLeft, Save, Loader2, MapPin, Clock, Camera } from "lucide-react";
+import { PhotoUpload } from "@/components/PhotoUpload";
 
 export default function PecheurPreferences() {
   const { user } = useAuth();
@@ -19,6 +20,12 @@ export default function PecheurPreferences() {
   const [defaultSalePointId, setDefaultSalePointId] = useState("");
   const [defaultTimeSlot, setDefaultTimeSlot] = useState("matin");
   const [fishermanId, setFishermanId] = useState("");
+  
+  // Photo states
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoBoat1, setPhotoBoat1] = useState<string | null>(null);
+  const [photoBoat2, setPhotoBoat2] = useState<string | null>(null);
+  const [photoDockSale, setPhotoDockSale] = useState<string | null>(null);
 
   const TIME_SLOTS = [
     { id: "matin", label: "Matin (7h–9h)" },
@@ -40,7 +47,7 @@ export default function PecheurPreferences() {
     try {
       const { data: fishermanData, error: fishermanError } = await supabase
         .from("fishermen")
-        .select("id, default_sale_point_id, default_time_slot")
+        .select("id, default_sale_point_id, default_time_slot, photo_url, photo_boat_1, photo_boat_2, photo_dock_sale")
         .eq("user_id", user?.id)
         .single();
 
@@ -49,6 +56,10 @@ export default function PecheurPreferences() {
       setFishermanId(fishermanData.id);
       setDefaultSalePointId(fishermanData.default_sale_point_id || "none");
       setDefaultTimeSlot(fishermanData.default_time_slot || "matin");
+      setPhotoUrl(fishermanData.photo_url);
+      setPhotoBoat1(fishermanData.photo_boat_1);
+      setPhotoBoat2(fishermanData.photo_boat_2);
+      setPhotoDockSale(fishermanData.photo_dock_sale);
 
       // Load sale points
       const { data: salePointsData, error: salePointsError } = await supabase
@@ -77,6 +88,10 @@ export default function PecheurPreferences() {
         .update({
           default_sale_point_id: defaultSalePointId === "none" ? null : defaultSalePointId,
           default_time_slot: defaultTimeSlot,
+          photo_url: photoUrl,
+          photo_boat_1: photoBoat1,
+          photo_boat_2: photoBoat2,
+          photo_dock_sale: photoDockSale,
         })
         .eq("id", fishermanId);
 
@@ -188,6 +203,45 @@ export default function PecheurPreferences() {
               <p className="text-xs text-muted-foreground">
                 Ce créneau sera présélectionné par défaut
               </p>
+            </div>
+
+            {/* Photos Section */}
+            <div className="space-y-4 pt-4 border-t">
+              <Label className="flex items-center gap-2 text-base font-semibold">
+                <Camera className="h-4 w-4" />
+                Photos de profil
+              </Label>
+              <p className="text-sm text-muted-foreground -mt-2">
+                Ces photos apparaîtront sur votre page vitrine et dans vos arrivages
+              </p>
+              
+              <PhotoUpload
+                label="Photo de profil principale"
+                value={photoUrl}
+                onChange={setPhotoUrl}
+                bucket="fishermen-photos"
+              />
+              
+              <PhotoUpload
+                label="Photo du bateau (1)"
+                value={photoBoat1}
+                onChange={setPhotoBoat1}
+                bucket="fishermen-photos"
+              />
+              
+              <PhotoUpload
+                label="Photo du bateau (2)"
+                value={photoBoat2}
+                onChange={setPhotoBoat2}
+                bucket="fishermen-photos"
+              />
+              
+              <PhotoUpload
+                label="Photo de vente à quai"
+                value={photoDockSale}
+                onChange={setPhotoDockSale}
+                bucket="fishermen-photos"
+              />
             </div>
 
             {/* Save Button */}

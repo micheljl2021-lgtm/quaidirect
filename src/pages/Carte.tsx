@@ -104,6 +104,11 @@ const Carte = () => {
             boat_name,
             is_ambassador,
             ambassador_slot
+          ),
+          drop_photos (
+            id,
+            photo_url,
+            display_order
           )
         `)
         .in('status', ['scheduled', 'landed'])
@@ -119,6 +124,7 @@ const Carte = () => {
   // Trouver le point de vente associé pour chaque arrivage
   const transformedArrivages = arrivages?.map(arrivage => {
     const salePoint = salePoints?.find((sp: any) => sp.id === arrivage.sale_point_id);
+    const hasOffers = arrivage.offers && arrivage.offers.length > 0 && arrivage.offers[0]?.unit_price;
     return {
       id: arrivage.id,
       species: arrivage.offers[0]?.species?.name || 'Poisson',
@@ -128,9 +134,10 @@ const Carte = () => {
         : (salePoint?.address || salePoint?.label || 'Point de vente'),
       eta: new Date(arrivage.eta_at),
       saleStartTime: arrivage.sale_start_time ? new Date(arrivage.sale_start_time) : undefined,
-      pricePerPiece: arrivage.offers[0]?.unit_price || 0,
+      pricePerPiece: hasOffers ? arrivage.offers[0].unit_price : undefined,
       quantity: arrivage.offers[0]?.available_units || 0,
       isPremium: arrivage.is_premium,
+      dropPhotos: arrivage.drop_photos,
       fisherman: {
         name: arrivage.fishermen?.boat_name || 'Pêcheur',
         boat: arrivage.fishermen?.boat_name || '',
@@ -254,7 +261,7 @@ const Carte = () => {
         {/* Arrivages grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredArrivages.map(arrivage => (
-            <ArrivageCard key={arrivage.id} {...arrivage} />
+            <ArrivageCard key={arrivage.id} {...arrivage} dropPhotos={arrivage.dropPhotos} />
           ))}
         </div>
 

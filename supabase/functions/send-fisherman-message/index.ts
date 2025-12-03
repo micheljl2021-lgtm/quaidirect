@@ -109,7 +109,7 @@ serve(async (req) => {
     if (fishermanError || !fisherman) throw new Error('Fisherman not found');
     logStep('Fisherman found', { fishermanId: fisherman.id });
 
-    const { message_type, subject, body, sent_to_group, drop_id, drop_details } = await req.json();
+    const { message_type, subject, body, sent_to_group, drop_id, drop_details, contact_ids } = await req.json();
 
     // Récupérer les contacts
     let query = supabaseClient
@@ -117,7 +117,11 @@ serve(async (req) => {
       .select('*')
       .eq('fisherman_id', fisherman.id);
 
-    if (sent_to_group && sent_to_group !== 'all') {
+    // Si contact_ids fourni, filtrer par ces IDs spécifiques
+    if (contact_ids && Array.isArray(contact_ids) && contact_ids.length > 0) {
+      query = query.in('id', contact_ids);
+      logStep('Filtering by specific contact_ids', { count: contact_ids.length });
+    } else if (sent_to_group && sent_to_group !== 'all') {
       query = query.eq('contact_group', sent_to_group);
     }
 
