@@ -5,11 +5,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ArrivageCard from '@/components/ArrivageCard';
+import { ArrivageCardSkeletonGrid } from '@/components/ArrivageCardSkeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Clock, Fish, Filter } from 'lucide-react';
+import { Fish, Filter } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useSalePoints } from '@/hooks/useSalePoints';
@@ -437,12 +438,9 @@ const Arrivages = () => {
           </CardContent>
         </Card>
 
-        {/* Loading state */}
+        {/* Loading state with skeleton */}
         {isLoading && (
-          <div className="text-center py-12">
-            <Clock className="h-12 w-12 mx-auto text-muted-foreground/50 animate-pulse mb-4" />
-            <p className="text-muted-foreground">Chargement des arrivages...</p>
-          </div>
+          <ArrivageCardSkeletonGrid count={6} />
         )}
 
         {/* Error state */}
