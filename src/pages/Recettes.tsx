@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -166,8 +167,20 @@ const Recettes = () => {
         </div>
 
         {loading ? (
-          <div className="text-center py-16">
-            <p className="text-muted-foreground">Chargement des recettes...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Card key={i} className="overflow-hidden">
+                <div className="aspect-video bg-muted animate-pulse" />
+                <CardContent className="pt-6 space-y-4">
+                  <div className="h-6 bg-muted rounded animate-pulse" />
+                  <div className="h-4 bg-muted rounded w-3/4 animate-pulse" />
+                  <div className="flex gap-2">
+                    <div className="h-6 w-16 bg-muted rounded animate-pulse" />
+                    <div className="h-6 w-20 bg-muted rounded animate-pulse" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -237,6 +250,7 @@ const Recettes = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };
