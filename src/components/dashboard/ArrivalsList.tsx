@@ -118,12 +118,12 @@ const ArrivalsList = ({ drops, archivedDrops, fishermanId, onRefresh }: Arrivals
                   key={drop.id}
                   className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                 >
-                  <div className="flex items-start justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                     <div 
                       className="space-y-1 flex-1 cursor-pointer"
                       onClick={() => navigate(`/drop/${drop.id}`)}
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-medium">
                           {drop.sale_point?.label || drop.sale_point?.address || drop.port?.name || 'Point de vente'}
                         </h3>
@@ -160,38 +160,38 @@ const ArrivalsList = ({ drops, archivedDrops, fishermanId, onRefresh }: Arrivals
                         <p className="text-sm text-muted-foreground">Présence au port</p>
                       )}
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="sm" className="gap-1" onClick={(e) => handleSaveAsTemplate(e, drop)}>
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="ghost" size="sm" className="gap-1 text-xs sm:text-sm" onClick={(e) => handleSaveAsTemplate(e, drop)}>
                         <Package className="h-3 w-3" />
-                        Modèle
+                        <span className="hidden xs:inline">Modèle</span>
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="gap-1"
+                        className="gap-1 text-xs sm:text-sm"
                         onClick={(e) => {
                           e.stopPropagation();
                           navigate(`/pecheur/dupliquer-arrivage/${drop.id}`);
                         }}
                       >
                         <Copy className="h-3 w-3" />
-                        Dupliquer
+                        <span className="hidden xs:inline">Dupliquer</span>
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="gap-1"
+                        className="gap-1 text-xs sm:text-sm"
                         onClick={(e) => {
                           e.stopPropagation();
                           navigate(`/pecheur/modifier-arrivage/${drop.id}`);
                         }}
                       >
                         <Pencil className="h-3 w-3" />
-                        Modifier
+                        <span className="hidden xs:inline">Modifier</span>
                       </Button>
-                      <Button variant="default" size="sm" className="gap-2" onClick={(e) => handleComplete(e, drop.id)}>
+                      <Button variant="default" size="sm" className="gap-1 text-xs sm:text-sm" onClick={(e) => handleComplete(e, drop.id)}>
                         <CheckCircle className="h-4 w-4" />
-                        Terminer
+                        <span className="hidden xs:inline">Terminer</span>
                       </Button>
                     </div>
                   </div>

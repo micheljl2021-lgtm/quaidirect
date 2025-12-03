@@ -7,8 +7,10 @@ import CaisseModule from '@/components/CaisseModule';
 import { SalePointsSection } from '@/components/SalePointsSection';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardStats from '@/components/dashboard/DashboardStats';
+import DashboardStatsSkeleton from '@/components/dashboard/DashboardStatsSkeleton';
 import MessagingSection from '@/components/dashboard/MessagingSection';
 import ArrivalsList from '@/components/dashboard/ArrivalsList';
+import ArrivalsListSkeleton from '@/components/dashboard/ArrivalsListSkeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Anchor, Loader2, ShoppingCart, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -145,38 +147,48 @@ const PecheurDashboard = () => {
     );
   }
 
+  const isDataLoading = loading && isVerifiedFisherman;
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       
-      <div className="container px-4 py-8">
+      <div className="container px-4 py-6 md:py-8">
         <DashboardHeader fishermanId={fishermanId} />
 
         {fishermanId && <MessagingSection fishermanId={fishermanId} />}
 
         {fishermanId && <SalePointsSection fishermanId={fishermanId} />}
 
-        <DashboardStats drops={drops} />
+        {isDataLoading ? (
+          <DashboardStatsSkeleton />
+        ) : (
+          <DashboardStats drops={drops} />
+        )}
 
-        <Tabs defaultValue="arrivages" className="space-y-6">
+        <Tabs defaultValue="arrivages" className="space-y-4 md:space-y-6">
           <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
-            <TabsTrigger value="arrivages" className="gap-2">
+            <TabsTrigger value="arrivages" className="gap-2 text-sm">
               <Anchor className="h-4 w-4" />
-              Mes arrivages
+              <span className="hidden xs:inline">Mes </span>arrivages
             </TabsTrigger>
-            <TabsTrigger value="caisse" className="gap-2">
+            <TabsTrigger value="caisse" className="gap-2 text-sm">
               <ShoppingCart className="h-4 w-4" />
-              Caisse au port
+              <span className="hidden xs:inline">Caisse au </span>port
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="arrivages">
-            <ArrivalsList 
-              drops={drops} 
-              archivedDrops={archivedDrops} 
-              fishermanId={fishermanId}
-              onRefresh={fetchDrops}
-            />
+            {isDataLoading ? (
+              <ArrivalsListSkeleton count={3} />
+            ) : (
+              <ArrivalsList 
+                drops={drops} 
+                archivedDrops={archivedDrops} 
+                fishermanId={fishermanId}
+                onRefresh={fetchDrops}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="caisse">
