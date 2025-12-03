@@ -184,32 +184,7 @@ const GoogleMapComponent = ({
 
     const allMarkers: google.maps.Marker[] = [];
 
-    // Port markers (blue circles)
-    const portMarkers = ports.map((port) => {
-      const marker = new google.maps.Marker({
-        position: { lat: port.latitude, lng: port.longitude },
-        map: map,
-        title: port.name,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          fillColor: selectedPortId === port.id ? '#0EA5E9' : '#06B6D4',
-          fillOpacity: selectedPortId === port.id ? 1 : 0.7,
-          strokeColor: '#FFFFFF',
-          strokeWeight: 2,
-          scale: selectedPortId === port.id ? 10 : 8,
-        },
-      });
-
-      marker.addListener('click', () => {
-        onPortClick(port.id);
-        setActiveInfoWindow(port.id);
-        setActiveType('port');
-      });
-
-      return marker;
-    });
-
-    // Sale point markers (orange)
+    // Sale point markers (orange) - Points de vente des pêcheurs
     const salePointMarkers = salePoints.map((salePoint) => {
       const marker = new google.maps.Marker({
         position: { lat: salePoint.latitude, lng: salePoint.longitude },
@@ -266,7 +241,7 @@ const GoogleMapComponent = ({
       return marker;
     });
 
-    allMarkers.push(...portMarkers, ...salePointMarkers, ...dropMarkers);
+    allMarkers.push(...salePointMarkers, ...dropMarkers);
     markersRef.current = allMarkers;
 
     clustererRef.current = new MarkerClusterer({
@@ -297,7 +272,7 @@ const GoogleMapComponent = ({
         clustererRef.current.clearMarkers();
       }
     };
-  }, [map, ports, salePoints, drops, selectedPortId, selectedSalePointId, selectedDropId, onPortClick, onSalePointClick, onDropClick, isLoaded]);
+  }, [map, salePoints, drops, selectedSalePointId, selectedDropId, onSalePointClick, onDropClick, isLoaded]);
 
   if (loadError) {
     return (
