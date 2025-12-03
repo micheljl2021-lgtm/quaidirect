@@ -1,11 +1,20 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': 'https://quaidirect.fr',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schema
+const RequestSchema = z.object({
+  basketId: z.string().uuid('basketId must be a valid UUID'),
+  priceId: z.string().min(1, 'priceId is required').regex(/^price_/, 'priceId must be a valid Stripe price ID'),
+  fishermanId: z.string().uuid().optional().nullable(),
+  dropId: z.string().uuid().optional().nullable(),
+});
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -36,8 +45,20 @@ serve(async (req) => {
     if (!user?.email) throw new Error('User not authenticated or email not available');
     logStep('User authenticated', { userId: user.id, email: user.email });
 
-    const { basketId, priceId, fishermanId, dropId } = await req.json();
-    if (!basketId || !priceId) throw new Error('Missing basketId or priceId');
+    // Validate input with Zod
+    const rawBody = await req.json();
+    const validationResult = RequestSchema.safeParse(rawBody);
+    
+    if (!validationResult.success) {
+      const errorMessages = validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+      logStep('Validation failed', { errors: errorMessages });
+      return new Response(
+        JSON.stringify({ error: `Validation error: ${errorMessages}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    const { basketId, priceId, fishermanId, dropId } = validationResult.data;
     logStep('Request data validated', { basketId, priceId, fishermanId, dropId });
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
