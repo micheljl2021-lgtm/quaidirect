@@ -17,6 +17,7 @@ import OfferPhotosUpload from '@/components/OfferPhotosUpload';
 import { DropPhotosUpload } from '@/components/DropPhotosUpload';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { getUserFriendlyError } from '@/lib/errorMessages';
 
 interface Offer {
   id?: string;
@@ -415,7 +416,7 @@ const EditArrivage = () => {
       console.error('Error updating arrivage:', error);
       toast({
         title: 'Erreur',
-        description: error.message || 'Impossible de modifier l\'arrivage',
+        description: getUserFriendlyError(error),
         variant: 'destructive',
       });
     } finally {

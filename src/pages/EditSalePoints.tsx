@@ -13,6 +13,7 @@ import Header from '@/components/Header';
 import { geocodeAddress } from '@/lib/google-geocode';
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
 import { googleMapsLoaderConfig } from '@/lib/google-maps';
+import { getUserFriendlyError } from '@/lib/errorMessages';
 
 interface SalePoint {
   id?: string;
@@ -237,17 +238,7 @@ export default function EditSalePoints() {
       navigate('/dashboard/pecheur');
     } catch (error: any) {
       console.error('Error saving sale points:', error);
-      
-      // Messages d'erreur spécifiques
-      if (error.message?.includes('2 points de vente maximum') || error.code === '23514') {
-        toast.error('Maximum 2 points de vente autorisés');
-      } else if (error.code === '42501' || error.message?.includes('RLS')) {
-        toast.error('Session expirée. Veuillez vous reconnecter.');
-      } else if (error.code === '23503') {
-        toast.error('Erreur de référence. Veuillez réessayer.');
-      } else {
-        toast.error(`Erreur: ${error.message || error.code || 'Inconnue'}`);
-      }
+      toast.error(getUserFriendlyError(error));
     } finally {
       setSaving(false);
     }

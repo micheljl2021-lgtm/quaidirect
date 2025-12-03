@@ -13,6 +13,7 @@ import { Upload, Plus, Trash2, Users, ArrowLeft } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import Header from "@/components/Header";
+import { getUserFriendlyError } from "@/lib/errorMessages";
 
 const PecheurContacts = () => {
   const { user } = useAuth();
@@ -91,8 +92,8 @@ const PecheurContacts = () => {
       setCsvContent("");
       queryClient.invalidateQueries({ queryKey: ['fisherman-contacts'] });
     },
-    onError: () => {
-      toast.error("Erreur lors de l'import des contacts");
+    onError: (error) => {
+      toast.error(getUserFriendlyError(error));
     }
   });
 
@@ -120,8 +121,8 @@ const PecheurContacts = () => {
       setShowManualForm(false);
       queryClient.invalidateQueries({ queryKey: ['fisherman-contacts'] });
     },
-    onError: () => {
-      toast.error("Erreur lors de l'ajout du contact");
+    onError: (error) => {
+      toast.error(getUserFriendlyError(error));
     }
   });
 
@@ -138,8 +139,8 @@ const PecheurContacts = () => {
       toast.success("Contact supprimé");
       queryClient.invalidateQueries({ queryKey: ['fisherman-contacts'] });
     },
-    onError: () => {
-      toast.error("Erreur lors de la suppression");
+    onError: (error) => {
+      toast.error(getUserFriendlyError(error));
     }
   });
 
