@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,11 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Loader2, MapPin, Plus, Trash2, ArrowLeft, Camera } from 'lucide-react';
+import { Loader2, MapPin, Plus, Trash2, ArrowLeft, Camera, Map, X } from 'lucide-react';
 import Header from '@/components/Header';
 import { geocodeAddress } from '@/lib/google-geocode';
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
-import { googleMapsLoaderConfig } from '@/lib/google-maps';
+import { googleMapsLoaderConfig, defaultMapConfig } from '@/lib/google-maps';
 import { getUserFriendlyError } from '@/lib/errorMessages';
 import { PhotoUpload } from '@/components/PhotoUpload';
 
@@ -32,6 +32,11 @@ const mapContainerStyle = {
   height: '200px',
 };
 
+const overlayMapStyle = {
+  width: '100%',
+  height: '100%',
+};
+
 export default function EditSalePoints() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -40,6 +45,9 @@ export default function EditSalePoints() {
   const [fishermanId, setFishermanId] = useState<string | null>(null);
   const [salePoints, setSalePoints] = useState<SalePoint[]>([]);
   const [geocoding, setGeocoding] = useState<{ [key: number]: boolean }>({});
+  const [selectingIndex, setSelectingIndex] = useState<number | null>(null);
+  const [tempMarker, setTempMarker] = useState<{ lat: number; lng: number } | null>(null);
+  const geocoderRef = useRef<google.maps.Geocoder | null>(null);
 
   const { isLoaded } = useJsApiLoader(googleMapsLoaderConfig);
 
@@ -48,6 +56,13 @@ export default function EditSalePoints() {
       loadSalePoints();
     }
   }, [user]);
+
+  // Initialiser le geocoder quand Google Maps est chargé
+  useEffect(() => {
+    if (isLoaded && !geocoderRef.current) {
+      geocoderRef.current = new google.maps.Geocoder();
+    }
+  }, [isLoaded]);
 
   const loadSalePoints = async () => {
     try {
@@ -141,7 +156,6 @@ export default function EditSalePoints() {
     try {
       const result = await geocodeAddress(point.address);
       if (result) {
-        // Mise à jour atomique de tous les champs pour éviter le stale state
         setSalePoints(prevPoints => {
           const newPoints = [...prevPoints];
           newPoints[index] = {
@@ -164,6 +178,87 @@ export default function EditSalePoints() {
     }
   };
 
+  const handleSelectOnMap = (index: number) => {
+    setSelectingIndex(index);
+    // Si le point a déjà des coordonnées, on les utilise comme position initiale du marqueur
+    const point = salePoints[index];
+    if (point.latitude && point.longitude) {
+      setTempMarker({ lat: point.latitude, lng: point.longitude });
+    } else {
+      setTempMarker(null);
+    }
+  };
+
+  const handleMapClick = async (event: google.maps.MapMouseEvent) => {
+    if (selectingIndex === null || !event.latLng) return;
+
+    const lat = event.latLng.lat();
+    const lng = event.latLng.lng();
+
+    // Mettre à jour le marqueur temporaire immédiatement
+    setTempMarker({ lat, lng });
+
+    // Reverse geocoding pour obtenir l'adresse
+    if (geocoderRef.current) {
+      try {
+        const response = await geocoderRef.current.geocode({ location: { lat, lng } });
+        if (response.results && response.results[0]) {
+          const formattedAddress = response.results[0].formatted_address;
+          
+          // Mise à jour atomique du point de vente
+          setSalePoints(prevPoints => {
+            const newPoints = [...prevPoints];
+            newPoints[selectingIndex] = {
+              ...newPoints[selectingIndex],
+              latitude: lat,
+              longitude: lng,
+              address: formattedAddress
+            };
+            return newPoints;
+          });
+
+          toast.success('Position sélectionnée avec succès');
+          setSelectingIndex(null);
+          setTempMarker(null);
+        } else {
+          // Pas d'adresse trouvée, on garde quand même les coordonnées
+          setSalePoints(prevPoints => {
+            const newPoints = [...prevPoints];
+            newPoints[selectingIndex] = {
+              ...newPoints[selectingIndex],
+              latitude: lat,
+              longitude: lng
+            };
+            return newPoints;
+          });
+          toast.info('Position enregistrée (adresse non trouvée)');
+          setSelectingIndex(null);
+          setTempMarker(null);
+        }
+      } catch (error) {
+        console.error('Reverse geocoding error:', error);
+        // En cas d'erreur, on garde quand même les coordonnées
+        setSalePoints(prevPoints => {
+          const newPoints = [...prevPoints];
+          newPoints[selectingIndex] = {
+            ...newPoints[selectingIndex],
+            latitude: lat,
+            longitude: lng
+          };
+          return newPoints;
+        });
+        toast.info('Position enregistrée (erreur de géocodage)');
+        setSelectingIndex(null);
+        setTempMarker(null);
+      }
+    }
+  };
+
+  const handleCancelSelection = () => {
+    setSelectingIndex(null);
+    setTempMarker(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fishermanId) return;
@@ -176,17 +271,15 @@ export default function EditSalePoints() {
 
     const notGeocodedPoints = salePoints.filter(p => !p.latitude || !p.longitude);
     if (notGeocodedPoints.length > 0) {
-      toast.error('Veuillez localiser toutes les adresses (bouton "Localiser")');
+      toast.error('Veuillez localiser toutes les adresses (bouton "Localiser" ou "Sélectionner sur la carte")');
       return;
     }
 
     setSaving(true);
     try {
-      // Récupérer les IDs existants pour déterminer les opérations UPSERT/DELETE
       const existingIds = salePoints.filter(p => p.id).map(p => p.id);
       const currentPointIds = salePoints.map(p => p.id).filter(Boolean);
 
-      // Supprimer les points qui ne sont plus dans la liste (point supprimé par l'utilisateur)
       if (existingIds.length > 0) {
         const idsToDelete = existingIds.filter(id => !currentPointIds.includes(id));
         if (idsToDelete.length > 0) {
@@ -202,7 +295,6 @@ export default function EditSalePoints() {
         }
       }
 
-      // UPSERT chaque point individuellement
       for (let index = 0; index < salePoints.length; index++) {
         const point = salePoints[index];
         const pointData = {
@@ -217,7 +309,6 @@ export default function EditSalePoints() {
         };
 
         if (point.id) {
-          // UPDATE existant
           const { error: updateError } = await supabase
             .from('fisherman_sale_points')
             .update(pointData)
@@ -228,7 +319,6 @@ export default function EditSalePoints() {
             throw updateError;
           }
         } else {
-          // INSERT nouveau
           const { error: insertError } = await supabase
             .from('fisherman_sale_points')
             .insert(pointData);
@@ -264,6 +354,42 @@ export default function EditSalePoints() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      
+      {/* Overlay carte pour sélection */}
+      {selectingIndex !== null && isLoaded && (
+        <div className="fixed inset-0 z-50 bg-background/95 flex flex-col">
+          <div className="p-4 bg-card border-b flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold">Sélectionner un emplacement</h2>
+              <p className="text-sm text-muted-foreground">Cliquez sur la carte pour définir le point de vente</p>
+            </div>
+            <Button variant="outline" onClick={handleCancelSelection}>
+              <X className="h-4 w-4 mr-2" />
+              Annuler
+            </Button>
+          </div>
+          <div className="flex-1">
+            <GoogleMap
+              mapContainerStyle={overlayMapStyle}
+              center={tempMarker || defaultMapConfig.center}
+              zoom={tempMarker ? 15 : defaultMapConfig.zoom}
+              onClick={handleMapClick}
+              options={{
+                streetViewControl: false,
+                mapTypeControl: true,
+              }}
+            >
+              {tempMarker && (
+                <Marker 
+                  position={tempMarker}
+                  animation={google.maps.Animation.DROP}
+                />
+              )}
+            </GoogleMap>
+          </div>
+        </div>
+      )}
+
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <Button
           variant="ghost"
@@ -340,9 +466,26 @@ export default function EditSalePoints() {
                           )}
                         </Button>
                       </div>
-                      {point.latitude && point.longitude && (
+                      
+                      {/* Bouton sélection sur carte */}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSelectOnMap(index)}
+                        className="w-full mt-2"
+                      >
+                        <Map className="h-4 w-4 mr-2" />
+                        Sélectionner sur la carte
+                      </Button>
+
+                      {point.latitude && point.longitude ? (
                         <p className="text-xs text-muted-foreground">
                           ✓ Localisé: {point.latitude.toFixed(6)}, {point.longitude.toFixed(6)}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">
+                          Veuillez saisir une adresse et utiliser le bouton "Localiser" ou "Sélectionner sur la carte"
                         </p>
                       )}
                     </div>
