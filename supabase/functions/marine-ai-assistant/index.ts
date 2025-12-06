@@ -5,7 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://quaidirect.fr',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
