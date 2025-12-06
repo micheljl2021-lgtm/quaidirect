@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.80.0';
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://quaidirect.fr',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
@@ -81,13 +81,14 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch drop details with species
+    // Fetch drop details with species and sale points
     const { data: drop, error: dropError } = await supabase
       .from('drops')
       .select(`
         id,
         sale_start_time,
         fisherman_id,
+        sale_point_id,
         fishermen!inner(
           boat_name,
           company_name,
@@ -102,6 +103,10 @@ serve(async (req) => {
         ports(
           name,
           city
+        ),
+        fisherman_sale_points(
+          label,
+          address
         )
       `)
       .eq('id', dropId)
@@ -179,7 +184,6 @@ serve(async (req) => {
 
     // Prepare notification data
     const fisherman = drop.fishermen as any;
-    const port = drop.ports as any;
     
     const fishermanName = fisherman.display_name_preference === 'company_name'
       ? (fisherman.company_name || fisherman.boat_name)
@@ -198,7 +202,15 @@ serve(async (req) => {
       minute: '2-digit',
     });
 
-    const portName = `${port.name}, ${port.city}`;
+    // Fallback logic: ports first, then sale_points, then default
+    let portName = 'Point de vente';
+    if (drop.ports) {
+      const port = drop.ports as any;
+      portName = `${port.name}, ${port.city}`;
+    } else if (drop.fisherman_sale_points) {
+      const sp = drop.fisherman_sale_points as any;
+      portName = sp.address || sp.label || 'Point de vente';
+    }
 
     const notificationPayload = {
       title: `🐟 Nouvel arrivage de ${fishermanName}`,
