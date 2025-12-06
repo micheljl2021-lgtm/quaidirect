@@ -53,10 +53,10 @@ const SalePointDrawer = ({ open, onOpenChange, salePoint }: SalePointDrawerProps
           <SheetTitle className="text-2xl">{salePoint.label}</SheetTitle>
         </SheetHeader>
 
-        <Tabs defaultValue="fisherman" className="mt-6">
+        <Tabs defaultValue="salepoint" className="mt-6">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="fisherman">Fiche Pêcheur</TabsTrigger>
             <TabsTrigger value="salepoint">Point de vente</TabsTrigger>
+            <TabsTrigger value="fisherman">Fiche Pêcheur</TabsTrigger>
           </TabsList>
 
           <TabsContent value="fisherman" className="space-y-4 mt-4">

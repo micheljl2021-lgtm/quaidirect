@@ -271,7 +271,7 @@ export default function EditSalePoints() {
 
     const notGeocodedPoints = salePoints.filter(p => !p.latitude || !p.longitude);
     if (notGeocodedPoints.length > 0) {
-      toast.error('Veuillez localiser toutes les adresses (bouton "Localiser" ou "Sélectionner sur la carte")');
+      toast.error('Veuillez localiser toutes les adresses en utilisant "Sélectionner sur la carte"');
       return;
     }
 
@@ -444,28 +444,13 @@ export default function EditSalePoints() {
 
                     <div className="space-y-2">
                       <Label htmlFor={`address-${index}`}>Adresse complète *</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          id={`address-${index}`}
-                          placeholder="Quai Cronstadt, 83400 Hyères"
-                          value={point.address}
-                          onChange={(e) => handleChange(index, 'address', e.target.value)}
-                          required
-                          className="flex-1"
-                        />
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={() => handleGeocode(index)}
-                          disabled={!point.address || geocoding[index]}
-                        >
-                          {geocoding[index] ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            'Localiser'
-                          )}
-                        </Button>
-                      </div>
+                      <Input
+                        id={`address-${index}`}
+                        placeholder="Quai Cronstadt, 83400 Hyères"
+                        value={point.address}
+                        onChange={(e) => handleChange(index, 'address', e.target.value)}
+                        required
+                      />
                       
                       {/* Bouton sélection sur carte */}
                       <Button
@@ -485,7 +470,7 @@ export default function EditSalePoints() {
                         </p>
                       ) : (
                         <p className="text-xs text-muted-foreground">
-                          Veuillez saisir une adresse et utiliser le bouton "Localiser" ou "Sélectionner sur la carte"
+                          Sélectionnez un emplacement sur la carte pour localiser le point de vente
                         </p>
                       )}
                     </div>
