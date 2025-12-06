@@ -14,16 +14,16 @@ import { fr } from 'date-fns/locale';
 
 const STRIPE_BASKETS = {
   discovery: {
-    product_id: 'prod_TVF3Li2lRYygck',
-    price_id: 'price_1SYEYvH0VhS1yyE0l4DkD2PG',
+    product_id: 'prod_TYJJLKGmdXjwoo',
+    price_id: 'price_1SbChHH0VhS1yyE0C1qRJc51',
   },
   family: {
-    product_id: 'prod_TVF3UdUvUwNH7w',
-    price_id: 'price_1SYEZ9H0VhS1yyE0OFQzbTZG',
+    product_id: 'prod_TYJLHasLC0fdcS',
+    price_id: 'price_1SbCiSH0VhS1yyE0IpIrjX28',
   },
   gourmet: {
-    product_id: 'prod_TVF3f5DQgEijf2',
-    price_id: 'price_1SYEZJH0VhS1yyE04442C45I',
+    product_id: 'prod_TYJLOy9bprPvDZ',
+    price_id: 'price_1SbCizH0VhS1yyE0ZP1T6pUG',
   },
 };
 

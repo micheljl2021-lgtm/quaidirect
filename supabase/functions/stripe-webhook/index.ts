@@ -162,6 +162,22 @@ serve(async (req) => {
                 logStep('ERROR sending fisherman notification', { error: notifError });
               }
             }
+
+            // Send confirmation email to customer
+            if (newOrder?.id) {
+              try {
+                const internalSecret = Deno.env.get('INTERNAL_FUNCTION_SECRET');
+                await supabaseClient.functions.invoke('send-basket-customer-email', {
+                  body: { orderId: newOrder.id },
+                  headers: {
+                    'x-internal-secret': internalSecret || ''
+                  }
+                });
+                logStep('Customer confirmation email sent for basket order', { orderId: newOrder.id });
+              } catch (customerEmailError) {
+                logStep('ERROR sending customer confirmation email', { error: customerEmailError });
+              }
+            }
           }
           break;
         }
