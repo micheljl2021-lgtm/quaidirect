@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, MapPin } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { CalendarIcon, MapPin, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
@@ -28,6 +29,7 @@ const TIME_SLOTS = [
   { id: "fin_matinee", label: "Fin de matinée (9h–11h)", value: "fin_matinee" },
   { id: "midi", label: "Midi (11h–13h)", value: "midi" },
   { id: "apres_midi", label: "Après-midi (14h–17h)", value: "apres_midi" },
+  { id: "custom", label: "Personnalisé", value: "custom" },
 ];
 
 export function Step1LieuHoraire({ initialData, onComplete, onCancel }: Step1Props) {
@@ -36,6 +38,7 @@ export function Step1LieuHoraire({ initialData, onComplete, onCancel }: Step1Pro
   const [selectedSalePoint, setSelectedSalePoint] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(initialData.date || new Date());
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>(initialData.timeSlot || 'matin');
+  const [customTime, setCustomTime] = useState<string>("08:00");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -106,7 +109,7 @@ export function Step1LieuHoraire({ initialData, onComplete, onCancel }: Step1Pro
       salePointId: selectedSalePoint.id,
       salePointLabel: selectedSalePoint.label,
       date: selectedDate,
-      timeSlot: selectedTimeSlot,
+      timeSlot: selectedTimeSlot === 'custom' ? `custom_${customTime}` : selectedTimeSlot,
     });
   };
 
@@ -208,13 +211,30 @@ export function Step1LieuHoraire({ initialData, onComplete, onCancel }: Step1Pro
                   type="button"
                   variant={selectedTimeSlot === slot.value ? "default" : "outline"}
                   size="lg"
-                  className="h-14"
+                  className={`h-14 ${slot.id === 'custom' ? 'col-span-1 sm:col-span-2' : ''}`}
                   onClick={() => setSelectedTimeSlot(slot.value)}
                 >
+                  {slot.id === 'custom' && <Clock className="h-5 w-5 mr-2" />}
                   {slot.label}
                 </Button>
               ))}
             </div>
+            
+            {/* Custom time input */}
+            {selectedTimeSlot === 'custom' && (
+              <div className="mt-4 p-4 bg-muted rounded-lg">
+                <label className="block text-sm font-medium mb-2">Heure personnalisée</label>
+                <Input
+                  type="time"
+                  value={customTime}
+                  onChange={(e) => setCustomTime(e.target.value)}
+                  className="h-14 text-lg max-w-xs"
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  L'heure saisie sera utilisée comme heure de début de vente
+                </p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
