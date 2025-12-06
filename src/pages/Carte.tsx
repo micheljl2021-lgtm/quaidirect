@@ -184,9 +184,9 @@ const Carte = () => {
         {/* Header */}
         <div className="mb-8 space-y-4">
           <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">
-              Arrivages du jour
-            </h1>
+          <h1 className="text-4xl font-bold text-foreground mb-2">
+            Carte des points de ventes
+          </h1>
             <p className="text-lg text-muted-foreground">
               {filteredArrivages.length} arrivages disponibles
             </p>

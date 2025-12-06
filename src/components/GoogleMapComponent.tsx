@@ -191,12 +191,14 @@ const GoogleMapComponent = ({
         map: map,
         title: salePoint.label,
         icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          fillColor: selectedSalePointId === salePoint.id ? '#ff6b35' : '#f97316',
-          fillOpacity: 0.9,
-          strokeColor: '#FFFFFF',
-          strokeWeight: 2,
-          scale: selectedSalePointId === salePoint.id ? 12 : 10,
+          url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+            <svg width="40" height="40" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="20" cy="20" r="16" fill="${selectedSalePointId === salePoint.id ? '#ff6b35' : '#f97316'}" opacity="0.9" stroke="#FFFFFF" stroke-width="3"/>
+              <text x="20" y="26" font-size="16" fill="#FFFFFF" text-anchor="middle" font-family="Arial">🏪</text>
+            </svg>
+          `)}`,
+          scaledSize: new google.maps.Size(40, 40),
+          anchor: new google.maps.Point(20, 20),
         },
       });
 
@@ -410,7 +412,7 @@ const GoogleMapComponent = ({
               <p className="text-sm"><strong>Dispo:</strong> {drops.find(d => d.id === activeInfoWindow)!.availableUnits} unités</p>
             </div>
             <button
-              onClick={() => window.location.href = `/arrivage/${drops.find(d => d.id === activeInfoWindow)!.id}`}
+              onClick={() => window.location.href = `/arrivages/${drops.find(d => d.id === activeInfoWindow)!.id}`}
               className="w-full bg-primary text-primary-foreground px-3 py-1.5 rounded text-sm font-medium hover:bg-primary/90 transition-colors"
             >
               Voir détails
