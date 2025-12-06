@@ -5,7 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://quaidirect.fr",
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
@@ -52,14 +52,14 @@ serve(async (req) => {
     if (!orderId) throw new Error('Missing orderId');
     logStep('Order ID received', { orderId });
 
-    // Get order details with basket, fisherman, drop, and user info
+    // Get order details with basket, fisherman, drop, ports AND sale_points
     const { data: order, error: orderError } = await supabaseClient
       .from('basket_orders')
       .select(`
         *,
         client_baskets(name, price_cents, weight_kg),
         fishermen!basket_orders_fisherman_id_fkey(boat_name, company_name, user_id),
-        drops(sale_start_time, ports(name, city))
+        drops(sale_start_time, ports(name, city), fisherman_sale_points(label, address))
       `)
       .eq('id', orderId)
       .single();
@@ -67,6 +67,11 @@ serve(async (req) => {
     if (orderError) throw orderError;
     if (!order) throw new Error('Order not found');
     logStep('Order details retrieved', { orderId });
+
+    // Validate fisherman data
+    if (!order.fishermen?.user_id) {
+      throw new Error('Fisherman user_id not found in order');
+    }
 
     // Get fisherman's email from auth.users
     const { data: { user: fishermanUser }, error: userError } = await supabaseClient.auth.admin.getUserById(
@@ -82,37 +87,55 @@ serve(async (req) => {
       order.user_id
     );
 
-    if (customerError) throw customerError;
+    if (customerError) {
+      logStep('WARNING: Could not retrieve customer user', { error: customerError });
+    }
     const customerEmail = customerUser?.email || 'Client inconnu';
 
-    // Format date
-    const pickupDate = new Date(order.drops.sale_start_time).toLocaleDateString('fr-FR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    // Build pickup location with fallback logic (sale_point > port > default)
+    let pickupLocation = 'Point de vente à confirmer';
+    if (order.drops?.fisherman_sale_points) {
+      pickupLocation = order.drops.fisherman_sale_points.address || order.drops.fisherman_sale_points.label || pickupLocation;
+    } else if (order.drops?.ports) {
+      pickupLocation = `${order.drops.ports.name} - ${order.drops.ports.city}`;
+    }
+
+    // Format date with null safety
+    let pickupDate = 'Horaire à confirmer';
+    if (order.drops?.sale_start_time) {
+      pickupDate = new Date(order.drops.sale_start_time).toLocaleDateString('fr-FR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    // Basket info with null safety
+    const basketName = order.client_baskets?.name || 'Panier';
+    const basketWeight = order.client_baskets?.weight_kg || 0;
+    const totalPrice = (order.total_price_cents / 100).toFixed(2);
 
     const emailResponse = await resend.emails.send({
       from: "QuaiDirect <support@quaidirect.fr>",
       to: [fishermanUser.email],
-      subject: `Nouvelle commande panier : ${order.client_baskets.name}`,
+      subject: `Nouvelle commande panier : ${basketName}`,
       html: `
         <h1>📦 Nouvelle commande de panier !</h1>
         
         <h2>Détails de la commande :</h2>
         <ul>
-          <li><strong>Panier :</strong> ${order.client_baskets.name}</li>
-          <li><strong>Poids indicatif :</strong> ~${order.client_baskets.weight_kg}kg</li>
-          <li><strong>Prix :</strong> ${(order.total_price_cents / 100).toFixed(2)}€</li>
+          <li><strong>Panier :</strong> ${basketName}</li>
+          <li><strong>Poids indicatif :</strong> ~${basketWeight}kg</li>
+          <li><strong>Prix :</strong> ${totalPrice}€</li>
           <li><strong>Client :</strong> ${customerEmail}</li>
         </ul>
 
         <h2>📍 Retrait :</h2>
         <ul>
-          <li><strong>Lieu :</strong> ${order.drops.ports.name} - ${order.drops.ports.city}</li>
+          <li><strong>Lieu :</strong> ${pickupLocation}</li>
           <li><strong>Date et heure :</strong> ${pickupDate}</li>
         </ul>
 
