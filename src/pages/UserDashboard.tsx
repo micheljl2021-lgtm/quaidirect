@@ -13,7 +13,8 @@ import { getRedirectPathByRole } from '@/lib/authRedirect';
 
 interface Drop {
   id: string;
-  port_id: string;
+  port_id: string | null;
+  sale_point_id: string | null;
   eta_at: string;
   visible_at: string;
   public_visible_at: string | null;
@@ -21,7 +22,11 @@ interface Drop {
   ports: {
     name: string;
     city: string;
-  };
+  } | null;
+  fisherman_sale_points: {
+    label: string;
+    address: string;
+  } | null;
   offers: Array<{
     id: string;
     title: string;
@@ -77,6 +82,7 @@ const UserDashboard = () => {
         .select(`
           id,
           port_id,
+          sale_point_id,
           eta_at,
           visible_at,
           public_visible_at,
@@ -85,6 +91,10 @@ const UserDashboard = () => {
           ports (
             name,
             city
+          ),
+          fisherman_sale_points (
+            label,
+            address
           ),
           offers (
             id,
@@ -235,9 +245,13 @@ const UserDashboard = () => {
             </div>
           ) : drops && drops.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {drops.slice(0, 4).map((drop) => {
+            {drops.slice(0, 4).map((drop) => {
                 const etaDate = new Date(drop.eta_at);
-                const portName = `${drop.ports.name}, ${drop.ports.city}`;
+                const location = drop.fisherman_sale_points 
+                  ? drop.fisherman_sale_points.address || drop.fisherman_sale_points.label
+                  : drop.ports 
+                    ? `${drop.ports.name}, ${drop.ports.city}` 
+                    : 'Lieu non spécifié';
                 
                 return (
                   <Card key={drop.id} className="hover:shadow-lg transition-shadow">
@@ -246,7 +260,7 @@ const UserDashboard = () => {
                         <div className="space-y-1 flex-1">
                           <CardTitle className="flex items-center gap-2 text-lg">
                             <MapPin className="h-5 w-5 text-primary flex-shrink-0" />
-                            <span className="line-clamp-1">{portName}</span>
+                            <span className="line-clamp-1">{location}</span>
                           </CardTitle>
                           <CardDescription className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
