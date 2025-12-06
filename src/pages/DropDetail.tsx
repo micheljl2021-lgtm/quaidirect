@@ -110,9 +110,11 @@ const DropDetail = () => {
     );
   }
 
-  const displayName = drop.fishermen.display_name_preference === 'company_name'
-    ? (drop.fishermen.company_name || drop.fishermen.boat_name)
-    : drop.fishermen.boat_name;
+  const displayName = drop.fishermen
+    ? (drop.fishermen.display_name_preference === 'company_name'
+        ? (drop.fishermen.company_name || drop.fishermen.boat_name)
+        : drop.fishermen.boat_name)
+    : 'Pêcheur inconnu';
 
   const photos = drop.drop_photos
     ?.sort((a, b) => a.display_order - b.display_order)
@@ -166,20 +168,22 @@ const DropDetail = () => {
             <div className="flex items-start justify-between">
               <div className="space-y-2">
                 <CardTitle className="text-2xl">Arrivage de {displayName}</CardTitle>
-                {drop.fishermen.is_ambassador && (
+              {drop.fishermen?.is_ambassador && (
                   <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500">
                     🏆 Ambassadeur
                   </Badge>
                 )}
               </div>
-              <Button
-                variant="outline"
-                onClick={() => navigate(`/pecheurs/${drop.fishermen.slug || drop.fishermen.id}`)}
-                className="gap-2"
-              >
-                <User className="h-4 w-4" />
-                Voir le profil
-              </Button>
+              {drop.fishermen && (
+                <Button
+                  variant="outline"
+                  onClick={() => navigate(`/pecheurs/${drop.fishermen?.slug || drop.fishermen?.id}`)}
+                  className="gap-2"
+                >
+                  <User className="h-4 w-4" />
+                  Voir le profil
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
