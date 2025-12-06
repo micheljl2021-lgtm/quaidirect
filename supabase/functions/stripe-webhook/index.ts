@@ -30,6 +30,8 @@ serve(async (req) => {
     { auth: { persistSession: false } }
   );
 
+  const internalSecret = Deno.env.get('INTERNAL_FUNCTION_SECRET') || '';
+
   try {
     const body = await req.text();
     const event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
@@ -150,12 +152,9 @@ serve(async (req) => {
             // Send notification to fisherman
             if (newOrder?.id && fishermanId) {
               try {
-                const internalSecret = Deno.env.get('INTERNAL_FUNCTION_SECRET');
                 await supabaseClient.functions.invoke('send-basket-order-notification', {
                   body: { orderId: newOrder.id },
-                  headers: {
-                    'x-internal-secret': internalSecret || ''
-                  }
+                  headers: { 'x-internal-secret': internalSecret }
                 });
                 logStep('Fisherman notification sent for basket order', { orderId: newOrder.id });
               } catch (notifError) {
@@ -166,12 +165,9 @@ serve(async (req) => {
             // Send confirmation email to customer
             if (newOrder?.id) {
               try {
-                const internalSecret = Deno.env.get('INTERNAL_FUNCTION_SECRET');
                 await supabaseClient.functions.invoke('send-basket-customer-email', {
                   body: { orderId: newOrder.id },
-                  headers: {
-                    'x-internal-secret': internalSecret || ''
-                  }
+                  headers: { 'x-internal-secret': internalSecret }
                 });
                 logStep('Customer confirmation email sent for basket order', { orderId: newOrder.id });
               } catch (customerEmailError) {
@@ -270,7 +266,7 @@ serve(async (req) => {
             logStep('Fisherman role added successfully');
           }
 
-          // Send welcome email
+          // Send welcome email via supabase.functions.invoke
           try {
             const { data: fishermenData } = await supabaseClient
               .from('fishermen')
@@ -278,22 +274,17 @@ serve(async (req) => {
               .eq('user_id', userId)
               .single();
 
-            const welcomeResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-fisherman-welcome-email`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
-                'x-internal-secret': Deno.env.get('INTERNAL_FUNCTION_SECRET') || '',
-              },
-              body: JSON.stringify({
+            const { error: welcomeError } = await supabaseClient.functions.invoke('send-fisherman-welcome-email', {
+              body: {
                 userEmail: session.customer_details?.email,
                 boatName: fishermenData?.boat_name,
                 plan: planType,
-              }),
+              },
+              headers: { 'x-internal-secret': internalSecret }
             });
 
-            if (!welcomeResponse.ok) {
-              logStep('WARNING: Failed to send welcome email', await welcomeResponse.text());
+            if (welcomeError) {
+              logStep('WARNING: Failed to send welcome email', { error: welcomeError });
             } else {
               logStep('Welcome email sent successfully');
             }
@@ -350,26 +341,23 @@ serve(async (req) => {
         } else {
           logStep('Premium role added successfully');
           
-            // Send welcome email to new premium user
-            try {
-              const { data: { user: premiumUser } } = await supabaseClient.auth.admin.getUserById(userId);
-              if (premiumUser?.email) {
-                const internalSecret = Deno.env.get('INTERNAL_FUNCTION_SECRET');
-                await supabaseClient.functions.invoke('send-premium-welcome-email', {
-                  body: { 
-                    userEmail: premiumUser.email,
-                    userName: premiumUser.user_metadata?.full_name,
-                    plan: plan
-                  },
-                  headers: {
-                    'x-internal-secret': internalSecret || ''
-                  }
-                });
-                logStep('Premium welcome email sent', { email: premiumUser.email });
-              }
-            } catch (emailError) {
-              logStep('ERROR sending premium welcome email', { error: emailError });
+          // Send welcome email to new premium user
+          try {
+            const { data: { user: premiumUser } } = await supabaseClient.auth.admin.getUserById(userId);
+            if (premiumUser?.email) {
+              await supabaseClient.functions.invoke('send-premium-welcome-email', {
+                body: { 
+                  userEmail: premiumUser.email,
+                  userName: premiumUser.user_metadata?.full_name,
+                  plan: plan
+                },
+                headers: { 'x-internal-secret': internalSecret }
+              });
+              logStep('Premium welcome email sent', { email: premiumUser.email });
             }
+          } catch (emailError) {
+            logStep('ERROR sending premium welcome email', { error: emailError });
+          }
         }
         break;
       }
@@ -405,27 +393,25 @@ serve(async (req) => {
                   .from('fishermen')
                   .select('boat_name')
                   .eq('user_id', paymentData.user_id)
-                  .single();
+                  .maybeSingle();
 
-                const confirmationResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-payment-confirmation-email`, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
-                    'x-internal-secret': Deno.env.get('INTERNAL_FUNCTION_SECRET') || '',
-                  },
-                  body: JSON.stringify({
+                // Extract plan type for email
+                const planType = paymentData.plan?.replace('fisherman_', '') || 'basic';
+
+                const { error: confirmError } = await supabaseClient.functions.invoke('send-payment-confirmation-email', {
+                  body: {
                     userEmail: userData?.user?.email,
                     boatName: fishermenData?.boat_name,
-                    plan: paymentData.plan,
+                    plan: planType,
                     amountPaid: invoice.amount_paid,
                     invoiceUrl: invoice.hosted_invoice_url,
                     nextBillingDate: new Date(subscription.current_period_end * 1000).toISOString(),
-                  }),
+                  },
+                  headers: { 'x-internal-secret': internalSecret }
                 });
 
-                if (!confirmationResponse.ok) {
-                  logStep('WARNING: Failed to send payment confirmation', await confirmationResponse.text());
+                if (confirmError) {
+                  logStep('WARNING: Failed to send payment confirmation', { error: confirmError });
                 } else {
                   logStep('Payment confirmation email sent successfully');
                 }
@@ -485,8 +471,8 @@ serve(async (req) => {
           .single();
 
         if (paymentData) {
-          // Remove role based on subscription plan
-          const roleToRemove = paymentData.plan === 'fisherman_annual' ? 'fisherman' : 'premium';
+          // Remove role based on subscription plan (fisherman_basic, fisherman_pro, or premium)
+          const roleToRemove = paymentData.plan?.startsWith('fisherman_') ? 'fisherman' : 'premium';
           
           const { error: roleError } = await supabaseClient
             .from('user_roles')
@@ -501,7 +487,7 @@ serve(async (req) => {
           }
 
           // Update fisherman status if it's a fisherman subscription
-          if (paymentData.plan === 'fisherman_annual') {
+          if (paymentData.plan?.startsWith('fisherman_')) {
             const { error: fisherError } = await supabaseClient
               .from('fishermen')
               .update({
@@ -558,7 +544,7 @@ serve(async (req) => {
               .from('fishermen')
               .select('boat_name')
               .eq('user_id', trialPayment.user_id)
-              .single();
+              .maybeSingle();
 
             // Create customer portal session for management link
             const portalSession = await stripe.billingPortal.sessions.create({
@@ -566,24 +552,22 @@ serve(async (req) => {
               return_url: 'https://quaidirect.fr/dashboard/pecheur',
             });
 
-            const reminderResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-trial-ending-reminder`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
-                'x-internal-secret': Deno.env.get('INTERNAL_FUNCTION_SECRET') || '',
-              },
-              body: JSON.stringify({
+            // Extract plan type for email
+            const planType = trialPayment.plan?.replace('fisherman_', '') || 'basic';
+
+            const { error: reminderError } = await supabaseClient.functions.invoke('send-trial-ending-reminder', {
+              body: {
                 userEmail: trialUserData?.user?.email,
                 boatName: trialFishermenData?.boat_name,
-                plan: trialPayment.plan.replace('fisherman_', ''),
-                trialEndDate: new Date(subscription.trial_end * 1000).toISOString(),
+                plan: planType,
+                trialEndDate: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : new Date().toISOString(),
                 customerPortalUrl: portalSession.url,
-              }),
+              },
+              headers: { 'x-internal-secret': internalSecret }
             });
 
-            if (!reminderResponse.ok) {
-              logStep('WARNING: Failed to send trial ending reminder', await reminderResponse.text());
+            if (reminderError) {
+              logStep('WARNING: Failed to send trial ending reminder', { error: reminderError });
             } else {
               logStep('Trial ending reminder sent successfully');
             }
