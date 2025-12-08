@@ -60,7 +60,7 @@ export function GenerateSitePromptDialog({
         
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
             <span className="ml-3">Génération du prompt en cours...</span>
           </div>
         ) : (
@@ -78,12 +78,12 @@ export function GenerateSitePromptDialog({
               <Button onClick={handleCopy} disabled={copied}>
                 {copied ? (
                   <>
-                    <Check className="h-4 w-4 mr-2" />
+                    <Check className="h-4 w-4 mr-2" aria-hidden="true" />
                     Copié !
                   </>
                 ) : (
                   <>
-                    <Copy className="h-4 w-4 mr-2" />
+                    <Copy className="h-4 w-4 mr-2" aria-hidden="true" />
                     Copier le prompt
                   </>
                 )}

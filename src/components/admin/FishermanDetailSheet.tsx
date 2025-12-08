@@ -93,7 +93,7 @@ export function FishermanDetailSheet({ fisherman, open, onOpenChange }: Fisherma
       <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
-            <Ship className="h-5 w-5" />
+            <Ship className="h-5 w-5" aria-hidden="true" />
             {fisherman.boat_name}
           </SheetTitle>
         </SheetHeader>
@@ -136,7 +136,7 @@ export function FishermanDetailSheet({ fisherman, open, onOpenChange }: Fisherma
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                <Fish className="h-4 w-4" />
+                <Fish className="h-4 w-4" aria-hidden="true" />
                 Pêche
               </CardTitle>
             </CardHeader>
@@ -186,7 +186,7 @@ export function FishermanDetailSheet({ fisherman, open, onOpenChange }: Fisherma
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
+                <MapPin className="h-4 w-4" aria-hidden="true" />
                 Points de vente ({salePoints?.length || 0})
               </CardTitle>
             </CardHeader>
@@ -210,7 +210,7 @@ export function FishermanDetailSheet({ fisherman, open, onOpenChange }: Fisherma
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                <Users className="h-4 w-4" />
+                <Users className="h-4 w-4" aria-hidden="true" />
                 Clients
               </CardTitle>
             </CardHeader>
@@ -224,7 +224,7 @@ export function FishermanDetailSheet({ fisherman, open, onOpenChange }: Fisherma
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
+                <Calendar className="h-4 w-4" aria-hidden="true" />
                 Derniers arrivages ({drops?.length || 0})
               </CardTitle>
             </CardHeader>
@@ -256,7 +256,7 @@ export function FishermanDetailSheet({ fisherman, open, onOpenChange }: Fisherma
           {fisherman.slug && (
             <Button asChild className="w-full">
               <a href={`/pecheurs/${fisherman.slug}`} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-4 w-4 mr-2" />
+                <ExternalLink className="h-4 w-4 mr-2" aria-hidden="true" />
                 Voir la vitrine publique
               </a>
             </Button>
