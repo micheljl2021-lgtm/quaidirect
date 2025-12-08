@@ -13,9 +13,10 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DropPhotosUpload } from '@/components/DropPhotosUpload';
-import { CalendarIcon, Clock, MapPin, ArrowLeft } from 'lucide-react';
+import { CalendarIcon, Clock, MapPin, ArrowLeft, Star, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const DESCRIPTION_TEMPLATES = [
   {
@@ -45,7 +46,9 @@ export default function SimpleAnnonce() {
   const [loading, setLoading] = useState(false);
   const [salePoints, setSalePoints] = useState<any[]>([]);
   const [allSpecies, setAllSpecies] = useState<any[]>([]);
+  const [preferredSpecies, setPreferredSpecies] = useState<any[]>([]);
   const [selectedSpecies, setSelectedSpecies] = useState<string[]>([]);
+  const [showAllSpecies, setShowAllSpecies] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
   
   const [formData, setFormData] = useState({
@@ -88,7 +91,25 @@ export default function SimpleAnnonce() {
         setFormData(prev => ({ ...prev, salePointId: points[0].id }));
       }
 
-      // Fetch species
+      // Fetch preferred species (from fishermen_species table)
+      const { data: fishermenSpecies } = await supabase
+        .from('fishermen_species')
+        .select('species_id, is_primary, species:species_id(id, name)')
+        .eq('fisherman_id', fisherman.id)
+        .order('is_primary', { ascending: false });
+
+      if (fishermenSpecies && fishermenSpecies.length > 0) {
+        const preferred = fishermenSpecies
+          .filter((fs: any) => fs.species)
+          .map((fs: any) => ({
+            id: fs.species.id,
+            name: fs.species.name,
+            is_primary: fs.is_primary
+          }));
+        setPreferredSpecies(preferred);
+      }
+
+      // Fetch all species
       const { data: species } = await supabase
         .from('species')
         .select('id, name')
@@ -370,19 +391,76 @@ export default function SimpleAnnonce() {
                 Ajoutez des tags d'espèces sans détail de prix/quantité
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {allSpecies.map(species => (
-                  <Badge
-                    key={species.id}
-                    variant={selectedSpecies.includes(species.id) ? 'default' : 'outline'}
-                    className="cursor-pointer"
-                    onClick={() => toggleSpecies(species.id)}
-                  >
-                    {species.name}
-                  </Badge>
-                ))}
+            <CardContent className="space-y-4">
+              {/* Preferred Species - Mes espèces habituelles */}
+              {preferredSpecies.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <Star className="h-4 w-4 text-amber-500" />
+                    Mes espèces habituelles
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {preferredSpecies.map(species => (
+                      <Badge
+                        key={species.id}
+                        variant={selectedSpecies.includes(species.id) ? 'default' : 'outline'}
+                        className={`cursor-pointer ${species.is_primary ? 'ring-2 ring-amber-500/30' : ''}`}
+                        onClick={() => toggleSpecies(species.id)}
+                      >
+                        {species.is_primary && <Star className="h-3 w-3 mr-1 text-amber-500" />}
+                        {species.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Dropdown for all species */}
+              <div className="space-y-2">
+                <Select onValueChange={(value) => {
+                  if (!selectedSpecies.includes(value)) {
+                    setSelectedSpecies(prev => [...prev, value]);
+                  }
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Ajouter une autre espèce..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {allSpecies
+                      .filter(s => !selectedSpecies.includes(s.id))
+                      .map(species => (
+                        <SelectItem key={species.id} value={species.id}>
+                          {species.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
               </div>
+
+              {/* Selected species display */}
+              {selectedSpecies.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-muted-foreground">
+                    Espèces sélectionnées ({selectedSpecies.length})
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedSpecies.map(speciesId => {
+                      const species = allSpecies.find(s => s.id === speciesId) || 
+                                     preferredSpecies.find(s => s.id === speciesId);
+                      return species ? (
+                        <Badge
+                          key={speciesId}
+                          variant="default"
+                          className="cursor-pointer"
+                          onClick={() => toggleSpecies(speciesId)}
+                        >
+                          {species.name} ✕
+                        </Badge>
+                      ) : null;
+                    })}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 

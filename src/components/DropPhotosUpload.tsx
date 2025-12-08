@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Camera, X, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { DefaultPhotoSelector } from "@/components/DefaultPhotoSelector";
+import { Separator } from "@/components/ui/separator";
 
 interface DropPhotosUploadProps {
   maxPhotos?: number;
@@ -107,6 +109,20 @@ export const DropPhotosUpload = ({
     onPhotosChange(newPhotos);
   };
 
+  const handleDefaultPhotoSelect = (photoUrl: string) => {
+    // Si la photo par défaut est déjà sélectionnée, la retirer
+    if (photos.includes(photoUrl)) {
+      const newPhotos = photos.filter(p => p !== photoUrl);
+      setPhotos(newPhotos);
+      onPhotosChange(newPhotos);
+    } else {
+      // Ajouter la photo par défaut
+      const newPhotos = [...photos, photoUrl];
+      setPhotos(newPhotos);
+      onPhotosChange(newPhotos);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Photo Grid */}
@@ -152,7 +168,7 @@ export const DropPhotosUpload = ({
         >
           <Camera className={`h-12 w-12 mb-3 transition-colors ${isDragging ? "text-primary" : "text-muted-foreground"}`} />
           <p className="text-sm font-medium mb-1 text-foreground">
-            {isDragging ? "Dépose tes photos ici" : "Photos de votre point de vente"}
+            {isDragging ? "Dépose tes photos ici" : "Photos de vos prises"}
           </p>
           <p className="text-xs text-muted-foreground mb-4 text-center max-w-sm">
             {isDragging 
@@ -182,6 +198,17 @@ export const DropPhotosUpload = ({
             </Button>
           )}
         </div>
+      )}
+
+      {/* Default Photos Selector - only show if no photos yet */}
+      {photos.length === 0 && (
+        <>
+          <Separator className="my-4" />
+          <DefaultPhotoSelector 
+            onSelect={handleDefaultPhotoSelect}
+            selectedUrl={photos.find(p => p.includes('unsplash.com'))}
+          />
+        </>
       )}
 
       {/* Hint */}

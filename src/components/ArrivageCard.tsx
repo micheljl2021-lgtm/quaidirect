@@ -2,9 +2,10 @@ import { useState, memo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Crown, MapPin, Clock, Euro, ShoppingCart, Star } from "lucide-react";
+import { Crown, MapPin, Clock, Euro, ShoppingCart, Star, ImageIcon } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { DEFAULT_PHOTO_URLS } from "@/components/DefaultPhotoSelector";
 
 interface ArrivageCardProps {
   id: string;
@@ -62,6 +63,11 @@ const ArrivageCard = ({
     ? dropPhotos.sort((a, b) => a.display_order - b.display_order)
     : null;
   
+  // Vérifier si c'est une photo d'illustration par défaut
+  const isDefaultPhoto = (url: string) => DEFAULT_PHOTO_URLS.includes(url);
+  const hasDefaultPhoto = displayPhotos?.some(p => isDefaultPhoto(p.photo_url)) || 
+                          (imageUrl && isDefaultPhoto(imageUrl));
+  
   const hasValidPrice = pricePerPiece !== undefined && pricePerPiece > 0;
   
   // Calculate stock percentage for full variant
@@ -78,10 +84,17 @@ const ArrivageCard = ({
           <div className="relative aspect-video overflow-hidden bg-muted">
             <img 
               src={displayPhotos[0].photo_url} 
-              alt="Point de vente"
+              alt="Pêche du jour"
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
               onError={() => setImgError(true)}
             />
+            {/* Badge Photo d'illustration */}
+            {isDefaultPhoto(displayPhotos[0].photo_url) && (
+              <div className="absolute top-3 left-3 bg-black/60 text-white text-[10px] px-2 py-1 rounded flex items-center gap-1">
+                <ImageIcon className="h-3 w-3" />
+                Photo d'illustration
+              </div>
+            )}
             {isPremium && (
               <div className="absolute top-3 right-3">
                 <Badge className="gap-1 bg-premium text-premium-foreground border-0 shadow-md">
@@ -117,6 +130,13 @@ const ArrivageCard = ({
             alt={species}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
+          {/* Badge Photo d'illustration */}
+          {isDefaultPhoto(imageUrl) && (
+            <div className="absolute top-3 left-3 bg-black/60 text-white text-[10px] px-2 py-1 rounded flex items-center gap-1">
+              <ImageIcon className="h-3 w-3" />
+              Photo d'illustration
+            </div>
+          )}
           {isPremium && (
             <div className="absolute top-3 right-3">
               <Badge className="gap-1 bg-premium text-premium-foreground border-0 shadow-md">
