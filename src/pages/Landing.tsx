@@ -147,13 +147,13 @@ const Landing = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/carte">
               <Button size="lg" className="gap-2 bg-gradient-ocean hover:opacity-90 transition-opacity text-lg px-8 h-14">
-                <MapPin className="h-5 w-5" />
+                <MapPin className="h-5 w-5" aria-hidden="true" />
                 Voir les arrivages
               </Button>
             </Link>
             <Link to="/premium">
               <Button size="lg" variant="outline" className="gap-2 text-lg px-8 h-14 border-2 border-white bg-white text-primary hover:bg-white/90">
-                <Crown className="h-5 w-5" />
+                <Crown className="h-5 w-5" aria-hidden="true" />
                 Premium
               </Button>
             </Link>
@@ -175,7 +175,7 @@ const Landing = () => {
           <Card className="text-center">
             <CardContent className="pt-6 space-y-2">
               <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                <Anchor className="h-6 w-6 text-primary" />
+                <Anchor className="h-6 w-6 text-primary" aria-hidden="true" />
               </div>
               <h3 className="text-3xl font-bold text-foreground">{fishermenCount}</h3>
               <p className="text-sm text-muted-foreground">Marins-pêcheurs</p>
@@ -185,7 +185,7 @@ const Landing = () => {
           <Card className="text-center">
             <CardContent className="pt-6 space-y-2">
               <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                <MapPin className="h-6 w-6 text-primary" />
+                <MapPin className="h-6 w-6 text-primary" aria-hidden="true" />
               </div>
               <h3 className="text-3xl font-bold text-foreground">25</h3>
               <p className="text-sm text-muted-foreground">Ports couverts</p>
@@ -195,7 +195,7 @@ const Landing = () => {
           <Card className="text-center">
             <CardContent className="pt-6 space-y-2">
               <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                <Users className="h-6 w-6 text-primary" />
+                <Users className="h-6 w-6 text-primary" aria-hidden="true" />
               </div>
               <h3 className="text-3xl font-bold text-foreground">{usersCount}</h3>
               <p className="text-sm text-muted-foreground">Utilisateurs actifs</p>
@@ -209,7 +209,7 @@ const Landing = () => {
         <div className="mx-auto max-w-4xl">
           <div className="text-center space-y-4 mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-premium/10 border border-premium/20">
-              <Crown className="h-4 w-4 text-premium" />
+              <Crown className="h-4 w-4 text-premium" aria-hidden="true" />
               <span className="text-sm font-medium text-premium-foreground">Premium</span>
             </div>
             <h2 className="text-4xl font-bold text-foreground">
@@ -224,7 +224,7 @@ const Landing = () => {
             <Card>
               <CardContent className="pt-6 space-y-3">
                 <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <MapPin className="h-5 w-5 text-primary" />
+                  <MapPin className="h-5 w-5 text-primary" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">Soutenez les points de vente</h3>
                 <p className="text-muted-foreground">
@@ -236,7 +236,7 @@ const Landing = () => {
             <Card>
               <CardContent className="pt-6 space-y-3">
                 <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Bell className="h-5 w-5 text-primary" />
+                  <Bell className="h-5 w-5 text-primary" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">Alertes poissons favoris</h3>
                 <p className="text-muted-foreground">
@@ -249,7 +249,7 @@ const Landing = () => {
           <div className="mt-8 text-center">
             <Link to="/premium">
               <Button size="lg" className="gap-2 bg-gradient-ocean hover:opacity-90 transition-opacity">
-                <Crown className="h-5 w-5" />
+                <Crown className="h-5 w-5" aria-hidden="true" />
                 À partir de 2,50€/mois
               </Button>
             </Link>
@@ -302,7 +302,7 @@ const Landing = () => {
               <div className="text-center">
                 <Link to="/carte">
                   <Button size="lg" variant="outline" className="gap-2">
-                    <MapPin className="h-5 w-5" />
+                    <MapPin className="h-5 w-5" aria-hidden="true" />
                     Voir tous les arrivages
                   </Button>
                 </Link>
@@ -312,7 +312,7 @@ const Landing = () => {
             <Card className="bg-gradient-to-br from-primary/5 to-accent/5 border-primary/10">
               <CardContent className="py-16 text-center space-y-6">
                 <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10">
-                  <Anchor className="h-10 w-10 text-primary" />
+                  <Anchor className="h-10 w-10 text-primary" aria-hidden="true" />
                 </div>
                 <div className="space-y-3 max-w-lg mx-auto">
                   <h3 className="text-2xl font-bold text-foreground">Pas d'arrivages pour le moment</h3>
@@ -324,13 +324,13 @@ const Landing = () => {
                 <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
                   <Link to="/carte">
                     <Button size="lg" className="gap-2">
-                      <MapPin className="h-5 w-5" />
+                      <MapPin className="h-5 w-5" aria-hidden="true" />
                       Explorer la carte
                     </Button>
                   </Link>
                   <Link to="/premium">
                     <Button size="lg" variant="outline" className="gap-2">
-                      <Bell className="h-5 w-5" />
+                      <Bell className="h-5 w-5" aria-hidden="true" />
                       Recevoir les alertes
                     </Button>
                   </Link>
@@ -358,7 +358,7 @@ const Landing = () => {
               <CardContent className="pt-6 space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Anchor className="h-6 w-6 text-primary" />
+                    <Anchor className="h-6 w-6 text-primary" aria-hidden="true" />
                   </div>
                   <div>
                     <h3 className="font-bold text-foreground">Sébastien Z.</h3>
@@ -376,7 +376,7 @@ const Landing = () => {
               <CardContent className="pt-6 space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Anchor className="h-6 w-6 text-primary" />
+                    <Anchor className="h-6 w-6 text-primary" aria-hidden="true" />
                   </div>
                   <div>
                     <h3 className="font-bold text-foreground">Sébastien P.</h3>
@@ -407,16 +407,16 @@ const Landing = () => {
           <div className="flex flex-wrap justify-center gap-4 pt-4">
             <Link to="/demo-tracabilite">
               <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/20 hover:bg-primary/10 transition-colors cursor-pointer">
-                <Shield className="h-4 w-4 text-primary" />
+                <Shield className="h-4 w-4 text-primary" aria-hidden="true" />
                 <span className="text-sm font-medium">100% traçable</span>
               </div>
             </Link>
             <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/20">
-              <Users className="h-4 w-4 text-primary" />
+              <Users className="h-4 w-4 text-primary" aria-hidden="true" />
               <span className="text-sm font-medium">Circuit ultra-court</span>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/20">
-              <Anchor className="h-4 w-4 text-primary" />
+              <Anchor className="h-4 w-4 text-primary" aria-hidden="true" />
               <span className="text-sm font-medium">Pêche responsable</span>
             </div>
           </div>

@@ -42,7 +42,7 @@ export function OnboardingStepIndicator({ currentStep }: OnboardingStepIndicator
                 )}
               >
                 {isCompleted ? (
-                  <Check className="w-5 h-5" />
+                  <Check className="w-5 h-5" aria-hidden="true" />
                 ) : (
                   <span>{step.number}</span>
                 )}

@@ -260,8 +260,8 @@ export function ImprovedDropsTab() {
                               className="w-10 h-10 object-cover rounded"
                             />
                           ) : (
-                            <div className="w-10 h-10 bg-muted rounded flex items-center justify-center">
-                              <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                          <div className="w-10 h-10 bg-muted rounded flex items-center justify-center">
+                              <ImageIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                             </div>
                           )}
                         </TableCell>
@@ -294,7 +294,7 @@ export function ImprovedDropsTab() {
                               onClick={() => handleEdit(drop.id)}
                               title="Modifier"
                             >
-                              <Pencil className="h-4 w-4" />
+                              <Pencil className="h-4 w-4" aria-hidden="true" />
                             </Button>
                             {canMarkCompleted && (
                               <Button
@@ -303,7 +303,7 @@ export function ImprovedDropsTab() {
                                 onClick={() => handleMarkCompleted(drop.id)}
                                 title="Marquer terminé"
                               >
-                                <CheckCircle className="h-4 w-4" />
+                                <CheckCircle className="h-4 w-4" aria-hidden="true" />
                               </Button>
                             )}
                           </div>
