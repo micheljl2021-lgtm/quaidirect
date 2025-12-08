@@ -23,7 +23,8 @@ import {
   Globe,
   Loader2,
   ShoppingCart,
-  Clock
+  Clock,
+  ArrowLeft
 } from 'lucide-react';
 import PushNotificationToggle from '@/components/PushNotificationToggle';
 
@@ -265,6 +266,18 @@ const FisherProfile = () => {
       )}
 
       <Header />
+
+      {/* Back Button */}
+      <div className="container max-w-5xl px-4 pt-4">
+        <Button
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour
+        </Button>
+      </div>
 
       {/* Hero Header */}
       <div className="relative h-64 md:h-80 bg-gradient-to-br from-primary/20 to-background">

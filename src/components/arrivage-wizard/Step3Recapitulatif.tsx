@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrivageData } from "@/pages/CreateArrivageWizard";
 import { DropPhotosUpload } from "@/components/DropPhotosUpload";
+import { DefaultPhotoSelector, DEFAULT_PHOTO_URLS } from "@/components/DefaultPhotoSelector";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { MapPin, Calendar, Clock, Edit, CheckCircle2, Loader2, Camera, Star } from "lucide-react";
@@ -137,11 +139,25 @@ export function Step3Recapitulatif({
               </Button>
             </div>
             {showPhotos && (
-              <DropPhotosUpload
-                maxPhotos={5}
-                onPhotosChange={onPhotosChange}
-                initialPhotos={photos}
-              />
+              <div className="space-y-4">
+                <DropPhotosUpload
+                  maxPhotos={5}
+                  onPhotosChange={onPhotosChange}
+                  initialPhotos={photos}
+                />
+                <Separator />
+                <DefaultPhotoSelector
+                  onSelect={(url) => {
+                    // Toggle selection: if already selected, remove it; otherwise add it
+                    if (photos.includes(url)) {
+                      onPhotosChange(photos.filter(p => p !== url));
+                    } else {
+                      onPhotosChange([...photos, url]);
+                    }
+                  }}
+                  selectedUrl={photos.find(p => DEFAULT_PHOTO_URLS.includes(p))}
+                />
+              </div>
             )}
             {photos.length > 0 && !showPhotos && (
               <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-3">

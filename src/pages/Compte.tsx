@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Crown, User, Bell, MapPin, Settings, Anchor, Shield, Fish } from "lucide-react";
+import { Crown, User, Bell, MapPin, Settings, Anchor, Shield, Fish, ArrowLeft } from "lucide-react";
 import { FavoriteSpeciesManager } from "@/components/FavoriteSpeciesManager";
 
 const Compte = () => {
@@ -87,6 +87,16 @@ const Compte = () => {
       <Header />
       
       <div className="container px-4 py-8 max-w-4xl">
+        {/* Back Button */}
+        <Button
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className="mb-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Retour
+        </Button>
+
         {/* Profile Header */}
         <Card className="mb-8">
           <CardContent className="pt-6">
