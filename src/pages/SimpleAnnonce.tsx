@@ -13,7 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DropPhotosUpload } from '@/components/DropPhotosUpload';
-import { CalendarIcon, Clock, MapPin, ArrowLeft, Star, ChevronDown } from 'lucide-react';
+import { CalendarIcon, Clock, MapPin, ArrowLeft, Star } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -38,6 +39,7 @@ const TIME_SLOTS = [
   { value: 'fin_matinee', label: '9h - 11h (Fin de matinée)' },
   { value: 'midi', label: '11h - 13h (Midi)' },
   { value: 'apres_midi', label: '14h - 17h (Après-midi)' },
+  { value: 'custom', label: 'Personnalisé' },
 ];
 
 export default function SimpleAnnonce() {
@@ -50,6 +52,7 @@ export default function SimpleAnnonce() {
   const [selectedSpecies, setSelectedSpecies] = useState<string[]>([]);
   const [showAllSpecies, setShowAllSpecies] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
+  const [customTime, setCustomTime] = useState("08:00");
   
   const [formData, setFormData] = useState({
     salePointId: '',
@@ -169,6 +172,7 @@ export default function SimpleAnnonce() {
         fin_matinee: { start: '09:00' },
         midi: { start: '11:00' },
         apres_midi: { start: '14:00' },
+        custom: { start: customTime },
       };
 
       const slot = timeSlotMap[formData.timeSlot] || timeSlotMap.matin;
@@ -334,6 +338,17 @@ export default function SimpleAnnonce() {
                     ))}
                   </SelectContent>
                 </Select>
+                {formData.timeSlot === 'custom' && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="time"
+                      value={customTime}
+                      onChange={(e) => setCustomTime(e.target.value)}
+                      className="w-32"
+                    />
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

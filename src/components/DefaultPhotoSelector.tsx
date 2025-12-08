@@ -1,13 +1,13 @@
+import { Check, ImageIcon, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Check, ImageIcon } from "lucide-react";
 
-// Photos par défaut avec URLs de placeholder qui seront remplacées par des images réelles
+// Photos par défaut avec URLs de placeholder
 const DEFAULT_PHOTOS = [
   { 
     id: 'filet', 
     label: 'Filet de poisson', 
-    url: 'https://images.unsplash.com/photo-1544943910-4c1dc44aab44?w=400&q=80',
+    url: 'https://images.unsplash.com/photo-1510130387422-82bed34b37e9?w=400&q=80',
     emoji: '🐟'
   },
   { 
@@ -36,72 +36,66 @@ interface DefaultPhotoSelectorProps {
 }
 
 export function DefaultPhotoSelector({ onSelect, selectedUrl }: DefaultPhotoSelectorProps) {
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <ImageIcon className="h-4 w-4" />
-        <span>Ou choisir une photo d'illustration</span>
-      </div>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full justify-between p-2 rounded-lg hover:bg-muted/50">
+        <div className="flex items-center gap-2">
+          <ImageIcon className="h-4 w-4" />
+          <span>Photos d'illustration</span>
+          {selectedUrl && (
+            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">1 sélectionnée</span>
+          )}
+        </div>
+        <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </CollapsibleTrigger>
       
-      <div className="grid grid-cols-2 gap-3">
-        {DEFAULT_PHOTOS.map((photo) => {
-          const isSelected = selectedUrl === photo.url;
-          
-          return (
-            <button
-              key={photo.id}
-              type="button"
-              onClick={() => onSelect(photo.url)}
-              onMouseEnter={() => setHoveredId(photo.id)}
-              onMouseLeave={() => setHoveredId(null)}
-              className={`
-                relative aspect-video rounded-lg overflow-hidden border-2 transition-all
-                ${isSelected 
-                  ? 'border-primary ring-2 ring-primary/20' 
-                  : 'border-border hover:border-primary/50'
-                }
-              `}
-            >
-              <img
-                src={photo.url}
-                alt={photo.label}
-                className="w-full h-full object-cover"
-              />
-              
-              {/* Overlay avec label */}
-              <div className={`
-                absolute inset-0 bg-gradient-to-t from-black/70 to-transparent
-                flex flex-col items-center justify-end p-2 transition-opacity
-                ${hoveredId === photo.id || isSelected ? 'opacity-100' : 'opacity-70'}
-              `}>
-                <span className="text-2xl mb-1">{photo.emoji}</span>
-                <span className="text-xs text-white font-medium text-center">
-                  {photo.label}
-                </span>
-              </div>
-
-              {/* Badge sélection */}
-              {isSelected && (
-                <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
-                  <Check className="h-3 w-3" />
+      <CollapsibleContent className="pt-2">
+        <div className="grid grid-cols-4 gap-2">
+          {DEFAULT_PHOTOS.map((photo) => {
+            const isSelected = selectedUrl === photo.url;
+            
+            return (
+              <button
+                key={photo.id}
+                type="button"
+                onClick={() => onSelect(photo.url)}
+                className={`
+                  relative aspect-square rounded-lg overflow-hidden border-2 transition-all
+                  ${isSelected 
+                    ? 'border-primary ring-2 ring-primary/20' 
+                    : 'border-border hover:border-primary/50'
+                  }
+                `}
+                title={photo.label}
+              >
+                <img
+                  src={photo.url}
+                  alt={photo.label}
+                  className="w-full h-full object-cover"
+                />
+                
+                {/* Overlay avec emoji */}
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                  <span className="text-xl">{photo.emoji}</span>
                 </div>
-              )}
 
-              {/* Badge "Illustration" */}
-              <div className="absolute top-2 left-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded">
-                Illustration
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
-      <p className="text-xs text-muted-foreground text-center">
-        Ces photos d'illustration indiquent au client que ce n'est pas votre pêche réelle
-      </p>
-    </div>
+                {/* Badge sélection */}
+                {isSelected && (
+                  <div className="absolute top-1 right-1 bg-primary text-primary-foreground rounded-full p-0.5">
+                    <Check className="h-2.5 w-2.5" />
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-xs text-muted-foreground text-center mt-2">
+          Ces illustrations indiquent au client que ce n'est pas votre pêche réelle
+        </p>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 

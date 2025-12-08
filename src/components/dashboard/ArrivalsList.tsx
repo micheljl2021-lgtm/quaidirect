@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Anchor, CheckCircle, Copy, Package, Pencil, Plus, History } from 'lucide-react';
 
 interface ArrivalsListProps {
@@ -160,40 +161,70 @@ const ArrivalsList = ({ drops, archivedDrops, fishermanId, onRefresh }: Arrivals
                         <p className="text-sm text-muted-foreground">Présence au port</p>
                       )}
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button variant="ghost" size="sm" className="gap-1 text-xs sm:text-sm" onClick={(e) => handleSaveAsTemplate(e, drop)}>
-                        <Package className="h-3 w-3" />
-                        <span className="hidden xs:inline">Modèle</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1 text-xs sm:text-sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/pecheur/dupliquer-arrivage/${drop.id}`);
-                        }}
-                      >
-                        <Copy className="h-3 w-3" />
-                        <span className="hidden xs:inline">Dupliquer</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1 text-xs sm:text-sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/pecheur/modifier-arrivage/${drop.id}`);
-                        }}
-                      >
-                        <Pencil className="h-3 w-3" />
-                        <span className="hidden xs:inline">Modifier</span>
-                      </Button>
-                      <Button variant="default" size="sm" className="gap-1 text-xs sm:text-sm" onClick={(e) => handleComplete(e, drop.id)}>
-                        <CheckCircle className="h-4 w-4" />
-                        <span className="hidden xs:inline">Terminer</span>
-                      </Button>
-                    </div>
+                    <TooltipProvider>
+                      <div className="flex flex-wrap gap-2">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="sm" className="gap-1 text-xs sm:text-sm" onClick={(e) => handleSaveAsTemplate(e, drop)}>
+                              <Package className="h-3 w-3" />
+                              <span className="hidden xs:inline">Modèle</span>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Sauvegarder comme modèle réutilisable</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1 text-xs sm:text-sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/pecheur/dupliquer-arrivage/${drop.id}`);
+                              }}
+                            >
+                              <Copy className="h-3 w-3" />
+                              <span className="hidden xs:inline">Dupliquer</span>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Créer un nouvel arrivage basé sur celui-ci</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1 text-xs sm:text-sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/pecheur/modifier-arrivage/${drop.id}`);
+                              }}
+                            >
+                              <Pencil className="h-3 w-3" />
+                              <span className="hidden xs:inline">Modifier</span>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Modifier les détails de l'arrivage</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="default" size="sm" className="gap-1 text-xs sm:text-sm" onClick={(e) => handleComplete(e, drop.id)}>
+                              <CheckCircle className="h-4 w-4" />
+                              <span className="hidden xs:inline">Terminer</span>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Marquer comme terminé et archiver</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </TooltipProvider>
                   </div>
                 </div>
               ))}
