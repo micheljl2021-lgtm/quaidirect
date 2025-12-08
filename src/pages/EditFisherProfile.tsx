@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Anchor, Save, Loader2 } from 'lucide-react';
+import { Anchor, Save, Loader2, ArrowLeft } from 'lucide-react';
 
 import { Database } from '@/integrations/supabase/types';
 
@@ -234,9 +234,20 @@ const EditFisherProfile = () => {
       <Header />
 
       <div className="container px-4 py-8 max-w-4xl mx-auto">
+        {/* Back Button */}
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate('/dashboard/pecheur')} 
+          className="gap-2 mb-4"
+          aria-label="Retour au dashboard pêcheur"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour
+        </Button>
+
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
-            <Anchor className="h-8 w-8 text-primary" />
+            <Anchor className="h-8 w-8 text-primary" aria-hidden="true" />
             <h1 className="text-3xl font-bold text-foreground">Modifier ma vitrine</h1>
           </div>
           <p className="text-muted-foreground">

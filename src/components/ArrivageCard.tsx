@@ -98,7 +98,7 @@ const ArrivageCard = ({
             {isPremium && (
               <div className="absolute top-3 right-3">
                 <Badge className="gap-1 bg-premium text-premium-foreground border-0 shadow-md">
-                  <Crown className="h-3 w-3" />
+                  <Crown className="h-3 w-3" aria-hidden="true" />
                   Premium
                 </Badge>
               </div>
@@ -139,10 +139,10 @@ const ArrivageCard = ({
           )}
           {isPremium && (
             <div className="absolute top-3 right-3">
-              <Badge className="gap-1 bg-premium text-premium-foreground border-0 shadow-md">
-                <Crown className="h-3 w-3" />
-                Premium
-              </Badge>
+            <Badge className="gap-1 bg-premium text-premium-foreground border-0 shadow-md">
+              <Crown className="h-3 w-3" aria-hidden="true" />
+              Premium
+            </Badge>
             </div>
           )}
         </div>
@@ -166,7 +166,7 @@ const ArrivageCard = ({
         {/* Info grid */}
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+            <MapPin className="h-4 w-4 text-primary flex-shrink-0" aria-hidden="true" />
             <div className="min-w-0">
               <p className="font-medium text-foreground truncate">{port}</p>
               {city && variant === 'full' && (
@@ -176,7 +176,7 @@ const ArrivageCard = ({
           </div>
           
           <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-primary flex-shrink-0" />
+            <Clock className="h-4 w-4 text-primary flex-shrink-0" aria-hidden="true" />
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground">
                 {saleStartTime ? `Retrait ${timeToSale}` : `Arrivée ${timeToSale}`}
@@ -228,8 +228,9 @@ const ArrivageCard = ({
                   onClick={onReserve}
                   size="sm"
                   className="gap-2"
+                  aria-label={`Commander ${species}`}
                 >
-                  <ShoppingCart className="h-4 w-4" />
+                  <ShoppingCart className="h-4 w-4" aria-hidden="true" />
                   Commander
                 </Button>
               )}
@@ -238,7 +239,7 @@ const ArrivageCard = ({
             <>
               {hasValidPrice ? (
                 <div className="flex items-center gap-1">
-                  <Euro className="h-4 w-4 text-accent" />
+                  <Euro className="h-4 w-4 text-accent" aria-hidden="true" />
                   <span className="font-bold text-foreground">~{pricePerPiece!.toFixed(2)}</span>
                   <span className="text-xs text-muted-foreground">/ pièce*</span>
                 </div>

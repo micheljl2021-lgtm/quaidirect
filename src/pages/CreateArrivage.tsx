@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, Anchor, MapPin, Calendar, Clock, Fish, Camera, Search, X, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Anchor, MapPin, Calendar, Clock, Fish, Camera, Search, X, Loader2, ArrowLeft } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import OfferPhotosUpload from '@/components/OfferPhotosUpload';
 import { DropPhotosUpload } from '@/components/DropPhotosUpload';
@@ -397,11 +397,22 @@ const CreateArrivage = () => {
       <Header />
       
       <div className="container px-4 py-8 max-w-4xl mx-auto">
+        {/* Back Button */}
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate('/dashboard/pecheur')} 
+          className="gap-2 mb-4"
+          aria-label="Retour au dashboard pêcheur"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour
+        </Button>
+
         {/* Header */}
-          <div className="mb-8">
+        <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 rounded-lg bg-primary/10">
-              <Anchor className="h-6 w-6 text-primary" />
+              <Anchor className="h-6 w-6 text-primary" aria-hidden="true" />
             </div>
             <h1 className="text-4xl font-bold text-foreground">
               Nouvel arrivage
