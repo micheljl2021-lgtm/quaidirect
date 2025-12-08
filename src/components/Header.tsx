@@ -27,9 +27,9 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between px-4">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+        <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80" aria-label="Accueil QuaiDirect">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-ocean">
-            <MapPin className="h-5 w-5 text-primary-foreground" />
+            <MapPin className="h-5 w-5 text-primary-foreground" aria-hidden="true" />
           </div>
           <span className="text-xl font-bold text-foreground">QuaiDirect</span>
         </Link>
@@ -58,7 +58,7 @@ const Header = () => {
           )}
           {userRole === 'premium' && (
             <Link to="/dashboard/premium" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-              <Crown className="h-4 w-4" />
+              <Crown className="h-4 w-4" aria-hidden="true" />
               Dashboard Premium
             </Link>
           )}
@@ -69,7 +69,7 @@ const Header = () => {
           )}
           {userRole === 'admin' && (
             <Link to="/dashboard/admin" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-              <Shield className="h-4 w-4" />
+              <Shield className="h-4 w-4" aria-hidden="true" />
               Dashboard Admin
             </Link>
           )}
@@ -132,8 +132,10 @@ const Header = () => {
           size="icon"
           className="md:hidden"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
+          aria-label={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+          aria-expanded={isMenuOpen}
         >
-          {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          {isMenuOpen ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
         </Button>
 
         {/* Mobile Menu */}

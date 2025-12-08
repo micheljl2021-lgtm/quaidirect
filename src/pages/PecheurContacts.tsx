@@ -8,11 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Upload, Plus, Trash2, Users, Download, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Upload, Plus, Trash2, Users, Download, AlertCircle, CheckCircle2, ArrowLeft } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Header from "@/components/Header";
+import { useNavigate } from "react-router-dom";
 import { getUserFriendlyError } from "@/lib/errorMessages";
 import { 
   parseCSVContacts, 
@@ -24,6 +25,7 @@ import {
 
 const PecheurContacts = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [csvContent, setCsvContent] = useState("");
   const [showManualForm, setShowManualForm] = useState(false);
@@ -217,6 +219,17 @@ const PecheurContacts = () => {
     <>
       <Header />
       <div className="container mx-auto py-8 px-4 max-w-6xl">
+        {/* Back Button */}
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate('/dashboard/pecheur')} 
+          className="gap-2 mb-4"
+          aria-label="Retour au dashboard pêcheur"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour au dashboard
+        </Button>
+
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">Mes Contacts Clients</h1>

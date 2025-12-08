@@ -10,7 +10,7 @@ import { Step3Recapitulatif } from "@/components/arrivage-wizard/Step3Recapitula
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Package } from "lucide-react";
+import { Package, ArrowLeft } from "lucide-react";
 import { getUserFriendlyError } from "@/lib/errorMessages";
 
 export interface ArrivageSpecies {
@@ -346,6 +346,17 @@ export default function CreateArrivageWizard() {
       <Header />
       
       <div className="container max-w-4xl mx-auto px-4 py-6">
+        {/* Back Button */}
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate('/dashboard/pecheur')} 
+          className="gap-2 mb-4"
+          aria-label="Retour au dashboard pêcheur"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour
+        </Button>
+
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
