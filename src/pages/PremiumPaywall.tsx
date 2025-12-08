@@ -21,8 +21,8 @@ const CLIENT_LEVELS = {
       { icon: MapPin, title: "Voir les arrivages publics" },
       { icon: Heart, title: "Suivre vos pêcheurs favoris" },
       { icon: MapPin, title: "Suivre vos ports favoris" },
+      { icon: Bell, title: "🔔 Notifications Push" },
     ],
-    notifications: "❌ Aucune notification",
   },
   premium: {
     name: "Premium",
@@ -33,10 +33,10 @@ const CLIENT_LEVELS = {
     description: "Notifications prioritaires",
     features: [
       { icon: Check, title: "Tout Follower inclus" },
-      { icon: Bell, title: "🔔 Notifications Push" },
       { icon: Mail, title: "📧 Notifications Email" },
       { icon: Star, title: "⚡ Accès anticipé 30min" },
       { icon: Crown, title: "✨ Badge Premium visible" },
+      { icon: Heart, title: "🎣 Choix d'un pêcheur favori à soutenir" },
     ],
     badgeAnnual: "2 mois offerts",
   },
@@ -53,6 +53,7 @@ const CLIENT_LEVELS = {
       { icon: Bell, title: "🚨 Alertes 'dernières pièces'" },
       { icon: Heart, title: "💰 Contribution cagnotte pêcheurs" },
       { icon: Star, title: "🌟 Badge Premium+ distinctif" },
+      { icon: Heart, title: "🎣 Choix d'un pêcheur favori à soutenir" },
     ],
     badgeAnnual: "2 mois offerts",
   },
@@ -162,10 +163,6 @@ export default function PremiumPaywall() {
                   </li>
                 ))}
               </ul>
-              
-              <div className="p-3 bg-muted rounded-md text-center">
-                <span className="text-sm text-muted-foreground">{CLIENT_LEVELS.follower.notifications}</span>
-              </div>
             </CardContent>
             <CardFooter>
               <Button
@@ -295,49 +292,30 @@ export default function PremiumPaywall() {
           </Card>
         </div>
 
-        {/* Tableau comparatif des notifications */}
-        <Card className="mb-12 max-w-4xl mx-auto">
-          <CardHeader>
-            <CardTitle className="text-center">📬 Canaux de notification par niveau</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-2">Canal</th>
-                    <th className="text-center py-3 px-2">Follower</th>
-                    <th className="text-center py-3 px-2">Premium</th>
-                    <th className="text-center py-3 px-2">Premium+</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-b">
-                    <td className="py-3 px-2 font-medium">🔔 Push (app)</td>
-                    <td className="text-center py-3 px-2">❌</td>
-                    <td className="text-center py-3 px-2">✅</td>
-                    <td className="text-center py-3 px-2">✅</td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="py-3 px-2 font-medium">📧 Email</td>
-                    <td className="text-center py-3 px-2">❌</td>
-                    <td className="text-center py-3 px-2">✅</td>
-                    <td className="text-center py-3 px-2">✅</td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="py-3 px-2 font-medium">📱 SMS</td>
-                    <td className="text-center py-3 px-2">❌</td>
-                    <td className="text-center py-3 px-2">❌</td>
-                    <td className="text-center py-3 px-2">✅</td>
-                  </tr>
-                  <tr>
-                    <td className="py-3 px-2 font-medium">⚡ Accès anticipé (30min)</td>
-                    <td className="text-center py-3 px-2">❌</td>
-                    <td className="text-center py-3 px-2">✅</td>
-                    <td className="text-center py-3 px-2">✅</td>
-                  </tr>
-                </tbody>
-              </table>
+        {/* Info Pêcheur Favori */}
+        <Card className="mb-12 max-w-4xl mx-auto bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-full bg-blue-100">
+                <Heart className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg text-blue-900 mb-2">
+                  🎣 Choisissez votre pêcheur favori
+                </h3>
+                <p className="text-sm text-blue-800 mb-2">
+                  Avec <strong>Premium</strong> ou <strong>Premium+</strong>, vous sélectionnez un pêcheur favori à l'inscription.
+                </p>
+                <p className="text-sm text-blue-700 mb-2">
+                  <strong>Vous avez été recommandé ?</strong> Indiquez le nom du pêcheur qui vous a invité.
+                </p>
+                <p className="text-sm text-blue-700">
+                  <strong>Pas de recommandation ?</strong> Choisissez votre port favori sur la carte, puis sélectionnez le pêcheur de ce secteur que vous souhaitez soutenir.
+                </p>
+                <p className="text-sm text-blue-600 mt-3 font-medium">
+                  C'est ce pêcheur qui bénéficiera de la cagnotte SMS grâce à votre abonnement Premium+.
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
