@@ -125,7 +125,7 @@ const PecheurDashboard = () => {
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
       </div>
     );
   }
@@ -136,7 +136,7 @@ const PecheurDashboard = () => {
         <Header />
         <div className="container max-w-2xl px-4 py-8">
           <Alert className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
-            <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+            <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-500" aria-hidden="true" />
             <AlertDescription className="text-amber-800 dark:text-amber-300">
               Votre compte pêcheur est en attente de validation. Vous recevrez un e-mail 
               une fois votre profil vérifié par notre équipe.
@@ -169,11 +169,11 @@ const PecheurDashboard = () => {
         <Tabs defaultValue="arrivages" className="space-y-4 md:space-y-6">
           <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
             <TabsTrigger value="arrivages" className="gap-2 text-sm">
-              <Anchor className="h-4 w-4" />
+              <Anchor className="h-4 w-4" aria-hidden="true" />
               <span className="hidden xs:inline">Mes </span>arrivages
             </TabsTrigger>
             <TabsTrigger value="caisse" className="gap-2 text-sm">
-              <ShoppingCart className="h-4 w-4" />
+              <ShoppingCart className="h-4 w-4" aria-hidden="true" />
               <span className="hidden xs:inline">Caisse au </span>port
             </TabsTrigger>
           </TabsList>

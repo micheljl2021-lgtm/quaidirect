@@ -87,7 +87,7 @@ const DropDetail = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
       </div>
     );
   }
@@ -131,7 +131,7 @@ const DropDetail = () => {
           onClick={() => navigate(-1)}
           className="gap-2"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Retour
         </Button>
 
@@ -180,7 +180,7 @@ const DropDetail = () => {
                   onClick={() => navigate(`/pecheurs/${drop.fishermen?.slug || drop.fishermen?.id}`)}
                   className="gap-2"
                 >
-                  <User className="h-4 w-4" />
+                  <User className="h-4 w-4" aria-hidden="true" />
                   Voir le profil
                 </Button>
               )}
@@ -188,7 +188,7 @@ const DropDetail = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-2 text-muted-foreground">
-              <MapPin className="h-5 w-5" />
+              <MapPin className="h-5 w-5" aria-hidden="true" />
               <span>
                 {drop.ports 
                   ? `${drop.ports.name}, ${drop.ports.city}`
@@ -197,7 +197,7 @@ const DropDetail = () => {
             </div>
             {saleDateTime && (
               <div className="flex items-center gap-2 text-muted-foreground">
-                <Clock className="h-5 w-5" />
+                <Clock className="h-5 w-5" aria-hidden="true" />
                 <span>
                   Vente le {format(saleDateTime, "EEEE d MMMM 'à' HH'h'mm", { locale: fr })}
                 </span>
@@ -215,7 +215,7 @@ const DropDetail = () => {
         {drop.offers && drop.offers.length > 0 && (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold flex items-center gap-2">
-              <Fish className="h-5 w-5" />
+              <Fish className="h-5 w-5" aria-hidden="true" />
               Produits disponibles
             </h2>
             {drop.offers.map((offer) => {

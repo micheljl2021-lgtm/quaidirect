@@ -217,7 +217,7 @@ const Auth = () => {
         <div className="text-center space-y-2">
           <Link to="/" className="inline-block">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4 hover:bg-primary/20 transition-colors cursor-pointer">
-              <Anchor className="h-8 w-8 text-primary" />
+              <Anchor className="h-8 w-8 text-primary" aria-hidden="true" />
             </div>
           </Link>
           <h1 className="text-3xl font-bold text-foreground">QuaiDirect</h1>
@@ -294,7 +294,7 @@ const Auth = () => {
                   <form onSubmit={handlePasswordSubmit} className="space-y-4">
                     <div className="space-y-2">
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
                         <Input
                           type="email"
                           placeholder="votre@email.fr"
@@ -305,7 +305,7 @@ const Auth = () => {
                         />
                       </div>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
+                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" aria-hidden="true" />
                         <PasswordInput
                           placeholder="Mot de passe"
                           value={password}
@@ -333,7 +333,7 @@ const Auth = () => {
                   <form onSubmit={handleEmailSubmit} className="space-y-4">
                     <div className="space-y-2">
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
                         <Input
                           type="email"
                           placeholder="votre@email.fr"
@@ -356,7 +356,7 @@ const Auth = () => {
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
                     <Input
                       type="email"
                       placeholder="votre@email.fr"
@@ -367,7 +367,7 @@ const Auth = () => {
                     />
                   </div>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
+                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" aria-hidden="true" />
                     <PasswordInput
                       placeholder="Mot de passe (min. 6 caractères)"
                       value={password}
@@ -433,7 +433,7 @@ const Auth = () => {
               <form onSubmit={handleResetPassword} className="space-y-4">
                 <div className="space-y-2">
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
                     <Input
                       type="email"
                       placeholder="votre@email.fr"

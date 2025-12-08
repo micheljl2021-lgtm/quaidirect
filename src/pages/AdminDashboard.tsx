@@ -39,7 +39,7 @@ const AdminDashboard = () => {
   if (loading || userRole !== "admin") {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
       </div>
     );
   }
@@ -52,11 +52,11 @@ const AdminDashboard = () => {
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 rounded-lg bg-gradient-to-r from-primary/20 to-secondary/20">
-              <Shield className="h-6 w-6 text-primary" />
+              <Shield className="h-6 w-6 text-primary" aria-hidden="true" />
             </div>
             <h1 className="text-4xl font-bold text-foreground">Dashboard Admin</h1>
             <Badge className="gap-2">
-              <Shield className="h-3 w-3" />
+              <Shield className="h-3 w-3" aria-hidden="true" />
               Administrateur
             </Badge>
           </div>
