@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Crown, Check, MapPin, Bell, Star } from "lucide-react";
+import { Crown, Check, MapPin, Bell, Star, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -138,8 +138,17 @@ export default function PremiumPaywall() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
       <Header />
+      
+      {/* Back button */}
+      <div className="container px-4 pt-4 max-w-6xl mx-auto">
+        <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2">
+          <ArrowLeft className="h-4 w-4" />
+          Retour
+        </Button>
+      </div>
+
       {/* Hero Section */}
-      <div className="container px-4 py-12 max-w-6xl mx-auto">
+      <div className="container px-4 py-8 max-w-6xl mx-auto">
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
             <Crown className="h-5 w-5" />
