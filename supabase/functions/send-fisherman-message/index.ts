@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@4.0.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,6 +9,21 @@ const corsHeaders = {
 };
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+
+// Request validation schema
+const RequestSchema = z.object({
+  message_type: z.enum(['invitation_initiale', 'new_drop', 'custom']),
+  subject: z.string().max(200).optional(),
+  body: z.string().max(5000).optional(),
+  sent_to_group: z.string().max(100).optional(),
+  drop_id: z.string().uuid().optional().nullable(),
+  drop_details: z.object({
+    time: z.string().optional(),
+    location: z.string().optional(),
+    species: z.string().optional(),
+  }).optional(),
+  contact_ids: z.array(z.string().uuid()).optional(),
+});
 
 // Rate limiting configuration
 const RATE_LIMIT = 3; // max messages
@@ -172,7 +188,25 @@ serve(async (req) => {
     }
     logStep('Rate limit check passed', { remaining });
 
-    const { message_type, subject, body, sent_to_group, drop_id, drop_details, contact_ids } = await req.json();
+    // Parse and validate request body
+    const rawBody = await req.json();
+    const parseResult = RequestSchema.safeParse(rawBody);
+    
+    if (!parseResult.success) {
+      logStep('Validation error', { errors: parseResult.error.flatten() });
+      return new Response(
+        JSON.stringify({ 
+          error: 'Données invalides', 
+          details: parseResult.error.flatten().fieldErrors 
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
+    }
+
+    const { message_type, subject, body, sent_to_group, drop_id, drop_details, contact_ids } = parseResult.data;
 
     // Récupérer les contacts
     let query = supabaseClient
