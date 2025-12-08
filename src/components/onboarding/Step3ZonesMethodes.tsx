@@ -48,7 +48,7 @@ export function Step3ZonesMethodes({ formData, onChange }: Step3ZonesMethodesPro
       {/* Header */}
       <div className="text-center space-y-2">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-          <Anchor className="w-8 h-8 text-primary" />
+          <Anchor className="w-8 h-8 text-primary" aria-hidden="true" />
         </div>
         <h2 className="text-2xl font-bold">Zones & méthodes de pêche</h2>
         <p className="text-muted-foreground">Où et comment vous pêchez</p>

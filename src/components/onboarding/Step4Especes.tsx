@@ -77,7 +77,7 @@ export function Step4Especes({ formData, onChange }: Step4EspecesProps) {
       {/* Header */}
       <div className="text-center space-y-2">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-          <Fish className="w-8 h-8 text-primary" />
+          <Fish className="w-8 h-8 text-primary" aria-hidden="true" />
         </div>
         <h2 className="text-2xl font-bold">Espèces pêchées</h2>
         <p className="text-muted-foreground">Sélectionnez les poissons et crustacés que vous pêchez</p>
@@ -86,7 +86,7 @@ export function Step4Especes({ formData, onChange }: Step4EspecesProps) {
       {/* Search Bar */}
       <div className="space-y-2">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -155,7 +155,7 @@ export function Step4Especes({ formData, onChange }: Step4EspecesProps) {
             variant="outline"
             onClick={handleAddCustomSpecies}
           >
-            <Plus className="w-4 h-4 mr-1" />
+            <Plus className="w-4 h-4 mr-1" aria-hidden="true" />
             Ajouter
           </Button>
         </div>

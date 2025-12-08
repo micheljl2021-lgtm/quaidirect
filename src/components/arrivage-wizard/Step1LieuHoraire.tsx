@@ -139,7 +139,7 @@ export function Step1LieuHoraire({ initialData, onComplete, onCancel }: Step1Pro
                       onClick={() => handleSalePointSelect(salePoint)}
                     >
                       <div className="flex items-start gap-3 w-full">
-                        <MapPin className="h-5 w-5 mt-1 flex-shrink-0" />
+                        <MapPin className="h-5 w-5 mt-1 flex-shrink-0" aria-hidden="true" />
                         <div className="flex-1 min-w-0">
                           <div className="font-semibold flex items-center gap-2 flex-wrap">
                             {salePoint.label}
@@ -159,7 +159,7 @@ export function Step1LieuHoraire({ initialData, onComplete, onCancel }: Step1Pro
             </div>
           ) : (
             <div className="bg-muted p-6 rounded-lg text-center">
-              <MapPin className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+              <MapPin className="h-12 w-12 mx-auto mb-3 text-muted-foreground" aria-hidden="true" />
               <p className="font-semibold mb-2">Aucun point de vente configuré</p>
               <p className="text-sm text-muted-foreground mb-4">
                 Configure tes points de vente pour créer des arrivages
@@ -180,7 +180,7 @@ export function Step1LieuHoraire({ initialData, onComplete, onCancel }: Step1Pro
                   size="lg"
                   className="w-full justify-start text-left font-normal h-14"
                 >
-                  <CalendarIcon className="mr-2 h-5 w-5" />
+                  <CalendarIcon className="mr-2 h-5 w-5" aria-hidden="true" />
                   {selectedDate ? (
                     format(selectedDate, "EEEE d MMMM yyyy", { locale: fr })
                   ) : (
@@ -214,7 +214,7 @@ export function Step1LieuHoraire({ initialData, onComplete, onCancel }: Step1Pro
                   className={`h-14 ${slot.id === 'custom' ? 'col-span-1 sm:col-span-2' : ''}`}
                   onClick={() => setSelectedTimeSlot(slot.value)}
                 >
-                  {slot.id === 'custom' && <Clock className="h-5 w-5 mr-2" />}
+                  {slot.id === 'custom' && <Clock className="h-5 w-5 mr-2" aria-hidden="true" />}
                   {slot.label}
                 </Button>
               ))}

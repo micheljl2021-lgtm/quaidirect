@@ -53,7 +53,7 @@ export function Step3Recapitulatif({
           {/* Info Box */}
           <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
               <div className="space-y-1 text-sm">
                 <p className="font-medium">Tu pourras encore modifier cet arrivage après publication.</p>
                 <p className="text-muted-foreground">
@@ -68,21 +68,21 @@ export function Step3Recapitulatif({
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Lieu & Horaires</h3>
               <Button variant="ghost" size="sm" onClick={onEditLieu}>
-                <Edit className="h-4 w-4 mr-1" />
+                <Edit className="h-4 w-4 mr-1" aria-hidden="true" />
                 Modifier
               </Button>
             </div>
             <div className="bg-muted/50 rounded-lg p-4 space-y-2">
               <div className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-primary" />
+                <MapPin className="h-5 w-5 text-primary" aria-hidden="true" />
                 <span className="font-medium">{arrivageData.salePointLabel}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-primary" />
+                <Calendar className="h-5 w-5 text-primary" aria-hidden="true" />
                 <span>{format(arrivageData.date, "EEEE d MMMM yyyy", { locale: fr })}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-primary" />
+                <Clock className="h-5 w-5 text-primary" aria-hidden="true" />
                 <span>{TIME_SLOT_LABELS[arrivageData.timeSlot]}</span>
               </div>
             </div>
@@ -93,7 +93,7 @@ export function Step3Recapitulatif({
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Espèces ({arrivageData.species.length})</h3>
               <Button variant="ghost" size="sm" onClick={onEditSpecies}>
-                <Edit className="h-4 w-4 mr-1" />
+                <Edit className="h-4 w-4 mr-1" aria-hidden="true" />
                 Modifier
               </Button>
             </div>
@@ -126,7 +126,7 @@ export function Step3Recapitulatif({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold flex items-center gap-2">
-                <Camera className="h-5 w-5" />
+                <Camera className="h-5 w-5" aria-hidden="true" />
                 Photos ({photos.length}/5)
               </h3>
               <Button
@@ -172,7 +172,7 @@ export function Step3Recapitulatif({
           <div className="space-y-3">
             <div className="flex items-center justify-between p-4 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
               <div className="flex items-center gap-3">
-                <Star className="h-5 w-5 text-amber-500" />
+                <Star className="h-5 w-5 text-amber-500" aria-hidden="true" />
                 <div>
                   <Label htmlFor="premium-toggle" className="font-semibold cursor-pointer">
                     Arrivage Premium
@@ -204,12 +204,12 @@ export function Step3Recapitulatif({
           >
             {isPublishing ? (
               <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" aria-hidden="true" />
                 Publication en cours...
               </>
             ) : (
               <>
-                <CheckCircle2 className="mr-2 h-5 w-5" />
+                <CheckCircle2 className="mr-2 h-5 w-5" aria-hidden="true" />
                 Publier l'arrivage
               </>
             )}

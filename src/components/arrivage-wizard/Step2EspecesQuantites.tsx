@@ -223,7 +223,7 @@ export function Step2EspecesQuantites({ initialSpecies, onComplete, onBack }: St
 
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <Star className="h-4 w-4 text-amber-500" />
+              <Star className="h-4 w-4 text-amber-500" aria-hidden="true" />
               <label className="block text-sm font-medium">Mes espèces habituelles</label>
             </div>
             <SpeciesChips species={suggestedSpecies} onSpeciesClick={handleSpeciesClick} />
@@ -232,7 +232,7 @@ export function Step2EspecesQuantites({ initialSpecies, onComplete, onBack }: St
           <div>
             <label className="block text-sm font-medium mb-3">Ajouter une espèce</label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" aria-hidden="true" />
               <Input
                 type="text"
                 placeholder="Tape le nom de l'espèce..."
@@ -269,7 +269,7 @@ export function Step2EspecesQuantites({ initialSpecies, onComplete, onBack }: St
                   size="sm"
                   onClick={() => setSaveDialogOpen(true)}
                 >
-                  <Star className="h-4 w-4 mr-2" />
+                  <Star className="h-4 w-4 mr-2" aria-hidden="true" />
                   Sauvegarder ce favori
                 </Button>
               </div>

@@ -40,7 +40,7 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
+            <MapPin className="h-5 w-5" aria-hidden="true" />
             Point de vente 1
           </CardTitle>
         </CardHeader>
@@ -86,7 +86,7 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
+                <MapPin className="h-5 w-5" aria-hidden="true" />
                 Point de vente 2
               </div>
               <Button
@@ -99,7 +99,7 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
                   onChange('salePoint2Description', '');
                 }}
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
               </Button>
             </CardTitle>
           </CardHeader>
@@ -142,7 +142,7 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
           className="w-full"
           onClick={() => setShowSecondPoint(true)}
         >
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="h-4 w-4 mr-2" aria-hidden="true" />
           Ajouter un deuxième point de vente
         </Button>
       )}
