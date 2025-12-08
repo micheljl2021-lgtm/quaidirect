@@ -428,7 +428,7 @@ const CreateArrivage = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
+                <MapPin className="h-5 w-5" aria-hidden="true" />
                 Informations de disponibilité
               </CardTitle>
               <CardDescription>
@@ -456,7 +456,7 @@ const CreateArrivage = () => {
               {/* ETA (Débarquement) - Optionnel */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <Anchor className="h-4 w-4 text-muted-foreground" />
+                  <Anchor className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   <Label className="text-base font-medium">Heure de débarquement (optionnel)</Label>
                 </div>
                 <div className="grid grid-cols-2 gap-4 pl-6">
@@ -489,7 +489,7 @@ const CreateArrivage = () => {
               {/* Sale Start Time (Mise en vente) */}
               <div className="space-y-3 p-4 rounded-lg bg-primary/5 border border-primary/20">
                 <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-primary" />
+                  <Clock className="h-4 w-4 text-primary" aria-hidden="true" />
                   <Label className="text-base font-medium">Heure de mise en vente</Label>
                 </div>
                 <div className="grid grid-cols-2 gap-4 pl-6">
@@ -554,7 +554,7 @@ const CreateArrivage = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Fish className="h-5 w-5" />
+                <Fish className="h-5 w-5" aria-hidden="true" />
                 Espèces disponibles
               </CardTitle>
               <CardDescription>
@@ -578,7 +578,7 @@ const CreateArrivage = () => {
 
               {/* Barre de recherche */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
                 <Input
                   value={speciesSearch}
                   onChange={(e) => setSpeciesSearch(e.target.value)}
@@ -591,7 +591,7 @@ const CreateArrivage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto p-1">
                 {filteredSpecies.length === 0 ? (
                   <div className="col-span-full text-center py-8 text-muted-foreground">
-                    <Fish className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                    <Fish className="h-12 w-12 mx-auto mb-2 opacity-20" aria-hidden="true" />
                     <p className="text-sm">Aucune espèce trouvée</p>
                   </div>
                 ) : (

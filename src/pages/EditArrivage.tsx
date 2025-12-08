@@ -447,7 +447,7 @@ const EditArrivage = () => {
             </AlertDescription>
           </Alert>
           <Button onClick={() => navigate('/dashboard/pecheur')} className="w-full">
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className="h-4 w-4 mr-2" aria-hidden="true" />
             Retour au dashboard
           </Button>
         </div>
@@ -467,13 +467,13 @@ const EditArrivage = () => {
             onClick={() => navigate('/dashboard/pecheur')}
             className="mb-4 gap-2"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             Retour au dashboard
           </Button>
           
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 rounded-lg bg-primary/10">
-              <Anchor className="h-6 w-6 text-primary" />
+              <Anchor className="h-6 w-6 text-primary" aria-hidden="true" />
             </div>
             <h1 className="text-4xl font-bold text-foreground">
               Modifier l'arrivage
@@ -489,7 +489,7 @@ const EditArrivage = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
+                <MapPin className="h-5 w-5" aria-hidden="true" />
                 Informations de disponibilité
               </CardTitle>
               <CardDescription>
@@ -521,7 +521,7 @@ const EditArrivage = () => {
 
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <Anchor className="h-4 w-4 text-muted-foreground" />
+                  <Anchor className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   <Label className="text-base font-medium">Heure de débarquement (optionnel)</Label>
                 </div>
                 <div className="grid grid-cols-2 gap-4 pl-6">

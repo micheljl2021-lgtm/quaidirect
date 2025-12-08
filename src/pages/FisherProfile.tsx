@@ -200,7 +200,7 @@ const FisherProfile = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
       </div>
     );
   }
@@ -274,7 +274,7 @@ const FisherProfile = () => {
           onClick={() => navigate(-1)}
           className="gap-2"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Retour
         </Button>
       </div>
@@ -313,7 +313,7 @@ const FisherProfile = () => {
             )}
             {fisherman.main_fishing_zone && (
               <div className="flex items-center gap-2 text-white/90 mt-2">
-                <MapPin className="h-4 w-4" />
+                <MapPin className="h-4 w-4" aria-hidden="true" />
                 <span>{fisherman.main_fishing_zone}</span>
               </div>
             )}
@@ -333,7 +333,7 @@ const FisherProfile = () => {
                   onClick={() => navigate('/pecheur/edit-profile')}
                   className="gap-2"
                 >
-                  <Settings className="h-4 w-4" />
+                  <Settings className="h-4 w-4" aria-hidden="true" />
                   Modifier mon profil
                 </Button>
               ) : (
@@ -343,7 +343,7 @@ const FisherProfile = () => {
                   disabled={followMutation.isPending || unfollowMutation.isPending}
                   className="gap-2"
                 >
-                  <Heart className={isFollowing ? "h-4 w-4 fill-current" : "h-4 w-4"} />
+                  <Heart className={isFollowing ? "h-4 w-4 fill-current" : "h-4 w-4"} aria-hidden="true" />
                   {isFollowing ? 'Abonné' : 'Suivre'}
                 </Button>
               )}
@@ -368,7 +368,7 @@ const FisherProfile = () => {
             <Card className="md:col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Fish className="h-5 w-5" />
+                  <Fish className="h-5 w-5" aria-hidden="true" />
                   Pêche artisanale et vente directe
                 </CardTitle>
               </CardHeader>
@@ -385,7 +385,7 @@ const FisherProfile = () => {
             <Card className="md:col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5" />
+                  <ShoppingCart className="h-5 w-5" aria-hidden="true" />
                   Comment commander
                 </CardTitle>
               </CardHeader>
@@ -410,7 +410,7 @@ const FisherProfile = () => {
             <Card className="md:col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
+                  <Clock className="h-5 w-5" aria-hidden="true" />
                   Horaires & Lieu de vente
                 </CardTitle>
               </CardHeader>
@@ -425,7 +425,7 @@ const FisherProfile = () => {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition"
                   >
-                    <MapPin className="h-4 w-4" />
+                    <MapPin className="h-4 w-4" aria-hidden="true" />
                     Voir sur Google Maps
                   </a>
                 )}
@@ -438,7 +438,7 @@ const FisherProfile = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
+                  <User className="h-5 w-5" aria-hidden="true" />
                   Qui je suis
                 </CardTitle>
               </CardHeader>
@@ -455,7 +455,7 @@ const FisherProfile = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Fish className="h-5 w-5" />
+                  <Fish className="h-5 w-5" aria-hidden="true" />
                   Ce que je pêche
                 </CardTitle>
               </CardHeader>
@@ -481,7 +481,7 @@ const FisherProfile = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Anchor className="h-5 w-5" />
+                  <Anchor className="h-5 w-5" aria-hidden="true" />
                   Comment je pêche
                 </CardTitle>
               </CardHeader>

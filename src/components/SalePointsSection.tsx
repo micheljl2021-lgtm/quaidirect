@@ -45,7 +45,7 @@ export const SalePointsSection = ({ fishermanId }: SalePointsSectionProps) => {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5" />
+              <MapPin className="h-5 w-5" aria-hidden="true" />
               Mes points de vente (max 2)
             </CardTitle>
             <CardDescription>
@@ -57,7 +57,7 @@ export const SalePointsSection = ({ fishermanId }: SalePointsSectionProps) => {
             size="sm"
             onClick={() => navigate('/pecheur/points-de-vente')}
           >
-            <Edit className="h-4 w-4 mr-2" />
+            <Edit className="h-4 w-4 mr-2" aria-hidden="true" />
             Modifier mon point de vente
           </Button>
         </div>
@@ -94,7 +94,7 @@ export const SalePointsSection = ({ fishermanId }: SalePointsSectionProps) => {
                   </h4>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  <MapPin className="h-3 w-3 inline mr-1" />
+                  <MapPin className="h-3 w-3 inline mr-1" aria-hidden="true" />
                   {point.address}
                 </p>
                 {point.description && (
