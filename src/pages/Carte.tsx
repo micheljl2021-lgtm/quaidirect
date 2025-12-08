@@ -15,7 +15,6 @@ import { Filter, Search, MapPin, Fish } from "lucide-react";
 import { useSalePoints } from "@/hooks/useSalePoints";
 
 const Carte = () => {
-  const [selectedPort, setSelectedPort] = useState<string | null>(null);
   const [selectedSalePoint, setSelectedSalePoint] = useState<any | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -167,13 +166,10 @@ const Carte = () => {
   }) || [];
 
   const filteredArrivages = transformedArrivages.filter(arrivage => {
-    const matchesPort = !selectedPort || arrivage.port.includes(
-      ports?.find(p => p.id === selectedPort)?.name || ''
-    );
     const matchesSearch = !searchQuery || 
       arrivage.species.toLowerCase().includes(searchQuery.toLowerCase()) ||
       arrivage.port.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesPort && matchesSearch;
+    return matchesSearch;
   });
 
   return (
@@ -182,67 +178,39 @@ const Carte = () => {
       
       <div className="container px-4 py-8">
         {/* Header */}
-        <div className="mb-8 space-y-4">
-          <div>
+        <div className="mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">
-            Carte des points de ventes
+            Carte des points de vente
           </h1>
-            <p className="text-lg text-muted-foreground">
-              {filteredArrivages.length} arrivages disponibles
-            </p>
-          </div>
-
-          {/* Search & Filters */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher une espèce ou un port..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Button variant="outline" className="gap-2">
-              <Filter className="h-4 w-4" />
-              Filtres
-            </Button>
-          </div>
-
-          {/* Port filters */}
-          <div className="flex flex-wrap gap-2">
-            <Badge
-              variant={selectedPort === null ? "default" : "outline"}
-              className="cursor-pointer"
-              onClick={() => setSelectedPort(null)}
-            >
-              Tous les ports
-            </Badge>
-            {ports?.map(port => (
-              <Badge
-                key={port.id}
-                variant={selectedPort === port.id ? "default" : "outline"}
-                className="cursor-pointer gap-1"
-                onClick={() => setSelectedPort(port.id)}
-              >
-                <MapPin className="h-3 w-3" />
-                {port.name}
-              </Badge>
-            ))}
-          </div>
+          <p className="text-lg text-muted-foreground">
+            {filteredArrivages.length} arrivages disponibles
+          </p>
         </div>
 
         {/* Google Map */}
-        <div className="mb-8 aspect-video md:aspect-[21/9] rounded-lg overflow-hidden border border-border shadow-lg">
+        <div className="mb-6 aspect-video md:aspect-[21/9] rounded-lg overflow-hidden border border-border shadow-lg">
             <GoogleMapComponent 
               ports={ports || []}
               salePoints={salePoints || []}
               drops={mapDrops}
-              selectedPortId={selectedPort}
-              onPortClick={setSelectedPort}
+              selectedPortId={null}
+              onPortClick={() => {}}
               onSalePointClick={handleSalePointClick}
               userLocation={userLocation}
             />
+        </div>
+
+        {/* Search bar - below map */}
+        <div className="mb-8">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher une espèce ou un lieu..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
         </div>
 
         {/* Sale Point Drawer */}

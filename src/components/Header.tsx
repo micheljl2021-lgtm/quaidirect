@@ -37,7 +37,7 @@ const Header = () => {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
           <Link to="/carte" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-            Carte des arrivages
+            Carte des points de vente
           </Link>
           <Link to="/arrivages" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Arrivages
@@ -149,7 +149,7 @@ const Header = () => {
                 className="text-base font-medium text-foreground hover:text-primary transition-colors py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Carte des arrivages
+                Carte des points de vente
               </Link>
               <Link 
                 to="/arrivages" 
