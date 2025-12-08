@@ -41,7 +41,7 @@ const DashboardHeader = ({ fishermanId }: DashboardHeaderProps) => {
               className="gap-2"
               onClick={handleViewStorefront}
             >
-              <Anchor className="h-5 w-5" />
+              <Anchor className="h-5 w-5" aria-hidden="true" />
               Ma page vitrine
             </Button>
             <Button 
@@ -50,7 +50,7 @@ const DashboardHeader = ({ fishermanId }: DashboardHeaderProps) => {
               className="gap-2"
               onClick={() => navigate('/pecheur/preferences')}
             >
-              <Settings className="h-5 w-5" />
+              <Settings className="h-5 w-5" aria-hidden="true" />
               Préférences
             </Button>
             <Button 
@@ -59,7 +59,7 @@ const DashboardHeader = ({ fishermanId }: DashboardHeaderProps) => {
               className="gap-2"
               onClick={() => navigate('/pecheur/edit-profile')}
             >
-              <Pencil className="h-5 w-5" />
+              <Pencil className="h-5 w-5" aria-hidden="true" />
               Ma vitrine
             </Button>
             <Button 
@@ -68,7 +68,7 @@ const DashboardHeader = ({ fishermanId }: DashboardHeaderProps) => {
               className="gap-2"
               onClick={() => navigate('/pecheur/contacts')}
             >
-              <Users className="h-5 w-5" />
+              <Users className="h-5 w-5" aria-hidden="true" />
               Carnet de clients
             </Button>
             <Button 
@@ -77,7 +77,7 @@ const DashboardHeader = ({ fishermanId }: DashboardHeaderProps) => {
               className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 border-0"
               onClick={() => navigate('/pecheur/ia-marin')}
             >
-              <Bot className="h-5 w-5" />
+              <Bot className="h-5 w-5" aria-hidden="true" />
               IA du Marin
             </Button>
             <Button 
@@ -86,7 +86,7 @@ const DashboardHeader = ({ fishermanId }: DashboardHeaderProps) => {
               className="gap-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 border-0"
               onClick={() => navigate('/pecheur/support')}
             >
-              <HelpCircle className="h-5 w-5" />
+              <HelpCircle className="h-5 w-5" aria-hidden="true" />
               Contacter l'admin
             </Button>
           </>
@@ -96,7 +96,7 @@ const DashboardHeader = ({ fishermanId }: DashboardHeaderProps) => {
           className="gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
           onClick={() => navigate('/pecheur/annonce-simple')}
         >
-          <MessageSquare className="h-5 w-5" />
+          <MessageSquare className="h-5 w-5" aria-hidden="true" />
           Arrivage
         </Button>
         <Button 
@@ -104,7 +104,7 @@ const DashboardHeader = ({ fishermanId }: DashboardHeaderProps) => {
           className="gap-2"
           onClick={() => navigate('/pecheur/nouvel-arrivage-v2')}
         >
-          <Plus className="h-5 w-5" />
+          <Plus className="h-5 w-5" aria-hidden="true" />
           Arrivage premium
         </Button>
       </div>

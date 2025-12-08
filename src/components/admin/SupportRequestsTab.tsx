@@ -315,7 +315,7 @@ export function SupportRequestsTab() {
                       </TableCell>
                       <TableCell>
                         <Badge className={statusColors[request.status as keyof typeof statusColors]}>
-                          <StatusIcon className="mr-1 h-3 w-3" />
+                          <StatusIcon className="mr-1 h-3 w-3" aria-hidden="true" />
                           {statusLabels[request.status as keyof typeof statusLabels]}
                         </Badge>
                       </TableCell>
@@ -325,7 +325,7 @@ export function SupportRequestsTab() {
                           variant="outline"
                           onClick={() => handleOpenDialog(request)}
                         >
-                          <MessageSquare className="h-4 w-4 mr-2" />
+                          <MessageSquare className="h-4 w-4 mr-2" aria-hidden="true" />
                           Gerer
                         </Button>
                       </TableCell>
@@ -404,7 +404,7 @@ export function SupportRequestsTab() {
                 return (
                   <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
                     <p className="text-sm font-medium mb-3 flex items-center gap-2">
-                      <Link2 className="h-4 w-4" />
+                      <Link2 className="h-4 w-4" aria-hidden="true" />
                       Action recommandee
                     </p>
                     <Button
@@ -412,7 +412,7 @@ export function SupportRequestsTab() {
                       className="w-full"
                       variant="default"
                     >
-                      <Link2 className="mr-2 h-4 w-4" />
+                      <Link2 className="mr-2 h-4 w-4" aria-hidden="true" />
                       {requestType?.action_button_label}
                     </Button>
                     <p className="text-xs text-muted-foreground mt-2">
@@ -426,7 +426,7 @@ export function SupportRequestsTab() {
                 return (
                   <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
                     <p className="text-sm font-medium mb-3 flex items-center gap-2">
-                      <CreditCard className="h-4 w-4" />
+                      <CreditCard className="h-4 w-4" aria-hidden="true" />
                       Action recommandee
                     </p>
                     <Button
@@ -434,7 +434,7 @@ export function SupportRequestsTab() {
                       className="w-full"
                       variant="default"
                     >
-                      <CreditCard className="mr-2 h-4 w-4" />
+                      <CreditCard className="mr-2 h-4 w-4" aria-hidden="true" />
                       {requestType?.action_button_label}
                     </Button>
                     <p className="text-xs text-muted-foreground mt-2">

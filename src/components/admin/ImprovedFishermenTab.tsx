@@ -223,7 +223,7 @@ export function ImprovedFishermenTab() {
                             onClick={() => handleOpenDetails(fisherman)}
                             title="Voir les détails"
                           >
-                            <Info className="h-4 w-4" />
+                            <Info className="h-4 w-4" aria-hidden="true" />
                           </Button>
                           {fisherman.slug && (
                             <Button
@@ -233,7 +233,7 @@ export function ImprovedFishermenTab() {
                               title="Voir la vitrine"
                             >
                               <a href={`/pecheurs/${fisherman.slug}`} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="h-4 w-4" />
+                                <ExternalLink className="h-4 w-4" aria-hidden="true" />
                               </a>
                             </Button>
                           )}
@@ -243,7 +243,7 @@ export function ImprovedFishermenTab() {
                               onClick={() => handleVerify(fisherman.id)}
                               title="Vérifier"
                             >
-                              <CheckCircle className="h-4 w-4" />
+                              <CheckCircle className="h-4 w-4" aria-hidden="true" />
                             </Button>
                           )}
                           <Button
@@ -260,7 +260,7 @@ export function ImprovedFishermenTab() {
                             onClick={() => handleEnrichProfile(fisherman)}
                             title="Enrichir profil SEO"
                           >
-                            <Globe className="h-4 w-4" />
+                            <Globe className="h-4 w-4" aria-hidden="true" />
                           </Button>
                         </div>
                       </TableCell>

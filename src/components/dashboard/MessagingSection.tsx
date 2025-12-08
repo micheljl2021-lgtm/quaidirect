@@ -87,7 +87,7 @@ const MessagingSection = ({ fishermanId }: MessagingSectionProps) => {
     <Card className="mb-8">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Mail className="h-5 w-5" />
+          <Mail className="h-5 w-5" aria-hidden="true" />
           Envoyer un message groupé
         </CardTitle>
         <CardDescription>
@@ -159,7 +159,7 @@ const MessagingSection = ({ fishermanId }: MessagingSectionProps) => {
           disabled={sendMessageMutation.isPending || selectedContacts.length === 0}
           className="w-full"
         >
-          <Send className="h-4 w-4 mr-2" />
+          <Send className="h-4 w-4 mr-2" aria-hidden="true" />
           {sendMessageMutation.isPending ? 'Envoi en cours...' : `Envoyer à ${selectedContacts.length} contact(s)`}
         </Button>
       </CardContent>

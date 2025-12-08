@@ -27,7 +27,7 @@ const DashboardStats = ({ drops }: DashboardStatsProps) => {
           <CardHeader className="pb-3 p-4 md:p-6">
             <div className="flex items-center justify-between">
               <CardDescription className="text-xs md:text-sm">{stat.label}</CardDescription>
-              <stat.icon className={`h-4 w-4 ${stat.color} hidden sm:block`} />
+              <stat.icon className={`h-4 w-4 ${stat.color} hidden sm:block`} aria-hidden="true" />
             </div>
             <CardTitle className="text-2xl md:text-3xl">{stat.value}</CardTitle>
           </CardHeader>
