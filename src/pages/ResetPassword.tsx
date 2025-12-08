@@ -93,7 +93,7 @@ const ResetPassword = () => {
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-            <Anchor className="h-8 w-8 text-primary" />
+            <Anchor className="h-8 w-8 text-primary" aria-hidden="true" />
           </div>
           <h1 className="text-3xl font-bold text-foreground">QuaiDirect</h1>
           <p className="text-muted-foreground">Réinitialisation du mot de passe</p>
@@ -110,7 +110,7 @@ const ResetPassword = () => {
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div className="space-y-2">
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" aria-hidden="true" />
                   <PasswordInput
                     placeholder="Nouveau mot de passe"
                     value={password}
@@ -121,7 +121,7 @@ const ResetPassword = () => {
                   />
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" aria-hidden="true" />
                   <PasswordInput
                     placeholder="Confirmer le mot de passe"
                     value={confirmPassword}

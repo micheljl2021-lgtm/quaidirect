@@ -85,7 +85,7 @@ export function SmsQuotaManager() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
+            <MessageSquare className="h-5 w-5" aria-hidden="true" />
             Quota SMS
           </CardTitle>
         </CardHeader>
@@ -102,7 +102,7 @@ export function SmsQuotaManager() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
+            <MessageSquare className="h-5 w-5" aria-hidden="true" />
             Quota SMS mensuel
           </CardTitle>
           <CardDescription>
@@ -140,7 +140,7 @@ export function SmsQuotaManager() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5" />
+            <ShoppingCart className="h-5 w-5" aria-hidden="true" />
             Acheter des SMS supplémentaires
           </CardTitle>
           <CardDescription>

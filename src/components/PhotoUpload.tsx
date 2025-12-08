@@ -70,7 +70,7 @@ export const PhotoUpload = ({ label, value, onChange, bucket = 'receipts' }: Pho
             className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={handleRemove}
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
       ) : (
@@ -88,9 +88,9 @@ export const PhotoUpload = ({ label, value, onChange, bucket = 'receipts' }: Pho
             className="cursor-pointer flex flex-col items-center gap-2"
           >
             {uploading ? (
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" aria-hidden="true" />
             ) : (
-              <Upload className="h-8 w-8 text-muted-foreground" />
+              <Upload className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
             )}
             <span className="text-sm text-muted-foreground">
               {uploading ? 'Téléchargement...' : 'Cliquer pour télécharger'}

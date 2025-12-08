@@ -93,7 +93,7 @@ export const FavoriteSpeciesManager = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Fish className="h-5 w-5 text-primary" />
+          <Fish className="h-5 w-5 text-primary" aria-hidden="true" />
             <CardTitle>Mes espèces favorites</CardTitle>
           </div>
           <CardDescription>
@@ -108,7 +108,7 @@ export const FavoriteSpeciesManager = () => {
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
-          <Fish className="h-5 w-5 text-primary" />
+          <Fish className="h-5 w-5 text-primary" aria-hidden="true" />
           <CardTitle>Mes espèces favorites</CardTitle>
         </div>
         <CardDescription>

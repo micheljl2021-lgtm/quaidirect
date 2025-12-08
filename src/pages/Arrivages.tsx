@@ -322,7 +322,7 @@ const Arrivages = () => {
         <Card className="border-border bg-card">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <Filter className="h-5 w-5" />
+              <Filter className="h-5 w-5" aria-hidden="true" />
               Filtres
             </CardTitle>
             <CardDescription>
@@ -458,7 +458,7 @@ const Arrivages = () => {
         {!isLoading && !error && filteredDrops && filteredDrops.length === 0 && drops && drops.length > 0 && (
           <Card>
             <CardContent className="pt-6 text-center py-12">
-              <Fish className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+              <Fish className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" aria-hidden="true" />
               <p className="text-muted-foreground">
                 Aucun arrivage ne correspond à vos critères.
               </p>
@@ -472,7 +472,7 @@ const Arrivages = () => {
         {!isLoading && !error && drops && drops.length === 0 && (
           <Card>
             <CardContent className="pt-6 text-center py-12 space-y-4">
-              <Fish className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+              <Fish className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" aria-hidden="true" />
               <p className="text-lg font-medium text-foreground">
                 Aucun arrivage prévu pour le moment
               </p>

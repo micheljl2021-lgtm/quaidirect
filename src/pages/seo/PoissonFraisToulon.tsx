@@ -48,7 +48,7 @@ const PoissonFraisToulon = () => {
         <section className="container px-4 py-16 bg-gradient-ocean/5">
           <div className="max-w-4xl mx-auto text-center space-y-6">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
-              <MapPin className="h-4 w-4 text-primary" />
+              <MapPin className="h-4 w-4 text-primary" aria-hidden="true" />
               <span className="text-sm font-medium">Port de Toulon, Var (83)</span>
             </div>
             <h1 className="text-5xl font-bold text-foreground">
@@ -61,9 +61,9 @@ const PoissonFraisToulon = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/carte">
                 <Button size="lg" className="gap-2">
-                  <Fish className="h-5 w-5" />
+                  <Fish className="h-5 w-5" aria-hidden="true" />
                   Voir les arrivages à Toulon
-                  <ArrowRight className="h-5 w-5" />
+                  <ArrowRight className="h-5 w-5" aria-hidden="true" />
                 </Button>
               </Link>
             </div>
@@ -174,7 +174,7 @@ const PoissonFraisToulon = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/carte">
                 <Button size="lg" className="gap-2">
-                  <MapPin className="h-5 w-5" />
+                  <MapPin className="h-5 w-5" aria-hidden="true" />
                   Arrivages Toulon
                 </Button>
               </Link>
