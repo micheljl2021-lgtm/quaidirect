@@ -131,14 +131,14 @@ const PoissonFraisHyeres = () => {
               Rencontrez les professionnels de la pêche artisanale qui travaillent au départ du port d&apos;Hyères
             </p>
 
-            <Card>
+              <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="h-12 w-12 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 flex items-center justify-center">
-                    <Anchor className="h-6 w-6 text-white" />
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Anchor className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-foreground">Sébastien Z. - Ambassadeur Partenaire</h3>
+                    <h3 className="font-bold text-foreground">Sébastien Z. - Pêcheur professionnel</h3>
                     <p className="text-sm text-muted-foreground">Ligneur professionnel • Port d&apos;Hyères</p>
                   </div>
                 </div>
@@ -146,9 +146,9 @@ const PoissonFraisHyeres = () => {
                   Pêche à la ligne de bar, dorade et autres poissons nobles en Méditerranée. 
                   Sébastien est l&apos;un des pionniers de QuaiDirect et garantit une qualité exceptionnelle.
                 </p>
-                <Link to="/ambassadeur-partenaire">
+                <Link to="/carte">
                   <Button variant="outline" className="gap-2">
-                    Voir sa vitrine
+                    Voir les arrivages
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>

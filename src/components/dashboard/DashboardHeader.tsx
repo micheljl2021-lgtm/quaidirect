@@ -74,15 +74,6 @@ const DashboardHeader = ({ fishermanId }: DashboardHeaderProps) => {
             <Button 
               size="lg" 
               variant="outline"
-              className="gap-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 border-0"
-              onClick={() => navigate('/pecheur/ambassadeur')}
-            >
-              <Crown className="h-5 w-5" />
-              Ambassadeur
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline"
               className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 border-0"
               onClick={() => navigate('/pecheur/ia-marin')}
             >

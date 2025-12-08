@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Crown, User, MapPin, Menu, X, Shield, Award } from "lucide-react";
+import { Crown, User, MapPin, Menu, X, Shield } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,10 +44,6 @@ const Header = () => {
           </Link>
           <Link to="/recettes" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Recettes
-          </Link>
-          <Link to="/ambassadeur-partenaire" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-            <Award className="h-4 w-4" />
-            Ambassadeur
           </Link>
           <Link to="/panier" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Panier
@@ -164,14 +160,6 @@ const Header = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Recettes
-              </Link>
-              <Link 
-                to="/ambassadeur-partenaire" 
-                className="text-base font-medium text-foreground hover:text-primary transition-colors py-2 flex items-center gap-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <Award className="h-4 w-4" />
-                Ambassadeur
               </Link>
               <Link 
                 to="/panier" 

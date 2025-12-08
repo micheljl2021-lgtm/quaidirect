@@ -1,12 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Crown, MapPin, Bell, Shield, Users, Anchor, Award, ArrowRight } from "lucide-react";
+import { Crown, MapPin, Bell, Shield, Users, Anchor, ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ArrivageCard from "@/components/ArrivageCard";
 import PhotoCarousel from "@/components/PhotoCarousel";
-import AmbassadorBadge from "@/components/AmbassadorBadge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import freshFishImage from "@/assets/landing/fresh-fish.jpg";
@@ -15,13 +14,11 @@ import fishermanBoatImage from "@/assets/landing/fisherman-boat.jpg";
 import pecheDurableLogo from "@/assets/logo-peche-durable.png";
 
 import { useLandingStats } from "@/hooks/useLandingStats";
-import { useAmbassadorStats } from "@/hooks/useAmbassadorStats";
 import { useSalePoints, findSalePointById } from "@/hooks/useSalePoints";
 
 const Landing = () => {
   const navigate = useNavigate();
   const { fishermenCount, usersCount } = useLandingStats();
-  const { data: ambassadorStats } = useAmbassadorStats();
   
   // Fetch sale points via centralized hook (cached 10 min)
   const { data: salePoints } = useSalePoints();
@@ -120,22 +117,6 @@ const Landing = () => {
     staleTime: 10 * 60 * 1000, // 10 minutes for photos (rarely change)
   });
 
-  // Fetch ambassadors
-  const { data: ambassadors } = useQuery({
-    queryKey: ['ambassadors'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('public_fishermen')
-        .select('*')
-        .eq('is_ambassador', true)
-        .order('created_at', { ascending: true })
-        .limit(10);
-
-      if (error) throw error;
-      return data || [];
-    },
-    staleTime: 30 * 60 * 1000, // 30 minutes for ambassadors (rarely change)
-  });
   return (
     <div className="min-h-screen bg-gradient-sky">
       <Header />

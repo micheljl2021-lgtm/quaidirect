@@ -82,21 +82,6 @@ const ArrivageCard = ({
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
               onError={() => setImgError(true)}
             />
-            {/* Badges Ambassador */}
-            <div className="absolute top-3 left-3 flex flex-col gap-2">
-              {fisherman.isPartnerAmbassador && (
-                <Badge className="gap-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0 shadow-md">
-                  <Star className="h-3 w-3" />
-                  Ambassadeur Partenaire
-                </Badge>
-              )}
-              {fisherman.isAmbassador && !fisherman.isPartnerAmbassador && (
-                <Badge className="gap-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0 shadow-md">
-                  <Crown className="h-3 w-3" />
-                  Ambassadeur
-                </Badge>
-              )}
-            </div>
             {isPremium && (
               <div className="absolute top-3 right-3">
                 <Badge className="gap-1 bg-premium text-premium-foreground border-0 shadow-md">
@@ -254,18 +239,6 @@ const ArrivageCard = ({
             <p className="text-xs text-muted-foreground">
               {fisherman.name} • {fisherman.boat}
             </p>
-            {fisherman.isPartnerAmbassador && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-yellow-500 text-yellow-600">
-                <Star className="h-2.5 w-2.5 mr-0.5" />
-                Partenaire
-              </Badge>
-            )}
-            {fisherman.isAmbassador && !fisherman.isPartnerAmbassador && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-blue-500 text-blue-600">
-                <Crown className="h-2.5 w-2.5 mr-0.5" />
-                Ambassadeur
-              </Badge>
-            )}
           </div>
           <p className="text-[10px] text-muted-foreground/70 italic">
             * Prix indicatif, ajusté après pesée réglementaire au retrait
