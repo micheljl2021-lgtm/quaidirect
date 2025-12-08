@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Bot, Send, Loader2, MessageSquare, Waves, Wrench, TrendingUp, Shield } from 'lucide-react';
+import { Bot, Send, Loader2, MessageSquare, Waves, Wrench, TrendingUp, Shield, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { QUICK_PROMPTS, type AICategory } from '@/lib/marinAI';
 
@@ -159,11 +159,22 @@ export default function MarineAIRefactored() {
       <Header />
 
       <div className="container px-4 py-8 max-w-6xl mx-auto">
+        {/* Back Button */}
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate('/dashboard/pecheur')} 
+          className="mb-6 gap-2"
+          aria-label="Retour au dashboard pêcheur"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          Retour au dashboard
+        </Button>
+
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500">
-              <Bot className="h-6 w-6 text-white" />
+              <Bot className="h-6 w-6 text-white" aria-hidden="true" />
             </div>
             <h1 className="text-3xl font-bold text-foreground">IA du Marin</h1>
             <Badge className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white">
@@ -272,11 +283,12 @@ export default function MarineAIRefactored() {
             disabled={isLoading || !input.trim()}
             size="lg"
             className="gap-2"
+            aria-label="Envoyer le message"
           >
             {isLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
             ) : (
-              <Send className="h-5 w-5" />
+              <Send className="h-5 w-5" aria-hidden="true" />
             )}
           </Button>
         </div>
@@ -285,7 +297,7 @@ export default function MarineAIRefactored() {
         <Card className="mt-6 border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/20">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
-              <Shield className="h-5 w-5 text-purple-600 flex-shrink-0 mt-0.5" />
+              <Shield className="h-5 w-5 text-purple-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
               <div className="text-sm text-purple-800 dark:text-purple-200">
                 <p className="font-medium mb-1">Assistant IA sécurisé</p>
                 <p>

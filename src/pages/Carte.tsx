@@ -203,7 +203,7 @@ const Carte = () => {
         {/* Search bar - below map */}
         <div className="mb-8">
           <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <Input
               placeholder="Rechercher une espèce ou un lieu..."
               value={searchQuery}
@@ -233,7 +233,7 @@ const Carte = () => {
 
         {filteredArrivages.length === 0 && (
           <div className="text-center py-16 space-y-4">
-            <Fish className="h-16 w-16 mx-auto text-muted-foreground/50" />
+            <Fish className="h-16 w-16 mx-auto text-muted-foreground/50" aria-hidden="true" />
             <div>
               <p className="text-lg font-medium text-foreground mb-2">
                 {arrivages && arrivages.length > 0 
