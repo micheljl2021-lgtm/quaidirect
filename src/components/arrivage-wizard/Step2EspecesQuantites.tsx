@@ -56,6 +56,30 @@ export function Step2EspecesQuantites({ initialSpecies, onComplete, onBack }: St
         setFilteredSpecies(speciesData);
       }
 
+      // Fetch preferred species from fishermen_species table (priority over history)
+      const { data: fishermenSpecies } = await supabase
+        .from("fishermen_species")
+        .select("species_id, is_primary, species:species_id(id, name, indicative_price)")
+        .eq("fisherman_id", fishermanData.id)
+        .order("is_primary", { ascending: false });
+
+      if (fishermenSpecies && fishermenSpecies.length > 0) {
+        const preferred = fishermenSpecies
+          .filter((fs: any) => fs.species)
+          .map((fs: any) => ({
+            id: fs.species.id,
+            name: fs.species.name,
+            indicative_price: fs.species.indicative_price,
+            is_primary: fs.is_primary
+          }));
+        
+        if (preferred.length > 0) {
+          setSuggestedSpecies(preferred.slice(0, 8));
+          return; // Use preferred species instead of history
+        }
+      }
+
+      // Fallback: use history-based suggestions
       const { data: dropsData } = await supabase
         .from("drops")
         .select("id")
@@ -198,7 +222,10 @@ export function Step2EspecesQuantites({ initialSpecies, onComplete, onBack }: St
           <TemplatesRapides onTemplateSelect={handleTemplateSelect} />
 
           <div>
-            <label className="block text-sm font-medium mb-3">Espèces suggérées</label>
+            <div className="flex items-center gap-2 mb-3">
+              <Star className="h-4 w-4 text-amber-500" />
+              <label className="block text-sm font-medium">Mes espèces habituelles</label>
+            </div>
             <SpeciesChips species={suggestedSpecies} onSpeciesClick={handleSpeciesClick} />
           </div>
 
