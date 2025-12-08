@@ -50,14 +50,14 @@ const SMS_PACKS = {
     quantity: 500,
     price: "40€",
     pricePerSms: "0.08€",
-    priceId: "price_SMS_500_40",
+    priceId: "price_1Sc6emH0VhS1yyE08QedRHLt",
   },
   pack1000: {
     name: "SMS+ Pack",
     quantity: 1000,
     price: "70€",
     pricePerSms: "0.07€",
-    priceId: "price_SMS_1000_70",
+    priceId: "price_1Sc6f2H0VhS1yyE0Q35I8Lak",
     badge: "Meilleur rapport",
   },
 };
