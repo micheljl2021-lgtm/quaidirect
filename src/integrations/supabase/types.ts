@@ -890,29 +890,35 @@ export type Database = {
       }
       fishermen_sms_usage: {
         Row: {
+          bonus_sms_at_signup: number | null
           created_at: string | null
           fisherman_id: string
           free_sms_used: number | null
           id: string
           month_year: string
+          monthly_allocation: number | null
           paid_sms_balance: number | null
           updated_at: string | null
         }
         Insert: {
+          bonus_sms_at_signup?: number | null
           created_at?: string | null
           fisherman_id: string
           free_sms_used?: number | null
           id?: string
           month_year: string
+          monthly_allocation?: number | null
           paid_sms_balance?: number | null
           updated_at?: string | null
         }
         Update: {
+          bonus_sms_at_signup?: number | null
           created_at?: string | null
           fisherman_id?: string
           free_sms_used?: number | null
           id?: string
           month_year?: string
+          monthly_allocation?: number | null
           paid_sms_balance?: number | null
           updated_at?: string | null
         }
@@ -1081,6 +1087,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          email_enabled: boolean | null
+          email_frequency: string | null
+          id: string
+          push_enabled: boolean | null
+          quiet_hours_end: string | null
+          quiet_hours_start: string | null
+          sms_enabled: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_enabled?: boolean | null
+          email_frequency?: string | null
+          id?: string
+          push_enabled?: boolean | null
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          sms_enabled?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_enabled?: boolean | null
+          email_frequency?: string | null
+          id?: string
+          push_enabled?: boolean | null
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          sms_enabled?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -1254,10 +1299,14 @@ export type Database = {
           current_period_start: string | null
           id: string
           plan: string
+          sms_pool_contribution_cents: number | null
           started_at: string
           status: string
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
+          subscription_level:
+            | Database["public"]["Enums"]["client_subscription_level"]
+            | null
           trial_end: string | null
           updated_at: string
           user_id: string
@@ -1270,10 +1319,14 @@ export type Database = {
           current_period_start?: string | null
           id?: string
           plan: string
+          sms_pool_contribution_cents?: number | null
           started_at?: string
           status: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          subscription_level?:
+            | Database["public"]["Enums"]["client_subscription_level"]
+            | null
           trial_end?: string | null
           updated_at?: string
           user_id: string
@@ -1286,10 +1339,14 @@ export type Database = {
           current_period_start?: string | null
           id?: string
           plan?: string
+          sms_pool_contribution_cents?: number | null
           started_at?: string
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          subscription_level?:
+            | Database["public"]["Enums"]["client_subscription_level"]
+            | null
           trial_end?: string | null
           updated_at?: string
           user_id?: string
@@ -1862,6 +1919,109 @@ export type Database = {
           },
         ]
       }
+      sms_pool: {
+        Row: {
+          balance_cents: number
+          created_at: string
+          fisherman_id: string
+          id: string
+          last_credited_at: string | null
+          last_used_at: string | null
+          total_credited_cents: number
+          total_used_cents: number
+          updated_at: string
+        }
+        Insert: {
+          balance_cents?: number
+          created_at?: string
+          fisherman_id: string
+          id?: string
+          last_credited_at?: string | null
+          last_used_at?: string | null
+          total_credited_cents?: number
+          total_used_cents?: number
+          updated_at?: string
+        }
+        Update: {
+          balance_cents?: number
+          created_at?: string
+          fisherman_id?: string
+          id?: string
+          last_credited_at?: string | null
+          last_used_at?: string | null
+          total_credited_cents?: number
+          total_used_cents?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_pool_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: true
+            referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_pool_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: true
+            referencedRelation: "public_fishermen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_pool_contributions: {
+        Row: {
+          amount_cents: number
+          contributed_at: string
+          contribution_month: string
+          contributor_user_id: string
+          fisherman_id: string
+          id: string
+          payment_id: string
+        }
+        Insert: {
+          amount_cents: number
+          contributed_at?: string
+          contribution_month: string
+          contributor_user_id: string
+          fisherman_id: string
+          id?: string
+          payment_id: string
+        }
+        Update: {
+          amount_cents?: number
+          contributed_at?: string
+          contribution_month?: string
+          contributor_user_id?: string
+          fisherman_id?: string
+          id?: string
+          payment_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_pool_contributions_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_pool_contributions_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "public_fishermen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_pool_contributions_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       species: {
         Row: {
           created_at: string
@@ -2311,6 +2471,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user" | "premium" | "fisherman"
+      client_subscription_level: "follower" | "premium" | "premium_plus"
       drop_status: "scheduled" | "landed" | "cancelled" | "completed"
       fishing_area: "mediterranee" | "atlantique" | "manche" | "all"
       fishing_method:
@@ -2464,6 +2625,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user", "premium", "fisherman"],
+      client_subscription_level: ["follower", "premium", "premium_plus"],
       drop_status: ["scheduled", "landed", "cancelled", "completed"],
       fishing_area: ["mediterranee", "atlantique", "manche", "all"],
       fishing_method: [
