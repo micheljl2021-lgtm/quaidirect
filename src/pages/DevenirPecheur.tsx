@@ -27,7 +27,7 @@ const DevenirPecheur = () => {
       <section className="container px-4 py-16 bg-gradient-ocean/5">
         <div className="max-w-4xl mx-auto text-center space-y-6">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
-            <Fish className="h-4 w-4 text-primary" />
+            <Fish className="h-4 w-4 text-primary" aria-hidden="true" />
             <span className="text-sm font-medium">Rejoignez 50+ marins-pêcheurs</span>
           </div>
           <h1 className="text-5xl font-bold text-foreground">
@@ -40,14 +40,14 @@ const DevenirPecheur = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
             <Link to="/pecheur/payment">
               <Button size="lg" className="gap-2">
-                <Fish className="h-5 w-5" />
+                <Fish className="h-5 w-5" aria-hidden="true" />
                 S&apos;inscrire maintenant
-                <ArrowRight className="h-5 w-5" />
+                <ArrowRight className="h-5 w-5" aria-hidden="true" />
               </Button>
             </Link>
             <Link to="/ambassadeur-partenaire">
               <Button size="lg" variant="outline" className="gap-2">
-                <Star className="h-5 w-5" />
+                <Star className="h-5 w-5" aria-hidden="true" />
                 Voir nos ambassadeurs
               </Button>
             </Link>
@@ -86,23 +86,23 @@ const DevenirPecheur = () => {
 
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
                     <span className="text-muted-foreground">Vitrine digitale personnalisée</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
                     <span className="text-muted-foreground">Création arrivages illimitée (2 min)</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
                     <span className="text-muted-foreground">Emails illimités à vos clients</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
                     <span className="text-muted-foreground">Partage WhatsApp automatique</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
                     <span className="text-muted-foreground">IA pour textes et descriptions</span>
                   </li>
                 </ul>
@@ -131,23 +131,23 @@ const DevenirPecheur = () => {
 
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
                     <span className="text-foreground font-medium">Tout le plan Basic +</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
                     <span className="text-muted-foreground">IA avancée pour prix et météo</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
                     <span className="text-muted-foreground">Statistiques et analyses détaillées</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
                     <span className="text-muted-foreground">Multi-points de vente</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
                     <span className="text-muted-foreground">Support prioritaire</span>
                   </li>
                 </ul>
@@ -180,7 +180,7 @@ const DevenirPecheur = () => {
             <Card>
               <CardContent className="pt-6 space-y-3">
                 <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Euro className="h-5 w-5 text-primary" />
+                  <Euro className="h-5 w-5 text-primary" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">Meilleure rentabilité</h3>
                 <p className="text-muted-foreground">
@@ -193,7 +193,7 @@ const DevenirPecheur = () => {
             <Card>
               <CardContent className="pt-6 space-y-3">
                 <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Clock className="h-5 w-5 text-primary" />
+                  <Clock className="h-5 w-5 text-primary" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">Gain de temps</h3>
                 <p className="text-muted-foreground">
@@ -206,7 +206,7 @@ const DevenirPecheur = () => {
             <Card>
               <CardContent className="pt-6 space-y-3">
                 <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Users className="h-5 w-5 text-primary" />
+                  <Users className="h-5 w-5 text-primary" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">Clientèle fidèle</h3>
                 <p className="text-muted-foreground">
@@ -219,7 +219,7 @@ const DevenirPecheur = () => {
             <Card>
               <CardContent className="pt-6 space-y-3">
                 <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Smartphone className="h-5 w-5 text-primary" />
+                  <Smartphone className="h-5 w-5 text-primary" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">100% mobile</h3>
                 <p className="text-muted-foreground">
@@ -232,7 +232,7 @@ const DevenirPecheur = () => {
             <Card>
               <CardContent className="pt-6 space-y-3">
                 <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <MessageSquare className="h-5 w-5 text-primary" />
+                  <MessageSquare className="h-5 w-5 text-primary" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">Communication simplifiée</h3>
                 <p className="text-muted-foreground">
@@ -245,7 +245,7 @@ const DevenirPecheur = () => {
             <Card>
               <CardContent className="pt-6 space-y-3">
                 <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <TrendingUp className="h-5 w-5 text-primary" />
+                  <TrendingUp className="h-5 w-5 text-primary" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">Visibilité accrue</h3>
                 <p className="text-muted-foreground">
@@ -272,7 +272,7 @@ const DevenirPecheur = () => {
               <CardContent className="pt-6 space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Fish className="h-6 w-6 text-primary" />
+                    <Fish className="h-6 w-6 text-primary" aria-hidden="true" />
                   </div>
                   <div>
                     <h3 className="font-bold text-foreground">Sébastien Z.</h3>
@@ -290,7 +290,7 @@ const DevenirPecheur = () => {
               <CardContent className="pt-6 space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Fish className="h-6 w-6 text-primary" />
+                    <Fish className="h-6 w-6 text-primary" aria-hidden="true" />
                   </div>
                   <div>
                     <h3 className="font-bold text-foreground">Sébastien P.</h3>
@@ -317,10 +317,10 @@ const DevenirPecheur = () => {
             Rejoignez les marins-pêcheurs qui ont choisi l&apos;autonomie et la rentabilité.
           </p>
           <Link to="/pecheur/payment">
-            <Button size="lg" className="gap-2">
-              <Fish className="h-5 w-5" />
-              S&apos;inscrire maintenant
-              <ArrowRight className="h-5 w-5" />
+              <Button size="lg" className="gap-2">
+                <Fish className="h-5 w-5" aria-hidden="true" />
+                S&apos;inscrire maintenant
+                <ArrowRight className="h-5 w-5" aria-hidden="true" />
             </Button>
           </Link>
           <p className="text-sm text-muted-foreground">

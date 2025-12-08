@@ -132,7 +132,7 @@ const Recettes = () => {
 
           <div className="flex flex-col sm:flex-row gap-4 max-w-4xl">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
               <Input
                 placeholder="Rechercher une recette ou un poisson..."
                 value={searchQuery}
@@ -198,7 +198,7 @@ const Recettes = () => {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <ChefHat className="h-16 w-16 text-white/50" />
+                    <ChefHat className="h-16 w-16 text-white/50" aria-hidden="true" />
                   )}
                 </div>
 
@@ -228,11 +228,11 @@ const Recettes = () => {
 
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
+                      <Clock className="h-4 w-4" aria-hidden="true" />
                       {recipe.preparation_time + recipe.cooking_time} min
                     </div>
                     <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4" />
+                      <Users className="h-4 w-4" aria-hidden="true" />
                       {recipe.servings} pers.
                     </div>
                   </div>

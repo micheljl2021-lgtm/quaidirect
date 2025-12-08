@@ -51,7 +51,7 @@ const CommentCaMarche = () => {
               </div>
               <CardContent className="pt-8 space-y-4">
                 <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                  <MapPin className="h-6 w-6 text-primary" />
+                  <MapPin className="h-6 w-6 text-primary" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">
                   Consultez les arrivages
@@ -70,7 +70,7 @@ const CommentCaMarche = () => {
               </div>
               <CardContent className="pt-8 space-y-4">
                 <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                  <ShoppingCart className="h-6 w-6 text-primary" />
+                  <ShoppingCart className="h-6 w-6 text-primary" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">
                   Commandez en ligne
@@ -89,7 +89,7 @@ const CommentCaMarche = () => {
               </div>
               <CardContent className="pt-8 space-y-4">
                 <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                  <CheckCircle2 className="h-6 w-6 text-primary" />
+                  <CheckCircle2 className="h-6 w-6 text-primary" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">
                   Récupérez au port
@@ -119,7 +119,7 @@ const CommentCaMarche = () => {
             <Card>
               <CardContent className="pt-6 space-y-4">
                 <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                  <Calendar className="h-6 w-6 text-primary" />
+                  <Calendar className="h-6 w-6 text-primary" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">
                   Créez votre arrivage
@@ -135,7 +135,7 @@ const CommentCaMarche = () => {
             <Card>
               <CardContent className="pt-6 space-y-4">
                 <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                  <Bell className="h-6 w-6 text-primary" />
+                  <Bell className="h-6 w-6 text-primary" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">
                   Vos clients sont alertés
@@ -151,7 +151,7 @@ const CommentCaMarche = () => {
             <Card>
               <CardContent className="pt-6 space-y-4">
                 <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                  <Users className="h-6 w-6 text-primary" />
+                  <Users className="h-6 w-6 text-primary" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">
                   Vendez au port
@@ -167,7 +167,7 @@ const CommentCaMarche = () => {
           <div className="mt-12 text-center">
             <Link to="/devenir-pecheur?plan=basic">
               <Button size="lg" className="gap-2">
-                <Fish className="h-5 w-5" />
+                <Fish className="h-5 w-5" aria-hidden="true" />
                 Devenir pêcheur partenaire
               </Button>
             </Link>
@@ -188,7 +188,7 @@ const CommentCaMarche = () => {
             <Card>
               <CardContent className="pt-6 space-y-3">
                 <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Shield className="h-5 w-5 text-primary" />
+                  <Shield className="h-5 w-5 text-primary" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">Traçabilité totale</h3>
                 <p className="text-muted-foreground">
@@ -201,7 +201,7 @@ const CommentCaMarche = () => {
             <Card>
               <CardContent className="pt-6 space-y-3">
                 <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Users className="h-5 w-5 text-primary" />
+                  <Users className="h-5 w-5 text-primary" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">Prix justes</h3>
                 <p className="text-muted-foreground">
@@ -214,7 +214,7 @@ const CommentCaMarche = () => {
             <Card>
               <CardContent className="pt-6 space-y-3">
                 <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Fish className="h-5 w-5 text-primary" />
+                  <Fish className="h-5 w-5 text-primary" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">Fraîcheur maximale</h3>
                 <p className="text-muted-foreground">
@@ -227,7 +227,7 @@ const CommentCaMarche = () => {
             <Card>
               <CardContent className="pt-6 space-y-3">
                 <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <MapPin className="h-5 w-5 text-primary" />
+                  <MapPin className="h-5 w-5 text-primary" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">Pêche locale</h3>
                 <p className="text-muted-foreground">
@@ -252,14 +252,14 @@ const CommentCaMarche = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/carte">
               <Button size="lg" className="gap-2">
-                <MapPin className="h-5 w-5" />
+                <MapPin className="h-5 w-5" aria-hidden="true" />
                 Voir la carte des ports
-                <ArrowRight className="h-5 w-5" />
+                <ArrowRight className="h-5 w-5" aria-hidden="true" />
               </Button>
             </Link>
             <Link to="/arrivages">
               <Button size="lg" variant="outline" className="gap-2">
-                <Fish className="h-5 w-5" />
+                <Fish className="h-5 w-5" aria-hidden="true" />
                 Consulter les arrivages
               </Button>
             </Link>

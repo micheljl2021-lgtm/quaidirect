@@ -6,7 +6,7 @@ import Header from '@/components/Header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Star, Anchor, MapPin, Fish, Award, Heart } from 'lucide-react';
+import { Star, Anchor, MapPin, Fish, Award, Heart, ArrowLeft } from 'lucide-react';
 
 const AmbassadorPartner = () => {
   const navigate = useNavigate();
@@ -99,11 +99,22 @@ const AmbassadorPartner = () => {
       <Header />
 
       <div className="container px-4 py-8 max-w-4xl mx-auto">
+        {/* Back Button */}
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate(-1)} 
+          className="mb-6 gap-2"
+          aria-label="Retour à la page précédente"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          Retour
+        </Button>
+
         {/* Hero Section */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-3 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500">
-              <Star className="h-8 w-8 text-white" />
+              <Star className="h-8 w-8 text-white" aria-hidden="true" />
             </div>
             <div>
               <h1 className="text-4xl font-bold text-foreground">Ambassadeur Partenaire</h1>
@@ -111,7 +122,7 @@ const AmbassadorPartner = () => {
             </div>
           </div>
           <Badge className="gap-2 text-base px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
-            <Star className="h-5 w-5" />
+            <Star className="h-5 w-5" aria-hidden="true" />
             Ambassadeur Partenaire Fondateur
           </Badge>
         </div>
@@ -123,7 +134,7 @@ const AmbassadorPartner = () => {
               <div className="flex items-start justify-between">
                 <div>
                   <CardTitle className="text-2xl flex items-center gap-2">
-                    <Anchor className="h-6 w-6 text-primary" />
+                    <Anchor className="h-6 w-6 text-primary" aria-hidden="true" />
                     {ambassador.boat_name}
                   </CardTitle>
                   {ambassador.company_name && (
@@ -147,7 +158,7 @@ const AmbassadorPartner = () => {
               {ambassador.fishermen_species && ambassador.fishermen_species.length > 0 && (
                 <div className="pt-4 border-t">
                   <h3 className="font-semibold mb-2 flex items-center gap-2">
-                    <Fish className="h-5 w-5 text-primary" />
+                    <Fish className="h-5 w-5 text-primary" aria-hidden="true" />
                     Espèces pêchées
                   </h3>
                   <div className="flex flex-wrap gap-2">
@@ -164,7 +175,7 @@ const AmbassadorPartner = () => {
               {ambassador.main_fishing_zone && (
                 <div className="pt-4 border-t">
                   <h3 className="font-semibold mb-2 flex items-center gap-2">
-                    <MapPin className="h-5 w-5 text-primary" />
+                    <MapPin className="h-5 w-5 text-primary" aria-hidden="true" />
                     Zone de pêche
                   </h3>
                   <p className="text-muted-foreground">{ambassador.main_fishing_zone}</p>
@@ -176,7 +187,7 @@ const AmbassadorPartner = () => {
                   onClick={() => navigate(`/pecheurs/${ambassador.slug}`)}
                   className="w-full gap-2"
                 >
-                  <Anchor className="h-4 w-4" />
+                  <Anchor className="h-4 w-4" aria-hidden="true" />
                   Voir la vitrine complète
                 </Button>
               </div>
@@ -194,7 +205,7 @@ const AmbassadorPartner = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Heart className="h-6 w-6 text-red-500" />
+              <Heart className="h-6 w-6 text-red-500" aria-hidden="true" />
               L'histoire d'un partenariat
             </CardTitle>
           </CardHeader>
@@ -211,7 +222,7 @@ const AmbassadorPartner = () => {
             
             <div className="mt-6 p-4 bg-muted rounded-lg">
               <h3 className="font-semibold mb-2 flex items-center gap-2">
-                <Award className="h-5 w-5 text-primary" />
+                <Award className="h-5 w-5 text-primary" aria-hidden="true" />
                 Avantages Ambassadeur Partenaire
               </h3>
               <ul className="list-disc list-inside space-y-1 text-sm">
