@@ -5,39 +5,60 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Store, Zap, Brain, ArrowLeft, Crown, Check } from 'lucide-react';
+import { Mail, MessageSquare, ArrowLeft, Crown, Check, Gift, Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Header from '@/components/Header';
 
 const PLANS = {
   basic: {
-    name: "Pêcheur Basic",
+    name: "Pêcheur",
     price: "150€",
     priceId: "price_1SZYAXH0VhS1yyE0FqJ0imbu",
     period: "par an",
     trial: "🎁 1 mois offert",
     features: [
       "Fiche pêcheur + points de vente",
-      "Emails illimités aux clients",
+      "📧 Emails illimités aux clients",
+      "📱 100 SMS/mois inclus pendant 1 an",
       "Partage WhatsApp depuis votre téléphone",
       "IA : textes, descriptions, messages types",
       "Base clients simple",
     ],
   },
   pro: {
-    name: "Pêcheur Pro",
+    name: "Pêcheur PRO",
     price: "199€",
     priceId: "price_1SYgOuH0VhS1yyE0XINPVQdm",
     period: "par an",
     badge: "Recommandé",
     trial: "🎁 1 mois offert",
     features: [
-      "Tout le plan Basic inclus",
+      "Tout le plan Pêcheur inclus",
+      "🎁 500 SMS offerts à l'inscription",
+      "📱 100 SMS/mois inclus pendant 1 an",
       "IA avancée : prix, mise en avant, météo/marée",
       "Multi-points de vente",
       "Statistiques : CA estimé, clients touchés",
       "Priorité support",
     ],
+  },
+};
+
+const SMS_PACKS = {
+  pack500: {
+    name: "SMS Pack",
+    quantity: 500,
+    price: "40€",
+    pricePerSms: "0.08€",
+    priceId: "price_SMS_500_40",
+  },
+  pack1000: {
+    name: "SMS+ Pack",
+    quantity: 1000,
+    price: "70€",
+    pricePerSms: "0.07€",
+    priceId: "price_SMS_1000_70",
+    badge: "Meilleur rapport",
   },
 };
 
@@ -134,7 +155,7 @@ const PecheurPayment = () => {
           <>
             {/* Pricing Cards */}
             <div className="grid md:grid-cols-2 gap-6 mb-8 max-w-5xl mx-auto">
-              {/* Basic Plan */}
+              {/* Basic Plan - Pêcheur */}
               <Card className="relative hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
@@ -179,7 +200,7 @@ const PecheurPayment = () => {
                 </CardContent>
               </Card>
 
-              {/* Pro Plan */}
+              {/* Pro Plan - Pêcheur PRO */}
               <Card className="relative border-primary shadow-lg hover:shadow-xl transition-shadow">
                 {PLANS.pro.badge && (
                   <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -230,11 +251,80 @@ const PecheurPayment = () => {
               </Card>
             </div>
 
+            {/* SMS Info Card */}
+            <Card className="mb-8 max-w-5xl mx-auto bg-blue-50 border-blue-200">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-3">
+                  <MessageSquare className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-blue-900 mb-2">
+                      📱 SMS inclus dans tous les plans
+                    </p>
+                    <p className="text-sm text-blue-800 mb-2">
+                      <strong>Pêcheur :</strong> 100 SMS/mois pendant 1 an (1 200 SMS au total)
+                    </p>
+                    <p className="text-sm text-blue-800 mb-2">
+                      <strong>Pêcheur PRO :</strong> 500 SMS bonus + 100 SMS/mois pendant 1 an (1 700 SMS au total)
+                    </p>
+                    <p className="text-sm text-blue-800 font-medium">
+                      📧 Emails illimités + WhatsApp inclus dans tous les plans
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* SMS Packs Options */}
+            <div className="max-w-5xl mx-auto mb-8">
+              <h3 className="text-xl font-semibold text-center mb-4">📦 Packs SMS supplémentaires</h3>
+              <p className="text-center text-muted-foreground mb-6">
+                Besoin de plus de SMS ? Achetez des packs additionnels après inscription
+              </p>
+              <div className="grid md:grid-cols-2 gap-4">
+                {/* Pack 500 SMS */}
+                <Card className="hover:shadow-md transition-shadow">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <p className="font-semibold text-lg">{SMS_PACKS.pack500.name}</p>
+                        <p className="text-sm text-muted-foreground">{SMS_PACKS.pack500.quantity} SMS</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold">{SMS_PACKS.pack500.price}</p>
+                        <p className="text-xs text-muted-foreground">{SMS_PACKS.pack500.pricePerSms}/SMS</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Pack 1000 SMS */}
+                <Card className="hover:shadow-md transition-shadow border-primary/50 relative">
+                  {SMS_PACKS.pack1000.badge && (
+                    <Badge className="absolute -top-2 right-4 bg-primary text-xs">
+                      {SMS_PACKS.pack1000.badge}
+                    </Badge>
+                  )}
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <p className="font-semibold text-lg">{SMS_PACKS.pack1000.name}</p>
+                        <p className="text-sm text-muted-foreground">{SMS_PACKS.pack1000.quantity} SMS</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold">{SMS_PACKS.pack1000.price}</p>
+                        <p className="text-xs text-muted-foreground">{SMS_PACKS.pack1000.pricePerSms}/SMS</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
             {/* Trial Info Card */}
             <Card className="mb-8 max-w-5xl mx-auto bg-green-50 border-green-200">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                  <Gift className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="font-medium text-green-900 mb-2">
                       🎁 Profitez de 1 mois d'essai gratuit
@@ -251,26 +341,6 @@ const PecheurPayment = () => {
               </CardContent>
             </Card>
 
-            {/* SMS Options Info */}
-            <Card className="mb-8 max-w-5xl mx-auto bg-blue-50 border-blue-200">
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-3">
-                  <Mail className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium text-blue-900 mb-2">
-                      📧 Emails illimités + WhatsApp inclus
-                    </p>
-                    <p className="text-sm text-blue-800 mb-2">
-                      Prévenez instantanément tous vos clients par email et partagez vos arrivages sur WhatsApp depuis votre téléphone.
-                    </p>
-                    <p className="text-sm text-blue-800 font-medium">
-                      💬 Options SMS disponibles après inscription (packs à partir de 49€ pour 500 SMS)
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Value Proposition */}
             <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-lg p-6 mb-8 max-w-5xl mx-auto">
               <p className="font-semibold text-primary mb-2">
@@ -278,7 +348,7 @@ const PecheurPayment = () => {
               </p>
               <ul className="text-sm space-y-1">
                 <li>✓ Plus de commission intermédiaire (vendez 100% de votre marge)</li>
-                <li>✓ Plus de temps perdu en coups de fil (emails/WhatsApp automatiques)</li>
+                <li>✓ Plus de temps perdu en coups de fil (emails/SMS automatiques)</li>
                 <li>✓ Plus de papier à gérer (tout est digitalisé)</li>
                 <li>✓ IA pour optimiser vos ventes et votre communication</li>
               </ul>

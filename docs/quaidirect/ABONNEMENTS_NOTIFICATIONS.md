@@ -1,32 +1,36 @@
 # Modèle d'Abonnements & Notifications - QuaiDirect
 
 > **Date**: 2025-12-08  
-> **Statut**: Spécification complète pour implémentation
+> **Statut**: ✅ Implémenté
 
 ---
 
 ## 1. Vue d'Ensemble
 
 QuaiDirect propose deux écosystèmes d'abonnements distincts :
-- **Pêcheurs** : Accès aux outils de vente directe
+- **Pêcheurs** : Accès aux outils de vente directe + SMS inclus
 - **Clients** : Accès prioritaire aux arrivages et notifications
 
 ---
 
-## 2. Abonnements Pêcheurs (Implémenté ✅)
+## 2. Abonnements Pêcheurs ✅
 
 ### 2.1 Plans Disponibles
 
 | Plan | Prix | Période | Stripe Price ID |
 |------|------|---------|-----------------|
-| Basic | 150€ | Annuel | `price_BASIC_150_YEAR` |
-| Pro | 199€ | Annuel | `price_PRO_199_YEAR` |
+| **Pêcheur** | 150€ | Annuel | `price_1SZYAXH0VhS1yyE0FqJ0imbu` |
+| **Pêcheur PRO** | 199€ | Annuel | `price_1SYgOuH0VhS1yyE0XINPVQdm` |
 
 ### 2.2 Fonctionnalités par Plan
 
-| Fonctionnalité | Basic | Pro |
-|----------------|-------|-----|
+| Fonctionnalité | Pêcheur | Pêcheur PRO |
+|----------------|---------|-------------|
+| Fiche pêcheur + points de vente | ✅ | ✅ |
 | Emails illimités | ✅ | ✅ |
+| **SMS/mois (pendant 1 an)** | 100 | 100 |
+| **SMS bonus à l'inscription** | ❌ | 500 |
+| **Total SMS 1ère année** | 1 200 | 1 700 |
 | Partage WhatsApp | ✅ | ✅ |
 | IA textes/descriptions | ✅ | ✅ |
 | Multi-points de vente | 1 | 2 |
@@ -35,25 +39,28 @@ QuaiDirect propose deux écosystèmes d'abonnements distincts :
 | Statistiques CA | ❌ | ✅ |
 | Support prioritaire | ❌ | ✅ |
 
-### 2.3 Packs SMS (Optionnels)
+### 2.3 Packs SMS Optionnels
+
+Achetables après inscription pour recharger le solde SMS :
 
 | Pack | Quantité | Prix | Prix/SMS |
 |------|----------|------|----------|
-| Starter | 500 SMS | 49€ | 0.098€ |
-| Business | 2000 SMS | 149€ | 0.0745€ |
-| Enterprise | 5000 SMS | 299€ | 0.0598€ |
+| **SMS Pack** | 500 SMS | 40€ | 0.08€ |
+| **SMS+ Pack** | 1000 SMS | 70€ | 0.07€ |
+
+**Note** : Ces packs sont des achats one-time, pas des abonnements.
 
 ---
 
-## 3. Abonnements Clients (À Implémenter)
+## 3. Abonnements Clients ✅
 
-### 3.1 Niveaux Proposés
+### 3.1 Niveaux Disponibles
 
-| Niveau | Prix | Période | Description |
-|--------|------|---------|-------------|
-| **Follower** | Gratuit | - | Compte de base, suit des pêcheurs |
-| **Premium** | 25€ | Annuel | Notifications prioritaires |
-| **Premium+** | 40€ | Annuel | Notifications + SMS + Cagnotte |
+| Niveau | Prix Mensuel | Prix Annuel | Description |
+|--------|--------------|-------------|-------------|
+| **Follower** | Gratuit | Gratuit | Compte de base |
+| **Premium** | 2,50€ | 25€ | Notifications prioritaires |
+| **Premium+** | 4€ | 40€ | Notifications + SMS + Cagnotte |
 
 ### 3.2 Fonctionnalités par Niveau
 
@@ -62,12 +69,12 @@ QuaiDirect propose deux écosystèmes d'abonnements distincts :
 | Voir arrivages publics | ✅ | ✅ | ✅ |
 | Suivre pêcheurs favoris | ✅ | ✅ | ✅ |
 | Suivre ports favoris | ✅ | ✅ | ✅ |
-| Notifications Push | ❌ | ✅ | ✅ |
-| Notifications Email | ❌ | ✅ | ✅ |
-| Notifications SMS | ❌ | ❌ | ✅ |
-| Accès anticipé (30min) | ❌ | ✅ | ✅ |
-| Badge Premium visible | ❌ | ✅ | ✅ |
-| Contribution cagnotte SMS | ❌ | ❌ | ✅ |
+| 🔔 Notifications Push | ❌ | ✅ | ✅ |
+| 📧 Notifications Email | ❌ | ✅ | ✅ |
+| 📱 Notifications SMS | ❌ | ❌ | ✅ |
+| ⚡ Accès anticipé (30min) | ❌ | ✅ | ✅ |
+| ✨ Badge Premium visible | ❌ | ✅ | ✅ |
+| 💰 Contribution cagnotte SMS | ❌ | ❌ | ✅ |
 
 ### 3.3 Canaux de Notification
 
@@ -95,7 +102,7 @@ QuaiDirect propose deux écosystèmes d'abonnements distincts :
 
 ### 4.1 Concept
 
-Les abonnés Premium+ contribuent à une cagnotte qui finance les SMS des pêcheurs.
+Les abonnés **Premium+** contribuent à une cagnotte qui finance les SMS des pêcheurs qu'ils suivent.
 
 ### 4.2 Flux Financier
 
@@ -135,242 +142,163 @@ Les abonnés Premium+ contribuent à une cagnotte qui finance les SMS des pêche
 
 ---
 
-## 5. Schéma Base de Données
+## 5. Schéma Base de Données ✅
 
-### 5.1 Nouveau Type Enum
+### 5.1 Type Enum
 
 ```sql
 CREATE TYPE client_subscription_level AS ENUM (
-  'follower',    -- Gratuit
-  'premium',     -- 25€/an
-  'premium_plus' -- 40€/an
+  'follower',     -- Gratuit
+  'premium',      -- 25€/an ou 2.50€/mois
+  'premium_plus'  -- 40€/an ou 4€/mois
 );
 ```
 
-### 5.2 Modification Table `payments`
+### 5.2 Colonnes Ajoutées à `payments`
 
-```sql
-ALTER TABLE payments 
-ADD COLUMN subscription_level client_subscription_level DEFAULT 'follower';
-
-ALTER TABLE payments 
-ADD COLUMN sms_pool_contribution_cents INTEGER DEFAULT 0;
-
-COMMENT ON COLUMN payments.subscription_level IS 
-  'Niveau d''abonnement client (follower/premium/premium_plus)';
-
-COMMENT ON COLUMN payments.sms_pool_contribution_cents IS 
-  'Montant en centimes versé à la cagnotte SMS (Premium+ uniquement)';
-```
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `subscription_level` | `client_subscription_level` | Niveau client (default: follower) |
+| `sms_pool_contribution_cents` | `INTEGER` | Contribution cagnotte en centimes |
 
 ### 5.3 Table `sms_pool` (Cagnotte)
 
 ```sql
 CREATE TABLE sms_pool (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  fisherman_id UUID NOT NULL REFERENCES fishermen(id) ON DELETE CASCADE,
+  id UUID PRIMARY KEY,
+  fisherman_id UUID NOT NULL REFERENCES fishermen(id),
   balance_cents INTEGER NOT NULL DEFAULT 0,
   total_credited_cents INTEGER NOT NULL DEFAULT 0,
   total_used_cents INTEGER NOT NULL DEFAULT 0,
   last_credited_at TIMESTAMPTZ,
   last_used_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  
-  CONSTRAINT positive_balance CHECK (balance_cents >= 0)
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
-
--- Index pour recherche rapide
-CREATE INDEX idx_sms_pool_fisherman ON sms_pool(fisherman_id);
-
--- RLS
-ALTER TABLE sms_pool ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Fishermen can view their own pool"
-  ON sms_pool FOR SELECT
-  USING (fisherman_id IN (
-    SELECT id FROM fishermen WHERE user_id = auth.uid()
-  ));
-
-CREATE POLICY "Admins can view all pools"
-  ON sms_pool FOR SELECT
-  USING (has_role(auth.uid(), 'admin'));
-
-CREATE POLICY "Service role can manage pools"
-  ON sms_pool FOR ALL
-  USING (true);
 ```
 
 ### 5.4 Table `sms_pool_contributions`
 
 ```sql
 CREATE TABLE sms_pool_contributions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  payment_id UUID NOT NULL REFERENCES payments(id) ON DELETE CASCADE,
-  fisherman_id UUID NOT NULL REFERENCES fishermen(id) ON DELETE CASCADE,
+  id UUID PRIMARY KEY,
+  payment_id UUID REFERENCES payments(id),
+  fisherman_id UUID REFERENCES fishermen(id),
   contributor_user_id UUID NOT NULL,
   amount_cents INTEGER NOT NULL,
   contribution_month DATE NOT NULL,
-  contributed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  
-  CONSTRAINT positive_amount CHECK (amount_cents > 0)
+  contributed_at TIMESTAMPTZ DEFAULT now()
 );
-
--- Index pour reporting
-CREATE INDEX idx_contributions_fisherman ON sms_pool_contributions(fisherman_id);
-CREATE INDEX idx_contributions_month ON sms_pool_contributions(contribution_month);
-CREATE INDEX idx_contributions_contributor ON sms_pool_contributions(contributor_user_id);
-
--- RLS
-ALTER TABLE sms_pool_contributions ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Fishermen can view their contributions"
-  ON sms_pool_contributions FOR SELECT
-  USING (fisherman_id IN (
-    SELECT id FROM fishermen WHERE user_id = auth.uid()
-  ));
-
-CREATE POLICY "Contributors can view their own"
-  ON sms_pool_contributions FOR SELECT
-  USING (contributor_user_id = auth.uid());
-
-CREATE POLICY "Admins can view all"
-  ON sms_pool_contributions FOR SELECT
-  USING (has_role(auth.uid(), 'admin'));
 ```
 
 ### 5.5 Table `notification_preferences`
 
 ```sql
 CREATE TABLE notification_preferences (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id UUID PRIMARY KEY,
   user_id UUID NOT NULL UNIQUE,
   push_enabled BOOLEAN DEFAULT true,
   email_enabled BOOLEAN DEFAULT true,
   sms_enabled BOOLEAN DEFAULT false,
-  email_frequency TEXT DEFAULT 'instant', -- 'instant', 'daily', 'weekly'
+  email_frequency TEXT DEFAULT 'instant', -- instant/daily/weekly
   quiet_hours_start TIME,
   quiet_hours_end TIME,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
-
--- RLS
-ALTER TABLE notification_preferences ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can manage their own preferences"
-  ON notification_preferences FOR ALL
-  USING (user_id = auth.uid());
 ```
+
+### 5.6 Colonnes Ajoutées à `fishermen_sms_usage`
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `monthly_allocation` | `INTEGER` | SMS alloués/mois (default: 100) |
+| `bonus_sms_at_signup` | `INTEGER` | SMS bonus inscription (PRO: 500) |
 
 ---
 
-## 6. Edge Functions Requises
+## 6. Stripe Products
 
-### 6.1 `distribute-sms-pool` (CRON mensuel)
+### 6.1 Produits Pêcheurs
+
+| Produit | Type | Prix | Stripe Price ID |
+|---------|------|------|-----------------|
+| Pêcheur | Subscription | 150€/an | `price_1SZYAXH0VhS1yyE0FqJ0imbu` |
+| Pêcheur PRO | Subscription | 199€/an | `price_1SYgOuH0VhS1yyE0XINPVQdm` |
+| SMS Pack 500 | One-time | 40€ | `price_SMS_500_40` (à créer) |
+| SMS+ Pack 1000 | One-time | 70€ | `price_SMS_1000_70` (à créer) |
+
+### 6.2 Produits Clients
+
+| Produit | Type | Prix | Stripe Price ID |
+|---------|------|------|-----------------|
+| Premium Mensuel | Subscription | 2.50€/mois | `price_1SZ489H0VhS1yyE0Nc9KZhy1` |
+| Premium Annuel | Subscription | 25€/an | `price_1SZ48UH0VhS1yyE0iYmXen3H` |
+| Premium+ Mensuel | Subscription | 4€/mois | `price_1SZ48yH0VhS1yyE0bijfw3y7` |
+| Premium+ Annuel | Subscription | 40€/an | `price_1SZ49DH0VhS1yyE06HJyLC65` |
+
+---
+
+## 7. Edge Functions Requises
+
+### 7.1 `distribute-sms-pool` (CRON mensuel)
 
 ```typescript
 // Exécuté le 1er de chaque mois
 // 1. Récupère tous les paiements Premium+ actifs
-// 2. Pour chaque paiement, calcule la contribution (15€/12 = 1.25€)
-// 3. Répartit entre les pêcheurs suivis par le client
-// 4. Crédite les cagnottes et enregistre les contributions
+// 2. Calcule la contribution (15€/12 = 1.25€)
+// 3. Répartit entre les pêcheurs suivis
+// 4. Crédite les cagnottes
 ```
 
-### 6.2 `check-client-subscription`
+### 7.2 `check-client-subscription`
 
 ```typescript
 // Vérifie le niveau d'abonnement client
 // Retourne : { level: 'follower' | 'premium' | 'premium_plus', ... }
 ```
 
-### 6.3 `send-notification` (Modification)
+### 7.3 Modification `send-drop-notification`
 
 ```typescript
 // Logique de routage par niveau :
-// 1. Vérifier le niveau d'abonnement du destinataire
+// 1. Vérifier le niveau du destinataire
 // 2. Appliquer les canaux autorisés
-// 3. Envoyer via les canaux appropriés
+// 3. Envoyer via Push/Email/SMS selon niveau
 ```
 
 ---
 
-## 7. Intégration Stripe
+## 8. Webhook Stripe
 
-### 7.1 Produits à Créer
+Événements à gérer dans `stripe-webhook` :
 
-| Produit | Type | Prix | Stripe Product ID |
-|---------|------|------|-------------------|
-| Client Premium Annuel | Subscription | 25€/an | `prod_CLIENT_PREMIUM` |
-| Client Premium+ Annuel | Subscription | 40€/an | `prod_CLIENT_PREMIUM_PLUS` |
-| Client Premium Mensuel | Subscription | 2.50€/mois | `prod_CLIENT_PREMIUM_MONTHLY` |
-| Client Premium+ Mensuel | Subscription | 4€/mois | `prod_CLIENT_PREMIUM_PLUS_MONTHLY` |
-
-### 7.2 Webhook Events
-
-Ajouter au `stripe-webhook` :
-- `customer.subscription.created` → Mettre à jour `subscription_level`
-- `customer.subscription.updated` → Mettre à jour `subscription_level`
-- `customer.subscription.deleted` → Rétrograder vers `follower`
+| Événement | Action |
+|-----------|--------|
+| `customer.subscription.created` | Mettre à jour `subscription_level` |
+| `customer.subscription.updated` | Mettre à jour `subscription_level` |
+| `customer.subscription.deleted` | Rétrograder vers `follower` |
+| `invoice.paid` (fisherman) | Créditer SMS mensuels |
 
 ---
 
-## 8. UI/UX Recommandations
+## 9. Checklist Implémentation
 
-### 8.1 Page Abonnement Client
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│              SOUTENEZ VOS PÊCHEURS PRÉFÉRÉS                 │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
-│  │  FOLLOWER   │  │   PREMIUM   │  │  PREMIUM+   │         │
-│  │   Gratuit   │  │   25€/an    │  │   40€/an    │         │
-│  │             │  │             │  │             │         │
-│  │ ✓ Arrivages │  │ ✓ Tout      │  │ ✓ Tout      │         │
-│  │ ✓ Favoris   │  │   Follower  │  │   Premium   │         │
-│  │             │  │ ✓ Push      │  │ ✓ SMS       │         │
-│  │             │  │ ✓ Email     │  │ ✓ Cagnotte  │         │
-│  │             │  │ ✓ Accès     │  │             │         │
-│  │             │  │   anticipé  │  │             │         │
-│  │             │  │             │  │             │         │
-│  │  [Actuel]   │  │ [Choisir]   │  │ [Choisir]   │         │
-│  └─────────────┘  └─────────────┘  └─────────────┘         │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 8.2 Badge Premium
-
-```tsx
-// Composant à créer : ClientPremiumBadge.tsx
-<Badge className="bg-gradient-to-r from-amber-500 to-orange-500">
-  {level === 'premium_plus' ? '⭐ Premium+' : '✨ Premium'}
-</Badge>
-```
-
----
-
-## 9. Migration Existants
-
-### 9.1 Clients Premium Actuels
-
-Les clients ayant déjà souscrit à "Premium" (ancien modèle 25€/an) :
-1. Migrer vers `subscription_level = 'premium'`
-2. Conserver leurs avantages actuels
-3. Proposer upgrade vers Premium+ (différence proratisée)
-
-### 9.2 Script de Migration
-
-```sql
--- Migrer les abonnements premium existants
-UPDATE payments 
-SET subscription_level = 'premium'
-WHERE plan = 'premium' 
-  AND status = 'active'
-  AND subscription_level IS NULL;
-```
+- [x] Créer enum `client_subscription_level`
+- [x] Modifier table `payments` (subscription_level, sms_pool_contribution_cents)
+- [x] Créer table `sms_pool`
+- [x] Créer table `sms_pool_contributions`
+- [x] Créer table `notification_preferences`
+- [x] Modifier `fishermen_sms_usage` (monthly_allocation, bonus_sms_at_signup)
+- [x] Mettre à jour `PecheurPayment.tsx` (Pêcheur + Pêcheur PRO + Packs SMS)
+- [x] Mettre à jour `PremiumPaywall.tsx` (3 niveaux clients)
+- [ ] Créer produits Stripe pour packs SMS (price_SMS_500_40, price_SMS_1000_70)
+- [ ] Créer Edge Function `check-client-subscription`
+- [ ] Créer Edge Function `distribute-sms-pool`
+- [ ] Modifier `send-drop-notification` pour routage par niveau
+- [ ] Modifier `stripe-webhook` pour gérer niveaux clients
+- [ ] Créer UI préférences notifications
+- [ ] Migrer abonnements existants
 
 ---
 
@@ -382,23 +310,5 @@ WHERE plan = 'premium'
 | Conversion Premium → Premium+ | % upgrade | > 30% |
 | Churn Premium | % désabonnement/mois | < 5% |
 | Cagnotte moyenne/pêcheur | €/mois | > 20€ |
-| SMS envoyés/cagnotte | Ratio utilisation | > 70% |
-
----
-
-## 11. Checklist Implémentation
-
-- [ ] Créer enum `client_subscription_level`
-- [ ] Modifier table `payments`
-- [ ] Créer table `sms_pool`
-- [ ] Créer table `sms_pool_contributions`
-- [ ] Créer table `notification_preferences`
-- [ ] Créer produits Stripe
-- [ ] Modifier `stripe-webhook` pour gérer niveaux
-- [ ] Créer Edge Function `check-client-subscription`
-- [ ] Créer Edge Function `distribute-sms-pool`
-- [ ] Modifier `send-drop-notification` pour routage par niveau
-- [ ] Créer composant `ClientPremiumBadge`
-- [ ] Créer page `/premium/upgrade`
-- [ ] Ajouter UI préférences notifications
-- [ ] Script migration existants
+| SMS utilisés/cagnotte | Ratio utilisation | > 70% |
+| SMS envoyés pêcheurs/mois | Volume | Croissant |
