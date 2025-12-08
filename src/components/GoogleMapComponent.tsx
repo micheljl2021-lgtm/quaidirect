@@ -194,7 +194,7 @@ const GoogleMapComponent = ({
           url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
             <svg width="40" height="40" xmlns="http://www.w3.org/2000/svg">
               <circle cx="20" cy="20" r="16" fill="${selectedSalePointId === salePoint.id ? '#ff6b35' : '#f97316'}" opacity="0.9" stroke="#FFFFFF" stroke-width="3"/>
-              <text x="20" y="26" font-size="16" fill="#FFFFFF" text-anchor="middle" font-family="Arial">🏪</text>
+              <text x="20" y="26" font-size="16" fill="#FFFFFF" text-anchor="middle" font-family="Arial">⚓</text>
             </svg>
           `)}`,
           scaledSize: new google.maps.Size(40, 40),
@@ -256,7 +256,7 @@ const GoogleMapComponent = ({
             icon: {
               url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
                 <svg width="50" height="50" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="25" cy="25" r="20" fill="#0EA5E9" opacity="0.9" stroke="#FFFFFF" stroke-width="3"/>
+                  <circle cx="25" cy="25" r="20" fill="#f97316" opacity="0.9" stroke="#FFFFFF" stroke-width="3"/>
                   <text x="25" y="30" font-size="14" font-weight="bold" fill="#FFFFFF" text-anchor="middle" font-family="Arial">${count}</text>
                 </svg>
               `)}`,
