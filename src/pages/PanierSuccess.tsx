@@ -104,7 +104,7 @@ const PanierSuccess = () => {
         <Card className="border-2 border-green-500/20">
           <CardHeader className="text-center pb-4">
             <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-green-500/10 flex items-center justify-center">
-              <CheckCircle className="h-10 w-10 text-green-500" />
+              <CheckCircle className="h-10 w-10 text-green-500" aria-hidden="true" />
             </div>
             <CardTitle className="text-3xl font-bold text-foreground">
               Commande confirmée !
@@ -114,14 +114,14 @@ const PanierSuccess = () => {
           <CardContent className="space-y-6">
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
               </div>
             ) : orderDetails ? (
               <>
                 {/* Order Details */}
                 <div className="bg-muted/50 rounded-lg p-5 space-y-4">
                   <h3 className="font-semibold text-lg flex items-center gap-2">
-                    <Package className="h-5 w-5 text-primary" />
+                    <Package className="h-5 w-5 text-primary" aria-hidden="true" />
                     Détails de votre commande
                   </h3>
                   
@@ -142,7 +142,7 @@ const PanierSuccess = () => {
                       <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Pêcheur</span>
                         <span className="font-medium flex items-center gap-1">
-                          <Fish className="h-4 w-4" />
+                          <Fish className="h-4 w-4" aria-hidden="true" />
                           {orderDetails.fisherman_name}
                         </span>
                       </div>
@@ -160,21 +160,21 @@ const PanierSuccess = () => {
                 {/* Pickup Information */}
                 <div className="bg-primary/5 rounded-lg p-5 space-y-4 border border-primary/20">
                   <h3 className="font-semibold text-lg flex items-center gap-2 text-primary">
-                    <MapPin className="h-5 w-5" />
+                    <MapPin className="h-5 w-5" aria-hidden="true" />
                     Retrait de votre commande
                   </h3>
                   
                   <div className="space-y-3 text-sm">
                     {orderDetails.pickup_location && (
                       <div className="flex items-start gap-3">
-                        <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                        <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" aria-hidden="true" />
                         <span className="font-medium">{orderDetails.pickup_location}</span>
                       </div>
                     )}
                     
                     {orderDetails.pickup_time && (
                       <div className="flex items-start gap-3">
-                        <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                        <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" aria-hidden="true" />
                         <span className="font-medium">
                           {format(new Date(orderDetails.pickup_time), "EEEE d MMMM yyyy 'à' HH:mm", { locale: fr })}
                         </span>
@@ -218,7 +218,7 @@ const PanierSuccess = () => {
                   variant="outline"
                   className="flex-1"
                 >
-                  <Home className="h-4 w-4 mr-2" />
+                  <Home className="h-4 w-4 mr-2" aria-hidden="true" />
                   Accueil
                 </Button>
                 <Button

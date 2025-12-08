@@ -255,7 +255,7 @@ const Panier = () => {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <ShoppingCart className="h-8 w-8 text-primary" />
+            <ShoppingCart className="h-8 w-8 text-primary" aria-hidden="true" />
             <h1 className="text-4xl font-bold text-foreground">Paniers de Poisson Frais</h1>
           </div>
           <p className="text-lg text-muted-foreground">
@@ -281,7 +281,7 @@ const Panier = () => {
                         : 'bg-muted text-muted-foreground'
                     }`}
                   >
-                    {currentStep > step.num ? <Check className="h-5 w-5" /> : step.num}
+                    {currentStep > step.num ? <Check className="h-5 w-5" aria-hidden="true" /> : step.num}
                   </div>
                   <span className="text-xs mt-2 font-medium text-center">{step.label}</span>
                 </div>
@@ -300,7 +300,7 @@ const Panier = () => {
         {/* Back Button */}
         {currentStep > 1 && (
           <Button variant="ghost" onClick={handleBack} className="mb-4">
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className="h-4 w-4 mr-2" aria-hidden="true" />
             Retour
           </Button>
         )}
@@ -311,7 +311,7 @@ const Panier = () => {
             <h2 className="text-2xl font-bold mb-4">Choisissez votre pêcheur</h2>
             {(dropsLoading || fishermenLoading) ? (
               <div className="text-center py-12">
-                <Loader2 className="h-12 w-12 mx-auto text-primary animate-spin mb-4" />
+                <Loader2 className="h-12 w-12 mx-auto text-primary animate-spin mb-4" aria-hidden="true" />
                 <p className="text-muted-foreground">Chargement des pêcheurs...</p>
               </div>
             ) : allFishermenForDisplay.length > 0 ? (
@@ -324,7 +324,7 @@ const Panier = () => {
                   >
                     <CardHeader>
                       <div className="flex items-center gap-2 mb-2">
-                        <Anchor className="h-5 w-5 text-primary" />
+                        <Anchor className="h-5 w-5 text-primary" aria-hidden="true" />
                         <CardTitle className="text-lg">
                           {fishermanData.fisherman.boat_name || fishermanData.fisherman.company_name}
                         </CardTitle>
@@ -344,7 +344,7 @@ const Panier = () => {
                       ) : (
                         <Button className="w-full gap-2">
                           Sélectionner
-                          <ChevronRight className="h-4 w-4" />
+                          <ChevronRight className="h-4 w-4" aria-hidden="true" />
                         </Button>
                       )}
                     </CardContent>
@@ -378,7 +378,7 @@ const Panier = () => {
                   <CardContent className="p-6">
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 text-muted-foreground">
-                        <MapPin className="h-4 w-4" />
+                        <MapPin className="h-4 w-4" aria-hidden="true" />
                         <span className="font-medium">
                           {drop.ports 
                             ? `${drop.ports.name} - ${drop.ports.city}` 
@@ -386,12 +386,12 @@ const Panier = () => {
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
+                        <Calendar className="h-4 w-4" aria-hidden="true" />
                         <span>{format(new Date(drop.sale_start_time), "EEEE d MMMM 'à' HH:mm", { locale: fr })}</span>
                       </div>
                       <Button className="w-full gap-2 mt-4">
                         Sélectionner
-                        <ChevronRight className="h-4 w-4" />
+                        <ChevronRight className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </div>
                   </CardContent>
@@ -415,7 +415,7 @@ const Panier = () => {
             </p>
             {basketsLoading ? (
               <div className="text-center py-12">
-                <Loader2 className="h-12 w-12 mx-auto text-primary animate-spin mb-4" />
+                <Loader2 className="h-12 w-12 mx-auto text-primary animate-spin mb-4" aria-hidden="true" />
                 <p className="text-muted-foreground">Chargement des paniers...</p>
               </div>
             ) : (
@@ -442,7 +442,7 @@ const Panier = () => {
 
                       <CardHeader className="text-center pb-4">
                         <div className="mx-auto mb-4 p-4 rounded-full bg-primary/10 w-fit">
-                          <Package className="h-8 w-8 text-primary" />
+                          <Package className="h-8 w-8 text-primary" aria-hidden="true" />
                         </div>
                         <CardTitle className="text-2xl">{basket.name}</CardTitle>
                         <CardDescription className="min-h-[40px]">
@@ -470,7 +470,7 @@ const Panier = () => {
 
                         <div className="space-y-2">
                           <div className="flex items-start gap-2">
-                            <Check className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                            <Check className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
                             <p className="text-sm text-muted-foreground">
                               {isDiscovery && '2-3 espèces locales'}
                               {basket.variety_level === 'varied' && '4-5 espèces variées'}
@@ -478,13 +478,13 @@ const Panier = () => {
                             </p>
                           </div>
                           <div className="flex items-start gap-2">
-                            <Check className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                            <Check className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
                             <p className="text-sm text-muted-foreground">
                               Pêche locale & responsable
                             </p>
                           </div>
                           <div className="flex items-start gap-2">
-                            <Check className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                            <Check className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
                             <p className="text-sm text-muted-foreground">
                               Fraîcheur garantie
                             </p>
@@ -495,7 +495,7 @@ const Panier = () => {
                           className={`w-full gap-2 ${isGourmet ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600' : ''}`}
                         >
                           Sélectionner
-                          <ChevronRight className="h-4 w-4" />
+                          <ChevronRight className="h-4 w-4" aria-hidden="true" />
                         </Button>
                       </CardContent>
                     </Card>
@@ -558,12 +558,12 @@ const Panier = () => {
                 <Button onClick={handlePurchase} disabled={loadingCheckout} className="flex-1 gap-2">
                   {loadingCheckout ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                       Chargement...
                     </>
                   ) : (
                     <>
-                      <ShoppingCart className="h-4 w-4" />
+                      <ShoppingCart className="h-4 w-4" aria-hidden="true" />
                       Procéder au paiement
                     </>
                   )}

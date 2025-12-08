@@ -9,7 +9,7 @@ const Footer = () => {
           {/* Logo & Description */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <Fish className="h-6 w-6 text-primary" />
+              <Fish className="h-6 w-6 text-primary" aria-hidden="true" />
               <span className="text-xl font-bold">QuaiDirect</span>
             </div>
             <p className="text-sm text-muted-foreground">
@@ -77,8 +77,9 @@ const Footer = () => {
               <a 
                 href="mailto:CEO@quaidirect.fr" 
                 className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                aria-label="Envoyer un email à CEO@quaidirect.fr"
               >
-                <Mail className="h-4 w-4" />
+                <Mail className="h-4 w-4" aria-hidden="true" />
                 CEO@quaidirect.fr
               </a>
               <p className="text-xs text-muted-foreground">
