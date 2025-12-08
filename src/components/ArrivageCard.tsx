@@ -91,7 +91,7 @@ const ArrivageCard = ({
             {/* Badge Photo d'illustration */}
             {isDefaultPhoto(displayPhotos[0].photo_url) && (
               <div className="absolute top-3 left-3 bg-black/60 text-white text-[10px] px-2 py-1 rounded flex items-center gap-1">
-                <ImageIcon className="h-3 w-3" />
+                <ImageIcon className="h-3 w-3" aria-hidden="true" />
                 Photo d'illustration
               </div>
             )}
@@ -133,7 +133,7 @@ const ArrivageCard = ({
           {/* Badge Photo d'illustration */}
           {isDefaultPhoto(imageUrl) && (
             <div className="absolute top-3 left-3 bg-black/60 text-white text-[10px] px-2 py-1 rounded flex items-center gap-1">
-              <ImageIcon className="h-3 w-3" />
+              <ImageIcon className="h-3 w-3" aria-hidden="true" />
               Photo d'illustration
             </div>
           )}
@@ -148,7 +148,7 @@ const ArrivageCard = ({
         </div>
       ) : (
         <div className="aspect-video bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
-          <MapPin className="h-12 w-12 text-muted-foreground/30" />
+          <MapPin className="h-12 w-12 text-muted-foreground/30" aria-hidden="true" />
         </div>
       )}
 

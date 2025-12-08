@@ -85,7 +85,7 @@ export const ContactsTab = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Contacts Totaux</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalContacts}</div>
@@ -98,7 +98,7 @@ export const ContactsTab = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Messages Envoyés</CardTitle>
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            <MessageSquare className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalMessages}</div>
@@ -111,7 +111,7 @@ export const ContactsTab = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Emails Envoyés</CardTitle>
-            <Mail className="h-4 w-4 text-muted-foreground" />
+            <Mail className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalRecipients}</div>
@@ -165,7 +165,7 @@ export const ContactsTab = () => {
                           <TableCell>
                             {contact.email ? (
                               <div className="flex items-center gap-2">
-                                <Mail className="h-3 w-3 text-muted-foreground" />
+                                <Mail className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
                                 {contact.email}
                               </div>
                             ) : (
@@ -175,7 +175,7 @@ export const ContactsTab = () => {
                           <TableCell>
                             {contact.phone ? (
                               <div className="flex items-center gap-2">
-                                <Phone className="h-3 w-3 text-muted-foreground" />
+                                <Phone className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
                                 {contact.phone}
                               </div>
                             ) : (
@@ -293,8 +293,9 @@ export const ContactsTab = () => {
                                     size="sm"
                                     variant="ghost"
                                     onClick={() => setSelectedMessage(message)}
+                                    aria-label="Voir le message"
                                   >
-                                    <Eye className="h-4 w-4" />
+                                    <Eye className="h-4 w-4" aria-hidden="true" />
                                   </Button>
                                 </DialogTrigger>
                                 <DialogContent className="max-w-2xl">
@@ -330,15 +331,17 @@ export const ContactsTab = () => {
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => handleMarkAsRead(message.id)}
+                                aria-label="Marquer comme lu"
                               >
-                                <CheckCircle className="h-4 w-4" />
+                                <CheckCircle className="h-4 w-4" aria-hidden="true" />
                               </Button>
                               <Button
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => handleArchive(message.id)}
+                                aria-label="Archiver"
                               >
-                                <Archive className="h-4 w-4" />
+                                <Archive className="h-4 w-4" aria-hidden="true" />
                               </Button>
                             </div>
                           </TableCell>

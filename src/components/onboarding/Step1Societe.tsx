@@ -24,7 +24,7 @@ export function Step1Societe({ formData, onChange }: Step1SocieteProps) {
       {/* Header */}
       <div className="text-center space-y-2">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-          <Building2 className="w-8 h-8 text-primary" />
+          <Building2 className="w-8 h-8 text-primary" aria-hidden="true" />
         </div>
         <h2 className="text-2xl font-bold">Informations société</h2>
         <p className="text-muted-foreground">Commençons par les informations de base</p>
@@ -46,7 +46,7 @@ export function Step1Societe({ formData, onChange }: Step1SocieteProps) {
       {/* Boat Name */}
       <div className="space-y-2">
         <Label htmlFor="boatName" className="flex items-center gap-2">
-          <Ship className="w-4 h-4" />
+          <Ship className="w-4 h-4" aria-hidden="true" />
           Nom du bateau*
         </Label>
         <Input

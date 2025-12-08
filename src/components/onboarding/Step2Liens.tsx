@@ -18,7 +18,7 @@ export function Step2Liens({ formData, onChange }: Step2LiensProps) {
       {/* Header */}
       <div className="text-center space-y-2">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-          <Globe className="w-8 h-8 text-primary" />
+          <Globe className="w-8 h-8 text-primary" aria-hidden="true" />
         </div>
         <h2 className="text-2xl font-bold">Présence en ligne</h2>
         <p className="text-muted-foreground">Partagez vos réseaux sociaux (optionnel mais recommandé)</p>
@@ -40,7 +40,7 @@ export function Step2Liens({ formData, onChange }: Step2LiensProps) {
       {/* Facebook */}
       <div className="space-y-2">
         <Label htmlFor="facebookUrl" className="flex items-center gap-2">
-          <Facebook className="w-4 h-4 text-blue-600" />
+          <Facebook className="w-4 h-4 text-blue-600" aria-hidden="true" />
           Page Facebook
         </Label>
         <Input
@@ -56,7 +56,7 @@ export function Step2Liens({ formData, onChange }: Step2LiensProps) {
       {/* Instagram */}
       <div className="space-y-2">
         <Label htmlFor="instagramUrl" className="flex items-center gap-2">
-          <Instagram className="w-4 h-4 text-pink-600" />
+          <Instagram className="w-4 h-4 text-pink-600" aria-hidden="true" />
           Compte Instagram
         </Label>
         <Input
@@ -72,7 +72,7 @@ export function Step2Liens({ formData, onChange }: Step2LiensProps) {
       {/* Website */}
       <div className="space-y-2">
         <Label htmlFor="websiteUrl" className="flex items-center gap-2">
-          <Globe className="w-4 h-4" />
+          <Globe className="w-4 h-4" aria-hidden="true" />
           Autre site web
         </Label>
         <Input

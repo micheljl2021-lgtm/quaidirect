@@ -70,7 +70,7 @@ export function Step5Photos({ formData, onChange }: Step5PhotosProps) {
       {/* Header */}
       <div className="text-center space-y-2">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-          <Camera className="w-8 h-8 text-primary" />
+          <Camera className="w-8 h-8 text-primary" aria-hidden="true" />
         </div>
         <h2 className="text-2xl font-bold">Photos & présentation</h2>
         <p className="text-muted-foreground">Dernière étape : valorisez votre métier</p>
@@ -110,7 +110,7 @@ export function Step5Photos({ formData, onChange }: Step5PhotosProps) {
       {/* AI Description Section */}
       <div className="space-y-4 p-6 border rounded-lg bg-gradient-to-br from-blue-50 to-purple-50">
         <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="w-5 h-5 text-purple-600" />
+          <Sparkles className="w-5 h-5 text-purple-600" aria-hidden="true" />
           <h3 className="font-semibold text-lg">Parlez de vous en quelques mots</h3>
         </div>
 
@@ -167,12 +167,12 @@ export function Step5Photos({ formData, onChange }: Step5PhotosProps) {
           >
             {isGenerating ? (
               <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" aria-hidden="true" />
                 Génération en cours...
               </>
             ) : (
               <>
-                <Sparkles className="w-5 h-5 mr-2" />
+                <Sparkles className="w-5 h-5 mr-2" aria-hidden="true" />
                 Générer ma description
               </>
             )}
