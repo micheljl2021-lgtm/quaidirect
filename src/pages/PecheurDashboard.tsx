@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import CaisseModule from '@/components/CaisseModule';
 import { SalePointsSection } from '@/components/SalePointsSection';
+import { SmsQuotaManager } from '@/components/SmsQuotaManager';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardStats from '@/components/dashboard/DashboardStats';
 import DashboardStatsSkeleton from '@/components/dashboard/DashboardStatsSkeleton';
@@ -12,7 +13,7 @@ import MessagingSection from '@/components/dashboard/MessagingSection';
 import ArrivalsList from '@/components/dashboard/ArrivalsList';
 import ArrivalsListSkeleton from '@/components/dashboard/ArrivalsListSkeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Anchor, Loader2, ShoppingCart, AlertCircle } from "lucide-react";
+import { Anchor, Loader2, ShoppingCart, MessageSquare, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getRedirectPathByRole } from '@/lib/authRedirect';
 
@@ -167,7 +168,7 @@ const PecheurDashboard = () => {
         )}
 
         <Tabs defaultValue="arrivages" className="space-y-4 md:space-y-6">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+          <TabsList className="grid w-full max-w-lg mx-auto grid-cols-3">
             <TabsTrigger value="arrivages" className="gap-2 text-sm">
               <Anchor className="h-4 w-4" aria-hidden="true" />
               <span className="hidden xs:inline">Mes </span>arrivages
@@ -175,6 +176,10 @@ const PecheurDashboard = () => {
             <TabsTrigger value="caisse" className="gap-2 text-sm">
               <ShoppingCart className="h-4 w-4" aria-hidden="true" />
               <span className="hidden xs:inline">Caisse au </span>port
+            </TabsTrigger>
+            <TabsTrigger value="sms" className="gap-2 text-sm">
+              <MessageSquare className="h-4 w-4" aria-hidden="true" />
+              <span className="hidden xs:inline">Quota </span>SMS
             </TabsTrigger>
           </TabsList>
 
@@ -193,6 +198,10 @@ const PecheurDashboard = () => {
 
           <TabsContent value="caisse">
             <CaisseModule />
+          </TabsContent>
+
+          <TabsContent value="sms">
+            <SmsQuotaManager />
           </TabsContent>
         </Tabs>
       </div>
