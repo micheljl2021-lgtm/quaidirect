@@ -8,6 +8,7 @@ import { ProtectedFisherRoute } from "@/components/ProtectedFisherRoute";
 import PageLoader from "@/components/PageLoader";
 
 // Critical pages - loaded immediately
+import PreLaunch from "./pages/PreLaunch";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -69,8 +70,10 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* Critical routes - no lazy loading */}
-          <Route path="/" element={<Landing />} />
+          {/* Pre-launch page - covers the main landing */}
+          <Route path="/" element={<PreLaunch />} />
+          {/* Original landing - accessible at /home for testing */}
+          <Route path="/home" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
 
             {/* Lazy-loaded public routes */}
