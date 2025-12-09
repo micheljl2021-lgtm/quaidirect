@@ -66,9 +66,10 @@ const GoogleMapComponent = ({
 
   const mapOptions = useMemo(() => ({
     styles: quaiDirectMapStyles,
+    mapTypeId: 'terrain' as google.maps.MapTypeId, // Mode relief avec montagnes vertes
     disableDefaultUI: false,
     zoomControl: true,
-    mapTypeControl: true,
+    mapTypeControl: false, // Désactiver pour éviter que l'utilisateur change
     streetViewControl: false,
     fullscreenControl: true,
   }), []);

@@ -56,6 +56,38 @@ export const defaultMapConfig = {
  * Styles personnalisés aux couleurs QuaiDirect
  */
 export const quaiDirectMapStyles: google.maps.MapTypeStyle[] = [
+  // Masquer TOUS les points d'intérêt (restaurants, parcs, McDonald's, etc.)
+  {
+    featureType: 'poi',
+    stylers: [{ visibility: 'off' }],
+  },
+  // Masquer les transports en commun
+  {
+    featureType: 'transit',
+    stylers: [{ visibility: 'off' }],
+  },
+  // Masquer les routes locales mineures
+  {
+    featureType: 'road.local',
+    stylers: [{ visibility: 'off' }],
+  },
+  // Masquer les quartiers et villages
+  {
+    featureType: 'administrative.neighborhood',
+    stylers: [{ visibility: 'off' }],
+  },
+  // Masquer les land parcels
+  {
+    featureType: 'administrative.land_parcel',
+    stylers: [{ visibility: 'off' }],
+  },
+  // Simplifier les labels de villes (garder uniquement les grandes villes)
+  {
+    featureType: 'administrative.locality',
+    elementType: 'labels',
+    stylers: [{ visibility: 'simplified' }],
+  },
+  // Eau avec couleurs QuaiDirect
   {
     featureType: 'water',
     elementType: 'geometry',
