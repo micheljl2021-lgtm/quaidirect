@@ -23,6 +23,7 @@ const RequestSchema = z.object({
     species: z.string().optional(),
   }).optional(),
   contact_ids: z.array(z.string().uuid()).optional(),
+  channel: z.enum(['email', 'sms', 'both']).default('email'),
 });
 
 // Rate limiting configuration
@@ -206,7 +207,7 @@ serve(async (req) => {
       );
     }
 
-    const { message_type, subject, body, sent_to_group, drop_id, drop_details, contact_ids } = parseResult.data;
+    const { message_type, subject, body, sent_to_group, drop_id, drop_details, contact_ids, channel } = parseResult.data;
 
     // Récupérer les contacts
     let query = supabaseClient
@@ -241,22 +242,78 @@ serve(async (req) => {
       dropUrl: drop_id ? `${origin}/arrivages?drop=${drop_id}` : `${origin}/arrivages`,
     });
 
-    // Envoyer les emails via Resend
-    const emailPromises = contacts
-      .filter(c => c.email)
-      .map(contact => 
-        resend.emails.send({
-          from: 'QuaiDirect <contact@quaidirect.fr>',
-          to: [contact.email],
-          subject: emailTemplate.subject,
-          html: emailTemplate.html,
-        })
-      );
+    let emailSuccessCount = 0;
+    let smsSuccessCount = 0;
 
-    const results = await Promise.allSettled(emailPromises);
-    const successCount = results.filter(r => r.status === 'fulfilled').length;
-    
-    logStep('Emails sent', { successCount, totalAttempts: emailPromises.length });
+    // Send emails if channel is 'email' or 'both'
+    if (channel === 'email' || channel === 'both') {
+      const emailPromises = contacts
+        .filter(c => c.email)
+        .map(contact => 
+          resend.emails.send({
+            from: 'QuaiDirect <contact@quaidirect.fr>',
+            to: [contact.email],
+            subject: emailTemplate.subject,
+            html: emailTemplate.html,
+          })
+        );
+
+      const emailResults = await Promise.allSettled(emailPromises);
+      emailSuccessCount = emailResults.filter(r => r.status === 'fulfilled').length;
+      logStep('Emails sent', { successCount: emailSuccessCount, totalAttempts: emailPromises.length });
+    }
+
+    // Send SMS if channel is 'sms' or 'both'
+    if (channel === 'sms' || channel === 'both') {
+      const contactsWithPhone = contacts.filter(c => c.phone);
+      
+      if (contactsWithPhone.length > 0) {
+        // Prepare SMS message (plain text, shorter)
+        let smsMessage = '';
+        switch (message_type) {
+          case 'invitation_initiale':
+            smsMessage = `${fisherman.boat_name} est maintenant sur QuaiDirect ! Retrouvez mes arrivages sur quaidirect.fr`;
+            break;
+          case 'new_drop':
+            smsMessage = `${fisherman.boat_name} - Nouvel arrivage ! ${drop_details?.time || ''} ${drop_details?.location || ''}. Détails sur quaidirect.fr`;
+            break;
+          case 'custom':
+          default:
+            smsMessage = body?.slice(0, 160) || 'Message de votre pêcheur sur QuaiDirect';
+            break;
+        }
+
+        // Call send-sms edge function
+        const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+        const phones = contactsWithPhone.map(c => c.phone);
+        
+        try {
+          const smsResponse = await fetch(`${supabaseUrl}/functions/v1/send-sms`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': req.headers.get('Authorization') || '',
+            },
+            body: JSON.stringify({ phones, message: smsMessage }),
+          });
+
+          const smsResult = await smsResponse.json();
+          
+          if (smsResult.error === 'TWILIO_NOT_CONFIGURED') {
+            logStep('SMS skipped - Twilio not configured');
+          } else if (smsResult.success) {
+            smsSuccessCount = smsResult.sent || 0;
+            logStep('SMS sent', { successCount: smsSuccessCount });
+          } else {
+            logStep('SMS failed', { error: smsResult.error });
+          }
+        } catch (smsError) {
+          logStep('SMS error', { error: smsError });
+        }
+      }
+    }
+
+    const totalRecipients = emailSuccessCount + smsSuccessCount;
 
     // Enregistrer le message
     const { error: messageError } = await supabaseClient
@@ -268,9 +325,10 @@ serve(async (req) => {
         body: body || emailTemplate.html,
         sent_to_group: sent_to_group || null,
         drop_id: drop_id || null,
-        recipient_count: successCount,
-        email_count: successCount,
-        channel: 'email'
+        recipient_count: totalRecipients,
+        email_count: emailSuccessCount,
+        sms_count: smsSuccessCount,
+        channel: channel,
       });
 
     if (messageError) {
@@ -280,11 +338,11 @@ serve(async (req) => {
 
     // Mettre à jour last_contacted_at pour les contacts
     if (contacts && contacts.length > 0) {
-      const contactIds = contacts.map(c => c.id);
+      const contactIdsList = contacts.map(c => c.id);
       await supabaseClient
         .from('fishermen_contacts')
         .update({ last_contacted_at: new Date().toISOString() })
-        .in('id', contactIds);
+        .in('id', contactIdsList);
     }
 
     logStep('Message saved and contacts updated');
@@ -292,8 +350,10 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        recipient_count: successCount,
-        message: `${successCount} emails envoyés avec succès`
+        recipient_count: totalRecipients,
+        email_count: emailSuccessCount,
+        sms_count: smsSuccessCount,
+        message: `${emailSuccessCount} email(s) et ${smsSuccessCount} SMS envoyé(s)`
       }),
       {
         headers: { 
