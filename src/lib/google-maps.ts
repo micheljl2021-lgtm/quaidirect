@@ -1,10 +1,13 @@
 /**
  * Module centralisé pour la configuration Google Maps
  * Garantit une utilisation cohérente de la clé API à travers l'application
+ * 
+ * @see docs/GOOGLE_MAPS_CONFIG.md pour les instructions de configuration
  */
 
 // Flag to track if warning has been shown (avoid spam)
 let apiKeyWarningShown = false;
+let configLogShown = false;
 
 export function getGoogleMapsApiKey(): string {
   const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -25,7 +28,73 @@ export function getGoogleMapsApiKey(): string {
  * Check if Google Maps API key is configured
  */
 export function isGoogleMapsConfigured(): boolean {
-  return Boolean(import.meta.env.VITE_GOOGLE_MAPS_API_KEY);
+  const configured = Boolean(import.meta.env.VITE_GOOGLE_MAPS_API_KEY);
+  
+  // Log configuration status once
+  if (!configLogShown) {
+    configLogShown = true;
+    if (configured) {
+      console.info("[Google Maps] API key configured ✓");
+      console.info("[Google Maps] Required APIs: Maps JavaScript API, Places API, Geocoding API");
+    } else {
+      console.warn("[Google Maps] API key not configured");
+    }
+  }
+  
+  return configured;
+}
+
+/**
+ * Validate API key format (basic check)
+ */
+export function validateApiKeyFormat(key: string): boolean {
+  // Google API keys typically start with 'AIza' and are 39 characters
+  return key.startsWith('AIza') && key.length === 39;
+}
+
+/**
+ * Get diagnostic info for troubleshooting
+ */
+export function getGoogleMapsDiagnostics(): {
+  keyConfigured: boolean;
+  keyFormat: 'valid' | 'invalid' | 'missing';
+  currentDomain: string;
+  recommendations: string[];
+} {
+  const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const keyConfigured = Boolean(key);
+  
+  let keyFormat: 'valid' | 'invalid' | 'missing' = 'missing';
+  if (key) {
+    keyFormat = validateApiKeyFormat(key) ? 'valid' : 'invalid';
+  }
+  
+  const currentDomain = typeof window !== 'undefined' ? window.location.hostname : 'unknown';
+  
+  const recommendations: string[] = [];
+  
+  if (!keyConfigured) {
+    recommendations.push("Configurez VITE_GOOGLE_MAPS_API_KEY dans les secrets Lovable Cloud");
+  }
+  
+  if (keyFormat === 'invalid') {
+    recommendations.push("Le format de la clé API semble incorrect (doit commencer par 'AIza')");
+  }
+  
+  if (currentDomain.includes('lovable')) {
+    recommendations.push(`Ajoutez *.lovableproject.com/* aux restrictions HTTP de la clé`);
+  }
+  
+  recommendations.push("Vérifiez que 'Maps JavaScript API' est activée dans Google Cloud Console");
+  recommendations.push("Vérifiez que 'Places API' est activée pour l'autocomplétion d'adresses");
+  recommendations.push("Vérifiez que 'Geocoding API' est activée pour la géolocalisation");
+  
+  return {
+    keyConfigured,
+    keyFormat,
+    currentDomain,
+    recommendations,
+  };
 }
 
 /**

@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-maps/api';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
-import { MapPin, AlertTriangle } from 'lucide-react';
+import { MapPin, AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
 import { googleMapsLoaderConfig, defaultMapConfig, quaiDirectMapStyles, isGoogleMapsConfigured } from '@/lib/google-maps';
+import { Button } from '@/components/ui/button';
 
 interface Port {
   id: string;
@@ -50,6 +51,9 @@ const mapContainerStyle = {
   height: '100%',
 };
 
+// Loading timeout in milliseconds
+const LOADING_TIMEOUT_MS = 15000;
+
 const GoogleMapComponent = ({
   ports,
   salePoints = [],
@@ -62,14 +66,22 @@ const GoogleMapComponent = ({
   onDropClick,
   userLocation,
 }: GoogleMapComponentProps) => {
-  const { isLoaded, loadError } = useJsApiLoader(googleMapsLoaderConfig);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const [hasTimedOut, setHasTimedOut] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const { isLoaded, loadError } = useJsApiLoader({
+    ...googleMapsLoaderConfig,
+    // Force reload on retry
+    id: `google-map-script-${loadAttempt}`,
+  });
 
   const mapOptions = useMemo(() => ({
     styles: quaiDirectMapStyles,
-    mapTypeId: 'terrain' as google.maps.MapTypeId, // Mode relief avec montagnes vertes
+    mapTypeId: 'terrain' as google.maps.MapTypeId,
     disableDefaultUI: false,
     zoomControl: true,
-    mapTypeControl: false, // Désactiver pour éviter que l'utilisateur change
+    mapTypeControl: false,
     streetViewControl: false,
     fullscreenControl: true,
   }), []);
@@ -79,6 +91,48 @@ const GoogleMapComponent = ({
   const [activeType, setActiveType] = useState<'port' | 'salePoint' | 'drop' | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const clustererRef = useRef<MarkerClusterer | null>(null);
+
+  // Loading timeout handler
+  useEffect(() => {
+    if (!isLoaded && !loadError && !hasTimedOut) {
+      timeoutRef.current = setTimeout(() => {
+        console.error('[Google Maps] Loading timeout exceeded after', LOADING_TIMEOUT_MS, 'ms');
+        setHasTimedOut(true);
+      }, LOADING_TIMEOUT_MS);
+    }
+
+    if (isLoaded || loadError) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      setHasTimedOut(false);
+    }
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [isLoaded, loadError, hasTimedOut, loadAttempt]);
+
+  // Log loading state for debugging
+  useEffect(() => {
+    if (loadError) {
+      console.error('[Google Maps] Load error:', loadError.message);
+    }
+    if (isLoaded) {
+      console.info('[Google Maps] Successfully loaded');
+    }
+  }, [isLoaded, loadError]);
+
+  const handleRetry = useCallback(() => {
+    console.info('[Google Maps] Retrying load...');
+    setHasTimedOut(false);
+    setLoadAttempt(prev => prev + 1);
+    // Force page reload for clean API reload
+    window.location.reload();
+  }, []);
 
   const onLoad = useCallback((map: google.maps.Map) => {
     setMap(map);
@@ -285,23 +339,74 @@ const GoogleMapComponent = ({
         <h3 className="text-lg font-semibold text-foreground mb-2">
           Carte non disponible
         </h3>
-        <p className="text-muted-foreground text-sm max-w-sm">
+        <p className="text-muted-foreground text-sm max-w-sm mb-4">
           La clé API Google Maps n'est pas configurée. 
           Veuillez contacter l'administrateur.
+        </p>
+        <p className="text-xs text-muted-foreground/70">
+          Code erreur: API_KEY_MISSING
+        </p>
+      </div>
+    );
+  }
+
+  // Timeout error state
+  if (hasTimedOut) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full bg-muted rounded-lg p-6 text-center">
+        <AlertTriangle className="h-12 w-12 text-warning mb-4" />
+        <h3 className="text-lg font-semibold text-foreground mb-2">
+          Chargement trop long
+        </h3>
+        <p className="text-muted-foreground text-sm max-w-sm mb-4">
+          La carte met trop de temps à charger. Cela peut être dû à :
+        </p>
+        <ul className="text-muted-foreground text-xs text-left mb-4 space-y-1">
+          <li>• Restrictions de domaine sur la clé API</li>
+          <li>• API Maps JavaScript non activée</li>
+          <li>• Connexion internet instable</li>
+        </ul>
+        <Button onClick={handleRetry} variant="outline" className="gap-2">
+          <RefreshCw className="h-4 w-4" />
+          Réessayer
+        </Button>
+        <p className="text-xs text-muted-foreground/70 mt-4">
+          Code erreur: LOADING_TIMEOUT
         </p>
       </div>
     );
   }
 
   if (loadError) {
+    const errorMessage = loadError.message || 'Erreur inconnue';
+    const isApiKeyError = errorMessage.includes('ApiNotActivatedMapError') || 
+                          errorMessage.includes('InvalidKeyMapError') ||
+                          errorMessage.includes('RefererNotAllowedMapError');
+    
     return (
       <div className="flex flex-col items-center justify-center h-full bg-muted rounded-lg p-6 text-center">
         <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
         <h3 className="text-lg font-semibold text-foreground mb-2">
-          Erreur de chargement
+          {isApiKeyError ? 'Configuration API requise' : 'Erreur de chargement'}
         </h3>
-        <p className="text-muted-foreground text-sm">
-          Impossible de charger la carte. Veuillez réessayer.
+        <p className="text-muted-foreground text-sm max-w-sm mb-4">
+          {isApiKeyError 
+            ? 'La clé API Google Maps nécessite une configuration dans Google Cloud Console.'
+            : 'Impossible de charger la carte. Veuillez réessayer.'}
+        </p>
+        {isApiKeyError && (
+          <ul className="text-muted-foreground text-xs text-left mb-4 space-y-1">
+            <li>• Vérifiez que "Maps JavaScript API" est activée</li>
+            <li>• Ajoutez ce domaine aux restrictions HTTP</li>
+            <li>• Vérifiez les quotas de l'API</li>
+          </ul>
+        )}
+        <Button onClick={handleRetry} variant="outline" className="gap-2">
+          <RefreshCw className="h-4 w-4" />
+          Réessayer
+        </Button>
+        <p className="text-xs text-muted-foreground/70 mt-4">
+          {errorMessage.slice(0, 100)}
         </p>
       </div>
     );
@@ -310,9 +415,12 @@ const GoogleMapComponent = ({
   if (!isLoaded) {
     return (
       <div className="flex items-center justify-center h-full bg-muted rounded-lg">
-        <div className="flex flex-col items-center gap-2">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <p className="text-muted-foreground">Chargement de la carte...</p>
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground text-sm">Chargement de la carte...</p>
+          <p className="text-xs text-muted-foreground/60">
+            Cela peut prendre quelques secondes
+          </p>
         </div>
       </div>
     );
