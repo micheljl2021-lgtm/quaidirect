@@ -8,7 +8,6 @@ import { ProtectedFisherRoute } from "@/components/ProtectedFisherRoute";
 import PageLoader from "@/components/PageLoader";
 
 // Critical pages - loaded immediately
-import PreLaunch from "./pages/PreLaunch";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -71,7 +70,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           {/* Pre-launch page - covers the main landing */}
-          <Route path="/" element={<PreLaunch />} />
+          <Route path="/" element={<Landing />} />
           {/* Original landing - accessible at /home for testing */}
           <Route path="/home" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
