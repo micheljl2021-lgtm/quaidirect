@@ -3,6 +3,8 @@
  * Évite la duplication et facilite la maintenance
  */
 
+import { FISHERMAN_PLANS, PREMIUM_PLANS, SMS_PACKS } from '@/config/pricing';
+
 // Prix des paniers en centimes
 export const BASKET_PRICES = {
   DECOUVERTE: 2500,
@@ -13,50 +15,43 @@ export const BASKET_PRICES = {
 // Commission plateforme (8%)
 export const PLATFORM_COMMISSION = 0.08;
 
-// Plans d'abonnement pêcheur (prix en centimes)
+// Plans d'abonnement pêcheur (prix en centimes) - Importé depuis pricing.ts
 export const SUBSCRIPTION_PLANS = {
-  BASIC: {
-    price: 15000,
-    name: 'Basic',
-    trialDays: 30,
+  STANDARD: {
+    price: FISHERMAN_PLANS.STANDARD.priceCents,
+    name: FISHERMAN_PLANS.STANDARD.name,
+    trialDays: FISHERMAN_PLANS.STANDARD.trialDays,
   },
   PRO: {
-    price: 19900,
-    name: 'Pro',
-    trialDays: 30,
+    price: FISHERMAN_PLANS.PRO.priceCents,
+    name: FISHERMAN_PLANS.PRO.name,
+    trialDays: FISHERMAN_PLANS.PRO.trialDays,
+  },
+  ELITE: {
+    price: FISHERMAN_PLANS.ELITE.priceCents,
+    name: FISHERMAN_PLANS.ELITE.name,
+    trialDays: FISHERMAN_PLANS.ELITE.trialDays,
   },
 } as const;
 
-// Plans client premium (prix en centimes)
+// Plans client premium (prix en centimes) - Importé depuis pricing.ts
 export const PREMIUM_CLIENT_PLANS = {
-  MONTHLY: {
-    price: 250,
-    name: 'Mensuel',
+  FOLLOWER: {
+    price: PREMIUM_PLANS.FOLLOWER.price,
+    name: PREMIUM_PLANS.FOLLOWER.name,
   },
-  ANNUAL: {
-    price: 2500,
-    name: 'Annuel',
+  PREMIUM: {
+    price: PREMIUM_PLANS.PREMIUM.priceAnnualCents,
+    name: PREMIUM_PLANS.PREMIUM.name,
+  },
+  PREMIUM_PLUS: {
+    price: PREMIUM_PLANS.PREMIUM_PLUS.priceAnnualCents,
+    name: PREMIUM_PLANS.PREMIUM_PLUS.name,
   },
 } as const;
 
-// Packs SMS (prix en centimes)
-export const SMS_PACKS = {
-  PACK_500: {
-    quantity: 500,
-    price: 4900,
-    pricePerSms: 0.098,
-  },
-  PACK_2000: {
-    quantity: 2000,
-    price: 14900,
-    pricePerSms: 0.0745,
-  },
-  PACK_5000: {
-    quantity: 5000,
-    price: 29900,
-    pricePerSms: 0.0598,
-  },
-} as const;
+// Export des packs SMS depuis pricing.ts pour compatibilité
+export { SMS_PACKS };
 
 // Limites système
 export const LIMITS = {

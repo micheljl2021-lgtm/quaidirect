@@ -332,12 +332,15 @@ export default function PremiumPaywall() {
                   💰 Cagnotte SMS : soutenez directement vos pêcheurs
                 </h3>
                 <p className="text-sm text-amber-800 mb-2">
-                  Avec <strong>Premium+</strong>, une partie de votre abonnement (15€/an) est reversée aux pêcheurs que vous suivez 
+                  Avec <strong>Premium+</strong>, une partie de votre abonnement (18€/an) est reversée aux pêcheurs que vous suivez 
                   pour financer leurs SMS de notification.
                 </p>
-                <p className="text-sm text-amber-700">
-                  Chaque mois, environ 1,25€ est crédité dans la cagnotte de vos pêcheurs favoris. 
+                <p className="text-sm text-amber-700 mb-2">
+                  Chaque année, 18€ sont crédités en SMS dans le wallet de votre pêcheur favori. 
                   C'est une façon concrète de soutenir la pêche artisanale locale.
+                </p>
+                <p className="text-sm text-amber-700">
+                  <strong>Premium</strong> reverse également 8€/an au pêcheur de votre choix.
                 </p>
               </div>
             </div>
