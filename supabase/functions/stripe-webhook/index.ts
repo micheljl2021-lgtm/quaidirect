@@ -256,9 +256,10 @@ serve(async (req) => {
 
           logStep('Parsed subscription dates', { currentPeriodStart, currentPeriodEnd, trialEnd });
 
+          // Insert payment record (use INSERT with ON CONFLICT on user_id + plan)
           const { error: paymentError } = await supabaseClient
             .from('payments')
-            .upsert({
+            .insert({
               user_id: userId,
               stripe_subscription_id: subscription.id,
               stripe_customer_id: subscription.customer as string,
@@ -267,12 +268,29 @@ serve(async (req) => {
               current_period_start: currentPeriodStart,
               current_period_end: currentPeriodEnd,
               trial_end: trialEnd,
-            }, {
-              onConflict: 'stripe_subscription_id'
             });
 
           if (paymentError) {
             logStep('ERROR creating fisherman subscription payment', { error: paymentError });
+            // If insert fails (duplicate), try update
+            const { error: updatePaymentError } = await supabaseClient
+              .from('payments')
+              .update({
+                stripe_subscription_id: subscription.id,
+                stripe_customer_id: subscription.customer as string,
+                status: subscription.status === 'trialing' ? 'trialing' : 'active',
+                current_period_start: currentPeriodStart,
+                current_period_end: currentPeriodEnd,
+                trial_end: trialEnd,
+              })
+              .eq('user_id', userId)
+              .ilike('plan', 'fisherman_%');
+            
+            if (updatePaymentError) {
+              logStep('ERROR updating existing fisherman payment', { error: updatePaymentError });
+            } else {
+              logStep('Existing fisherman payment record updated', { planType });
+            }
           } else {
             logStep('Fisherman subscription payment record created', { planType });
           }
