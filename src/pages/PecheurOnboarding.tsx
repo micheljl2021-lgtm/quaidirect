@@ -43,6 +43,7 @@ interface FormData {
   websiteUrl: string;
   // Step 3
   mainFishingZone: string;
+  zoneId: string;
   fishingZones: string;
   fishingMethods: string[];
   // Step 4
@@ -60,9 +61,13 @@ interface FormData {
   salePoint1Label: string;
   salePoint1Address: string;
   salePoint1Description: string;
+  salePoint1Lat: number | undefined;
+  salePoint1Lng: number | undefined;
   salePoint2Label: string;
   salePoint2Address: string;
   salePoint2Description: string;
+  salePoint2Lat: number | undefined;
+  salePoint2Lng: number | undefined;
 }
 
 const PecheurOnboarding = () => {
@@ -85,6 +90,7 @@ const PecheurOnboarding = () => {
     instagramUrl: "",
     websiteUrl: "",
     mainFishingZone: "",
+    zoneId: "",
     fishingZones: "",
     fishingMethods: [],
     selectedSpecies: [],
@@ -99,9 +105,13 @@ const PecheurOnboarding = () => {
     salePoint1Label: "",
     salePoint1Address: "",
     salePoint1Description: "",
+    salePoint1Lat: undefined,
+    salePoint1Lng: undefined,
     salePoint2Label: "",
     salePoint2Address: "",
     salePoint2Description: "",
+    salePoint2Lat: undefined,
+    salePoint2Lng: undefined,
   });
   
   const { basin, portFile } = usePortFile(formData.postalCode?.substring(0, 2));
@@ -181,6 +191,7 @@ const PecheurOnboarding = () => {
           instagramUrl: fisherman.instagram_url || "",
           websiteUrl: fisherman.website_url || "",
           mainFishingZone: fisherman.main_fishing_zone || "",
+          zoneId: fisherman.zone_id || "",
           fishingZones: Array.isArray(fisherman.fishing_zones) ? fisherman.fishing_zones.join(', ') : "",
           fishingMethods: Array.isArray(fisherman.fishing_methods) ? fisherman.fishing_methods : [],
           selectedSpecies: savedData.selectedSpecies || [],
@@ -195,9 +206,13 @@ const PecheurOnboarding = () => {
           salePoint1Label: savedData.salePoint1Label || "",
           salePoint1Address: savedData.salePoint1Address || "",
           salePoint1Description: savedData.salePoint1Description || "",
+          salePoint1Lat: savedData.salePoint1Lat,
+          salePoint1Lng: savedData.salePoint1Lng,
           salePoint2Label: savedData.salePoint2Label || "",
           salePoint2Address: savedData.salePoint2Address || "",
           salePoint2Description: savedData.salePoint2Description || "",
+          salePoint2Lat: savedData.salePoint2Lat,
+          salePoint2Lng: savedData.salePoint2Lng,
         });
       }
     };
@@ -277,6 +292,7 @@ const PecheurOnboarding = () => {
         instagram_url: formData.instagramUrl,
         website_url: formData.websiteUrl,
         main_fishing_zone: formData.mainFishingZone,
+        zone_id: formData.zoneId || null,
         fishing_zones: formData.fishingZones ? [formData.fishingZones] : null,
         fishing_methods: formData.fishingMethods as any,
         photo_boat_1: formData.photoBoat1,
@@ -293,9 +309,13 @@ const PecheurOnboarding = () => {
           salePoint1Label: formData.salePoint1Label,
           salePoint1Address: formData.salePoint1Address,
           salePoint1Description: formData.salePoint1Description,
+          salePoint1Lat: formData.salePoint1Lat,
+          salePoint1Lng: formData.salePoint1Lng,
           salePoint2Label: formData.salePoint2Label,
           salePoint2Address: formData.salePoint2Address,
           salePoint2Description: formData.salePoint2Description,
+          salePoint2Lat: formData.salePoint2Lat,
+          salePoint2Lng: formData.salePoint2Lng,
         },
       };
 
@@ -355,6 +375,7 @@ const PecheurOnboarding = () => {
           instagram_url: formData.instagramUrl,
           website_url: formData.websiteUrl,
           main_fishing_zone: formData.mainFishingZone,
+          zone_id: formData.zoneId || null,
           fishing_zones: formData.fishingZones ? [formData.fishingZones] : null,
           fishing_methods: formData.fishingMethods as any,
           photo_boat_1: formData.photoBoat1,
@@ -373,7 +394,13 @@ const PecheurOnboarding = () => {
 
       if (fishermanError) throw fishermanError;
 
-      // Save sale points
+      // Delete existing sale points before re-inserting
+      await supabase
+        .from('fisherman_sale_points')
+        .delete()
+        .eq('fisherman_id', fishermanData.id);
+
+      // Save sale points with coordinates
       const salePointsToInsert = [];
       
       if (formData.salePoint1Label && formData.salePoint1Address) {
@@ -382,6 +409,8 @@ const PecheurOnboarding = () => {
           label: formData.salePoint1Label,
           address: formData.salePoint1Address,
           description: formData.salePoint1Description || null,
+          latitude: formData.salePoint1Lat || null,
+          longitude: formData.salePoint1Lng || null,
           is_primary: true,
         });
       }
@@ -392,6 +421,8 @@ const PecheurOnboarding = () => {
           label: formData.salePoint2Label,
           address: formData.salePoint2Address,
           description: formData.salePoint2Description || null,
+          latitude: formData.salePoint2Lat || null,
+          longitude: formData.salePoint2Lng || null,
           is_primary: false,
         });
       }
