@@ -210,22 +210,73 @@ serve(async (req) => {
               logStep('Fisherman payment status updated successfully');
             }
           } else {
-            const { error: insertError } = await supabaseClient
+            // Generate unique temp values using userId to avoid constraint conflicts
+            const tempSuffix = userId.substring(0, 12);
+            const tempBoatReg = `TEMP-${tempSuffix}`;
+            const tempSiret = `TEMP-SIRET-${tempSuffix}`;
+            
+            logStep('Creating new fisherman record', { userId, tempBoatReg, tempSiret });
+            
+            const { data: newFisherman, error: insertError } = await supabaseClient
               .from('fishermen')
               .insert({
                 user_id: userId,
                 boat_name: 'À compléter',
-                boat_registration: 'À compléter',
-                siret: 'À compléter',
+                boat_registration: tempBoatReg,
+                siret: tempSiret,
                 onboarding_payment_status: 'paid',
                 onboarding_payment_id: session.payment_intent as string,
                 onboarding_paid_at: new Date().toISOString(),
-              });
+                email: session.customer_details?.email || null,
+              })
+              .select('id')
+              .single();
 
             if (insertError) {
-              logStep('ERROR creating fisherman record', { error: insertError });
+              logStep('ERROR creating fisherman record', { error: insertError, code: insertError.code, message: insertError.message, details: insertError.details });
+              
+              // Retry with more unique identifiers if constraint error
+              if (insertError.code === '23505') {
+                const retryBoatReg = `TEMP-${Date.now()}-${tempSuffix}`;
+                const retrySiret = `TEMP-SIRET-${Date.now()}-${tempSuffix}`;
+                logStep('Retrying fisherman insert with unique values', { retryBoatReg, retrySiret });
+                
+                const { data: retryFisherman, error: retryError } = await supabaseClient
+                  .from('fishermen')
+                  .insert({
+                    user_id: userId,
+                    boat_name: 'À compléter',
+                    boat_registration: retryBoatReg,
+                    siret: retrySiret,
+                    onboarding_payment_status: 'paid',
+                    onboarding_payment_id: session.payment_intent as string,
+                    onboarding_paid_at: new Date().toISOString(),
+                    email: session.customer_details?.email || null,
+                  })
+                  .select('id')
+                  .single();
+                
+                if (retryError) {
+                  logStep('CRITICAL ERROR: Retry fisherman insert also failed', { error: retryError });
+                } else {
+                  logStep('Fisherman record created on retry successfully', { fishermanId: retryFisherman?.id });
+                }
+              }
             } else {
-              logStep('Fisherman record created with payment successfully');
+              logStep('Fisherman record created with payment successfully', { fishermanId: newFisherman?.id });
+            }
+            
+            // Verify fisherman was created
+            const { data: verifyFisherman, error: verifyError } = await supabaseClient
+              .from('fishermen')
+              .select('id, boat_name, onboarding_payment_status')
+              .eq('user_id', userId)
+              .maybeSingle();
+            
+            if (verifyError || !verifyFisherman) {
+              logStep('CRITICAL WARNING: Fisherman verification failed - record may not exist', { verifyError });
+            } else {
+              logStep('Fisherman creation verified', { fishermanId: verifyFisherman.id, status: verifyFisherman.onboarding_payment_status });
             }
           }
 
