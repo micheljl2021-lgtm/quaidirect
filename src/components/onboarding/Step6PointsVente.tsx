@@ -1,31 +1,142 @@
-import { useState } from 'react';
-import { Plus, Trash2, MapPin } from 'lucide-react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { Plus, Trash2, MapPin, Loader2, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useLoadScript, Autocomplete } from '@react-google-maps/api';
 
-interface SalePoint {
-  label: string;
-  address: string;
-  description: string;
-}
+const libraries: ("places")[] = ["places"];
 
 interface Step6PointsVenteProps {
   formData: {
     salePoint1Label?: string;
     salePoint1Address?: string;
     salePoint1Description?: string;
+    salePoint1Lat?: number;
+    salePoint1Lng?: number;
     salePoint2Label?: string;
     salePoint2Address?: string;
     salePoint2Description?: string;
+    salePoint2Lat?: number;
+    salePoint2Lng?: number;
   };
   onChange: (field: string, value: any) => void;
 }
 
 export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) => {
   const [showSecondPoint, setShowSecondPoint] = useState(!!formData.salePoint2Label);
+  const autocomplete1Ref = useRef<google.maps.places.Autocomplete | null>(null);
+  const autocomplete2Ref = useRef<google.maps.places.Autocomplete | null>(null);
+
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
+    libraries,
+  });
+
+  const handlePlaceChanged1 = useCallback(() => {
+    if (autocomplete1Ref.current) {
+      const place = autocomplete1Ref.current.getPlace();
+      if (place.geometry?.location) {
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+        const formattedAddress = place.formatted_address || place.name || '';
+        
+        onChange('salePoint1Address', formattedAddress);
+        onChange('salePoint1Lat', lat);
+        onChange('salePoint1Lng', lng);
+      }
+    }
+  }, [onChange]);
+
+  const handlePlaceChanged2 = useCallback(() => {
+    if (autocomplete2Ref.current) {
+      const place = autocomplete2Ref.current.getPlace();
+      if (place.geometry?.location) {
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+        const formattedAddress = place.formatted_address || place.name || '';
+        
+        onChange('salePoint2Address', formattedAddress);
+        onChange('salePoint2Lat', lat);
+        onChange('salePoint2Lng', lng);
+      }
+    }
+  }, [onChange]);
+
+  const onLoad1 = useCallback((autocomplete: google.maps.places.Autocomplete) => {
+    autocomplete1Ref.current = autocomplete;
+  }, []);
+
+  const onLoad2 = useCallback((autocomplete: google.maps.places.Autocomplete) => {
+    autocomplete2Ref.current = autocomplete;
+  }, []);
+
+  const autocompleteOptions = {
+    componentRestrictions: { country: 'fr' },
+    types: ['address', 'establishment'],
+  };
+
+  const renderAddressInput = (
+    id: string,
+    value: string,
+    lat: number | undefined,
+    lng: number | undefined,
+    onLoadFn: (autocomplete: google.maps.places.Autocomplete) => void,
+    onPlaceChangedFn: () => void,
+    onChangeFn: (value: string) => void
+  ) => {
+    if (loadError) {
+      return (
+        <div className="space-y-2">
+          <Input
+            id={id}
+            placeholder="Ex: Quai Cronstadt, Port de Hyères..."
+            value={value}
+            onChange={(e) => onChangeFn(e.target.value)}
+          />
+          <p className="text-xs text-destructive">Impossible de charger l'autocomplétion</p>
+        </div>
+      );
+    }
+
+    if (!isLoaded) {
+      return (
+        <div className="flex items-center gap-2 text-muted-foreground h-10">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Chargement...
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-2">
+        <Autocomplete
+          onLoad={onLoadFn}
+          onPlaceChanged={onPlaceChangedFn}
+          options={autocompleteOptions}
+        >
+          <Input
+            id={id}
+            placeholder="Tapez une adresse pour la rechercher..."
+            defaultValue={value}
+            onChange={(e) => {
+              if (!e.target.value) {
+                onChangeFn('');
+              }
+            }}
+          />
+        </Autocomplete>
+        {lat && lng && (
+          <div className="flex items-center gap-2 text-xs text-green-600">
+            <CheckCircle className="h-3 w-3" />
+            Coordonnées GPS enregistrées ({lat.toFixed(4)}, {lng.toFixed(4)})
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -58,13 +169,15 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
 
           <div className="space-y-2">
             <Label htmlFor="salePoint1Address">Adresse ou lieu *</Label>
-            <Input
-              id="salePoint1Address"
-              placeholder="Ex: Quai Cronstadt, Port de Hyères..."
-              value={formData.salePoint1Address || ''}
-              onChange={(e) => onChange('salePoint1Address', e.target.value)}
-              required
-            />
+            {renderAddressInput(
+              'salePoint1Address',
+              formData.salePoint1Address || '',
+              formData.salePoint1Lat,
+              formData.salePoint1Lng,
+              onLoad1,
+              handlePlaceChanged1,
+              (val) => onChange('salePoint1Address', val)
+            )}
           </div>
 
           <div className="space-y-2">
@@ -97,6 +210,8 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
                   onChange('salePoint2Label', '');
                   onChange('salePoint2Address', '');
                   onChange('salePoint2Description', '');
+                  onChange('salePoint2Lat', undefined);
+                  onChange('salePoint2Lng', undefined);
                 }}
               >
                 <Trash2 className="h-4 w-4" aria-hidden="true" />
@@ -116,12 +231,15 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
 
             <div className="space-y-2">
               <Label htmlFor="salePoint2Address">Adresse ou lieu</Label>
-              <Input
-                id="salePoint2Address"
-                placeholder="Ex: Place du Marché..."
-                value={formData.salePoint2Address || ''}
-                onChange={(e) => onChange('salePoint2Address', e.target.value)}
-              />
+              {renderAddressInput(
+                'salePoint2Address',
+                formData.salePoint2Address || '',
+                formData.salePoint2Lat,
+                formData.salePoint2Lng,
+                onLoad2,
+                handlePlaceChanged2,
+                (val) => onChange('salePoint2Address', val)
+              )}
             </div>
 
             <div className="space-y-2">
