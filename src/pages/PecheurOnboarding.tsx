@@ -126,37 +126,34 @@ const PecheurOnboarding = () => {
       
       const isWhitelisted = !!whitelistData;
       
+      // Check if user has paid via fishermen table OR payments table OR has fisherman role
       if (!isWhitelisted && (!fisherman || fisherman.onboarding_payment_status !== 'paid')) {
-        // Attendre 5 secondes pour que le webhook traite le paiement
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        // Check payments table for any active fisherman subscription
+        const { data: payment } = await supabase
+          .from('payments')
+          .select('status, plan')
+          .eq('user_id', user.id)
+          .ilike('plan', 'fisherman_%')
+          .in('status', ['active', 'trialing'])
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
         
-        // Vérifier à la fois la table payments ET fishermen
-        const [updatedFishermanResult, paymentsResult] = await Promise.all([
-          supabase
-            .from('fishermen')
-            .select('onboarding_payment_status')
-            .eq('user_id', user.id)
-            .single(),
-          supabase
-            .from('payments')
-            .select('status, plan')
-            .eq('user_id', user.id)
-            .in('plan', ['fisherman_basic', 'fisherman_pro'])
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle()
-        ]);
+        // Check if user has fisherman role
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'fisherman')
+          .maybeSingle();
         
-        const updatedFisherman = updatedFishermanResult.data;
-        const payment = paymentsResult.data;
+        const hasActivePayment = !!payment;
+        const hasFishermanRole = !!roleData;
         
-        // Si un paiement existe dans la table payments avec status active
-        const hasActivePayment = payment && payment.status === 'active';
-        const hasPaidStatus = updatedFisherman && updatedFisherman.onboarding_payment_status === 'paid';
-        
-        if (!hasActivePayment && !hasPaidStatus) {
+        // If has role or payment, allow access
+        if (!hasActivePayment && !hasFishermanRole) {
           toast.error(
-            "Votre paiement est en cours de traitement. Si le problème persiste après quelques minutes, contactez support@quaidirect.fr",
+            "Votre paiement n'a pas été trouvé. Si vous venez de payer, attendez quelques secondes et rafraîchissez la page.",
             { duration: 6000 }
           );
           navigate('/pecheur/payment');
