@@ -112,4 +112,4 @@ export const USER_ROLES = {
 } as const;
 
 // Mode maintenance - basculer sur false pour lancer le site
-export const MAINTENANCE_MODE = true;
+export const MAINTENANCE_MODE = false;
