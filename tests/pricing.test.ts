@@ -62,7 +62,6 @@ describe('Affiliate Credits Calculation', () => {
 
   it('should not allow negative credits', () => {
     const credits = AFFILIATE_CREDITS_RULES.calculateSmsCredits(-100);
-    expect(credits).toBeLessThanOrEqual(0);
     expect(credits).toBe(0);
   });
 

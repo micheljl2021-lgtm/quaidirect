@@ -332,19 +332,16 @@ serve(async (req) => {
               logStep('Adding opening bonus SMS to wallet', { fishermanId: fishermanData.id, bonusSms, planType });
               
               try {
-                // Create/update wallet with opening bonus
-                const { error: walletError } = await supabaseClient
-                  .from('fishermen_sms_wallet')
-                  .upsert({
-                    fisherman_id: fishermanData.id,
-                    balance_sms: bonusSms,
-                    updated_at: new Date().toISOString(),
-                  }, { onConflict: 'fisherman_id' });
+                // Use RPC function to increment wallet balance atomically
+                const { error: walletError } = await supabaseClient.rpc('increment_wallet_balance', {
+                  p_fisherman_id: fishermanData.id,
+                  p_sms_delta: bonusSms,
+                });
 
                 if (walletError) {
-                  logStep('ERROR creating/updating wallet', { error: walletError });
+                  logStep('ERROR incrementing wallet balance', { error: walletError });
                 } else {
-                  logStep('Wallet created/updated with opening bonus');
+                  logStep('Wallet incremented with opening bonus');
                   
                   // Record in history
                   const { error: historyError } = await supabaseClient
