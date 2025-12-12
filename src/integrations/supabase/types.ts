@@ -1088,6 +1088,27 @@ export type Database = {
           },
         ]
       }
+      launch_subscribers: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          message: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          message?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          message?: string | null
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           created_at: string
