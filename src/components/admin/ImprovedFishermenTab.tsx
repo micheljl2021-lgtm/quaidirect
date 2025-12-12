@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle, Globe, Eye, ExternalLink, Info } from "lucide-react";
+import { CheckCircle, Globe, ExternalLink, Info, XCircle, Mail } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -47,16 +47,52 @@ export function ImprovedFishermenTab() {
     },
   });
 
-  const handleVerify = async (fishermanId: string) => {
+  const handleVerify = async (fisherman: any) => {
+    const toastId = toast.loading("Validation en cours...");
+    
     const { error } = await supabase
       .from('fishermen')
       .update({ verified_at: new Date().toISOString() })
-      .eq('id', fishermanId);
+      .eq('id', fisherman.id);
 
     if (error) {
-      toast.error("Erreur lors de la vérification");
+      toast.error("Erreur lors de la vérification", { id: toastId });
+      return;
+    }
+
+    // Send approval email
+    try {
+      await supabase.functions.invoke('send-fisherman-approved-email', {
+        body: {
+          userEmail: fisherman.email,
+          boatName: fisherman.boat_name,
+          plan: fisherman.onboarding_payment_status === 'paid' ? 'standard' : 'pending',
+        }
+      });
+      toast.success("Pêcheur vérifié et email envoyé !", { id: toastId });
+    } catch (emailError) {
+      console.error('Error sending approval email:', emailError);
+      toast.success("Pêcheur vérifié (email non envoyé)", { id: toastId });
+    }
+    
+    refetch();
+  };
+
+  const handleReject = async (fisherman: any) => {
+    const confirmed = window.confirm(`Rejeter l'inscription de ${fisherman.boat_name} ? Cette action supprimera le profil pêcheur.`);
+    if (!confirmed) return;
+
+    const toastId = toast.loading("Rejet en cours...");
+    
+    const { error } = await supabase
+      .from('fishermen')
+      .delete()
+      .eq('id', fisherman.id);
+
+    if (error) {
+      toast.error("Erreur lors du rejet", { id: toastId });
     } else {
-      toast.success("Pêcheur vérifié avec succès");
+      toast.success("Inscription rejetée", { id: toastId });
       refetch();
     }
   };
@@ -181,9 +217,9 @@ export function ImprovedFishermenTab() {
                     <TableHead>Entreprise</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>SIRET</TableHead>
+                    <TableHead>Étape</TableHead>
                     <TableHead>Paiement</TableHead>
                     <TableHead>Vérifié</TableHead>
-                    <TableHead>Ambassadeur</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -194,6 +230,11 @@ export function ImprovedFishermenTab() {
                       <TableCell>{fisherman.company_name || '-'}</TableCell>
                       <TableCell className="text-sm">{fisherman.email || '-'}</TableCell>
                       <TableCell className="font-mono text-xs">{fisherman.siret}</TableCell>
+                      <TableCell>
+                        <Badge variant={fisherman.onboarding_step >= 6 ? 'default' : 'secondary'}>
+                          {fisherman.onboarding_step || 1}/6
+                        </Badge>
+                      </TableCell>
                       <TableCell>
                         <Badge variant={
                           fisherman.onboarding_payment_status === 'paid' ? 'default' :
@@ -208,11 +249,6 @@ export function ImprovedFishermenTab() {
                       <TableCell>
                         <Badge variant={fisherman.verified_at ? 'default' : 'secondary'}>
                           {fisherman.verified_at ? 'Oui' : 'Non'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={fisherman.is_ambassador ? 'default' : 'outline'}>
-                          {fisherman.is_ambassador ? 'Oui' : 'Non'}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -237,23 +273,31 @@ export function ImprovedFishermenTab() {
                               </a>
                             </Button>
                           )}
-                          {!fisherman.verified_at && (
-                            <Button
-                              size="sm"
-                              onClick={() => handleVerify(fisherman.id)}
-                              title="Vérifier"
-                            >
-                              <CheckCircle className="h-4 w-4" aria-hidden="true" />
-                            </Button>
+                          {!fisherman.verified_at && fisherman.onboarding_step >= 6 && (
+                            <>
+                              <Button
+                                size="sm"
+                                onClick={() => handleVerify(fisherman)}
+                                title="Valider l'inscription"
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                <CheckCircle className="h-4 w-4" aria-hidden="true" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleReject(fisherman)}
+                                title="Rejeter l'inscription"
+                              >
+                                <XCircle className="h-4 w-4" aria-hidden="true" />
+                              </Button>
+                            </>
                           )}
-                          <Button
-                            size="sm"
-                            variant={fisherman.is_ambassador ? 'destructive' : 'secondary'}
-                            onClick={() => handleToggleAmbassador(fisherman.id, fisherman.is_ambassador || false)}
-                            title={fisherman.is_ambassador ? 'Retirer ambassadeur' : 'Nommer ambassadeur'}
-                          >
-                            {fisherman.is_ambassador ? '−' : '★'}
-                          </Button>
+                          {!fisherman.verified_at && fisherman.onboarding_step < 6 && (
+                            <Badge variant="outline" className="text-xs">
+                              Onboarding incomplet
+                            </Badge>
+                          )}
                           <Button
                             size="sm"
                             variant="outline"

@@ -15,8 +15,19 @@ const PecheurPaymentSuccess = () => {
   const [paymentStatus, setPaymentStatus] = useState<'checking' | 'confirmed' | 'timeout'>('checking');
   const [pollingAttempts, setPollingAttempts] = useState(0);
   
-  const plan = searchParams.get('plan') || 'basic';
-  const amount = plan === 'pro' ? '199€' : '150€';
+  const plan = searchParams.get('plan') || 'standard';
+  const planLabels: Record<string, string> = {
+    standard: 'Standard',
+    pro: 'Pro',
+    elite: 'Elite',
+  };
+  const planAmounts: Record<string, string> = {
+    standard: '150€',
+    pro: '790€',
+    elite: '1990€',
+  };
+  const amount = planAmounts[plan] || '150€';
+  const planLabel = planLabels[plan] || 'Standard';
 
   const checkPaymentStatus = async () => {
     if (!user) return false;
@@ -175,7 +186,7 @@ const PecheurPaymentSuccess = () => {
             </div>
             <CardTitle className="text-3xl">Paiement confirmé !</CardTitle>
             <CardDescription className="text-lg">
-              Votre paiement de <strong>{amount}</strong> a été traité avec succès
+              Votre abonnement <strong>{planLabel}</strong> ({amount}/an) est actif
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -188,11 +199,11 @@ const PecheurPaymentSuccess = () => {
             </div>
             
             <p className="text-muted-foreground">
-              Vous pouvez maintenant compléter votre profil pêcheur et commencer à publier vos arrivages sur QuaiDirect.
+              Complétez votre profil pêcheur en 6 étapes pour activer votre compte et commencer à publier vos arrivages.
             </p>
             
-            <Button onClick={() => navigate('/pecheur/onboarding')} size="lg" className="w-full">
-              Commencer le formulaire d'inscription
+            <Button onClick={() => navigate('/pecheur/onboarding')} size="lg" className="w-full bg-green-600 hover:bg-green-700 text-white text-lg py-6">
+              🚀 Compléter mon profil pêcheur
             </Button>
             <Button 
               variant="outline" 
