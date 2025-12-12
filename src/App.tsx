@@ -57,6 +57,9 @@ const EditSalePoints = lazy(() => import("./pages/EditSalePoints"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const MarineAIRefactored = lazy(() => import("./pages/MarineAIRefactored"));
 const CreateArrivageWizard = lazy(() => import("./pages/CreateArrivageWizard"));
+const PecheursLanding = lazy(() => import("./pages/PecheursLanding"));
+const PecheursTarifs = lazy(() => import("./pages/PecheursTarifs"));
+const PecheurWallet = lazy(() => import("./pages/PecheurWallet"));
 
 // Wrapper for lazy-loaded routes
 const LazyRoute = ({ children }: { children: React.ReactNode }) => (
@@ -92,6 +95,8 @@ const App = () => (
             <Route path="/arrivages" element={<LazyRoute><Arrivages /></LazyRoute>} />
             <Route path="/comment-ca-marche" element={<LazyRoute><CommentCaMarche /></LazyRoute>} />
             <Route path="/devenir-pecheur" element={<LazyRoute><DevenirPecheur /></LazyRoute>} />
+            <Route path="/pecheurs" element={<LazyRoute><PecheursLanding /></LazyRoute>} />
+            <Route path="/pecheurs/tarifs" element={<LazyRoute><PecheursTarifs /></LazyRoute>} />
             <Route path="/ambassadeur-partenaire" element={<LazyRoute><AmbassadorPartner /></LazyRoute>} />
             <Route path="/drop/:id" element={<LazyRoute><DropDetail /></LazyRoute>} />
             <Route path="/pecheurs/:slug" element={<LazyRoute><FisherProfile /></LazyRoute>} />
@@ -167,6 +172,11 @@ const App = () => (
             <Route path="/pecheur/ia-marin" element={<LazyRoute><MarineAIRefactored /></LazyRoute>} />
             <Route path="/pecheur/support" element={<LazyRoute><PecheurSupport /></LazyRoute>} />
             <Route path="/pecheur/preferences" element={<LazyRoute><PecheurPreferences /></LazyRoute>} />
+            <Route path="/dashboard/pecheur/wallet" element={
+              <ProtectedFisherRoute>
+                <LazyRoute><PecheurWallet /></LazyRoute>
+              </ProtectedFisherRoute>
+            } />
 
             {/* Catch-all 404 */}
             <Route path="*" element={<NotFound />} />
