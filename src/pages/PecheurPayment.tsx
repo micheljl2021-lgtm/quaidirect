@@ -13,13 +13,14 @@ const PLANS = {
   standard: {
     name: "Standard",
     price: "150€",
-    priceId: "price_FISHERMAN_STANDARD_150_YEAR",
+    priceId: "price_1SZYAXH0VhS1yyE0FqJ0imbu",
     period: "par an",
     trial: "🎁 1 mois offert",
     features: [
       "Vitrine digitale personnalisée",
       "📱 50 SMS/mois + 200 SMS bonus",
       "📧 Emails illimités aux clients",
+      "🔔 Notifications push illimitées",
       "500 contacts CRM",
       "1 point de vente",
       "IA pour textes et descriptions",
@@ -27,14 +28,15 @@ const PLANS = {
   },
   pro: {
     name: "Pro",
-    price: "299€",
-    priceId: "price_FISHERMAN_PRO_299_YEAR",
+    price: "790€",
+    priceId: "price_1SddbeH0VhS1yyE0T70ZjSC1",
     period: "par an",
     badge: "Recommandé",
     trial: "🎁 1 mois offert",
     features: [
       "Tout le plan Standard inclus",
       "📱 200 SMS/mois + 1000 SMS bonus",
+      "🔔 Notifications push illimitées",
       "2000 contacts CRM",
       "3 points de vente",
       "IA avancée : prix, météo/marée",
@@ -44,15 +46,16 @@ const PLANS = {
   },
   elite: {
     name: "Elite",
-    price: "199€",
-    priceId: "price_FISHERMAN_ELITE_199_MONTH",
-    period: "par mois",
+    price: "1990€",
+    priceId: "price_1SddbuH0VhS1yyE0ZFYhsoQ4",
+    period: "par an",
     badge: "Volume",
     trial: "",
     features: [
       "Tout le plan Pro inclus",
       "📱 1500 SMS/mois",
       "SMS illimités (0.09€/SMS au-delà)",
+      "🔔 Notifications push illimitées",
       "10 000 contacts CRM",
       "10 points de vente",
       "Toutes les fonctionnalités avancées",
@@ -60,7 +63,16 @@ const PLANS = {
   },
 };
 
-const SMS_PACKS = {
+interface SmsPack {
+  name: string;
+  quantity: number;
+  price: string;
+  pricePerSms: string;
+  priceId: string;
+  badge?: string;
+}
+
+const SMS_PACKS: Record<string, SmsPack> = {
   pack500: {
     name: "Pack 500",
     quantity: 500,
