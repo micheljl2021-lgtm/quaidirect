@@ -21,19 +21,34 @@ const PecheurPaymentSuccess = () => {
   const checkPaymentStatus = async () => {
     if (!user) return false;
     
-    const { data, error } = await supabase
+    // Vérifier si le rôle fisherman a été assigné (preuve que le webhook a fonctionné)
+    const { data: roleData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'fisherman')
+      .maybeSingle();
+
+    if (roleData) {
+      setPaymentStatus('confirmed');
+      return true;
+    }
+
+    // Fallback: vérifier aussi la table payments
+    const { data: paymentData } = await supabase
       .from('payments')
-      .select('status, plan')
+      .select('status')
       .eq('user_id', user.id)
       .in('plan', ['fisherman_basic', 'fisherman_pro'])
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
-    if (!error && data?.status === 'active') {
+    if (paymentData?.status === 'active' || paymentData?.status === 'trialing') {
       setPaymentStatus('confirmed');
       return true;
     }
+    
     return false;
   };
 

@@ -24,6 +24,7 @@ const PecheurDashboard = () => {
   const [archivedDrops, setArchivedDrops] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [fishermanId, setFishermanId] = useState<string | null>(null);
+  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -38,15 +39,47 @@ const PecheurDashboard = () => {
       return;
     }
 
-    if (userRole === 'fisherman' && !isVerifiedFisherman) {
-      setLoading(false);
-      return;
-    }
+    // Check if fisherman has completed onboarding
+    const checkOnboardingStatus = async () => {
+      const { data: fisherman } = await supabase
+        .from('fishermen')
+        .select('id, boat_name, siret, verified_at')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-    if (isVerifiedFisherman) {
-      fetchDrops();
+      if (!fisherman) {
+        // No fisherman record - redirect to payment
+        navigate('/pecheur/payment');
+        return;
+      }
+
+      // Check if critical fields are filled (onboarding complete)
+      const isOnboardingDone = fisherman.boat_name && 
+                               fisherman.boat_name !== 'À compléter' &&
+                               fisherman.siret && 
+                               fisherman.siret !== 'À compléter';
+      
+      if (!isOnboardingDone) {
+        // Onboarding not complete - redirect to onboarding
+        navigate('/pecheur/onboarding');
+        return;
+      }
+
+      setOnboardingComplete(true);
+      setFishermanId(fisherman.id);
+
+      // If admin verified, fetch drops
+      if (fisherman.verified_at) {
+        fetchDrops();
+      } else {
+        setLoading(false);
+      }
+    };
+
+    if (userRole === 'fisherman' || userRole === 'admin') {
+      checkOnboardingStatus();
     }
-  }, [user, userRole, isVerifiedFisherman, authLoading, navigate]);
+  }, [user, userRole, authLoading, navigate]);
 
   // Realtime subscription for drops
   useEffect(() => {
@@ -131,18 +164,31 @@ const PecheurDashboard = () => {
     );
   }
 
-  if (!isVerifiedFisherman) {
+  // Onboarding complete but awaiting admin verification
+  if (onboardingComplete && !isVerifiedFisherman) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="container max-w-2xl px-4 py-8">
+        <div className="container max-w-2xl px-4 py-8 space-y-6">
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-full mb-4">
+              <AlertCircle className="h-8 w-8 text-amber-600 dark:text-amber-500" aria-hidden="true" />
+            </div>
+            <h1 className="text-2xl font-bold text-foreground mb-2">Profil en cours de vérification</h1>
+            <p className="text-muted-foreground">
+              Merci d'avoir complété votre inscription ! Notre équipe vérifie actuellement votre profil.
+            </p>
+          </div>
           <Alert className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
             <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-500" aria-hidden="true" />
             <AlertDescription className="text-amber-800 dark:text-amber-300">
-              Votre compte pêcheur est en attente de validation. Vous recevrez un e-mail 
-              une fois votre profil vérifié par notre équipe.
+              <strong>Prochaine étape :</strong> Vous recevrez un e-mail dès que votre profil sera validé par notre équipe.
+              Cela prend généralement moins de 24h.
             </AlertDescription>
           </Alert>
+          <div className="text-center text-sm text-muted-foreground">
+            <p>Une question ? Contactez-nous à <a href="mailto:support@quaidirect.fr" className="text-primary underline">support@quaidirect.fr</a></p>
+          </div>
         </div>
       </div>
     );
