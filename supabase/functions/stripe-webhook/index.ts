@@ -312,6 +312,64 @@ serve(async (req) => {
             logStep('Fisherman role added successfully');
           }
 
+          // Add opening bonus SMS to wallet
+          const bonusSmsMap: Record<string, number> = {
+            standard: 200,
+            pro: 1000,
+            elite: 0,
+          };
+          const bonusSms = bonusSmsMap[planType] || 0;
+          
+          if (bonusSms > 0) {
+            // Retrieve fisherman ID
+            const { data: fishermanData } = await supabaseClient
+              .from('fishermen')
+              .select('id')
+              .eq('user_id', userId)
+              .maybeSingle();
+            
+            if (fishermanData?.id) {
+              logStep('Adding opening bonus SMS to wallet', { fishermanId: fishermanData.id, bonusSms, planType });
+              
+              try {
+                // Create/update wallet with opening bonus
+                const { error: walletError } = await supabaseClient
+                  .from('fishermen_sms_wallet')
+                  .upsert({
+                    fisherman_id: fishermanData.id,
+                    balance_sms: bonusSms,
+                    updated_at: new Date().toISOString(),
+                  }, { onConflict: 'fisherman_id' });
+
+                if (walletError) {
+                  logStep('ERROR creating/updating wallet', { error: walletError });
+                } else {
+                  logStep('Wallet created/updated with opening bonus');
+                  
+                  // Record in history
+                  const { error: historyError } = await supabaseClient
+                    .from('fishermen_sms_wallet_history')
+                    .insert({
+                      fisherman_id: fishermanData.id,
+                      operation_type: 'opening_bonus',
+                      sms_delta: bonusSms,
+                      notes: `Bonus ouverture plan ${planType}`,
+                    });
+
+                  if (historyError) {
+                    logStep('ERROR recording wallet history', { error: historyError });
+                  } else {
+                    logStep('Opening bonus recorded in wallet history');
+                  }
+                }
+              } catch (walletException) {
+                logStep('EXCEPTION adding opening bonus', { error: walletException });
+              }
+            } else {
+              logStep('WARNING: Could not retrieve fisherman ID for opening bonus');
+            }
+          }
+
           // Send welcome email via supabase.functions.invoke
           try {
             const { data: fishermenData } = await supabaseClient
@@ -399,6 +457,83 @@ serve(async (req) => {
           logStep('ERROR adding premium role', { error: roleError });
         } else {
           logStep('Premium role added successfully');
+          
+          // Handle affiliate credits for Premium/Premium+
+          const referrerCode = session.metadata?.ref || session.metadata?.referrer_code;
+          if (referrerCode) {
+            logStep('Processing affiliate credits', { referrerCode, plan });
+            
+            try {
+              const { data: fisherman } = await supabaseClient
+                .from('fishermen')
+                .select('id')
+                .eq('affiliate_code', referrerCode)
+                .maybeSingle();
+              
+              if (fisherman) {
+                // Determine credit amount based on plan
+                const creditCentsMap: Record<string, number> = {
+                  premium: 800,           // 8€
+                  premium_annual: 800,
+                  premium_plus: 1800,     // 18€
+                  premium_plus_annual: 1800,
+                };
+                const creditCents = creditCentsMap[plan] || 0;
+                const smsCredits = Math.floor(creditCents / 7); // 0.07€ per SMS
+                
+                if (smsCredits > 0) {
+                  logStep('Crediting fisherman wallet', { fishermanId: fisherman.id, smsCredits, creditCents });
+                  
+                  // Increment wallet balance
+                  const { error: walletError } = await supabaseClient.rpc('increment_wallet_balance', {
+                    p_fisherman_id: fisherman.id,
+                    p_sms_delta: smsCredits,
+                  });
+                  
+                  if (walletError) {
+                    logStep('ERROR incrementing wallet balance', { error: walletError });
+                  } else {
+                    logStep('Wallet balance incremented successfully');
+                    
+                    // Record in wallet history
+                    const operationType = plan.includes('premium_plus') ? 'affiliate_premium_plus' : 'affiliate_premium';
+                    const { error: historyError } = await supabaseClient
+                      .from('fishermen_sms_wallet_history')
+                      .insert({
+                        fisherman_id: fisherman.id,
+                        operation_type: operationType,
+                        sms_delta: smsCredits,
+                        eur_cents_delta: creditCents,
+                        source_user_id: userId,
+                        notes: `Affiliation ${plan} - ${smsCredits} SMS crédités`,
+                      });
+                    
+                    if (historyError) {
+                      logStep('ERROR recording affiliate history', { error: historyError });
+                    } else {
+                      logStep('Affiliate credits recorded in history');
+                    }
+                    
+                    // Mark the payment with the referrer
+                    const { error: paymentUpdateError } = await supabaseClient
+                      .from('payments')
+                      .update({ referrer_fisherman_id: fisherman.id })
+                      .eq('stripe_subscription_id', subscription.id);
+                    
+                    if (paymentUpdateError) {
+                      logStep('ERROR updating payment with referrer', { error: paymentUpdateError });
+                    } else {
+                      logStep('Payment marked with referrer fisherman');
+                    }
+                  }
+                }
+              } else {
+                logStep('WARNING: Referrer code not found', { referrerCode });
+              }
+            } catch (affiliateError) {
+              logStep('EXCEPTION processing affiliate credits', { error: affiliateError });
+            }
+          }
           
           // Send welcome email to new premium user
           try {
