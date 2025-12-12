@@ -10,55 +10,85 @@ import { Badge } from '@/components/ui/badge';
 import Header from '@/components/Header';
 
 const PLANS = {
-  basic: {
-    name: "Pêcheur",
+  standard: {
+    name: "Standard",
     price: "150€",
-    priceId: "price_1SZYAXH0VhS1yyE0FqJ0imbu",
+    priceId: "price_FISHERMAN_STANDARD_150_YEAR",
     period: "par an",
     trial: "🎁 1 mois offert",
     features: [
-      "Fiche pêcheur + points de vente",
+      "Vitrine digitale personnalisée",
+      "📱 50 SMS/mois + 200 SMS bonus",
       "📧 Emails illimités aux clients",
-      "📱 100 SMS/mois inclus pendant 1 an",
-      "Partage WhatsApp depuis votre téléphone",
-      "IA : textes, descriptions, messages types",
-      "Base clients simple",
+      "500 contacts CRM",
+      "1 point de vente",
+      "IA pour textes et descriptions",
     ],
   },
   pro: {
-    name: "Pêcheur PRO",
-    price: "199€",
-    priceId: "price_1SYgOuH0VhS1yyE0XINPVQdm",
+    name: "Pro",
+    price: "299€",
+    priceId: "price_FISHERMAN_PRO_299_YEAR",
     period: "par an",
     badge: "Recommandé",
     trial: "🎁 1 mois offert",
     features: [
-      "Tout le plan Pêcheur inclus",
-      "🎁 500 SMS offerts à l'inscription",
-      "📱 100 SMS/mois inclus pendant 1 an",
-      "IA avancée : prix, mise en avant, météo/marée",
-      "Multi-points de vente",
-      "Statistiques : CA estimé, clients touchés",
-      "Priorité support",
+      "Tout le plan Standard inclus",
+      "📱 200 SMS/mois + 1000 SMS bonus",
+      "2000 contacts CRM",
+      "3 points de vente",
+      "IA avancée : prix, météo/marée",
+      "Statistiques détaillées",
+      "Support prioritaire",
+    ],
+  },
+  elite: {
+    name: "Elite",
+    price: "199€",
+    priceId: "price_FISHERMAN_ELITE_199_MONTH",
+    period: "par mois",
+    badge: "Volume",
+    trial: "",
+    features: [
+      "Tout le plan Pro inclus",
+      "📱 1500 SMS/mois",
+      "SMS illimités (0.09€/SMS au-delà)",
+      "10 000 contacts CRM",
+      "10 points de vente",
+      "Toutes les fonctionnalités avancées",
     ],
   },
 };
 
 const SMS_PACKS = {
   pack500: {
-    name: "SMS Pack",
+    name: "Pack 500",
     quantity: 500,
     price: "40€",
     pricePerSms: "0.08€",
-    priceId: "price_1Sc6emH0VhS1yyE08QedRHLt",
+    priceId: "price_SMS_PACK_500",
   },
   pack1000: {
-    name: "SMS+ Pack",
+    name: "Pack Lancement",
     quantity: 1000,
     price: "70€",
     pricePerSms: "0.07€",
-    priceId: "price_1Sc6f2H0VhS1yyE0Q35I8Lak",
-    badge: "Meilleur rapport",
+    priceId: "price_SMS_PACK_LANCEMENT",
+    badge: "Recommandé",
+  },
+  pack2000: {
+    name: "Pack 2000",
+    quantity: 2000,
+    price: "120€",
+    pricePerSms: "0.06€",
+    priceId: "price_SMS_PACK_2000",
+  },
+  pack5000: {
+    name: "Pack 5000",
+    quantity: 5000,
+    price: "250€",
+    pricePerSms: "0.05€",
+    priceId: "price_SMS_PACK_5000",
   },
 };
 
@@ -154,33 +184,33 @@ const PecheurPayment = () => {
         {!isWhitelisted && (
           <>
             {/* Pricing Cards */}
-            <div className="grid md:grid-cols-2 gap-6 mb-8 max-w-5xl mx-auto">
-              {/* Basic Plan - Pêcheur */}
+            <div className="grid md:grid-cols-3 gap-6 mb-8 max-w-6xl mx-auto">
+              {/* Standard Plan */}
               <Card className="relative hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    <span>{PLANS.basic.name}</span>
+                    <span>{PLANS.standard.name}</span>
                   </CardTitle>
                   <CardDescription>Pour démarrer la vente en direct</CardDescription>
-                  {PLANS.basic.trial && (
+                  {PLANS.standard.trial && (
                     <Badge className="bg-green-500 text-white mt-2 w-fit">
-                      {PLANS.basic.trial}
+                      {PLANS.standard.trial}
                     </Badge>
                   )}
                 </CardHeader>
                 <CardContent>
                   <div className="mb-6">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-bold">{PLANS.basic.price}</span>
-                      <span className="text-muted-foreground">/{PLANS.basic.period}</span>
+                      <span className="text-4xl font-bold">{PLANS.standard.price}</span>
+                      <span className="text-muted-foreground">/{PLANS.standard.period}</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      puis {PLANS.basic.price}/{PLANS.basic.period}
+                      puis {PLANS.standard.price}/{PLANS.standard.period}
                     </p>
                   </div>
                   
                   <ul className="space-y-3 mb-6">
-                    {PLANS.basic.features.map((feature, index) => (
+                    {PLANS.standard.features.map((feature, index) => (
                       <li key={index} className="flex items-start gap-2">
                         <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                         <span className="text-sm">{feature}</span>
@@ -189,18 +219,18 @@ const PecheurPayment = () => {
                   </ul>
 
                   <Button
-                    onClick={() => handlePayment(PLANS.basic.priceId, 'basic')}
-                    disabled={loading === 'basic'}
+                    onClick={() => handlePayment(PLANS.standard.priceId, 'standard')}
+                    disabled={loading === 'standard'}
                     size="lg"
                     variant="outline"
                     className="w-full"
                   >
-                    {loading === 'basic' ? 'Chargement...' : 'Démarrer l\'essai gratuit'}
+                    {loading === 'standard' ? 'Chargement...' : 'Démarrer l\'essai gratuit'}
                   </Button>
                 </CardContent>
               </Card>
 
-              {/* Pro Plan - Pêcheur PRO */}
+              {/* Pro Plan */}
               <Card className="relative border-primary shadow-lg hover:shadow-xl transition-shadow">
                 {PLANS.pro.badge && (
                   <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -249,10 +279,56 @@ const PecheurPayment = () => {
                   </Button>
                 </CardContent>
               </Card>
+
+              {/* Elite Plan */}
+              <Card className="relative hover:shadow-lg transition-shadow border-2">
+                {PLANS.elite.badge && (
+                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-600">
+                    {PLANS.elite.badge}
+                  </Badge>
+                )}
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>{PLANS.elite.name}</span>
+                    <Zap className="h-5 w-5 text-purple-600" />
+                  </CardTitle>
+                  <CardDescription>Pour les gros volumes</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="mb-6">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-bold">{PLANS.elite.price}</span>
+                      <span className="text-muted-foreground">/{PLANS.elite.period}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Facturation mensuelle
+                    </p>
+                  </div>
+                  
+                  <ul className="space-y-3 mb-6">
+                    {PLANS.elite.features.map((feature, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button
+                    onClick={() => handlePayment(PLANS.elite.priceId, 'elite')}
+                    disabled={loading === 'elite'}
+                    size="lg"
+                    className="w-full"
+                    variant="default"
+                  >
+                    {loading === 'elite' ? 'Chargement...' : 'Commencer'}
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
 
             {/* SMS Info Card */}
-            <Card className="mb-8 max-w-5xl mx-auto bg-blue-50 border-blue-200">
+            <Card className="mb-8 max-w-6xl mx-auto bg-blue-50 border-blue-200">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-3">
                   <MessageSquare className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
@@ -261,10 +337,13 @@ const PecheurPayment = () => {
                       📱 SMS inclus dans tous les plans
                     </p>
                     <p className="text-sm text-blue-800 mb-2">
-                      <strong>Pêcheur :</strong> 100 SMS/mois pendant 1 an (1 200 SMS au total)
+                      <strong>Standard :</strong> 50 SMS/mois + 200 SMS bonus à l'inscription
                     </p>
                     <p className="text-sm text-blue-800 mb-2">
-                      <strong>Pêcheur PRO :</strong> 500 SMS bonus + 100 SMS/mois pendant 1 an (1 700 SMS au total)
+                      <strong>Pro :</strong> 200 SMS/mois + 1000 SMS bonus à l'inscription
+                    </p>
+                    <p className="text-sm text-blue-800 mb-2">
+                      <strong>Elite :</strong> 1500 SMS/mois + SMS illimités (0.09€/SMS au-delà)
                     </p>
                     <p className="text-sm text-blue-800 font-medium">
                       📧 Emails illimités + WhatsApp inclus dans tous les plans
@@ -275,48 +354,29 @@ const PecheurPayment = () => {
             </Card>
 
             {/* SMS Packs Options */}
-            <div className="max-w-5xl mx-auto mb-8">
+            <div className="max-w-6xl mx-auto mb-8">
               <h3 className="text-xl font-semibold text-center mb-4">📦 Packs SMS supplémentaires</h3>
               <p className="text-center text-muted-foreground mb-6">
                 Besoin de plus de SMS ? Achetez des packs additionnels après inscription
               </p>
-              <div className="grid md:grid-cols-2 gap-4">
-                {/* Pack 500 SMS */}
-                <Card className="hover:shadow-md transition-shadow">
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <p className="font-semibold text-lg">{SMS_PACKS.pack500.name}</p>
-                        <p className="text-sm text-muted-foreground">{SMS_PACKS.pack500.quantity} SMS</p>
+              <div className="grid md:grid-cols-4 gap-4">
+                {Object.entries(SMS_PACKS).map(([key, pack]) => (
+                  <Card key={key} className={`hover:shadow-md transition-shadow ${pack.badge ? 'border-primary/50 relative' : ''}`}>
+                    {pack.badge && (
+                      <Badge className="absolute -top-2 right-4 bg-primary text-xs">
+                        {pack.badge}
+                      </Badge>
+                    )}
+                    <CardContent className="pt-6">
+                      <div className="flex flex-col gap-2 mb-4">
+                        <p className="font-semibold text-lg">{pack.name}</p>
+                        <p className="text-sm text-muted-foreground">{pack.quantity} SMS</p>
+                        <p className="text-2xl font-bold">{pack.price}</p>
+                        <p className="text-xs text-muted-foreground">{pack.pricePerSms}/SMS</p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold">{SMS_PACKS.pack500.price}</p>
-                        <p className="text-xs text-muted-foreground">{SMS_PACKS.pack500.pricePerSms}/SMS</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Pack 1000 SMS */}
-                <Card className="hover:shadow-md transition-shadow border-primary/50 relative">
-                  {SMS_PACKS.pack1000.badge && (
-                    <Badge className="absolute -top-2 right-4 bg-primary text-xs">
-                      {SMS_PACKS.pack1000.badge}
-                    </Badge>
-                  )}
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <p className="font-semibold text-lg">{SMS_PACKS.pack1000.name}</p>
-                        <p className="text-sm text-muted-foreground">{SMS_PACKS.pack1000.quantity} SMS</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold">{SMS_PACKS.pack1000.price}</p>
-                        <p className="text-xs text-muted-foreground">{SMS_PACKS.pack1000.pricePerSms}/SMS</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             </div>
 

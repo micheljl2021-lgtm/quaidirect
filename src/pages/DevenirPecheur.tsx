@@ -60,26 +60,26 @@ const DevenirPecheur = () => {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-foreground mb-4">
-              Deux formules adaptées à vos besoins
+              Trois formules adaptées à vos besoins
             </h2>
             <p className="text-lg text-muted-foreground">
               Choisissez le plan qui correspond à votre activité
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Plan Basic */}
-            <Card className={`border-2 ${preselectedPlan === 'basic' ? 'border-primary shadow-lg' : ''}`}>
-              {preselectedPlan === 'basic' && (
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Plan STANDARD */}
+            <Card className={`border-2 ${preselectedPlan === 'standard' ? 'border-primary shadow-lg' : ''}`}>
+              {preselectedPlan === 'standard' && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-white text-sm font-medium rounded-full">
                   Plan sélectionné
                 </div>
               )}
               <CardContent className="pt-8 space-y-6">
                 <div>
-                  <h3 className="text-2xl font-bold text-foreground mb-2">Plan Basic</h3>
+                  <h3 className="text-2xl font-bold text-foreground mb-2">Plan Standard</h3>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold text-primary">99€</span>
+                    <span className="text-4xl font-bold text-primary">150€</span>
                     <span className="text-muted-foreground">/an</span>
                   </div>
                 </div>
@@ -91,7 +91,7 @@ const DevenirPecheur = () => {
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-muted-foreground">Création arrivages illimitée (2 min)</span>
+                    <span className="text-muted-foreground">50 SMS/mois + 200 SMS bonus</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
@@ -99,17 +99,17 @@ const DevenirPecheur = () => {
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-muted-foreground">Partage WhatsApp automatique</span>
+                    <span className="text-muted-foreground">500 contacts CRM</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-muted-foreground">IA pour textes et descriptions</span>
+                    <span className="text-muted-foreground">1 point de vente</span>
                   </li>
                 </ul>
 
-                <Link to="/pecheur/payment?plan=basic" className="block">
+                <Link to="/pecheur/payment?plan=standard" className="block">
                   <Button className="w-full" size="lg">
-                    Choisir Basic - 99€/an
+                    Choisir Standard - 150€/an
                   </Button>
                 </Link>
               </CardContent>
@@ -124,7 +124,7 @@ const DevenirPecheur = () => {
                 <div>
                   <h3 className="text-2xl font-bold text-foreground mb-2">Plan Pro</h3>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold text-primary">199€</span>
+                    <span className="text-4xl font-bold text-primary">299€</span>
                     <span className="text-muted-foreground">/an</span>
                   </div>
                 </div>
@@ -132,29 +132,76 @@ const DevenirPecheur = () => {
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-foreground font-medium">Tout le plan Basic +</span>
+                    <span className="text-foreground font-medium">Tout le plan Standard +</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-muted-foreground">IA avancée pour prix et météo</span>
+                    <span className="text-muted-foreground">200 SMS/mois + 1000 SMS bonus</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-muted-foreground">Statistiques et analyses détaillées</span>
+                    <span className="text-muted-foreground">2000 contacts CRM</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-muted-foreground">Multi-points de vente</span>
+                    <span className="text-muted-foreground">3 points de vente</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-muted-foreground">Support prioritaire</span>
+                    <span className="text-muted-foreground">IA avancée et statistiques</span>
                   </li>
                 </ul>
 
                 <Link to="/pecheur/payment?plan=pro" className="block">
                   <Button className="w-full" size="lg" variant="default">
-                    Choisir Pro - 199€/an
+                    Choisir Pro - 299€/an
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* Plan ELITE */}
+            <Card className={`border-2 ${preselectedPlan === 'elite' ? 'border-primary shadow-lg' : ''}`}>
+              {preselectedPlan === 'elite' && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-white text-sm font-medium rounded-full">
+                  Plan sélectionné
+                </div>
+              )}
+              <CardContent className="pt-8 space-y-6">
+                <div>
+                  <h3 className="text-2xl font-bold text-foreground mb-2">Plan Elite</h3>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold text-primary">199€</span>
+                    <span className="text-muted-foreground">/mois</span>
+                  </div>
+                </div>
+
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
+                    <span className="text-foreground font-medium">Tout le plan Pro +</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
+                    <span className="text-muted-foreground">1500 SMS/mois</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
+                    <span className="text-muted-foreground">SMS illimités (0.09€/SMS au-delà)</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
+                    <span className="text-muted-foreground">10 000 contacts CRM</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
+                    <span className="text-muted-foreground">10 points de vente</span>
+                  </li>
+                </ul>
+
+                <Link to="/pecheur/payment?plan=elite" className="block">
+                  <Button className="w-full" size="lg" variant="default">
+                    Choisir Elite - 199€/mois
                   </Button>
                 </Link>
               </CardContent>
@@ -162,7 +209,7 @@ const DevenirPecheur = () => {
           </div>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
-            SMS disponibles en option après inscription • Commission de 8% sur les paniers
+            Packs SMS supplémentaires disponibles après inscription • Commission de 8% sur les paniers
           </p>
         </div>
       </section>
