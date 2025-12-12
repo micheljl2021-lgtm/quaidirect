@@ -100,3 +100,6 @@ verify_jwt = false  # Public endpoint - returns sale points for map display
 
 [functions.send-basket-customer-email]
 verify_jwt = false  # Called by webhook after basket order - sends confirmation to customer
+
+[functions.send-inquiry-confirmation]
+verify_jwt = false  # Public endpoint - sends confirmation to anonymous inquiries

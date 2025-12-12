@@ -78,7 +78,9 @@ export default function MaintenancePage({ showAdminLink = true }: MaintenancePag
         .from('launch_subscribers')
         .insert({ 
           email: email.trim().toLowerCase(), 
-          message: message.trim() || null 
+          message: message.trim() || null,
+          type: 'launch_notification',
+          status: 'new'
         });
 
       if (error) {
@@ -88,8 +90,17 @@ export default function MaintenancePage({ showAdminLink = true }: MaintenancePag
           throw error;
         }
       } else {
+        // Send confirmation email
+        await supabase.functions.invoke('send-inquiry-confirmation', {
+          body: { 
+            email: email.trim().toLowerCase(), 
+            message: message.trim(), 
+            type: 'launch_notification' 
+          }
+        });
+        
         setIsSubscribed(true);
-        toast.success("Merci ! Nous vous préviendrons dès l'ouverture.");
+        toast.success("Merci ! Vérifiez votre boîte mail pour la confirmation.");
       }
     } catch (error) {
       console.error('Subscribe error:', error);

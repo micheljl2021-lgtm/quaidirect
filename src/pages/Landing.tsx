@@ -1,7 +1,12 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Crown, MapPin, Bell, Shield, Users, Anchor, ArrowRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Crown, MapPin, Bell, Shield, Users, Anchor, ArrowRight, Send, Loader2, CheckCircle, MessageSquare } from "lucide-react";
+import { toast } from "sonner";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ArrivageCard from "@/components/ArrivageCard";
@@ -15,6 +20,152 @@ import pecheDurableLogo from "@/assets/logo-peche-durable.png";
 
 import { useLandingStats } from "@/hooks/useLandingStats";
 import { useSalePoints, findSalePointById } from "@/hooks/useSalePoints";
+
+// Contact Section Component
+function ContactSection() {
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [type, setType] = useState("question");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email.trim()) {
+      toast.error("Veuillez entrer votre email");
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      // Insert into database
+      const { error: dbError } = await supabase
+        .from('launch_subscribers')
+        .insert({ 
+          email: email.trim().toLowerCase(), 
+          message: message.trim() || null,
+          type,
+          status: 'new'
+        });
+
+      if (dbError) {
+        if (dbError.code === '23505') {
+          toast.info("Vous nous avez déjà contacté ! Nous reviendrons vers vous bientôt.");
+        } else {
+          throw dbError;
+        }
+      } else {
+        // Send confirmation email
+        await supabase.functions.invoke('send-inquiry-confirmation', {
+          body: { email: email.trim().toLowerCase(), message: message.trim(), type }
+        });
+        
+        setIsSubmitted(true);
+        toast.success("Message envoyé ! Vérifiez votre boîte mail.");
+      }
+    } catch (error) {
+      console.error('Contact form error:', error);
+      toast.error("Une erreur est survenue. Réessayez.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isSubmitted) {
+    return (
+      <section className="container px-4 py-16 border-t border-border bg-muted/30">
+        <div className="mx-auto max-w-xl text-center space-y-6">
+          <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
+          <h2 className="text-3xl font-bold text-foreground">Message envoyé !</h2>
+          <p className="text-lg text-muted-foreground">
+            Nous avons bien reçu votre demande. Vérifiez votre boîte mail pour la confirmation.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="container px-4 py-16 border-t border-border bg-muted/30">
+      <div className="mx-auto max-w-xl">
+        <div className="text-center space-y-4 mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
+            <MessageSquare className="h-4 w-4 text-primary" aria-hidden="true" />
+            <span className="text-sm font-medium text-foreground">Contact</span>
+          </div>
+          <h2 className="text-3xl font-bold text-foreground">
+            Une question ? Contactez-nous !
+          </h2>
+          <p className="text-muted-foreground">
+            Notre équipe vous répondra dans les plus brefs délais
+          </p>
+        </div>
+
+        <Card>
+          <CardContent className="pt-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Input
+                  type="email"
+                  placeholder="Votre email *"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="bg-background"
+                />
+              </div>
+              
+              <div>
+                <Select value={type} onValueChange={setType}>
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Type de demande" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="question">Question générale</SelectItem>
+                    <SelectItem value="fisherman_interest">Je suis pêcheur et intéressé</SelectItem>
+                    <SelectItem value="partnership">Partenariat / Presse</SelectItem>
+                    <SelectItem value="other">Autre</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Textarea
+                  placeholder="Votre message..."
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  rows={4}
+                  className="bg-background resize-none"
+                />
+              </div>
+              
+              <Button 
+                type="submit" 
+                className="w-full" 
+                size="lg"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Envoi...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Envoyer ma demande
+                  </>
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </section>
+  );
+}
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -445,6 +596,9 @@ const Landing = () => {
           </Card>
         </div>
       </section>
+
+      {/* Contact Section */}
+      <ContactSection />
 
       {/* Footer */}
       <Footer />

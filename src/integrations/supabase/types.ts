@@ -1090,22 +1090,34 @@ export type Database = {
       }
       launch_subscribers: {
         Row: {
+          admin_response: string | null
           created_at: string | null
           email: string
           id: string
           message: string | null
+          responded_at: string | null
+          status: string | null
+          type: string | null
         }
         Insert: {
+          admin_response?: string | null
           created_at?: string | null
           email: string
           id?: string
           message?: string | null
+          responded_at?: string | null
+          status?: string | null
+          type?: string | null
         }
         Update: {
+          admin_response?: string | null
           created_at?: string | null
           email?: string
           id?: string
           message?: string | null
+          responded_at?: string | null
+          status?: string | null
+          type?: string | null
         }
         Relationships: []
       }
