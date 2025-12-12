@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Crown, Zap, ArrowLeft } from "lucide-react";
+import { CheckCircle2, Crown, Zap, ArrowLeft, Users } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { FISHERMAN_PLANS } from "@/config/pricing";
@@ -18,6 +18,7 @@ const PecheursTarifs = () => {
         'Vitrine digitale personnalisée',
         `${FISHERMAN_PLANS.STANDARD.smsQuotaMonthly} SMS/mois`,
         `${FISHERMAN_PLANS.STANDARD.openingBonusSms} SMS bonus à l'ouverture`,
+        '🔔 Notifications push illimitées',
         `${FISHERMAN_PLANS.STANDARD.crmContacts} contacts CRM`,
         `${FISHERMAN_PLANS.STANDARD.salePoints} point de vente`,
         'Emails illimités',
@@ -33,6 +34,7 @@ const PecheursTarifs = () => {
         'Tout le plan Standard inclus',
         `${FISHERMAN_PLANS.PRO.smsQuotaMonthly} SMS/mois`,
         `${FISHERMAN_PLANS.PRO.openingBonusSms} SMS bonus à l'ouverture`,
+        '🔔 Notifications push illimitées',
         `${FISHERMAN_PLANS.PRO.crmContacts} contacts CRM`,
         `${FISHERMAN_PLANS.PRO.salePoints} points de vente`,
         'IA avancée et statistiques',
@@ -48,6 +50,7 @@ const PecheursTarifs = () => {
         'Tout le plan Pro inclus',
         `${FISHERMAN_PLANS.ELITE.smsQuotaMonthly} SMS/mois`,
         'SMS illimités (0.09€/SMS au-delà)',
+        '🔔 Notifications push illimitées',
         `${FISHERMAN_PLANS.ELITE.crmContacts.toLocaleString()} contacts CRM`,
         `${FISHERMAN_PLANS.ELITE.salePoints} points de vente`,
         'Toutes les fonctionnalités avancées',
@@ -136,7 +139,7 @@ const PecheursTarifs = () => {
         </div>
 
         {/* Additional Information */}
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           <Card>
             <CardContent className="pt-6">
               <h3 className="font-semibold text-lg mb-2">SMS inclus</h3>
@@ -153,6 +156,18 @@ const PecheursTarifs = () => {
               <p className="text-sm text-muted-foreground">
                 Sur les paniers vendus via la plateforme uniquement. 
                 Vente en direct = 0% de commission.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 border-dashed border-primary/30 bg-primary/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 mb-2">
+                <Users className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold text-lg">🎁 Parrainage</h3>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Parrainez un collègue et recevez <span className="font-semibold text-primary">300 SMS bonus</span> chacun !
               </p>
             </CardContent>
           </Card>

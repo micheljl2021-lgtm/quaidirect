@@ -99,6 +99,10 @@ const DevenirPecheur = () => {
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
+                    <span className="text-muted-foreground">🔔 Notifications push illimitées</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
                     <span className="text-muted-foreground">500 contacts CRM</span>
                   </li>
                   <li className="flex items-start gap-3">
@@ -123,8 +127,8 @@ const DevenirPecheur = () => {
               <CardContent className="pt-8 space-y-6">
                 <div>
                   <h3 className="text-2xl font-bold text-foreground mb-2">Plan Pro</h3>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold text-primary">299€</span>
+                <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold text-primary">790€</span>
                     <span className="text-muted-foreground">/an</span>
                   </div>
                 </div>
@@ -137,6 +141,10 @@ const DevenirPecheur = () => {
                   <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
                     <span className="text-muted-foreground">200 SMS/mois + 1000 SMS bonus</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
+                    <span className="text-muted-foreground">🔔 Notifications push illimitées</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
@@ -154,7 +162,7 @@ const DevenirPecheur = () => {
 
                 <Link to="/pecheur/payment?plan=pro" className="block">
                   <Button className="w-full" size="lg" variant="default">
-                    Choisir Pro - 299€/an
+                    Choisir Pro - 790€/an
                   </Button>
                 </Link>
               </CardContent>
@@ -170,9 +178,9 @@ const DevenirPecheur = () => {
               <CardContent className="pt-8 space-y-6">
                 <div>
                   <h3 className="text-2xl font-bold text-foreground mb-2">Plan Elite</h3>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold text-primary">199€</span>
-                    <span className="text-muted-foreground">/mois</span>
+                <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold text-primary">1990€</span>
+                    <span className="text-muted-foreground">/an</span>
                   </div>
                 </div>
 
@@ -191,6 +199,10 @@ const DevenirPecheur = () => {
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
+                    <span className="text-muted-foreground">🔔 Notifications push illimitées</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
                     <span className="text-muted-foreground">10 000 contacts CRM</span>
                   </li>
                   <li className="flex items-start gap-3">
@@ -201,7 +213,7 @@ const DevenirPecheur = () => {
 
                 <Link to="/pecheur/payment?plan=elite" className="block">
                   <Button className="w-full" size="lg" variant="default">
-                    Choisir Elite - 199€/mois
+                    Choisir Elite - 1990€/an
                   </Button>
                 </Link>
               </CardContent>
@@ -211,6 +223,33 @@ const DevenirPecheur = () => {
           <p className="text-center text-sm text-muted-foreground mt-6">
             Packs SMS supplémentaires disponibles après inscription • Commission de 8% sur les paniers
           </p>
+
+          {/* Programme de Parrainage */}
+          <Card className="mt-12 border-2 border-dashed border-primary/30 bg-primary/5">
+            <CardContent className="pt-6">
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="flex-shrink-0 h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Users className="h-8 w-8 text-primary" aria-hidden="true" />
+                </div>
+                <div className="flex-1 text-center md:text-left">
+                  <h3 className="text-xl font-bold text-foreground mb-2">🎁 Programme de Parrainage</h3>
+                  <p className="text-muted-foreground mb-3">
+                    Parrainez un collègue pêcheur et recevez <span className="font-semibold text-primary">300 SMS bonus</span> chacun !
+                  </p>
+                  <div className="flex flex-wrap gap-4 justify-center md:justify-start">
+                    <div className="flex items-center gap-2 text-sm">
+                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                      <span>Vous : 300 SMS bonus</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                      <span>Votre filleul : 300 SMS bonus</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
