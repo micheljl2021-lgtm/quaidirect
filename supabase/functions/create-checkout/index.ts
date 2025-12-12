@@ -118,11 +118,50 @@ serve(async (req) => {
 
     // Check if customer exists
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    let customerId;
+    let customerId: string | undefined;
     
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
       logStep('Existing customer found', { customerId });
+
+      // CRITICAL: Check for existing active/trialing subscription to prevent duplicates
+      const existingActiveSubs = await stripe.subscriptions.list({
+        customer: customerId,
+        status: 'active',
+        limit: 1
+      });
+      
+      const existingTrialingSubs = await stripe.subscriptions.list({
+        customer: customerId,
+        status: 'trialing',
+        limit: 1
+      });
+
+      if (existingActiveSubs.data.length > 0 || existingTrialingSubs.data.length > 0) {
+        logStep('User already has an active/trialing subscription', { 
+          activeCount: existingActiveSubs.data.length,
+          trialingCount: existingTrialingSubs.data.length 
+        });
+        
+        // Create portal session for user to manage existing subscription
+        const portalSession = await stripe.billingPortal.sessions.create({
+          customer: customerId,
+          return_url: `${req.headers.get('origin') || 'https://quaidirect.fr'}/premium`,
+        });
+
+        return new Response(
+          JSON.stringify({ 
+            error: 'Vous avez déjà un abonnement actif. Gérez-le via le portail client.',
+            hasExistingSubscription: true,
+            portalUrl: portalSession.url 
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400,
+          }
+        );
+      }
+      logStep('No existing subscription, proceeding with checkout');
     } else {
       logStep('No existing customer, will create during checkout');
     }
