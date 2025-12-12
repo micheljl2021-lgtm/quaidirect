@@ -112,7 +112,7 @@ export const USER_ROLES = {
 } as const;
 
 // Mode maintenance - basculer sur false pour lancer le site
-export const MAINTENANCE_MODE = true;
+export const MAINTENANCE_MODE = false;
 
 // Date de lancement officielle (18h00 heure française le 12 décembre 2025)
 export const LAUNCH_DATE = new Date('2025-12-12T18:00:00+01:00');
