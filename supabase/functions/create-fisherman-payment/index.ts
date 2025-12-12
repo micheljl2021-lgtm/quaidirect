@@ -43,8 +43,56 @@ serve(async (req) => {
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId = customers.data.length > 0 ? customers.data[0].id : undefined;
     
+    const origin = req.headers.get('origin') || 'https://quaidirect.fr';
+
     if (customerId) {
       logStep('Existing customer found', { customerId });
+
+      // CRITICAL: Check for existing active/trialing fisherman subscription to prevent duplicates
+      const existingActiveSubs = await stripe.subscriptions.list({
+        customer: customerId,
+        status: 'active',
+        limit: 5
+      });
+      
+      const existingTrialingSubs = await stripe.subscriptions.list({
+        customer: customerId,
+        status: 'trialing',
+        limit: 5
+      });
+
+      // Check if any subscription is a fisherman subscription (by metadata or by checking payments table)
+      const allExistingSubs = [...existingActiveSubs.data, ...existingTrialingSubs.data];
+      const hasFishermanSub = allExistingSubs.some(sub => 
+        sub.metadata?.payment_type === 'fisherman_onboarding' ||
+        sub.metadata?.plan_type === 'basic' ||
+        sub.metadata?.plan_type === 'pro'
+      );
+
+      if (hasFishermanSub) {
+        logStep('User already has an active/trialing fisherman subscription', { 
+          subscriptionCount: allExistingSubs.length 
+        });
+        
+        // Create portal session for user to manage existing subscription
+        const portalSession = await stripe.billingPortal.sessions.create({
+          customer: customerId,
+          return_url: `${origin}/dashboard/pecheur`,
+        });
+
+        return new Response(
+          JSON.stringify({ 
+            error: 'Vous avez déjà un abonnement pêcheur actif. Gérez-le via le portail client.',
+            hasExistingSubscription: true,
+            portalUrl: portalSession.url 
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400,
+          }
+        );
+      }
+      logStep('No existing fisherman subscription, proceeding with checkout');
     } else {
       logStep('No existing customer');
     }
@@ -57,7 +105,6 @@ serve(async (req) => {
 
     logStep('Request data', { priceId, planType });
 
-    const origin = req.headers.get('origin') || 'http://localhost:3000';
     
     const session = await stripe.checkout.sessions.create({
       customer: customerId,

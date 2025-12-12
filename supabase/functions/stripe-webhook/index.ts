@@ -34,8 +34,10 @@ serve(async (req) => {
 
   try {
     const body = await req.text();
+    logStep('Received webhook body', { bodyLength: body.length, signaturePresent: !!signature });
+    
     const event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
-    logStep('Webhook event received', { type: event.type, id: event.id });
+    logStep('Webhook event validated and received', { type: event.type, id: event.id });
 
     switch (event.type) {
       case 'checkout.session.completed': {
@@ -228,6 +230,32 @@ serve(async (req) => {
           }
 
           // Create subscription payment record with plan type
+          // First check if user already has a payment record for this subscription type
+          const { data: existingPayment } = await supabaseClient
+            .from('payments')
+            .select('id')
+            .eq('user_id', userId)
+            .ilike('plan', 'fisherman_%')
+            .eq('status', 'active')
+            .maybeSingle();
+          
+          if (existingPayment) {
+            logStep('User already has active fisherman payment, updating instead of creating duplicate', { existingId: existingPayment.id });
+          }
+
+          // Safely parse dates with fallback
+          const currentPeriodStart = subscription.current_period_start 
+            ? new Date(subscription.current_period_start * 1000).toISOString() 
+            : new Date().toISOString();
+          const currentPeriodEnd = subscription.current_period_end 
+            ? new Date(subscription.current_period_end * 1000).toISOString() 
+            : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+          const trialEnd = subscription.trial_end 
+            ? new Date(subscription.trial_end * 1000).toISOString() 
+            : null;
+
+          logStep('Parsed subscription dates', { currentPeriodStart, currentPeriodEnd, trialEnd });
+
           const { error: paymentError } = await supabaseClient
             .from('payments')
             .upsert({
@@ -235,10 +263,10 @@ serve(async (req) => {
               stripe_subscription_id: subscription.id,
               stripe_customer_id: subscription.customer as string,
               plan: `fisherman_${planType}`,
-              status: 'active',
-              current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-              trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
+              status: subscription.status === 'trialing' ? 'trialing' : 'active',
+              current_period_start: currentPeriodStart,
+              current_period_end: currentPeriodEnd,
+              trial_end: trialEnd,
             }, {
               onConflict: 'stripe_subscription_id'
             });
@@ -303,6 +331,19 @@ serve(async (req) => {
 
         const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
         
+        // Safely parse dates with fallback to prevent "Invalid time value" errors
+        const premiumCurrentPeriodStart = subscription.current_period_start 
+          ? new Date(subscription.current_period_start * 1000).toISOString() 
+          : new Date().toISOString();
+        const premiumCurrentPeriodEnd = subscription.current_period_end 
+          ? new Date(subscription.current_period_end * 1000).toISOString() 
+          : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        const premiumTrialEnd = subscription.trial_end 
+          ? new Date(subscription.trial_end * 1000).toISOString() 
+          : null;
+
+        logStep('Parsed premium subscription dates', { premiumCurrentPeriodStart, premiumCurrentPeriodEnd, premiumTrialEnd });
+
         // Insert or update payment record
         const { error: upsertError } = await supabaseClient
           .from('payments')
@@ -311,10 +352,10 @@ serve(async (req) => {
             stripe_subscription_id: subscription.id,
             stripe_customer_id: subscription.customer as string,
             plan: plan,
-            status: 'active',
-            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-            trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
+            status: subscription.status === 'trialing' ? 'trialing' : 'active',
+            current_period_start: premiumCurrentPeriodStart,
+            current_period_end: premiumCurrentPeriodEnd,
+            trial_end: premiumTrialEnd,
           }, {
             onConflict: 'stripe_subscription_id'
           });
