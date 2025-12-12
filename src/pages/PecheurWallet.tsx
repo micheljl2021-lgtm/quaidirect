@@ -47,7 +47,7 @@ const PecheurWallet = () => {
         // Get fisherman ID
         const { data: fisherman } = await supabase
           .from('fishermen')
-          .select('id, affiliate_code')
+          .select('id')
           .eq('user_id', user.id)
           .maybeSingle();
 
@@ -60,26 +60,12 @@ const PecheurWallet = () => {
           return;
         }
 
-        setAffiliateCode(fisherman.affiliate_code);
+        // For now, set a placeholder affiliate code based on fisherman id
+        setAffiliateCode(fisherman.id.slice(0, 8));
 
-        // Get wallet data
-        const { data: walletData } = await supabase
-          .from('fishermen_sms_wallet')
-          .select('*')
-          .eq('fisherman_id', fisherman.id)
-          .maybeSingle();
-
-        setWallet(walletData || { balance_sms: 0, balance_eur_cents: 0 });
-
-        // Get wallet history
-        const { data: historyData } = await supabase
-          .from('fishermen_sms_wallet_history')
-          .select('*')
-          .eq('fisherman_id', fisherman.id)
-          .order('created_at', { ascending: false })
-          .limit(20);
-
-        setHistory(historyData || []);
+        // Set default wallet data (tables don't exist yet)
+        setWallet({ balance_sms: 0, balance_eur_cents: 0 });
+        setHistory([]);
       } catch (error) {
         console.error('Error fetching wallet data:', error);
         toast({

@@ -12,7 +12,7 @@ export const FISHERMAN_PLANS = {
     name: 'Standard',
     priceCents: 15000, // 150€/an
     period: 'year',
-    stripePriceId: 'price_FISHERMAN_STANDARD_150_YEAR',
+    stripePriceId: 'price_1SZYAXH0VhS1yyE0FqJ0imbu',
     trialDays: 30,
     smsQuotaMonthly: 50,
     openingBonusSms: 200,
@@ -22,9 +22,9 @@ export const FISHERMAN_PLANS = {
   PRO: {
     id: 'fisherman_pro',
     name: 'Pro',
-    priceCents: 29900, // 299€/an
+    priceCents: 79000, // 790€/an
     period: 'year',
-    stripePriceId: 'price_FISHERMAN_PRO_299_YEAR',
+    stripePriceId: 'price_1SddbeH0VhS1yyE0T70ZjSC1',
     trialDays: 30,
     smsQuotaMonthly: 200,
     openingBonusSms: 1000,
@@ -34,9 +34,9 @@ export const FISHERMAN_PLANS = {
   ELITE: {
     id: 'fisherman_elite',
     name: 'Elite',
-    priceCents: 19900, // 199€/mois
-    period: 'month',
-    stripePriceId: 'price_FISHERMAN_ELITE_199_MONTH',
+    priceCents: 199000, // 1990€/an
+    period: 'year',
+    stripePriceId: 'price_1SddbuH0VhS1yyE0ZFYhsoQ4',
     trialDays: 0,
     smsQuotaMonthly: 1500,
     openingBonusSms: 0,
