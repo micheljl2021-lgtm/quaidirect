@@ -5,11 +5,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle, Globe, ExternalLink, Info, XCircle, Mail } from "lucide-react";
+import { CheckCircle, Globe, ExternalLink, Info, XCircle, AlertTriangle, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { FishermanDetailSheet } from "./FishermanDetailSheet";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
+interface OrphanUser {
+  user_id: string;
+  email: string | null;
+}
 
 export function ImprovedFishermenTab() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -44,6 +50,50 @@ export function ImprovedFishermenTab() {
       const { data, error } = await query;
       if (error) throw error;
       return data;
+    },
+  });
+
+  // Detect orphan users: have fisherman role but no fishermen profile
+  const { data: orphanUsers, refetch: refetchOrphans } = useQuery({
+    queryKey: ['admin-orphan-fisherman-users'],
+    queryFn: async () => {
+      // Get all users with fisherman role
+      const { data: fishermenRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'fisherman');
+      
+      if (rolesError) throw rolesError;
+      if (!fishermenRoles?.length) return [];
+
+      const userIds = fishermenRoles.map(r => r.user_id);
+
+      // Get all fishermen profiles
+      const { data: fishermenProfiles, error: profilesError } = await supabase
+        .from('fishermen')
+        .select('user_id');
+      
+      if (profilesError) throw profilesError;
+      
+      const profileUserIds = new Set(fishermenProfiles?.map(f => f.user_id) || []);
+      
+      // Find orphans (have role but no profile)
+      const orphanUserIds = userIds.filter(uid => !profileUserIds.has(uid));
+      
+      if (!orphanUserIds.length) return [];
+
+      // Get email from profiles table
+      const { data: profiles, error: emailError } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .in('id', orphanUserIds);
+      
+      if (emailError) throw emailError;
+
+      return orphanUserIds.map(uid => ({
+        user_id: uid,
+        email: profiles?.find(p => p.id === uid)?.email || null
+      })) as OrphanUser[];
     },
   });
 
@@ -136,12 +186,69 @@ export function ImprovedFishermenTab() {
     setSheetOpen(true);
   };
 
+  const handleCreateOrphanProfile = async (orphan: OrphanUser) => {
+    const toastId = toast.loading("Création du profil pêcheur...");
+    
+    const tempSuffix = orphan.user_id.substring(0, 12);
+    const tempBoatReg = `TEMP-${Date.now()}-${tempSuffix}`;
+    const tempSiret = `TEMP-SIRET-${Date.now()}-${tempSuffix}`;
+    
+    const { error } = await supabase
+      .from('fishermen')
+      .insert({
+        user_id: orphan.user_id,
+        boat_name: 'À compléter',
+        boat_registration: tempBoatReg,
+        siret: tempSiret,
+        onboarding_payment_status: 'paid',
+        onboarding_step: 1,
+        email: orphan.email,
+      });
+
+    if (error) {
+      console.error('Error creating orphan profile:', error);
+      toast.error("Erreur lors de la création du profil", { id: toastId });
+    } else {
+      toast.success("Profil pêcheur créé ! L'utilisateur peut maintenant compléter son onboarding.", { id: toastId });
+      refetch();
+      refetchOrphans();
+    }
+  };
+
   const verifiedCount = fishermen?.filter(f => f.verified_at).length || 0;
   const pendingCount = fishermen?.filter(f => !f.verified_at).length || 0;
   const ambassadorCount = fishermen?.filter(f => f.is_ambassador).length || 0;
+  const orphanCount = orphanUsers?.length || 0;
 
   return (
     <div className="space-y-6">
+      {/* Orphan users alert */}
+      {orphanCount > 0 && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Utilisateurs orphelins détectés ({orphanCount})</AlertTitle>
+          <AlertDescription>
+            <p className="mb-3">Ces utilisateurs ont le rôle pêcheur mais pas de profil fishermen. Cela peut arriver si le webhook Stripe a échoué après le paiement.</p>
+            <div className="space-y-2">
+              {orphanUsers?.map((orphan) => (
+                <div key={orphan.user_id} className="flex items-center justify-between bg-background/50 p-2 rounded">
+                  <span className="text-sm font-mono">
+                    {orphan.email || orphan.user_id.substring(0, 8) + '...'}
+                  </span>
+                  <Button
+                    size="sm"
+                    onClick={() => handleCreateOrphanProfile(orphan)}
+                    className="bg-orange-600 hover:bg-orange-700"
+                  >
+                    <UserPlus className="h-4 w-4 mr-1" />
+                    Créer le profil
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader>
