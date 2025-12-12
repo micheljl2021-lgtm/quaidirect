@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Header from "@/components/Header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Loader2 } from "lucide-react";
+import { Shield, Loader2, MessageSquare } from "lucide-react";
 import { OverviewTab } from "@/components/admin/OverviewTab";
 import { ImprovedUsersTab } from "@/components/admin/ImprovedUsersTab";
 import { ImprovedFishermenTab } from "@/components/admin/ImprovedFishermenTab";
@@ -16,11 +16,28 @@ import { PremiumSubscriptionsTab } from "@/components/admin/PremiumSubscriptions
 import { FishermanSubscriptionsTab } from "@/components/admin/FishermanSubscriptionsTab";
 import { ContactsTab } from "@/components/admin/ContactsTab";
 import { SupportRequestsTab } from "@/components/admin/SupportRequestsTab";
+import PublicInquiriesTab from "@/components/admin/PublicInquiriesTab";
 import { getRedirectPathByRole } from "@/lib/authRedirect";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const AdminDashboard = () => {
   const { user, userRole, loading } = useAuth();
   const navigate = useNavigate();
+
+  // Fetch new inquiries count for badge
+  const { data: newInquiriesCount } = useQuery({
+    queryKey: ["new-inquiries-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("launch_subscribers")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "new");
+      if (error) throw error;
+      return count || 0;
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
 
   useEffect(() => {
     if (loading) return;
@@ -66,7 +83,7 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:grid-cols-11 gap-2">
+          <TabsList className="grid w-full grid-cols-6 lg:grid-cols-12 gap-2">
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
             <TabsTrigger value="users">Utilisateurs</TabsTrigger>
             <TabsTrigger value="fishermen">Pêcheurs</TabsTrigger>
@@ -78,6 +95,15 @@ const AdminDashboard = () => {
             <TabsTrigger value="fisherman-subs">Pêcheurs Abo</TabsTrigger>
             <TabsTrigger value="contacts">Contacts</TabsTrigger>
             <TabsTrigger value="support">Demandes</TabsTrigger>
+            <TabsTrigger value="messages" className="relative">
+              <MessageSquare className="h-4 w-4 mr-1" />
+              Messages
+              {newInquiriesCount && newInquiriesCount > 0 ? (
+                <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {newInquiriesCount}
+                </span>
+              ) : null}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -122,6 +148,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="support" className="space-y-6">
             <SupportRequestsTab />
+          </TabsContent>
+
+          <TabsContent value="messages" className="space-y-6">
+            <PublicInquiriesTab />
           </TabsContent>
         </Tabs>
       </div>
