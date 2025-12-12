@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedFisherRoute } from "@/components/ProtectedFisherRoute";
+import { MaintenanceGuard } from "@/components/MaintenanceGuard";
 import PageLoader from "@/components/PageLoader";
 
 // Critical pages - loaded immediately
@@ -68,11 +69,12 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          {/* Pre-launch page - covers the main landing */}
-          <Route path="/" element={<Landing />} />
-          {/* Original landing - accessible at /home for testing */}
-          <Route path="/home" element={<Landing />} />
+        <MaintenanceGuard>
+          <Routes>
+            {/* Pre-launch page - covers the main landing */}
+            <Route path="/" element={<Landing />} />
+            {/* Original landing - accessible at /home for testing */}
+            <Route path="/home" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
 
             {/* Lazy-loaded public routes */}
@@ -169,9 +171,10 @@ const App = () => (
             {/* Catch-all 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
+        </MaintenanceGuard>
+      </BrowserRouter>
+    </TooltipProvider>
+  </AuthProvider>
 );
 
 export default App;

@@ -110,3 +110,6 @@ export const USER_ROLES = {
   FISHERMAN: 'fisherman',
   ADMIN: 'admin',
 } as const;
+
+// Mode maintenance - basculer sur false pour lancer le site
+export const MAINTENANCE_MODE = true;
