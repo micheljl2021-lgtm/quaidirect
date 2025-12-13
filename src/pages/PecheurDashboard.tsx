@@ -13,8 +13,9 @@ import MessagingSection from '@/components/dashboard/MessagingSection';
 import ArrivalsList from '@/components/dashboard/ArrivalsList';
 import ArrivalsListSkeleton from '@/components/dashboard/ArrivalsListSkeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Anchor, Loader2, ShoppingCart, MessageSquare, AlertCircle } from "lucide-react";
+import { Anchor, Loader2, ShoppingCart, MessageSquare, AlertCircle, Activity } from "lucide-react";
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { getRedirectPathByRole } from '@/lib/authRedirect';
 
 const PecheurDashboard = () => {
@@ -206,6 +207,19 @@ const PecheurDashboard = () => {
         {fishermanId && <MessagingSection fishermanId={fishermanId} />}
 
         {fishermanId && <SalePointsSection fishermanId={fishermanId} />}
+
+        {/* Push Notification Diagnostic Link */}
+        <div className="mb-6">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => navigate('/push-diagnostic')}
+          >
+            <Activity className="h-4 w-4" aria-hidden="true" />
+            Diagnostic notifications push
+          </Button>
+        </div>
 
         {isDataLoading ? (
           <DashboardStatsSkeleton />

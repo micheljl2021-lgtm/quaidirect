@@ -4,7 +4,8 @@ import { useAuth } from "@/hooks/useAuth";
 import Header from "@/components/Header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Loader2, MessageSquare } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Shield, Loader2, MessageSquare, Activity } from "lucide-react";
 import { OverviewTab } from "@/components/admin/OverviewTab";
 import { ImprovedUsersTab } from "@/components/admin/ImprovedUsersTab";
 import { ImprovedFishermenTab } from "@/components/admin/ImprovedFishermenTab";
@@ -80,6 +81,19 @@ const AdminDashboard = () => {
           <p className="text-muted-foreground">
             Contrôle total de la plateforme QuaiDirect
           </p>
+        </div>
+
+        {/* Push Notification Diagnostic Link */}
+        <div className="mb-6">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => navigate('/push-diagnostic')}
+          >
+            <Activity className="h-4 w-4" aria-hidden="true" />
+            Diagnostic notifications push
+          </Button>
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
