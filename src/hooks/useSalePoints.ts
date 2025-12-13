@@ -6,6 +6,7 @@ interface SalePoint {
   address: string;
   latitude: number | null;
   longitude: number | null;
+  photo_url: string | null;
   fisherman_id: string;
   fisherman_boat_name: string;
   fisherman_company_name: string | null;
