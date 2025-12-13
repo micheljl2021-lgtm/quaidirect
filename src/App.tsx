@@ -60,6 +60,8 @@ const CreateArrivageWizard = lazy(() => import("./pages/CreateArrivageWizard"));
 const PecheursLanding = lazy(() => import("./pages/PecheursLanding"));
 const PecheursTarifs = lazy(() => import("./pages/PecheursTarifs"));
 const PecheurWallet = lazy(() => import("./pages/PecheurWallet"));
+const PecheurSmsAnalytics = lazy(() => import("./pages/PecheurSmsAnalytics"));
+const AdminSmsAnalytics = lazy(() => import("./pages/AdminSmsAnalytics"));
 
 // Wrapper for lazy-loaded routes
 const LazyRoute = ({ children }: { children: React.ReactNode }) => (
@@ -184,6 +186,14 @@ const App = () => (
               <ProtectedFisherRoute>
                 <LazyRoute><PecheurWallet /></LazyRoute>
               </ProtectedFisherRoute>
+            } />
+            <Route path="/pecheur/sms-analytics" element={
+              <ProtectedFisherRoute>
+                <LazyRoute><PecheurSmsAnalytics /></LazyRoute>
+              </ProtectedFisherRoute>
+            } />
+            <Route path="/admin/sms-analytics" element={
+              <LazyRoute><AdminSmsAnalytics /></LazyRoute>
             } />
 
             {/* Catch-all 404 */}
