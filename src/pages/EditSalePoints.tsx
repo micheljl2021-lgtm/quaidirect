@@ -419,10 +419,16 @@ export default function EditSalePoints() {
                             src={point.photo_url} 
                             alt={point.label || `Point ${index + 1}`}
                             className="h-12 w-12 rounded-lg object-cover"
+                            loading="lazy"
+                            onError={(e) => {
+                              // Fallback to icon if image fails to load
+                              e.currentTarget.style.display = 'none';
+                              const icon = e.currentTarget.nextElementSibling;
+                              if (icon) icon.classList.remove('hidden');
+                            }}
                           />
-                        ) : (
-                          <MapPin className="h-5 w-5" />
-                        )}
+                        ) : null}
+                        <MapPin className={`h-5 w-5 ${point.photo_url ? 'hidden' : ''}`} />
                         <div className="flex flex-col">
                           <span>Point {index + 1}</span>
                           {point.is_primary && <span className="text-sm text-primary">(Principal)</span>}
