@@ -44,7 +44,7 @@ export function FishermanSubscriptionsTab() {
   const getPlanLabel = (plan: string) => {
     switch (plan) {
       case 'fisherman_basic':
-        return 'Basic (150€/an)';
+        return 'Basic (150€/an)'; // Legacy plan, kept for backward compatibility
       case 'fisherman_standard':
         return 'Standard (150€/an)';
       case 'fisherman_pro':
