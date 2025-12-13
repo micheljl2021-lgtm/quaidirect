@@ -1,7 +1,10 @@
-const CACHE_NAME = 'quaidirect-v2';
-const RUNTIME_CACHE = 'quaidirect-runtime';
-const STATIC_CACHE = 'quaidirect-static';
-const API_CACHE = 'quaidirect-api';
+// Cache version - update this on each deployment
+// Format: YYYYMMDD-HHMMSS or use build timestamp
+const CACHE_VERSION = '__CACHE_VERSION__'; // Will be replaced during build
+const CACHE_NAME = `quaidirect-v2-${CACHE_VERSION}`;
+const RUNTIME_CACHE = `quaidirect-runtime-${CACHE_VERSION}`;
+const STATIC_CACHE = `quaidirect-static-${CACHE_VERSION}`;
+const API_CACHE = `quaidirect-api-${CACHE_VERSION}`;
 
 // Assets à mettre en cache lors de l'installation
 const PRECACHE_ASSETS = [
@@ -45,16 +48,27 @@ self.addEventListener('install', (event) => {
 
 // Activation et nettoyage des anciens caches
 self.addEventListener('activate', (event) => {
-  const validCaches = [CACHE_NAME, RUNTIME_CACHE, STATIC_CACHE, API_CACHE];
+  const currentCaches = [CACHE_NAME, RUNTIME_CACHE, STATIC_CACHE, API_CACHE];
   
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((name) => !validCaches.includes(name))
-          .map((name) => caches.delete(name))
+          .filter((cacheName) => {
+            // Keep only current version caches
+            // Delete all old caches including those with old versions or without versions
+            return !currentCaches.includes(cacheName);
+          })
+          .map((cacheName) => {
+            console.log('Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          })
       );
-    }).then(() => self.clients.claim())
+    }).then(() => {
+      console.log('Service Worker activated with version:', CACHE_VERSION);
+      // Take control of all pages immediately
+      return self.clients.claim();
+    })
   );
 });
 
@@ -201,6 +215,24 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'CLEAR_CACHE') {
     const cacheName = event.data.cacheName || RUNTIME_CACHE;
     caches.delete(cacheName);
+  }
+  
+  // Check cache version
+  if (event.data && event.data.type === 'GET_VERSION') {
+    event.ports[0].postMessage({ version: CACHE_VERSION });
+  }
+  
+  // Force update - clear all caches and skip waiting
+  if (event.data && event.data.type === 'FORCE_UPDATE') {
+    event.waitUntil(
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => caches.delete(cacheName))
+        );
+      }).then(() => {
+        self.skipWaiting();
+      })
+    );
   }
 });
 
