@@ -249,7 +249,7 @@ export function PecheurSmsManager({ fishermanId }: PecheurSmsManagerProps) {
                   className="resize-none"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Variables disponibles : {{'{{'}}signup_link{{'}}'}}, {{'{{'}}first_name{{'}}'}}, {{'{{'}}last_name{{'}}'}}
+                  Variables disponibles : {'{{signup_link}}, {{first_name}}, {{last_name}}'} 
                 </p>
               </div>
 
@@ -388,7 +388,7 @@ export function PecheurSmsManager({ fishermanId }: PecheurSmsManagerProps) {
               <Alert>
                 <Settings className="h-4 w-4" />
                 <AlertDescription>
-                  Gérez vos templates de messages SMS. Les variables {{'{{'}}signup_link{{'}}'}}, {{'{{'}}drop_link{{'}}'}}, etc. seront automatiquement remplacées.
+                  Gérez vos templates de messages SMS. Les variables {'{{signup_link}}, {{drop_link}}'}, etc. seront automatiquement remplacées.
                 </AlertDescription>
               </Alert>
               
@@ -413,7 +413,7 @@ export function PecheurSmsManager({ fishermanId }: PecheurSmsManagerProps) {
                         <div className="flex gap-1 mt-2">
                           {template.variables.map((v: string) => (
                             <span key={v} className="text-xs bg-gray-100 px-2 py-0.5 rounded">
-                              {{'{{'}}{v}{'}}'}
+                              {`{{${v}}}`}
                             </span>
                           ))}
                         </div>

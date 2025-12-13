@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import CaisseModule from '@/components/CaisseModule';
 import { SalePointsSection } from '@/components/SalePointsSection';
 import { SmsQuotaManager } from '@/components/SmsQuotaManager';
+import { PecheurSmsManager } from '@/components/PecheurSmsManager';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardStats from '@/components/dashboard/DashboardStats';
 import DashboardStatsSkeleton from '@/components/dashboard/DashboardStatsSkeleton';
@@ -247,7 +248,10 @@ const PecheurDashboard = () => {
           </TabsContent>
 
           <TabsContent value="sms">
-            <SmsQuotaManager />
+            <div className="space-y-6">
+              <SmsQuotaManager />
+              {fishermanId && <PecheurSmsManager fishermanId={fishermanId} />}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
