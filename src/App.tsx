@@ -2,7 +2,7 @@ import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedFisherRoute } from "@/components/ProtectedFisherRoute";
 import { MaintenanceGuard } from "@/components/MaintenanceGuard";
@@ -68,8 +68,8 @@ const LazyRoute = ({ children }: { children: React.ReactNode }) => (
 
 // Redirect component that preserves query parameters
 const RedirectWithParams = ({ to }: { to: string }) => {
-  const search = window.location.search;
-  return <Navigate to={`${to}${search}`} replace />;
+  const location = useLocation();
+  return <Navigate to={`${to}${location.search}`} replace />;
 };
 
 const App = () => (
