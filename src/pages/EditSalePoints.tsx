@@ -414,9 +414,25 @@ export default function EditSalePoints() {
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg flex items-center gap-2">
-                        <MapPin className="h-5 w-5" />
-                        Point {index + 1}
-                        {point.is_primary && <span className="text-sm text-primary">(Principal)</span>}
+                        {point.photo_url ? (
+                          <img 
+                            src={point.photo_url} 
+                            alt={point.label || `Point ${index + 1}`}
+                            className="h-12 w-12 rounded-lg object-cover"
+                            loading="lazy"
+                            onError={(e) => {
+                              // Fallback to icon if image fails to load
+                              e.currentTarget.style.display = 'none';
+                              const icon = e.currentTarget.nextElementSibling;
+                              if (icon) icon.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null}
+                        <MapPin className={`h-5 w-5 ${point.photo_url ? 'hidden' : ''}`} />
+                        <div className="flex flex-col">
+                          <span>Point {index + 1}</span>
+                          {point.is_primary && <span className="text-sm text-primary">(Principal)</span>}
+                        </div>
                       </CardTitle>
                       {salePoints.length > 1 && (
                         <Button
