@@ -8,6 +8,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Escape HTML to prevent XSS attacks
+function escapeHtml(text: string | null | undefined): string {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 interface TrialEndingRequest {
   userEmail: string;
   boatName?: string;
@@ -45,7 +56,7 @@ const handler = async (req: Request): Promise<Response> => {
       subject: `⏰ Votre essai QuaiDirect se termine dans 3 jours`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #0066cc;">⏰ Votre essai gratuit se termine bientôt ${boatName ? `- ${boatName}` : ''}</h1>
+          <h1 style="color: #0066cc;">⏰ Votre essai gratuit se termine bientôt ${boatName ? `- ${escapeHtml(boatName)}` : ''}</h1>
           
           <div style="background: #fff9e6; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
             <p style="margin: 0; font-size: 18px; font-weight: bold;">

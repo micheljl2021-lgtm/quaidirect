@@ -6,9 +6,20 @@ const Resend = resendModule.Resend || resendModule.default?.Resend || resendModu
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://quaidirect.fr",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Escape HTML to prevent XSS attacks
+function escapeHtml(text: string | null | undefined): string {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 
 interface UserWelcomeRequest {
   email: string;
@@ -62,7 +73,7 @@ const handler = async (req: Request): Promise<Response> => {
               <h1 style="margin: 0; font-size: 28px;">⚓ Bienvenue sur QuaiDirect !</h1>
             </div>
             <div class="content">
-              <p style="font-size: 18px; margin-top: 0;">Bonjour${name ? ` ${name}` : ''} 👋</p>
+              <p style="font-size: 18px; margin-top: 0;">Bonjour${name ? ` ${escapeHtml(name)}` : ''} 👋</p>
               
               <p>Merci d'avoir rejoint <strong>QuaiDirect</strong>, la plateforme qui connecte directement les marins-pêcheurs artisanaux avec leurs clients.</p>
               

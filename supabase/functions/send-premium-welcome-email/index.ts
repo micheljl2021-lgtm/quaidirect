@@ -8,6 +8,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Escape HTML to prevent XSS attacks
+function escapeHtml(text: string | null | undefined): string {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 interface PremiumWelcomeRequest {
   userEmail: string;
   userName?: string;
@@ -42,8 +53,8 @@ const handler = async (req: Request): Promise<Response> => {
       to: [userEmail],
       subject: `Bienvenue dans QuaiDirect ${planType} !`,
       html: `
-        <h1>Bienvenue ${userName ? userName : ''} !</h1>
-        <p>Votre abonnement <strong>${planType} ${planLabel}</strong> est maintenant actif.</p>
+        <h1>Bienvenue ${userName ? escapeHtml(userName) : ''} !</h1>
+        <p>Votre abonnement <strong>${escapeHtml(planType)} ${escapeHtml(planLabel)}</strong> est maintenant actif.</p>
         
         <h2>🎉 Vos avantages Premium :</h2>
         <ul>
