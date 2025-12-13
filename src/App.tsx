@@ -121,6 +121,8 @@ const App = () => (
             {/* Pecheur payment routes */}
             <Route path="/pecheur/payment" element={<LazyRoute><PecheurPayment /></LazyRoute>} />
             <Route path="/pecheur/payment-success" element={<LazyRoute><PecheurPaymentSuccess /></LazyRoute>} />
+            {/* Redirect old route to canonical route for backward compatibility */}
+            <Route path="/pecheur/payment/success" element={<LazyRoute><PecheurPaymentSuccess /></LazyRoute>} />
 
             {/* Protected pecheur routes */}
             <Route path="/pecheur/points-de-vente" element={

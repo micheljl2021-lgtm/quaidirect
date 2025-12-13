@@ -83,7 +83,7 @@ QuaiDirect utilise **Stripe** comme processeur de paiement unique pour :
 4. Stocke `plan` en metadata
 5. Retourne `sessionId` pour redirection frontend
 
-**Success URL** : `https://quaidirect.fr/pecheur/payment/success?session_id={CHECKOUT_SESSION_ID}`  
+**Success URL** : `https://quaidirect.fr/pecheur/payment-success?session_id={CHECKOUT_SESSION_ID}`  
 **Cancel URL** : `https://quaidirect.fr/pecheur/payment`
 
 ---
@@ -274,7 +274,7 @@ Frontend (/pecheur/payment)
       → Assigne role "fisherman" dans user_roles
       → Crée profil fishermen (onboarding_payment_status: "paid")
       → Appelle approve-fisherman-access (envoie email validation admin)
-  → Redirection /pecheur/payment/success
+  → Redirection /pecheur/payment-success
   → Redirection /pecheur/onboarding (formulaire 6 étapes)
 ```
 

@@ -124,7 +124,7 @@ Crée une session Stripe Checkout avec période d'essai.
 const { data } = await supabase.functions.invoke('create-checkout', {
   body: {
     priceId: 'price_BASIC_150_YEAR',
-    successUrl: `${window.location.origin}/pecheur/payment/success`
+    successUrl: `${window.location.origin}/pecheur/payment-success`
   }
 });
 window.location.href = data.url;

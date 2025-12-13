@@ -71,7 +71,7 @@
 |-------|-----------|-------------|
 | `/devenir-pecheur` | `DevenirPecheur` | Landing inscription pêcheur |
 | `/pecheur/payment` | `PecheurPayment` | Paiement abonnement |
-| `/pecheur/payment/success` | `PecheurPaymentSuccess` | Confirmation paiement |
+| `/pecheur/payment-success` | `PecheurPaymentSuccess` | Confirmation paiement |
 | `/pecheur/onboarding` | `PecheurOnboarding` | Formulaire onboarding 6 étapes |
 | `/pecheur/onboarding/confirmation` | `OnboardingConfirmation` | Confirmation fin onboarding |
 

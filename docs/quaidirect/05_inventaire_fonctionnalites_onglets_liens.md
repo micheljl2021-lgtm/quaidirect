@@ -134,7 +134,7 @@ QuaiDirect est structuré en **8 modules principaux** couvrant l'ensemble du par
 | **Landing Pêcheur** | Présentation avantages, plans Basic/Pro | Tous | `/devenir-pecheur` |
 | **Page Paiement** | 2 plans : Basic 99€/an, Pro 199€/an avec comparaison features | Visitor | `/pecheur/payment` |
 | **Checkout Pêcheur** | Paiement annuel récurrent Stripe | Visitor | Edge Function `create-fisherman-payment` |
-| **Confirmation Paiement** | Page succès avec redirection onboarding | Fisherman | `/pecheur/payment/success` |
+| **Confirmation Paiement** | Page succès avec redirection onboarding | Fisherman | `/pecheur/payment-success` |
 | **Onboarding 6 Étapes** | Formulaire structuré : Société, Liens, Zones/Méthodes, Espèces, Photos, Points de vente | Fisherman | `/pecheur/onboarding` |
 | **Confirmation Onboarding** | Page fin onboarding avec redirection dashboard | Fisherman | `/pecheur/onboarding/confirmation` |
 | **Email Validation Admin** | Email automatique admin après paiement pour validation pêcheur | Admin | Edge Function `send-fisherman-approved-email` |
