@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Anchor, Plus, MessageSquare, Settings, Users, Crown, Bot, Pencil, HelpCircle } from 'lucide-react';
+import { Anchor, Plus, MessageSquare, Settings, Users, Crown, Bot, Pencil, HelpCircle, BarChart3 } from 'lucide-react';
 
 interface DashboardHeaderProps {
   fishermanId: string | null;
@@ -70,6 +70,15 @@ const DashboardHeader = ({ fishermanId }: DashboardHeaderProps) => {
             >
               <Users className="h-5 w-5" aria-hidden="true" />
               Carnet de clients
+            </Button>
+            <Button 
+              size="lg" 
+              variant="outline"
+              className="gap-2"
+              onClick={() => navigate('/pecheur/sms-analytics')}
+            >
+              <BarChart3 className="h-5 w-5" aria-hidden="true" />
+              Analytics SMS
             </Button>
             <Button 
               size="lg" 

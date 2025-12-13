@@ -157,15 +157,49 @@ serve(async (req) => {
           successCount++;
           results.push({ phone, success: true, sid: data.sid });
           logStep('SMS sent successfully', { phone, sid: data.sid });
+          
+          // Log to sms_messages table
+          await supabase.from('sms_messages').insert({
+            fisherman_id: fisherman.id,
+            contact_phone: phone,
+            message: message,
+            type: 'notification',
+            status: 'sent',
+            sent_at: new Date().toISOString(),
+            twilio_sid: data.sid,
+            cost_cents: 5,
+          });
         } else {
           failCount++;
           results.push({ phone, success: false, error: data.message || 'Unknown error' });
           logStep('SMS failed', { phone, error: data });
+          
+          // Log failed SMS to sms_messages table
+          await supabase.from('sms_messages').insert({
+            fisherman_id: fisherman.id,
+            contact_phone: phone,
+            message: message,
+            type: 'notification',
+            status: 'failed',
+            error_message: data.message || 'Unknown error',
+            cost_cents: 5,
+          });
         }
       } catch (error: any) {
         failCount++;
         results.push({ phone, success: false, error: error.message });
         logStep('SMS error', { phone, error: error.message });
+        
+        // Log error to sms_messages table
+        await supabase.from('sms_messages').insert({
+          fisherman_id: fisherman.id,
+          contact_phone: phone,
+          message: message,
+          type: 'notification',
+          status: 'failed',
+          error_message: error.message,
+          cost_cents: 5,
+        });
       }
     }
 
