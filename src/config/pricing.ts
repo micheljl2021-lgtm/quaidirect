@@ -14,7 +14,7 @@ export const FISHERMAN_PLANS = {
     priceMonthlyEquivalent: 1250, // 12,50€/mois
     period: 'year' as const,
     stripePriceId: 'price_1SZYAXH0VhS1yyE0FqJ0imbu',
-    trialDays: 30,
+    trialDays: 0,
     smsQuotaMonthly: 50,
     openingBonusSms: 200,
     crmContacts: 500,
@@ -35,7 +35,7 @@ export const FISHERMAN_PLANS = {
     priceMonthlyEquivalent: 2490, // 24,90€/mois
     period: 'year' as const,
     stripePriceId: 'price_1Sdnn9H0VhS1yyE0JAINCVDH',
-    trialDays: 30,
+    trialDays: 0,
     smsQuotaMonthly: 200,
     openingBonusSms: 1000,
     crmContacts: 2000,

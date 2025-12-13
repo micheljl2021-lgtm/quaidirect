@@ -73,7 +73,7 @@ const PecheursTarifs = () => {
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">Tarifs Pêcheurs QuaiDirect</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Choisissez le plan qui correspond à votre activité. Standard et Pro incluent 30 jours d'essai gratuit.
+            Choisissez le plan qui correspond à votre activité.
           </p>
         </div>
 
@@ -115,11 +115,6 @@ const PecheursTarifs = () => {
                       soit {((plan.data as any).priceMonthlyEquivalent / 100).toFixed(2)}€/mois
                     </p>
                   )}
-                  {plan.data.trialDays > 0 && (
-                    <Badge className="bg-green-500 text-white mt-2">
-                      🎁 {plan.data.trialDays} jours offerts
-                    </Badge>
-                  )}
                 </div>
 
                 <ul className="space-y-3 mb-6">
@@ -141,7 +136,7 @@ const PecheursTarifs = () => {
                     size="lg"
                     variant={plan.key === 'pro' ? 'default' : 'outline'}
                   >
-                    {plan.data.trialDays > 0 ? 'Démarrer l\'essai gratuit' : 'Commencer'}
+                    Commencer
                   </Button>
                 </Link>
               </CardContent>

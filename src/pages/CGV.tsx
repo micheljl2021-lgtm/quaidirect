@@ -136,10 +136,10 @@ const CGV = () => {
             <li>Le soutien aux pêcheurs artisanaux français</li>
           </ul>
 
-          <h3>7.2 Période d'essai</h3>
+          <h3>7.2 Facturation</h3>
           <p>
-            Une période d'essai gratuite de 7 jours est proposée. À l'issue de cette période, l'abonnement est automatiquement
-            renouvelé sauf résiliation.
+            L'abonnement est facturé immédiatement lors de la souscription. Il est automatiquement
+            renouvelé à chaque échéance sauf résiliation.
           </p>
 
           <h3>7.3 Résiliation</h3>

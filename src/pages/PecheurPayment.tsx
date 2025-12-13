@@ -110,9 +110,6 @@ const PecheurPayment = () => {
                     <span>{FISHERMAN_PLANS.STANDARD.name}</span>
                   </CardTitle>
                   <CardDescription>{FISHERMAN_PLANS.STANDARD.positioning}</CardDescription>
-                  <Badge className="bg-green-500 text-white mt-2 w-fit">
-                    🎁 {FISHERMAN_PLANS.STANDARD.trialDays} jours offerts
-                  </Badge>
                 </CardHeader>
                 <CardContent>
                   <div className="mb-6">
@@ -163,7 +160,7 @@ const PecheurPayment = () => {
                     variant="outline"
                     className="w-full"
                   >
-                    {loading === 'standard' ? 'Chargement...' : 'Démarrer l\'essai gratuit'}
+                    {loading === 'standard' ? 'Chargement...' : 'Commencer'}
                   </Button>
                 </CardContent>
               </Card>
@@ -179,9 +176,6 @@ const PecheurPayment = () => {
                     <Crown className="h-5 w-5 text-primary" />
                   </CardTitle>
                   <CardDescription>{FISHERMAN_PLANS.PRO.positioning}</CardDescription>
-                  <Badge className="bg-green-500 text-white mt-2 w-fit">
-                    🎁 {FISHERMAN_PLANS.PRO.trialDays} jours offerts
-                  </Badge>
                 </CardHeader>
                 <CardContent>
                   <div className="mb-6">
@@ -235,7 +229,7 @@ const PecheurPayment = () => {
                     size="lg"
                     className="w-full"
                   >
-                    {loading === 'pro' ? 'Chargement...' : 'Démarrer l\'essai gratuit'}
+                    {loading === 'pro' ? 'Chargement...' : 'Commencer'}
                   </Button>
                 </CardContent>
               </Card>

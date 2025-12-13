@@ -126,8 +126,6 @@ serve(async (req) => {
         plan_type: planType,
       },
       subscription_data: {
-        // Elite n'a pas de période d'essai, Standard/Pro ont 30 jours
-        ...(planType !== 'elite' && { trial_period_days: 30 }),
         metadata: {
           user_id: user.id,
           payment_type: 'fisherman_onboarding',
