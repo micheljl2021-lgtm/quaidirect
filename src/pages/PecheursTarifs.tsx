@@ -177,11 +177,90 @@ const PecheursTarifs = () => {
           </CardContent>
         </Card>
 
+        {/* Comment vos clients financent vos SMS */}
+        <Card className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200 dark:border-blue-800">
+          <CardContent className="pt-6">
+            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+              <span className="text-2xl">💰</span>
+              Comment vos clients financent vos SMS
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Chaque client qui prend un abonnement Premium via votre lien vous rapporte des crédits SMS :
+            </p>
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="p-4 bg-white dark:bg-background rounded-lg border">
+                <p className="text-sm font-medium mb-1">Premium (25€/an)</p>
+                <p className="text-2xl font-bold text-blue-600">~114 SMS</p>
+                <p className="text-xs text-muted-foreground">8€ reversés → 0,07€/SMS</p>
+              </div>
+              <div className="p-4 bg-white dark:bg-background rounded-lg border">
+                <p className="text-sm font-medium mb-1">Premium+ (40€/an)</p>
+                <p className="text-2xl font-bold text-purple-600">~257 SMS</p>
+                <p className="text-xs text-muted-foreground">18€ reversés → 0,07€/SMS</p>
+              </div>
+              <div className="p-4 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-950/50 dark:to-emerald-950/50 rounded-lg border border-green-300 dark:border-green-700">
+                <p className="text-sm font-medium mb-1">Exemple : 5% de conversion</p>
+                <p className="text-2xl font-bold text-green-600">~1100 SMS/mois</p>
+                <p className="text-xs text-muted-foreground">Sur 1300 contacts → 65 Premium</p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-4 italic">
+              💡 Avec le plan PRO, vos crédits d'affiliation sont illimités. En Standard, max 200 SMS/mois.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Challenges & Système de Points */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <Card className="border-dashed">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-2xl">🏆</span>
+                <h3 className="font-bold text-lg">Challenges & Récompenses</h3>
+                <Badge variant="secondary">Bientôt</Badge>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Accomplissez des objectifs pour débloquer des bonus SMS :
+              </p>
+              <ul className="space-y-2 text-sm">
+                <li className="flex justify-between items-center p-2 bg-muted/50 rounded">
+                  <span>5 Premium via votre lien</span>
+                  <span className="font-bold text-green-600">+500 SMS</span>
+                </li>
+                <li className="flex justify-between items-center p-2 bg-muted/50 rounded">
+                  <span>10 Premium+ via votre lien</span>
+                  <span className="font-bold text-green-600">+1 500 SMS</span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card className="border-dashed">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-2xl">⭐</span>
+                <h3 className="font-bold text-lg">Système de Points Partenaires</h3>
+                <Badge variant="secondary">Bientôt</Badge>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Évaluez et soyez évalué sur la tenue des points de vente partagés :
+              </p>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>👍 Points positifs → bonus SMS, privatisation de point</li>
+                <li>👎 Trop de négatifs → restriction temporaire d'accès</li>
+              </ul>
+              <p className="text-xs mt-3 italic">
+                Un système de confiance entre pêcheurs pour mieux collaborer.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Additional Information */}
         <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           <Card>
             <CardContent className="pt-6">
-              <h3 className="font-semibold text-lg mb-2">SMS inclus</h3>
+              <h3 className="font-semibold text-lg mb-2">📱 SMS inclus</h3>
               <p className="text-sm text-muted-foreground">
                 Tous les plans incluent des SMS mensuels et des bonus à l'ouverture. 
                 Besoin de plus ? Achetez des packs SMS (moins chers en PRO).
@@ -191,7 +270,7 @@ const PecheursTarifs = () => {
 
           <Card>
             <CardContent className="pt-6">
-              <h3 className="font-semibold text-lg mb-2">Commission de 8%</h3>
+              <h3 className="font-semibold text-lg mb-2">🛒 Commission de 8%</h3>
               <p className="text-sm text-muted-foreground">
                 Sur les paniers vendus via la plateforme uniquement. 
                 Vente en direct = 0% de commission.
@@ -203,10 +282,10 @@ const PecheursTarifs = () => {
             <CardContent className="pt-6">
               <div className="flex items-center gap-2 mb-2">
                 <Users className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-lg">🎁 Parrainage</h3>
+                <h3 className="font-semibold text-lg">🤝 Parrainage</h3>
               </div>
               <p className="text-sm text-muted-foreground">
-                Parrainez un collègue et recevez <span className="font-semibold text-primary">{AFFILIATE_CREDITS_RULES.REFERRAL_BONUS_SMS} SMS bonus</span> chacun !
+                Parrainez un collègue pêcheur : <span className="font-semibold text-primary">{AFFILIATE_CREDITS_RULES.REFERRAL_BONUS_SMS} SMS bonus</span> pour vous deux !
               </p>
             </CardContent>
           </Card>
