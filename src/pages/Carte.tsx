@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -10,33 +10,70 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
-import { Filter, Search, MapPin, Fish } from "lucide-react";
+import { Filter, Search, MapPin, Fish, Locate, Loader2, AlertTriangle } from "lucide-react";
 import { useSalePoints } from "@/hooks/useSalePoints";
+
+type GeoStatus = 'idle' | 'loading' | 'granted' | 'denied' | 'error';
 
 const Carte = () => {
   const [selectedSalePoint, setSelectedSalePoint] = useState<any | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoStatus, setGeoStatus] = useState<GeoStatus>('idle');
 
-  // Get user's geolocation
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
-        },
-        (error) => {
-          console.log('Geolocation error:', error);
-          // Silently fail, map will use default center
-        }
-      );
+  // Get user's geolocation with enhanced options and error handling
+  const requestGeolocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      console.log('[Geoloc] Geolocation not supported by browser');
+      setGeoStatus('error');
+      return;
     }
+
+    console.log('[Geoloc] Requesting user location...');
+    setGeoStatus('loading');
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const location = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        };
+        console.log('[Geoloc] Location obtained:', location);
+        setUserLocation(location);
+        setGeoStatus('granted');
+      },
+      (error) => {
+        console.log('[Geoloc] Error:', error.code, error.message);
+        
+        // Determine error type
+        if (error.code === error.PERMISSION_DENIED) {
+          console.log('[Geoloc] Permission denied by user');
+          setGeoStatus('denied');
+        } else if (error.code === error.TIMEOUT) {
+          console.log('[Geoloc] Request timeout');
+          setGeoStatus('error');
+        } else {
+          console.log('[Geoloc] Position unavailable');
+          setGeoStatus('error');
+        }
+        
+        // Map will use default center (Hyères)
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 8000,
+        maximumAge: 30000,
+      }
+    );
   }, []);
+
+  // Auto-request geolocation on mount
+  useEffect(() => {
+    requestGeolocation();
+  }, [requestGeolocation]);
 
   // Fetch sale points via centralized hook (cached 10 min)
   const { data: salePoints } = useSalePoints();
@@ -187,8 +224,35 @@ const Carte = () => {
           </p>
         </div>
 
-        {/* Google Map */}
-        <div className="mb-6 aspect-video md:aspect-[21/9] rounded-lg overflow-hidden border border-border shadow-lg">
+        {/* Geolocation Error Alert */}
+        {geoStatus === 'denied' && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Géolocalisation refusée</AlertTitle>
+            <AlertDescription>
+              Vous avez refusé l'accès à votre position. Pour activer la géolocalisation :
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>Chrome/Edge : Cliquez sur l'icône cadenas dans la barre d'adresse</li>
+                <li>Firefox : Cliquez sur l'icône info et modifiez les permissions</li>
+                <li>Safari : Préférences → Sites web → Localisation</li>
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {geoStatus === 'error' && (
+          <Alert className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Géolocalisation indisponible</AlertTitle>
+            <AlertDescription>
+              Impossible d'obtenir votre position. La carte affiche la zone par défaut.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Google Map with Localization Button */}
+        <div className="mb-6 relative">
+          <div className="aspect-video md:aspect-[21/9] rounded-lg overflow-hidden border border-border shadow-lg">
             <GoogleMapComponent 
               ports={ports || []}
               salePoints={salePoints || []}
@@ -198,6 +262,23 @@ const Carte = () => {
               onSalePointClick={handleSalePointClick}
               userLocation={userLocation}
             />
+          </div>
+          
+          {/* Locate Me Button */}
+          <Button
+            onClick={requestGeolocation}
+            disabled={geoStatus === 'loading'}
+            variant={geoStatus === 'granted' ? 'default' : 'secondary'}
+            size="icon"
+            className="absolute top-4 right-4 shadow-lg"
+            title="Me localiser"
+          >
+            {geoStatus === 'loading' ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Locate className={`h-4 w-4 ${geoStatus === 'granted' ? 'text-primary-foreground' : ''}`} />
+            )}
+          </Button>
         </div>
 
         {/* Search bar - below map */}
