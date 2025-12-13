@@ -3,6 +3,25 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import compression from "vite-plugin-compression";
+import fs from "fs";
+
+// Plugin to inject cache version into service worker
+function injectServiceWorkerVersion() {
+  return {
+    name: 'inject-sw-version',
+    apply: 'build',
+    closeBundle() {
+      const swPath = path.resolve(__dirname, 'dist/sw.js');
+      if (fs.existsSync(swPath)) {
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+        let content = fs.readFileSync(swPath, 'utf-8');
+        content = content.replace(/__CACHE_VERSION__/g, timestamp);
+        fs.writeFileSync(swPath, content);
+        console.log(`Service Worker cache version set to: ${timestamp}`);
+      }
+    }
+  };
+}
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -13,6 +32,8 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === "development" && componentTagger(),
+    // Inject cache version into service worker
+    injectServiceWorkerVersion(),
     // Gzip compression for production builds
     mode === "production" && compression({
       algorithm: "gzip",
