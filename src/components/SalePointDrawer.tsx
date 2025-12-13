@@ -13,6 +13,7 @@ interface SalePoint {
   address: string;
   description: string | null;
   is_primary: boolean;
+  photo_url: string | null;
   fishermen: {
     id: string;
     boat_name: string;
@@ -138,7 +139,15 @@ const SalePointDrawer = ({ open, onOpenChange, salePoint }: SalePointDrawerProps
           <TabsContent value="salepoint" className="space-y-4 mt-4">
             {/* Photo du point de vente */}
             <div className="aspect-video rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-              <MapPin className="h-24 w-24 text-muted-foreground/50" />
+              {salePoint.photo_url || salePoint.fishermen.photo_url ? (
+                <img
+                  src={salePoint.photo_url || salePoint.fishermen.photo_url || ''}
+                  alt={salePoint.label}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <MapPin className="h-24 w-24 text-muted-foreground/50" />
+              )}
             </div>
 
             {/* Type de point de vente */}
