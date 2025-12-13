@@ -2,58 +2,60 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Crown, Zap, ArrowLeft, Users } from "lucide-react";
+import { CheckCircle2, Crown, Zap, ArrowLeft, Users, TrendingUp } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { FISHERMAN_PLANS } from "@/config/pricing";
+import { FISHERMAN_PLANS, AFFILIATE_CREDITS_RULES } from "@/config/pricing";
 
 const PecheursTarifs = () => {
   const plans = [
     {
       key: 'standard',
       data: FISHERMAN_PLANS.STANDARD,
-      description: 'Pour démarrer la vente en direct',
+      description: FISHERMAN_PLANS.STANDARD.positioning,
       icon: null,
       features: [
-        'Vitrine digitale personnalisée',
+        `CRM simple (${FISHERMAN_PLANS.STANDARD.crmContacts} contacts)`,
         `${FISHERMAN_PLANS.STANDARD.smsQuotaMonthly} SMS/mois`,
-        `${FISHERMAN_PLANS.STANDARD.openingBonusSms} SMS bonus à l'ouverture`,
-        '🔔 Notifications push illimitées',
-        `${FISHERMAN_PLANS.STANDARD.crmContacts} contacts CRM`,
+        `🎁 ${FISHERMAN_PLANS.STANDARD.openingBonusSms} SMS bonus à l'ouverture`,
+        'IA basique (textes, descriptions)',
         `${FISHERMAN_PLANS.STANDARD.salePoints} point de vente`,
-        'Emails illimités',
+        'Stats light',
+        '📧 Emails illimités',
+        `Affiliation : max ${FISHERMAN_PLANS.STANDARD.affiliateSmsCapMonthly} SMS/mois`,
       ],
     },
     {
       key: 'pro',
       data: FISHERMAN_PLANS.PRO,
       badge: 'Recommandé',
-      description: 'Pour maximiser vos ventes',
+      description: FISHERMAN_PLANS.PRO.positioning,
       icon: <Crown className="h-5 w-5 text-primary" />,
       features: [
-        'Tout le plan Standard inclus',
+        `CRM avancé (${FISHERMAN_PLANS.PRO.crmContacts} contacts + tags)`,
         `${FISHERMAN_PLANS.PRO.smsQuotaMonthly} SMS/mois`,
-        `${FISHERMAN_PLANS.PRO.openingBonusSms} SMS bonus à l'ouverture`,
-        '🔔 Notifications push illimitées',
-        `${FISHERMAN_PLANS.PRO.crmContacts} contacts CRM`,
+        `🎁 ${FISHERMAN_PLANS.PRO.openingBonusSms} SMS bonus à l'ouverture`,
+        'IA Marine + météo + templates',
         `${FISHERMAN_PLANS.PRO.salePoints} points de vente`,
-        'IA avancée et statistiques',
+        'Stats campagnes',
+        '💰 Packs SMS moins chers',
+        '🚀 Crédits affiliation illimités',
       ],
     },
     {
       key: 'elite',
       data: FISHERMAN_PLANS.ELITE,
-      badge: 'Volume',
-      description: 'Pour les gros volumes',
+      badge: 'Gros débit',
+      description: FISHERMAN_PLANS.ELITE.positioning,
       icon: <Zap className="h-5 w-5 text-purple-600" />,
       features: [
-        'Tout le plan Pro inclus',
-        `${FISHERMAN_PLANS.ELITE.smsQuotaMonthly} SMS/mois`,
-        'SMS illimités (0.09€/SMS au-delà)',
-        '🔔 Notifications push illimitées',
-        `${FISHERMAN_PLANS.ELITE.crmContacts.toLocaleString()} contacts CRM`,
+        `CRM complet (${FISHERMAN_PLANS.ELITE.crmContacts.toLocaleString()} contacts)`,
+        `${FISHERMAN_PLANS.ELITE.smsQuotaMonthly} SMS/mois inclus`,
+        `SMS illimités (${(FISHERMAN_PLANS.ELITE.overagePricePerSmsCents / 100).toFixed(2)}€/SMS au-delà)`,
+        'IA complète + "photo → annonce"',
         `${FISHERMAN_PLANS.ELITE.salePoints} points de vente`,
-        'Toutes les fonctionnalités avancées',
+        'Dashboard avancé',
+        'Sender pro / numéro vérifié',
       ],
     },
   ];
@@ -71,7 +73,7 @@ const PecheursTarifs = () => {
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">Tarifs Pêcheurs QuaiDirect</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Choisissez le plan qui correspond à votre activité. Tous les plans incluent 30 jours d'essai gratuit (sauf Elite).
+            Choisissez le plan qui correspond à votre activité. Standard et Pro incluent 30 jours d'essai gratuit.
           </p>
         </div>
 
@@ -108,6 +110,11 @@ const PecheursTarifs = () => {
                       /{plan.data.period === 'year' ? 'an' : 'mois'}
                     </span>
                   </div>
+                  {'priceMonthlyEquivalent' in plan.data && plan.data.period === 'year' && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      soit {((plan.data as any).priceMonthlyEquivalent / 100).toFixed(2)}€/mois
+                    </p>
+                  )}
                   {plan.data.trialDays > 0 && (
                     <Badge className="bg-green-500 text-white mt-2">
                       🎁 {plan.data.trialDays} jours offerts
@@ -118,8 +125,12 @@ const PecheursTarifs = () => {
                 <ul className="space-y-3 mb-6">
                   {plan.features.map((feature, index) => (
                     <li key={index} className="flex items-start gap-2">
-                      <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                      <span className="text-sm">{feature}</span>
+                      <CheckCircle2 className={`h-5 w-5 shrink-0 mt-0.5 ${
+                        feature.includes('illimités') || feature.includes('moins chers') ? 'text-green-600' : 'text-primary'
+                      }`} />
+                      <span className={`text-sm ${
+                        feature.includes('illimités') || feature.includes('moins chers') ? 'font-medium' : ''
+                      }`}>{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -138,6 +149,34 @@ const PecheursTarifs = () => {
           ))}
         </div>
 
+        {/* Pourquoi PRO */}
+        <Card className="mb-8 border-primary/20 bg-primary/5">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <TrendingUp className="h-6 w-6 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="font-semibold text-primary mb-3">
+                  💡 Pourquoi PRO est le meilleur choix ?
+                </p>
+                <div className="grid md:grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <p className="font-medium mb-1">Packs SMS moins chers</p>
+                    <p className="text-muted-foreground">Pack 1000 : 65€ vs 75€</p>
+                  </div>
+                  <div>
+                    <p className="font-medium mb-1">Bonus 5x plus gros</p>
+                    <p className="text-muted-foreground">1000 SMS à l'ouverture</p>
+                  </div>
+                  <div>
+                    <p className="font-medium mb-1">Affiliation illimitée</p>
+                    <p className="text-muted-foreground">Pas de plafond mensuel</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Additional Information */}
         <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           <Card>
@@ -145,7 +184,7 @@ const PecheursTarifs = () => {
               <h3 className="font-semibold text-lg mb-2">SMS inclus</h3>
               <p className="text-sm text-muted-foreground">
                 Tous les plans incluent des SMS mensuels et des bonus à l'ouverture. 
-                Besoin de plus ? Achetez des packs SMS supplémentaires.
+                Besoin de plus ? Achetez des packs SMS (moins chers en PRO).
               </p>
             </CardContent>
           </Card>
@@ -167,7 +206,7 @@ const PecheursTarifs = () => {
                 <h3 className="font-semibold text-lg">🎁 Parrainage</h3>
               </div>
               <p className="text-sm text-muted-foreground">
-                Parrainez un collègue et recevez <span className="font-semibold text-primary">300 SMS bonus</span> chacun !
+                Parrainez un collègue et recevez <span className="font-semibold text-primary">{AFFILIATE_CREDITS_RULES.REFERRAL_BONUS_SMS} SMS bonus</span> chacun !
               </p>
             </CardContent>
           </Card>

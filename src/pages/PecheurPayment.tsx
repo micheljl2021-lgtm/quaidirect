@@ -5,104 +5,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, MessageSquare, ArrowLeft, Crown, Check, Gift, Zap } from 'lucide-react';
+import { Mail, MessageSquare, ArrowLeft, Crown, Check, Gift, Zap, Users, TrendingUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Header from '@/components/Header';
-
-const PLANS = {
-  standard: {
-    name: "Standard",
-    price: "150€",
-    priceId: "price_1SZYAXH0VhS1yyE0FqJ0imbu",
-    period: "par an",
-    trial: "🎁 1 mois offert",
-    features: [
-      "Vitrine digitale personnalisée",
-      "📱 50 SMS/mois + 200 SMS bonus",
-      "📧 Emails illimités aux clients",
-      "🔔 Notifications push illimitées",
-      "500 contacts CRM",
-      "1 point de vente",
-      "IA pour textes et descriptions",
-    ],
-  },
-  pro: {
-    name: "Pro",
-    price: "790€",
-    priceId: "price_1SddbeH0VhS1yyE0T70ZjSC1",
-    period: "par an",
-    badge: "Recommandé",
-    trial: "🎁 1 mois offert",
-    features: [
-      "Tout le plan Standard inclus",
-      "📱 200 SMS/mois + 1000 SMS bonus",
-      "🔔 Notifications push illimitées",
-      "2000 contacts CRM",
-      "3 points de vente",
-      "IA avancée : prix, météo/marée",
-      "Statistiques détaillées",
-      "Support prioritaire",
-    ],
-  },
-  elite: {
-    name: "Elite",
-    price: "1990€",
-    priceId: "price_1SddbuH0VhS1yyE0ZFYhsoQ4",
-    period: "par an",
-    badge: "Volume",
-    trial: "",
-    features: [
-      "Tout le plan Pro inclus",
-      "📱 1500 SMS/mois",
-      "SMS illimités (0.09€/SMS au-delà)",
-      "🔔 Notifications push illimitées",
-      "10 000 contacts CRM",
-      "10 points de vente",
-      "Toutes les fonctionnalités avancées",
-    ],
-  },
-};
-
-interface SmsPack {
-  name: string;
-  quantity: number;
-  price: string;
-  pricePerSms: string;
-  priceId: string;
-  badge?: string;
-}
-
-const SMS_PACKS: Record<string, SmsPack> = {
-  pack500: {
-    name: "Pack 500",
-    quantity: 500,
-    price: "40€",
-    pricePerSms: "0.08€",
-    priceId: "price_SMS_PACK_500",
-  },
-  pack1000: {
-    name: "Pack Lancement",
-    quantity: 1000,
-    price: "70€",
-    pricePerSms: "0.07€",
-    priceId: "price_SMS_PACK_LANCEMENT",
-    badge: "Recommandé",
-  },
-  pack2000: {
-    name: "Pack 2000",
-    quantity: 2000,
-    price: "120€",
-    pricePerSms: "0.06€",
-    priceId: "price_SMS_PACK_2000",
-  },
-  pack5000: {
-    name: "Pack 5000",
-    quantity: 5000,
-    price: "250€",
-    pricePerSms: "0.05€",
-    priceId: "price_SMS_PACK_5000",
-  },
-};
+import { FISHERMAN_PLANS, SMS_PACKS, AFFILIATE_CREDITS_RULES } from '@/config/pricing';
 
 const PecheurPayment = () => {
   const { user } = useAuth();
@@ -201,37 +107,57 @@ const PecheurPayment = () => {
               <Card className="relative hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    <span>{PLANS.standard.name}</span>
+                    <span>{FISHERMAN_PLANS.STANDARD.name}</span>
                   </CardTitle>
-                  <CardDescription>Pour démarrer la vente en direct</CardDescription>
-                  {PLANS.standard.trial && (
-                    <Badge className="bg-green-500 text-white mt-2 w-fit">
-                      {PLANS.standard.trial}
-                    </Badge>
-                  )}
+                  <CardDescription>{FISHERMAN_PLANS.STANDARD.positioning}</CardDescription>
+                  <Badge className="bg-green-500 text-white mt-2 w-fit">
+                    🎁 {FISHERMAN_PLANS.STANDARD.trialDays} jours offerts
+                  </Badge>
                 </CardHeader>
                 <CardContent>
                   <div className="mb-6">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-bold">{PLANS.standard.price}</span>
-                      <span className="text-muted-foreground">/{PLANS.standard.period}</span>
+                      <span className="text-4xl font-bold">{FISHERMAN_PLANS.STANDARD.priceCents / 100}€</span>
+                      <span className="text-muted-foreground">/an</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      puis {PLANS.standard.price}/{PLANS.standard.period}
+                      soit {(FISHERMAN_PLANS.STANDARD.priceMonthlyEquivalent / 100).toFixed(2)}€/mois
                     </p>
                   </div>
                   
                   <ul className="space-y-3 mb-6">
-                    {PLANS.standard.features.map((feature, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm">CRM simple ({FISHERMAN_PLANS.STANDARD.crmContacts} contacts)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm">📱 {FISHERMAN_PLANS.STANDARD.smsQuotaMonthly} SMS/mois</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm font-medium text-primary">🎁 {FISHERMAN_PLANS.STANDARD.openingBonusSms} SMS bonus à l'ouverture</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm">IA basique (textes, descriptions)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm">{FISHERMAN_PLANS.STANDARD.salePoints} point de vente</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm">Stats light</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm">📧 Emails illimités</span>
+                    </li>
                   </ul>
 
                   <Button
-                    onClick={() => handlePayment(PLANS.standard.priceId, 'standard')}
+                    onClick={() => handlePayment(FISHERMAN_PLANS.STANDARD.stripePriceId, 'standard')}
                     disabled={loading === 'standard'}
                     size="lg"
                     variant="outline"
@@ -242,47 +168,69 @@ const PecheurPayment = () => {
                 </CardContent>
               </Card>
 
-              {/* Pro Plan */}
+              {/* Pro Plan - Recommandé */}
               <Card className="relative border-primary shadow-lg hover:shadow-xl transition-shadow">
-                {PLANS.pro.badge && (
-                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    {PLANS.pro.badge}
-                  </Badge>
-                )}
+                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  Recommandé
+                </Badge>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    <span>{PLANS.pro.name}</span>
+                    <span>{FISHERMAN_PLANS.PRO.name}</span>
                     <Crown className="h-5 w-5 text-primary" />
                   </CardTitle>
-                  <CardDescription>Pour maximiser vos ventes</CardDescription>
-                  {PLANS.pro.trial && (
-                    <Badge className="bg-green-500 text-white mt-2 w-fit">
-                      {PLANS.pro.trial}
-                    </Badge>
-                  )}
+                  <CardDescription>{FISHERMAN_PLANS.PRO.positioning}</CardDescription>
+                  <Badge className="bg-green-500 text-white mt-2 w-fit">
+                    🎁 {FISHERMAN_PLANS.PRO.trialDays} jours offerts
+                  </Badge>
                 </CardHeader>
                 <CardContent>
                   <div className="mb-6">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-bold">{PLANS.pro.price}</span>
-                      <span className="text-muted-foreground">/{PLANS.pro.period}</span>
+                      <span className="text-4xl font-bold">{FISHERMAN_PLANS.PRO.priceCents / 100}€</span>
+                      <span className="text-muted-foreground">/an</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      puis {PLANS.pro.price}/{PLANS.pro.period}
+                      soit {(FISHERMAN_PLANS.PRO.priceMonthlyEquivalent / 100).toFixed(2)}€/mois
                     </p>
                   </div>
                   
                   <ul className="space-y-3 mb-6">
-                    {PLANS.pro.features.map((feature, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm">CRM avancé ({FISHERMAN_PLANS.PRO.crmContacts} contacts + tags)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm">📱 {FISHERMAN_PLANS.PRO.smsQuotaMonthly} SMS/mois</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm font-medium text-primary">🎁 {FISHERMAN_PLANS.PRO.openingBonusSms} SMS bonus à l'ouverture</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm">IA Marine + météo + templates</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm">{FISHERMAN_PLANS.PRO.salePoints} points de vente</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm">Stats campagnes</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                      <span className="text-sm font-medium">Packs SMS moins chers</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                      <span className="text-sm font-medium">Crédits affiliation illimités</span>
+                    </li>
                   </ul>
 
                   <Button
-                    onClick={() => handlePayment(PLANS.pro.priceId, 'pro')}
+                    onClick={() => handlePayment(FISHERMAN_PLANS.PRO.stripePriceId, 'pro')}
                     disabled={loading === 'pro'}
                     size="lg"
                     className="w-full"
@@ -294,23 +242,21 @@ const PecheurPayment = () => {
 
               {/* Elite Plan */}
               <Card className="relative hover:shadow-lg transition-shadow border-2">
-                {PLANS.elite.badge && (
-                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-600">
-                    {PLANS.elite.badge}
-                  </Badge>
-                )}
+                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-600">
+                  Gros débit
+                </Badge>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    <span>{PLANS.elite.name}</span>
+                    <span>{FISHERMAN_PLANS.ELITE.name}</span>
                     <Zap className="h-5 w-5 text-purple-600" />
                   </CardTitle>
-                  <CardDescription>Pour les gros volumes</CardDescription>
+                  <CardDescription>{FISHERMAN_PLANS.ELITE.positioning}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="mb-6">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-bold">{PLANS.elite.price}</span>
-                      <span className="text-muted-foreground">/{PLANS.elite.period}</span>
+                      <span className="text-4xl font-bold">{FISHERMAN_PLANS.ELITE.priceCents / 100}€</span>
+                      <span className="text-muted-foreground">/mois</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
                       Facturation mensuelle
@@ -318,16 +264,38 @@ const PecheurPayment = () => {
                   </div>
                   
                   <ul className="space-y-3 mb-6">
-                    {PLANS.elite.features.map((feature, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm">CRM complet ({FISHERMAN_PLANS.ELITE.crmContacts.toLocaleString()} contacts)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm">📱 {FISHERMAN_PLANS.ELITE.smsQuotaMonthly} SMS/mois inclus</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-purple-600 shrink-0 mt-0.5" />
+                      <span className="text-sm font-medium">SMS illimités ({(FISHERMAN_PLANS.ELITE.overagePricePerSmsCents / 100).toFixed(2)}€/SMS au-delà)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm">IA complète + "photo → annonce"</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm">{FISHERMAN_PLANS.ELITE.salePoints} points de vente</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm">Dashboard avancé</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm">Sender pro / numéro vérifié</span>
+                    </li>
                   </ul>
 
                   <Button
-                    onClick={() => handlePayment(PLANS.elite.priceId, 'elite')}
+                    onClick={() => handlePayment(FISHERMAN_PLANS.ELITE.stripePriceId, 'elite')}
                     disabled={loading === 'elite'}
                     size="lg"
                     className="w-full"
@@ -339,27 +307,92 @@ const PecheurPayment = () => {
               </Card>
             </div>
 
-            {/* SMS Info Card */}
-            <Card className="mb-8 max-w-6xl mx-auto bg-blue-50 border-blue-200">
+            {/* Pourquoi PRO plutôt que Standard ? */}
+            <Card className="mb-8 max-w-6xl mx-auto border-primary/20 bg-primary/5">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-3">
-                  <MessageSquare className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <TrendingUp className="h-6 w-6 text-primary mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="font-medium text-blue-900 mb-2">
-                      📱 SMS inclus dans tous les plans
+                    <p className="font-semibold text-primary mb-3">
+                      💡 Pourquoi choisir PRO plutôt que Standard ?
                     </p>
-                    <p className="text-sm text-blue-800 mb-2">
-                      <strong>Standard :</strong> 50 SMS/mois + 200 SMS bonus à l'inscription
+                    <div className="grid md:grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <p className="font-medium mb-1">Meilleur prix SMS</p>
+                        <p className="text-muted-foreground">Pack 1000 SMS : 65€ (vs 75€ en Standard)</p>
+                      </div>
+                      <div>
+                        <p className="font-medium mb-1">Bonus 5x plus important</p>
+                        <p className="text-muted-foreground">1000 SMS bonus (vs 200 en Standard)</p>
+                      </div>
+                      <div>
+                        <p className="font-medium mb-1">Affiliation illimitée</p>
+                        <p className="text-muted-foreground">Vos clients Premium financent vos SMS sans limite</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Affiliation : vos clients financent vos SMS */}
+            <Card className="mb-8 max-w-6xl mx-auto border-green-200 bg-green-50">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-3">
+                  <Users className="h-6 w-6 text-green-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold text-green-900 mb-3">
+                      🤝 Vos clients Premium financent vos SMS
                     </p>
-                    <p className="text-sm text-blue-800 mb-2">
-                      <strong>Pro :</strong> 200 SMS/mois + 1000 SMS bonus à l'inscription
+                    <div className="text-sm text-green-800 space-y-2">
+                      <p>Chaque client qui prend <strong>Premium (25€/an)</strong> via votre lien = <strong>~{AFFILIATE_CREDITS_RULES.calculateSmsCredits(800)} SMS crédités</strong></p>
+                      <p>Chaque client qui prend <strong>Premium+ (40€/an)</strong> via votre lien = <strong>~{AFFILIATE_CREDITS_RULES.calculateSmsCredits(1800)} SMS crédités</strong></p>
+                      <p className="font-medium pt-2">
+                        💰 À 5% de conversion sur 1300 contacts = ~1100 SMS/mois financés par vos clients !
+                      </p>
+                      <p className="text-xs text-green-700 pt-2">
+                        ⚠️ Standard : max {FISHERMAN_PLANS.STANDARD.affiliateSmsCapMonthly} SMS/mois via affiliation • Pro/Elite : illimité
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Programme de Parrainage */}
+            <Card className="mb-8 max-w-6xl mx-auto border-2 border-dashed border-primary/30 bg-primary/5">
+              <CardContent className="pt-6">
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                  <div className="flex-shrink-0 h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Users className="h-8 w-8 text-primary" />
+                  </div>
+                  <div className="flex-1 text-center md:text-left">
+                    <h3 className="text-xl font-bold text-foreground mb-2">🎁 Programme de Parrainage</h3>
+                    <p className="text-muted-foreground mb-3">
+                      Parrainez un collègue pêcheur et recevez <span className="font-semibold text-primary">{AFFILIATE_CREDITS_RULES.REFERRAL_BONUS_SMS} SMS bonus</span> chacun !
                     </p>
-                    <p className="text-sm text-blue-800 mb-2">
-                      <strong>Elite :</strong> 1500 SMS/mois + SMS illimités (0.09€/SMS au-delà)
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Challenges à venir */}
+            <Card className="mb-8 max-w-6xl mx-auto border-amber-200 bg-amber-50">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-3">
+                  <Gift className="h-6 w-6 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold text-amber-900 mb-2">
+                      🏆 Challenges & Récompenses (bientôt)
                     </p>
-                    <p className="text-sm text-blue-800 font-medium">
-                      📧 Emails illimités + WhatsApp inclus dans tous les plans
-                    </p>
+                    <div className="text-sm text-amber-800 space-y-1">
+                      <p>• 5 Premium via ton lien = <strong>+500 SMS</strong></p>
+                      <p>• 10 Premium+ via ton lien = <strong>+1500 SMS</strong></p>
+                      <p className="pt-2 text-xs text-amber-700">
+                        Système de points partenaires en préparation : notez vos partenaires de point de vente, 
+                        gagnez des SMS, ou privatisez un emplacement !
+                      </p>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -368,23 +401,33 @@ const PecheurPayment = () => {
             {/* SMS Packs Options */}
             <div className="max-w-6xl mx-auto mb-8">
               <h3 className="text-xl font-semibold text-center mb-4">📦 Packs SMS supplémentaires</h3>
-              <p className="text-center text-muted-foreground mb-6">
+              <p className="text-center text-muted-foreground mb-2">
                 Besoin de plus de SMS ? Achetez des packs additionnels après inscription
+              </p>
+              <p className="text-center text-sm text-primary font-medium mb-6">
+                💡 Les abonnés PRO bénéficient de tarifs réduits sur les packs
               </p>
               <div className="grid md:grid-cols-4 gap-4">
                 {Object.entries(SMS_PACKS).map(([key, pack]) => (
-                  <Card key={key} className={`hover:shadow-md transition-shadow ${pack.badge ? 'border-primary/50 relative' : ''}`}>
-                    {pack.badge && (
+                  <Card key={key} className={`hover:shadow-md transition-shadow ${'recommended' in pack && pack.recommended ? 'border-primary/50 relative' : ''}`}>
+                    {'recommended' in pack && pack.recommended && (
                       <Badge className="absolute -top-2 right-4 bg-primary text-xs">
-                        {pack.badge}
+                        Recommandé
                       </Badge>
                     )}
                     <CardContent className="pt-6">
                       <div className="flex flex-col gap-2 mb-4">
-                        <p className="font-semibold text-lg">{pack.name}</p>
-                        <p className="text-sm text-muted-foreground">{pack.quantity} SMS</p>
-                        <p className="text-2xl font-bold">{pack.price}</p>
-                        <p className="text-xs text-muted-foreground">{pack.pricePerSms}/SMS</p>
+                        <p className="font-semibold text-lg">{pack.quantity} SMS</p>
+                        <div className="space-y-1">
+                          <p className="text-2xl font-bold">{pack.priceCents / 100}€</p>
+                          <p className="text-xs text-muted-foreground">Standard</p>
+                        </div>
+                        {pack.priceCentsPro !== pack.priceCents && (
+                          <div className="pt-1 border-t">
+                            <p className="text-lg font-bold text-green-600">{pack.priceCentsPro / 100}€</p>
+                            <p className="text-xs text-green-600 font-medium">PRO (-{Math.round((1 - pack.priceCentsPro / pack.priceCents) * 100)}%)</p>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -399,32 +442,16 @@ const PecheurPayment = () => {
                   <Gift className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="font-medium text-green-900 mb-2">
-                      🎁 Profitez de 1 mois d'essai gratuit
+                      🎁 Profitez de 30 jours d'essai gratuit (Standard & Pro)
                     </p>
                     <p className="text-sm text-green-800">
                       Votre carte bancaire sera vérifiée mais <strong>pas débitée</strong> pendant 30 jours. 
                       Vous pouvez annuler à tout moment avant la fin de l'essai sans frais.
                     </p>
-                    <p className="text-sm text-green-800 mt-2">
-                      Après 30 jours : facturation automatique selon le plan choisi.
-                    </p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-
-            {/* Value Proposition */}
-            <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-lg p-6 mb-8 max-w-5xl mx-auto">
-              <p className="font-semibold text-primary mb-2">
-                💰 Ce que vous économisez avec QuaiDirect
-              </p>
-              <ul className="text-sm space-y-1">
-                <li>✓ Plus de commission intermédiaire (vendez 100% de votre marge)</li>
-                <li>✓ Plus de temps perdu en coups de fil (emails/SMS automatiques)</li>
-                <li>✓ Plus de papier à gérer (tout est digitalisé)</li>
-                <li>✓ IA pour optimiser vos ventes et votre communication</li>
-              </ul>
-            </div>
 
             <div className="text-center space-y-3 max-w-5xl mx-auto">
               <Button
@@ -436,7 +463,7 @@ const PecheurPayment = () => {
                 Retour à l'accueil
               </Button>
               <p className="text-xs text-muted-foreground">
-                Paiement sécurisé par Stripe
+                Paiement sécurisé par Stripe • Commission de 8% sur les paniers
               </p>
             </div>
           </>

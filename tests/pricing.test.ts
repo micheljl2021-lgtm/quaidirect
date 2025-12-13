@@ -7,12 +7,19 @@ describe('Pricing Configuration', () => {
       expect(FISHERMAN_PLANS.STANDARD.priceCents).toBe(15000);
       expect(FISHERMAN_PLANS.STANDARD.openingBonusSms).toBe(200);
       expect(FISHERMAN_PLANS.STANDARD.smsQuotaMonthly).toBe(50);
+      expect(FISHERMAN_PLANS.STANDARD.crmContacts).toBe(500);
+      expect(FISHERMAN_PLANS.STANDARD.salePoints).toBe(1);
+      expect(FISHERMAN_PLANS.STANDARD.affiliateSmsCapMonthly).toBe(200);
     });
 
     it('should have correct PRO plan pricing', () => {
       expect(FISHERMAN_PLANS.PRO.priceCents).toBe(29900);
       expect(FISHERMAN_PLANS.PRO.openingBonusSms).toBe(1000);
       expect(FISHERMAN_PLANS.PRO.smsQuotaMonthly).toBe(200);
+      expect(FISHERMAN_PLANS.PRO.crmContacts).toBe(2000);
+      expect(FISHERMAN_PLANS.PRO.salePoints).toBe(3);
+      expect(FISHERMAN_PLANS.PRO.affiliateSmsCapMonthly).toBeNull();
+      expect(FISHERMAN_PLANS.PRO.recommended).toBe(true);
     });
 
     it('should have correct ELITE plan pricing', () => {
@@ -21,6 +28,8 @@ describe('Pricing Configuration', () => {
       expect(FISHERMAN_PLANS.ELITE.smsQuotaMonthly).toBe(1500);
       expect(FISHERMAN_PLANS.ELITE.overageEnabled).toBe(true);
       expect(FISHERMAN_PLANS.ELITE.overagePricePerSmsCents).toBe(9);
+      expect(FISHERMAN_PLANS.ELITE.crmContacts).toBe(10000);
+      expect(FISHERMAN_PLANS.ELITE.salePoints).toBe(10);
     });
   });
 
@@ -45,6 +54,12 @@ describe('Pricing Configuration', () => {
       expect(SMS_PACKS.PACK_LANCEMENT.recommended).toBe(true);
       expect(SMS_PACKS.PACK_LANCEMENT.quantity).toBe(1000);
       expect(SMS_PACKS.PACK_LANCEMENT.priceCents).toBe(7000);
+      expect(SMS_PACKS.PACK_LANCEMENT.priceCentsPro).toBe(6500);
+    });
+
+    it('should have better prices for PRO plan', () => {
+      expect(SMS_PACKS.PACK_500.priceCentsPro).toBeLessThan(SMS_PACKS.PACK_500.priceCents);
+      expect(SMS_PACKS.PACK_LANCEMENT.priceCentsPro).toBeLessThan(SMS_PACKS.PACK_LANCEMENT.priceCents);
     });
   });
 });
@@ -75,5 +90,15 @@ describe('Affiliate Credits Calculation', () => {
     expect(AFFILIATE_CREDITS_RULES.calculateSmsCredits(350)).toBe(50);
     expect(AFFILIATE_CREDITS_RULES.calculateSmsCredits(70)).toBe(10);
     expect(AFFILIATE_CREDITS_RULES.calculateSmsCredits(6)).toBe(0); // Not enough for 1 SMS
+  });
+
+  it('should return correct affiliate cap by plan', () => {
+    expect(AFFILIATE_CREDITS_RULES.getAffiliateCap('fisherman_standard')).toBe(200);
+    expect(AFFILIATE_CREDITS_RULES.getAffiliateCap('fisherman_pro')).toBeNull();
+    expect(AFFILIATE_CREDITS_RULES.getAffiliateCap('fisherman_elite')).toBeNull();
+  });
+
+  it('should have referral bonus defined', () => {
+    expect(AFFILIATE_CREDITS_RULES.REFERRAL_BONUS_SMS).toBe(300);
   });
 });
