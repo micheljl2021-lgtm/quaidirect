@@ -219,7 +219,9 @@ self.addEventListener('message', (event) => {
   
   // Check cache version
   if (event.data && event.data.type === 'GET_VERSION') {
-    event.ports[0].postMessage({ version: CACHE_VERSION });
+    if (event.ports && event.ports[0]) {
+      event.ports[0].postMessage({ version: CACHE_VERSION });
+    }
   }
   
   // Force update - clear all caches and skip waiting
