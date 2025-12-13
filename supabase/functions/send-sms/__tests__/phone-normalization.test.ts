@@ -143,7 +143,6 @@ describe('Phone Number Normalization to E.164', () => {
 
   describe('Edge cases', () => {
     it('handles minimum valid length (8 digits)', () => {
-      expect(normalizePhoneToE164('+1234567890')).toBeNull(); // 10 digits, too short
       expect(normalizePhoneToE164('+12345678')).toBe('+12345678'); // 8 digits, valid
     });
 

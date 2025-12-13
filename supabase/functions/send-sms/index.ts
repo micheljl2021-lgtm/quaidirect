@@ -25,7 +25,7 @@ function normalizePhoneToE164(phone: string): string | null {
   }
   
   // 3. If starts with 33 (without +) -> add +
-  if (cleaned.startsWith('33') && !cleaned.startsWith('+')) {
+  if (cleaned.startsWith('33')) {
     cleaned = '+' + cleaned;
   }
   
@@ -260,10 +260,12 @@ serve(async (req) => {
     }
 
     // Update quota (deduct from free first, then paid)
+    let newFreeRemaining = freeRemaining;
+    let newPaidBalance = paidBalance;
+    
     if (successCount > 0) {
       let smsToDeduct = successCount;
       let newFreeUsed = freeUsed;
-      let newPaidBalance = paidBalance;
 
       // Use free SMS first
       const freeToUse = Math.min(smsToDeduct, freeRemaining);
@@ -276,6 +278,9 @@ serve(async (req) => {
       if (smsToDeduct > 0) {
         newPaidBalance = Math.max(0, paidBalance - smsToDeduct);
       }
+
+      // Calculate new remaining values
+      newFreeRemaining = Math.max(0, freeQuota - newFreeUsed);
 
       // Upsert usage record
       await supabase
@@ -293,9 +298,6 @@ serve(async (req) => {
       logStep('Quota updated', { newFreeUsed, newPaidBalance });
     }
 
-    // Calculate remaining quota
-    const newFreeRemaining = Math.max(0, freeQuota - (freeUsed + Math.min(successCount, freeRemaining)));
-    const newPaidBalance = successCount > freeRemaining ? paidBalance - (successCount - freeRemaining) : paidBalance;
     const newTotalAvailable = newFreeRemaining + Math.max(0, newPaidBalance);
 
     return new Response(
