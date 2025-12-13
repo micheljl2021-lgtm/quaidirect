@@ -8,10 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Upload, Plus, Trash2, Users, Download, AlertCircle, CheckCircle2, ArrowLeft } from "lucide-react";
+import { Upload, Plus, Trash2, Users, Download, AlertCircle, CheckCircle2, ArrowLeft, Pencil } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Header from "@/components/Header";
 import { useNavigate } from "react-router-dom";
 import { getUserFriendlyError } from "@/lib/errorMessages";
@@ -22,6 +24,10 @@ import {
   validateFrenchPhone,
   type ParsedContact 
 } from "@/lib/validators";
+import type { Database } from "@/integrations/supabase/types";
+
+// Type alias for Contact from Supabase schema
+type Contact = Database['public']['Tables']['fishermen_contacts']['Row'];
 
 const PecheurContacts = () => {
   const { user } = useAuth();
@@ -38,6 +44,8 @@ const PecheurContacts = () => {
     notes: ""
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [editFormErrors, setEditFormErrors] = useState<Record<string, string>>({});
 
   // Récupérer le fisherman_id
   const { data: fisherman } = useQuery({
@@ -68,6 +76,32 @@ const PecheurContacts = () => {
     },
     enabled: !!fisherman?.id
   });
+
+  // Common validation function for contact forms
+  const validateContactForm = (email: string | null, phone: string | null) => {
+    const errors: Record<string, string> = {};
+    
+    if (!email && !phone) {
+      errors.email = 'Email ou téléphone requis';
+      errors.phone = 'Email ou téléphone requis';
+    }
+    
+    if (email) {
+      const emailResult = validateEmail(email);
+      if (!emailResult.isValid) {
+        errors.email = emailResult.error || 'Email invalide';
+      }
+    }
+    
+    if (phone) {
+      const phoneResult = validateFrenchPhone(phone);
+      if (!phoneResult.isValid) {
+        errors.phone = phoneResult.error || 'Téléphone invalide';
+      }
+    }
+    
+    return errors;
+  };
 
   // Parse CSV preview
   const csvPreview = useMemo(() => {
@@ -113,28 +147,16 @@ const PecheurContacts = () => {
 
   // Validate manual form
   const validateManualForm = () => {
-    const errors: Record<string, string> = {};
-    
-    if (!manualContact.email && !manualContact.phone) {
-      errors.email = 'Email ou téléphone requis';
-      errors.phone = 'Email ou téléphone requis';
-    }
-    
-    if (manualContact.email) {
-      const emailResult = validateEmail(manualContact.email);
-      if (!emailResult.isValid) {
-        errors.email = emailResult.error || 'Email invalide';
-      }
-    }
-    
-    if (manualContact.phone) {
-      const phoneResult = validateFrenchPhone(manualContact.phone);
-      if (!phoneResult.isValid) {
-        errors.phone = phoneResult.error || 'Téléphone invalide';
-      }
-    }
-    
+    const errors = validateContactForm(manualContact.email, manualContact.phone);
     setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Validate edit form
+  const validateEditForm = () => {
+    if (!editingContact) return false;
+    const errors = validateContactForm(editingContact.email, editingContact.phone);
+    setEditFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
@@ -194,6 +216,39 @@ const PecheurContacts = () => {
     },
     onError: (error) => {
       toast.error(getUserFriendlyError(error));
+    }
+  });
+
+  // Update contact
+  const updateContact = useMutation({
+    mutationFn: async (contact: Contact) => {
+      if (!validateEditForm()) {
+        throw new Error('Formulaire invalide');
+      }
+      
+      const { error } = await supabase
+        .from('fishermen_contacts')
+        .update({
+          first_name: contact.first_name,
+          last_name: contact.last_name,
+          email: contact.email,
+          phone: contact.phone,
+          contact_group: contact.contact_group,
+          notes: contact.notes,
+        })
+        .eq('id', contact.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Contact modifié avec succès');
+      setEditingContact(null);
+      setEditFormErrors({});
+      queryClient.invalidateQueries({ queryKey: ['fisherman-contacts'] });
+    },
+    onError: (error: Error) => {
+      if (error.message !== 'Formulaire invalide') {
+        toast.error(getUserFriendlyError(error));
+      }
     }
   });
 
@@ -490,13 +545,24 @@ const PecheurContacts = () => {
                             <Badge variant="outline">{contact.contact_group}</Badge>
                           </TableCell>
                           <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deleteContact.mutate(contact.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setEditingContact(contact)}
+                                aria-label="Modifier le contact"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => deleteContact.mutate(contact.id)}
+                                aria-label="Supprimer le contact"
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -509,6 +575,142 @@ const PecheurContacts = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Edit Contact Dialog */}
+        <Dialog open={!!editingContact} onOpenChange={(open) => !open && setEditingContact(null)}>
+          <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Modifier le contact</DialogTitle>
+              <DialogDescription>
+                Modifiez les informations du contact. Au moins l'email ou le téléphone est requis.
+              </DialogDescription>
+            </DialogHeader>
+            
+            {editingContact && (
+              <div className="space-y-4 py-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="edit-first-name">Prénom</Label>
+                    <Input
+                      id="edit-first-name"
+                      value={editingContact.first_name || ''}
+                      onChange={(e) => setEditingContact({
+                        ...editingContact,
+                        first_name: e.target.value
+                      })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-last-name">Nom</Label>
+                    <Input
+                      id="edit-last-name"
+                      value={editingContact.last_name || ''}
+                      onChange={(e) => setEditingContact({
+                        ...editingContact,
+                        last_name: e.target.value
+                      })}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="edit-email">Email</Label>
+                  <Input
+                    id="edit-email"
+                    type="email"
+                    value={editingContact.email || ''}
+                    onChange={(e) => {
+                      setEditingContact({
+                        ...editingContact,
+                        email: e.target.value
+                      });
+                      setEditFormErrors({...editFormErrors, email: ''});
+                    }}
+                    placeholder="client@example.com"
+                    className={editFormErrors.email ? 'border-destructive' : ''}
+                  />
+                  {editFormErrors.email && (
+                    <p className="text-xs text-destructive mt-1">{editFormErrors.email}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="edit-phone">Téléphone</Label>
+                  <Input
+                    id="edit-phone"
+                    value={editingContact.phone || ''}
+                    onChange={(e) => {
+                      setEditingContact({
+                        ...editingContact,
+                        phone: e.target.value
+                      });
+                      setEditFormErrors({...editFormErrors, phone: ''});
+                    }}
+                    placeholder="06 12 34 56 78"
+                    className={editFormErrors.phone ? 'border-destructive' : ''}
+                  />
+                  {editFormErrors.phone && (
+                    <p className="text-xs text-destructive mt-1">{editFormErrors.phone}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="edit-contact-group">Groupe</Label>
+                  <Select 
+                    value={editingContact.contact_group || 'general'} 
+                    onValueChange={(value) => setEditingContact({
+                      ...editingContact,
+                      contact_group: value
+                    })}
+                  >
+                    <SelectTrigger id="edit-contact-group">
+                      <SelectValue placeholder="Sélectionnez un groupe" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">Général</SelectItem>
+                      <SelectItem value="reguliers">Réguliers</SelectItem>
+                      <SelectItem value="occasionnels">Occasionnels</SelectItem>
+                      <SelectItem value="professionnels">Professionnels</SelectItem>
+                      <SelectItem value="vip">VIP</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="edit-notes">Notes</Label>
+                  <Textarea
+                    id="edit-notes"
+                    value={editingContact.notes || ''}
+                    onChange={(e) => setEditingContact({
+                      ...editingContact,
+                      notes: e.target.value
+                    })}
+                    placeholder="Notes optionnelles..."
+                    rows={3}
+                  />
+                </div>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setEditingContact(null);
+                  setEditFormErrors({});
+                }}
+              >
+                Annuler
+              </Button>
+              <Button 
+                onClick={() => editingContact && updateContact.mutate(editingContact)}
+                disabled={updateContact.isPending}
+              >
+                {updateContact.isPending ? 'Enregistrement...' : 'Enregistrer'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </>
   );
