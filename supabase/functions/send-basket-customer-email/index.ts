@@ -4,6 +4,17 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
+// Helper function to escape HTML to prevent XSS
+const escapeHtml = (text: string): string => {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+};
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "https://quaidirect.fr",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -130,7 +141,7 @@ serve(async (req) => {
               
               <div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #e0e0e0;">
                 <span style="color: #666;">Panier</span>
-                <strong style="color: #333;">${order.client_baskets.name}</strong>
+                <strong style="color: #333;">${escapeHtml(order.client_baskets.name)}</strong>
               </div>
               
               <div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #e0e0e0;">
@@ -140,7 +151,7 @@ serve(async (req) => {
               
               <div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #e0e0e0;">
                 <span style="color: #666;">Pêcheur</span>
-                <strong style="color: #333;">${fishermanName}</strong>
+                <strong style="color: #333;">${escapeHtml(fishermanName)}</strong>
               </div>
               
               <div style="display: flex; justify-content: space-between;">
@@ -153,11 +164,11 @@ serve(async (req) => {
               <h3 style="margin: 0 0 15px 0; color: #0066cc;">📍 Retrait de votre commande</h3>
               
               <p style="margin: 0 0 10px 0; color: #333;">
-                <strong>Lieu :</strong> ${pickupLocation}
+                <strong>Lieu :</strong> ${escapeHtml(pickupLocation)}
               </p>
               
               <p style="margin: 0; color: #333;">
-                <strong>Date et heure :</strong> ${pickupDate}
+                <strong>Date et heure :</strong> ${escapeHtml(pickupDate)}
               </p>
             </div>
 

@@ -9,7 +9,7 @@ import fs from "fs";
 function injectServiceWorkerVersion() {
   return {
     name: 'inject-sw-version',
-    apply: 'build',
+    apply: 'build' as const,
     closeBundle() {
       const swPath = path.resolve(__dirname, 'dist/sw.js');
       if (fs.existsSync(swPath)) {

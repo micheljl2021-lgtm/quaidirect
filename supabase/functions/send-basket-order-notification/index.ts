@@ -4,6 +4,17 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
+// Helper function to escape HTML to prevent XSS
+const escapeHtml = (text: string): string => {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+};
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -127,19 +138,19 @@ serve(async (req) => {
         
         <h2>Détails de la commande :</h2>
         <ul>
-          <li><strong>Panier :</strong> ${basketName}</li>
+          <li><strong>Panier :</strong> ${escapeHtml(basketName)}</li>
           <li><strong>Poids indicatif :</strong> ~${basketWeight}kg</li>
           <li><strong>Prix :</strong> ${totalPrice}€</li>
-          <li><strong>Client :</strong> ${customerEmail}</li>
+          <li><strong>Client :</strong> ${escapeHtml(customerEmail)}</li>
         </ul>
 
         <h2>📍 Retrait :</h2>
         <ul>
-          <li><strong>Lieu :</strong> ${pickupLocation}</li>
-          <li><strong>Date et heure :</strong> ${pickupDate}</li>
+          <li><strong>Lieu :</strong> ${escapeHtml(pickupLocation)}</li>
+          <li><strong>Date et heure :</strong> ${escapeHtml(pickupDate)}</li>
         </ul>
 
-        ${order.notes ? `<p><strong>Notes du client :</strong> ${order.notes}</p>` : ''}
+        ${order.notes ? `<p><strong>Notes du client :</strong> ${escapeHtml(order.notes)}</p>` : ''}
 
         <p style="margin-top: 30px;">
           <a href="https://quaidirect.fr/dashboard/pecheur" 
