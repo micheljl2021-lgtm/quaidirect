@@ -141,7 +141,7 @@ const SalePointDrawer = ({ open, onOpenChange, salePoint }: SalePointDrawerProps
             <div className="aspect-video rounded-lg overflow-hidden bg-muted flex items-center justify-center">
               {salePoint.photo_url || salePoint.fishermen.photo_url ? (
                 <img
-                  src={salePoint.photo_url || salePoint.fishermen.photo_url || ''}
+                  src={salePoint.photo_url || salePoint.fishermen.photo_url}
                   alt={salePoint.label}
                   className="w-full h-full object-cover"
                 />
