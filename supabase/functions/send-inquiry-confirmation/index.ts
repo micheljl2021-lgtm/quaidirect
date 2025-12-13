@@ -2,6 +2,17 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
+// Helper function to escape HTML to prevent XSS
+const escapeHtml = (text: string): string => {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+};
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -78,10 +89,10 @@ const handler = async (req: Request): Promise<Response> => {
             <div class="recap">
               <div class="recap-title">📋 Récapitulatif de votre demande</div>
               <div class="recap-item">
-                <span class="recap-label">Type :</span> ${typeLabel}
+                <span class="recap-label">Type :</span> ${escapeHtml(typeLabel)}
               </div>
               <div class="recap-item">
-                <span class="recap-label">Message :</span> ${messagePreview}
+                <span class="recap-label">Message :</span> ${escapeHtml(messagePreview)}
               </div>
             </div>
 

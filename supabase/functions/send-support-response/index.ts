@@ -4,6 +4,17 @@ import { Resend } from "https://esm.sh/resend@4.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
+// Helper function to escape HTML to prevent XSS
+const escapeHtml = (text: string): string => {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+};
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -88,13 +99,13 @@ const handler = async (req: Request): Promise<Response> => {
           <p>Votre demande de support a été traitée par notre équipe.</p>
           
           <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p style="margin: 5px 0;"><strong>📋 Sujet :</strong> ${supportRequest.subject}</p>
-            <p style="margin: 5px 0;"><strong>📌 Statut :</strong> <span style="color: #0EA5E9;">${statusLabel}</span></p>
+            <p style="margin: 5px 0;"><strong>📋 Sujet :</strong> ${escapeHtml(supportRequest.subject)}</p>
+            <p style="margin: 5px 0;"><strong>📌 Statut :</strong> <span style="color: #0EA5E9;">${escapeHtml(statusLabel)}</span></p>
           </div>
           
           <div style="background-color: #ffffff; border-left: 4px solid #0EA5E9; padding: 15px; margin: 20px 0;">
             <p style="margin: 0 0 10px 0;"><strong>💬 Réponse de l'équipe QuaiDirect :</strong></p>
-            <p style="margin: 0; white-space: pre-wrap;">${adminResponse}</p>
+            <p style="margin: 0; white-space: pre-wrap;">${escapeHtml(adminResponse)}</p>
           </div>
           
           <p>Vous pouvez consulter l'historique de vos demandes sur :</p>
