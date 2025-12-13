@@ -63,8 +63,8 @@ src/
 ### Testing
 - **Test Framework**: Vitest with React Testing Library
 - **Test Location**: All tests are in the `tests/` directory
-- **Run Tests**: `npm test` or `npx vitest`
-- **Test Coverage**: `npm run test:coverage`
+- **Run Tests**: `npx vitest`
+- **Test Coverage**: `npx vitest --coverage`
 - Use MSW (Mock Service Worker) for mocking API calls
 - Follow existing test patterns in `tests/` directory
 
@@ -172,8 +172,9 @@ const { error } = await supabase
 
 ### Adding Dependencies
 1. Use `npm install` to add dependencies
-2. Verify no security vulnerabilities
-3. Update documentation if it affects setup
+2. Check for security vulnerabilities with `npm audit`
+3. Fix vulnerabilities with `npm audit fix` if available
+4. Update documentation if it affects setup
 
 ## Resources
 
