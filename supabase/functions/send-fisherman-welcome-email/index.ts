@@ -76,9 +76,9 @@ const handler = async (req: Request): Promise<Response> => {
           </ol>
 
           <div style="margin: 30px 0; text-align: center;">
-            <a href="https://quaidirect.fr/dashboard/pecheur" 
+            <a href="https://quaidirect.fr/pecheur/onboarding" 
                style="background: #0066cc; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
-              Accéder à mon tableau de bord
+              Compléter mon profil
             </a>
           </div>
 

@@ -31,6 +31,7 @@ serve(async (req) => {
         address,
         latitude,
         longitude,
+        photo_url,
         fisherman_id,
         fishermen!fisherman_sale_points_fisherman_id_fkey (
           id,
