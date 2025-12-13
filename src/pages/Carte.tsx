@@ -232,8 +232,8 @@ const Carte = () => {
             <AlertDescription>
               Vous avez refusé l'accès à votre position. Pour activer la géolocalisation :
               <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>Chrome/Edge : Cliquez sur l'icône 🔒 dans la barre d'adresse</li>
-                <li>Firefox : Cliquez sur l'icône ⓘ et modifiez les permissions</li>
+                <li>Chrome/Edge : Cliquez sur l'icône cadenas dans la barre d'adresse</li>
+                <li>Firefox : Cliquez sur l'icône info et modifiez les permissions</li>
                 <li>Safari : Préférences → Sites web → Localisation</li>
               </ul>
             </AlertDescription>
