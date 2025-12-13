@@ -11,39 +11,104 @@ export const FISHERMAN_PLANS = {
     id: 'fisherman_standard',
     name: 'Standard',
     priceCents: 15000, // 150€/an
-    period: 'year',
+    priceMonthlyEquivalent: 1250, // 12,50€/mois
+    period: 'year' as const,
     stripePriceId: 'price_1SZYAXH0VhS1yyE0FqJ0imbu',
     trialDays: 30,
     smsQuotaMonthly: 50,
     openingBonusSms: 200,
     crmContacts: 500,
     salePoints: 1,
+    features: {
+      crm: 'simple',
+      ia: 'basique', // texte d'annonce, description
+      stats: 'light',
+      smsPacks: true,
+    },
+    affiliateSmsCapMonthly: 200, // Plafond affiliation mensuel
+    positioning: 'Tu démarres, tu construis ton fichier',
   },
   PRO: {
     id: 'fisherman_pro',
     name: 'Pro',
     priceCents: 29900, // 299€/an
-    period: 'year',
-    stripePriceId: 'price_1SddbeH0VhS1yyE0T70ZjSC1',
+    priceMonthlyEquivalent: 2490, // 24,90€/mois
+    period: 'year' as const,
+    stripePriceId: 'price_1Sdnn9H0VhS1yyE0JAINCVDH',
     trialDays: 30,
     smsQuotaMonthly: 200,
     openingBonusSms: 1000,
     crmContacts: 2000,
     salePoints: 3,
+    features: {
+      crm: 'avancé', // tags/segments
+      ia: 'marine', // IA Marine + météo + templates
+      stats: 'campagnes',
+      smsPacks: true,
+      smsPacksDiscount: true, // Meilleur prix sur les packs
+    },
+    affiliateSmsCapMonthly: null, // Illimité
+    positioning: 'Le vrai plan rentable si tu annonces souvent',
+    recommended: true,
   },
   ELITE: {
     id: 'fisherman_elite',
     name: 'Elite',
     priceCents: 19900, // 199€/mois
-    period: 'month',
+    period: 'month' as const,
     stripePriceId: 'price_1SddbuH0VhS1yyE0ZFYhsoQ4',
     trialDays: 0,
     smsQuotaMonthly: 1500,
-    openingBonusSms: 0,
+    openingBonusSms: 0, // Pas de bonus car mensuel
+    openingBonusAnnualSms: 2000, // Si passage en annuel
     overageEnabled: true,
-    overagePricePerSmsCents: 9, // 0.09€ par SMS supplémentaire
+    overagePricePerSmsCents: 9, // 0,09€ par SMS supplémentaire
     crmContacts: 10000,
-    salePoints: 10,
+    salePoints: 10, // Multi points de vente
+    features: {
+      crm: 'complet',
+      ia: 'complète', // + "photo → annonce" à venir
+      stats: 'dashboard avancé',
+      senderPro: true, // Numéro vérifié (quand possible)
+      smsPacks: false, // Surconsommation directe
+    },
+    affiliateSmsCapMonthly: null, // Illimité
+    positioning: 'Ports actifs / gros fichiers / ventes régulières',
+  },
+} as const;
+
+// ============================================
+// PACKS SMS (prix différenciés par plan)
+// ============================================
+export const SMS_PACKS = {
+  PACK_500: {
+    id: 'pack_500',
+    quantity: 500,
+    priceCents: 4000, // 40€ (prix Standard)
+    priceCentsPro: 3500, // 35€ (prix Pro)
+    stripePriceId: 'price_1Sc6emH0VhS1yyE08QedRHLt',
+  },
+  PACK_LANCEMENT: {
+    id: 'pack_lancement',
+    quantity: 1000,
+    priceCents: 7000, // 70€ → 75€ Standard
+    priceCentsPro: 6500, // 65€ Pro
+    stripePriceId: 'price_1Sc6f2H0VhS1yyE0Q35I8Lak',
+    recommended: true,
+  },
+  PACK_2000: {
+    id: 'pack_2000',
+    quantity: 2000,
+    priceCents: 12000, // 120€ → 140€ Standard
+    priceCentsPro: 12000, // 120€ Pro
+    stripePriceId: 'price_SMS_PACK_2000', // À créer
+  },
+  PACK_5000: {
+    id: 'pack_5000',
+    quantity: 5000,
+    priceCents: 25000, // 250€
+    priceCentsPro: 22000, // 220€ Pro
+    stripePriceId: 'price_SMS_PACK_5000', // À créer
   },
 } as const;
 
@@ -73,44 +138,35 @@ export const PREMIUM_PLANS = {
 } as const;
 
 // ============================================
-// PACKS SMS
+// RÈGLES AFFILIATION
 // ============================================
-export const SMS_PACKS = {
-  PACK_500: {
-    id: 'pack_500',
-    quantity: 500,
-    priceCents: 4000, // 40€
-    stripePriceId: 'price_SMS_PACK_500',
+export const AFFILIATE_CREDITS_RULES = {
+  SMS_CREDIT_VALUE_CENTS: 7, // 0,07€ par SMS
+  REFERRAL_BONUS_SMS: 300, // Bonus parrainage pour les deux parties
+  calculateSmsCredits: (creditCents: number): number => {
+    if (creditCents < 0) return 0;
+    return Math.floor(creditCents / 7);
   },
-  PACK_LANCEMENT: {
-    id: 'pack_lancement',
-    quantity: 1000,
-    priceCents: 7000, // 70€
-    stripePriceId: 'price_SMS_PACK_LANCEMENT',
-    recommended: true,
-  },
-  PACK_2000: {
-    id: 'pack_2000',
-    quantity: 2000,
-    priceCents: 12000, // 120€
-    stripePriceId: 'price_SMS_PACK_2000',
-  },
-  PACK_5000: {
-    id: 'pack_5000',
-    quantity: 5000,
-    priceCents: 25000, // 250€
-    stripePriceId: 'price_SMS_PACK_5000',
+  // Plafonds d'affiliation par plan
+  getAffiliateCap: (planId: string): number | null => {
+    if (planId === 'fisherman_standard') return 200;
+    return null; // Illimité pour Pro/Elite
   },
 } as const;
 
 // ============================================
-// RÈGLES AFFILIATION
+// CHALLENGES ET RÉCOMPENSES (à venir)
 // ============================================
-export const AFFILIATE_CREDITS_RULES = {
-  SMS_CREDIT_VALUE_CENTS: 7, // 0.07€ par SMS
-  calculateSmsCredits: (creditCents: number): number => {
-    if (creditCents < 0) return 0;
-    return Math.floor(creditCents / 7);
+export const CHALLENGES = {
+  PREMIUM_5: {
+    id: 'premium_5',
+    description: '5 Premium via ton lien',
+    rewardSms: 500,
+  },
+  PREMIUM_PLUS_10: {
+    id: 'premium_plus_10',
+    description: '10 Premium+ via ton lien',
+    rewardSms: 1500,
   },
 } as const;
 
