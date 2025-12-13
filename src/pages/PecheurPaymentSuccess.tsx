@@ -29,8 +29,8 @@ const PecheurPaymentSuccess = () => {
   const amount = planAmounts[plan] || '150€/an';
   const planLabel = planLabels[plan] || 'Standard';
   const planHasTrial: Record<string, boolean> = {
-    standard: true,
-    pro: true,
+    standard: false,
+    pro: false,
     elite: false,
   };
 

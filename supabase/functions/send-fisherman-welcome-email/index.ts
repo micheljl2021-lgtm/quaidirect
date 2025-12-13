@@ -58,10 +58,7 @@ const handler = async (req: Request): Promise<Response> => {
           
           <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <p style="margin: 0; font-size: 16px;">
-              <strong>Votre période d'essai gratuite de 30 jours a commencé !</strong>
-            </p>
-            <p style="margin: 10px 0 0 0; color: #666;">
-              Plan souscrit : <strong>${planLabel}</strong>
+              <strong>Votre abonnement ${planLabel} est maintenant actif !</strong>
             </p>
           </div>
 
@@ -93,10 +90,10 @@ const handler = async (req: Request): Promise<Response> => {
             </a>
           </div>
 
-          <div style="background: #fff9e6; padding: 16px; border-left: 4px solid #ffc107; margin: 20px 0;">
+          <div style="background: #e8f5e9; padding: 16px; border-left: 4px solid #4caf50; margin: 20px 0;">
             <p style="margin: 0; font-size: 14px;">
-              <strong>💡 Rappel :</strong> Votre essai gratuit se termine dans 30 jours. 
-              Vous serez facturé automatiquement ${isPro ? '199€' : '150€'} pour votre première année, sauf annulation avant la fin de l'essai.
+              <strong>✅ Confirmation :</strong> Votre abonnement ${planLabel} (${isPro ? '299€' : '150€'}/an) est maintenant actif.
+              Votre prochaine facturation aura lieu dans un an.
             </p>
           </div>
 

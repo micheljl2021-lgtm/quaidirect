@@ -25,12 +25,9 @@ const PremiumSuccess = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <p className="text-sm text-muted-foreground mb-2">
-                ✨ Votre période d'essai de 7 jours commence maintenant
-              </p>
-              <p className="text-sm font-medium">
-                Profitez de toutes les fonctionnalités Premium sans engagement
+            <div className="bg-green-50 p-4 rounded-lg">
+              <p className="text-sm font-medium text-green-800">
+                ✅ Votre abonnement Premium est maintenant actif !
               </p>
             </div>
 
