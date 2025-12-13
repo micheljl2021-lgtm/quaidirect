@@ -50,7 +50,7 @@ src/
 ## Development Workflow
 
 ### Before Making Changes
-1. Run existing tests to understand baseline: `npm test`
+1. Run existing tests to understand baseline: `npx vitest run`
 2. Run linter to check code style: `npm run lint`
 3. Run the dev server to verify functionality: `npm run dev`
 
@@ -171,10 +171,12 @@ const { error } = await supabase
 4. Test changes thoroughly
 
 ### Adding Dependencies
-1. Use `npm install` to add dependencies
+1. Use `npm install` to add dependencies (project uses npm for package management)
 2. Check for security vulnerabilities with `npm audit`
 3. Fix vulnerabilities with `npm audit fix` if available
 4. Update documentation if it affects setup
+
+Note: Project has both `package-lock.json` and `bun.lockb` - use npm for consistency.
 
 ## Resources
 
