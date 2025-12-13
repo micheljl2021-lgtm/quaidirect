@@ -2,7 +2,7 @@ import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedFisherRoute } from "@/components/ProtectedFisherRoute";
 import { MaintenanceGuard } from "@/components/MaintenanceGuard";
@@ -66,6 +66,12 @@ const LazyRoute = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<PageLoader />}>{children}</Suspense>
 );
 
+// Redirect component that preserves query parameters
+const RedirectWithParams = ({ to }: { to: string }) => {
+  const location = useLocation();
+  return <Navigate to={`${to}${location.search}`} replace />;
+};
+
 const App = () => (
   <AuthProvider>
     <TooltipProvider>
@@ -121,6 +127,8 @@ const App = () => (
             {/* Pecheur payment routes */}
             <Route path="/pecheur/payment" element={<LazyRoute><PecheurPayment /></LazyRoute>} />
             <Route path="/pecheur/payment-success" element={<LazyRoute><PecheurPaymentSuccess /></LazyRoute>} />
+            {/* Redirect old route to canonical route for backward compatibility */}
+            <Route path="/pecheur/payment/success" element={<RedirectWithParams to="/pecheur/payment-success" />} />
 
             {/* Protected pecheur routes */}
             <Route path="/pecheur/points-de-vente" element={

@@ -248,7 +248,7 @@ CREATE POLICY "Premium users can view drops early"
    - INSERT INTO user_roles (user_id, role: 'fisherman') ON CONFLICT DO NOTHING
    - INSERT INTO fishermen (user_id, onboarding_payment_status: 'paid', ...)
    - Appelle approve-fisherman-access (validation admin + email)
-8. Redirection /pecheur/payment/success
+8. Redirection /pecheur/payment-success
 9. Redirection /pecheur/onboarding (formulaire 6 étapes)
 10. Pêcheur complète onboarding → UPDATE fishermen SET onboarding_step = 6, verified_at = now()
 11. Trigger auto_assign_fisherman_role confirme rôle fisherman

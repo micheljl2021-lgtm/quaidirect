@@ -59,7 +59,7 @@ QuaiDirect est structuré autour de **5 types d'utilisateurs** avec des dashboar
 |-------|-----------|-------|-------|---------------------------|
 | `/devenir-pecheur` | DevenirPecheur.tsx | Devenir Pêcheur | Tous | Landing inscription pêcheur |
 | `/pecheur/payment` | PecheurPayment.tsx | Abonnement Pêcheur | visitor | Plans Basic (99€) / Pro (199€) |
-| `/pecheur/payment/success` | PecheurPaymentSuccess.tsx | Paiement Réussi | fisherman | Confirmation paiement pêcheur |
+| `/pecheur/payment-success` | PecheurPaymentSuccess.tsx | Paiement Réussi | fisherman | Confirmation paiement pêcheur |
 | `/pecheur/onboarding` | PecheurOnboarding.tsx | Onboarding Pêcheur | fisherman | Formulaire onboarding (6 étapes) |
 | `/pecheur/onboarding/confirmation` | OnboardingConfirmation.tsx | Onboarding Terminé | fisherman | Confirmation fin onboarding |
 | `/dashboard/pecheur` | PecheurDashboard.tsx | Dashboard Pêcheur | fisherman | Hub central pêcheur (8 sections) |
@@ -144,7 +144,7 @@ Landing (/)
   → Devenir Pêcheur (/devenir-pecheur)
   → Choisir Plan (Basic/Pro) (/pecheur/payment)
   → Paiement Stripe (99€ ou 199€)
-  → Confirmation (/pecheur/payment/success)
+  → Confirmation (/pecheur/payment-success)
   → Onboarding 6 étapes (/pecheur/onboarding)
   → Validation Admin (backend)
   → Dashboard Pêcheur (/dashboard/pecheur)
