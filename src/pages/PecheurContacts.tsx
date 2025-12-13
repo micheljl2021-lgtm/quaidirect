@@ -24,21 +24,10 @@ import {
   validateFrenchPhone,
   type ParsedContact 
 } from "@/lib/validators";
+import type { Database } from "@/integrations/supabase/types";
 
-// Define Contact type based on Supabase schema
-interface Contact {
-  id: string;
-  email: string | null;
-  phone: string | null;
-  first_name: string | null;
-  last_name: string | null;
-  contact_group: string | null;
-  notes: string | null;
-  fisherman_id: string;
-  created_at: string | null;
-  imported_at: string | null;
-  last_contacted_at: string | null;
-}
+// Type alias for Contact from Supabase schema
+type Contact = Database['public']['Tables']['fishermen_contacts']['Row'];
 
 const PecheurContacts = () => {
   const { user } = useAuth();
@@ -88,6 +77,32 @@ const PecheurContacts = () => {
     enabled: !!fisherman?.id
   });
 
+  // Common validation function for contact forms
+  const validateContactForm = (email: string | null, phone: string | null) => {
+    const errors: Record<string, string> = {};
+    
+    if (!email && !phone) {
+      errors.email = 'Email ou téléphone requis';
+      errors.phone = 'Email ou téléphone requis';
+    }
+    
+    if (email) {
+      const emailResult = validateEmail(email);
+      if (!emailResult.isValid) {
+        errors.email = emailResult.error || 'Email invalide';
+      }
+    }
+    
+    if (phone) {
+      const phoneResult = validateFrenchPhone(phone);
+      if (!phoneResult.isValid) {
+        errors.phone = phoneResult.error || 'Téléphone invalide';
+      }
+    }
+    
+    return errors;
+  };
+
   // Parse CSV preview
   const csvPreview = useMemo(() => {
     if (!csvContent.trim()) return null;
@@ -132,27 +147,7 @@ const PecheurContacts = () => {
 
   // Validate manual form
   const validateManualForm = () => {
-    const errors: Record<string, string> = {};
-    
-    if (!manualContact.email && !manualContact.phone) {
-      errors.email = 'Email ou téléphone requis';
-      errors.phone = 'Email ou téléphone requis';
-    }
-    
-    if (manualContact.email) {
-      const emailResult = validateEmail(manualContact.email);
-      if (!emailResult.isValid) {
-        errors.email = emailResult.error || 'Email invalide';
-      }
-    }
-    
-    if (manualContact.phone) {
-      const phoneResult = validateFrenchPhone(manualContact.phone);
-      if (!phoneResult.isValid) {
-        errors.phone = phoneResult.error || 'Téléphone invalide';
-      }
-    }
-    
+    const errors = validateContactForm(manualContact.email, manualContact.phone);
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -160,28 +155,7 @@ const PecheurContacts = () => {
   // Validate edit form
   const validateEditForm = () => {
     if (!editingContact) return false;
-    
-    const errors: Record<string, string> = {};
-    
-    if (!editingContact.email && !editingContact.phone) {
-      errors.email = 'Email ou téléphone requis';
-      errors.phone = 'Email ou téléphone requis';
-    }
-    
-    if (editingContact.email) {
-      const emailResult = validateEmail(editingContact.email);
-      if (!emailResult.isValid) {
-        errors.email = emailResult.error || 'Email invalide';
-      }
-    }
-    
-    if (editingContact.phone) {
-      const phoneResult = validateFrenchPhone(editingContact.phone);
-      if (!phoneResult.isValid) {
-        errors.phone = phoneResult.error || 'Téléphone invalide';
-      }
-    }
-    
+    const errors = validateContactForm(editingContact.email, editingContact.phone);
     setEditFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
