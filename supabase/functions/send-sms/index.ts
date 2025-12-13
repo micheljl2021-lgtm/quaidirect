@@ -15,6 +15,33 @@ const logStep = (step: string, details?: any) => {
   console.log(`[SEND-SMS] ${step}`, details ? JSON.stringify(details) : '');
 };
 
+function normalizePhoneToE164(phone: string): string | null {
+  // 1. Clean: trim, remove spaces/dots/dashes/parentheses
+  let cleaned = phone.trim().replace(/[\s.\-()]/g, '');
+  
+  // 2. If starts with 0 and length 10 (French format) -> +33
+  if (cleaned.startsWith('0') && cleaned.length === 10) {
+    cleaned = '+33' + cleaned.substring(1);
+  }
+  
+  // 3. If starts with 33 (without +) -> add +
+  if (cleaned.startsWith('33')) {
+    cleaned = '+' + cleaned;
+  }
+  
+  // 4. If starts with 00 (international format) -> replace with +
+  if (cleaned.startsWith('00')) {
+    cleaned = '+' + cleaned.substring(2);
+  }
+  
+  // 5. Final validation: must match /^\+\d{8,15}$/
+  if (!/^\+\d{8,15}$/.test(cleaned)) {
+    return null; // Invalid number
+  }
+  
+  return cleaned;
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -128,15 +155,63 @@ serve(async (req) => {
 
     logStep('Quota check passed', { needed: smsNeeded, available: totalAvailable });
 
+    // Normalize and validate phone numbers
+    const validatedPhones: Array<{ original: string; normalized: string }> = [];
+    const invalidPhones: Array<{ phone: string; reason: string }> = [];
+
+    for (const phone of phones) {
+      const normalized = normalizePhoneToE164(phone);
+      if (normalized) {
+        validatedPhones.push({ original: phone, normalized });
+      } else {
+        invalidPhones.push({ phone, reason: 'Invalid phone format (expected E.164)' });
+        logStep('Invalid phone number', { phone, reason: 'Failed E.164 normalization' });
+      }
+    }
+
+    // If no valid phones, return error
+    if (validatedPhones.length === 0) {
+      return new Response(
+        JSON.stringify({ 
+          ok: false,
+          error: 'NO_VALID_PHONES',
+          message: 'Aucun numéro valide. Format attendu: 06XXXXXXXX ou +33XXXXXXXXX',
+          failed: phones.length,
+          errors: invalidPhones.map(p => ({
+            phone: p.phone,
+            code: 'INVALID_FORMAT',
+            message: p.reason
+          }))
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    logStep('Phone validation complete', { 
+      valid: validatedPhones.length, 
+      invalid: invalidPhones.length 
+    });
+
     // Send SMS via Twilio
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
     const twilioAuth = btoa(`${twilioAccountSid}:${twilioAuthToken}`);
 
-    const results = [];
+    const messageIds: string[] = [];
+    const errors: Array<{ phone: string; code: string; message: string }> = [];
     let successCount = 0;
     let failCount = 0;
 
-    for (const phone of phones) {
+    // Add invalid phones to errors
+    for (const invalid of invalidPhones) {
+      errors.push({
+        phone: invalid.phone,
+        code: 'INVALID_FORMAT',
+        message: invalid.reason
+      });
+      failCount++;
+    }
+
+    for (const { original, normalized } of validatedPhones) {
       try {
         const response = await fetch(twilioUrl, {
           method: 'POST',
@@ -145,7 +220,7 @@ serve(async (req) => {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
           body: new URLSearchParams({
-            To: phone,
+            To: normalized,
             From: twilioPhoneNumber,
             Body: message,
           }),
@@ -155,25 +230,42 @@ serve(async (req) => {
 
         if (response.ok) {
           successCount++;
-          results.push({ phone, success: true, sid: data.sid });
-          logStep('SMS sent successfully', { phone, sid: data.sid });
+          messageIds.push(data.sid);
+          logStep('SMS sent successfully', { phone: original, normalized, sid: data.sid });
         } else {
           failCount++;
-          results.push({ phone, success: false, error: data.message || 'Unknown error' });
-          logStep('SMS failed', { phone, error: data });
+          const errorCode = data.code || 'TWILIO_ERROR';
+          const errorMessage = data.message || 'Unknown error';
+          errors.push({
+            phone: original,
+            code: errorCode,
+            message: errorMessage
+          });
+          logStep('Twilio error', { 
+            code: errorCode, 
+            message: errorMessage,
+            phone: original,
+            normalized
+          });
         }
       } catch (error: any) {
         failCount++;
-        results.push({ phone, success: false, error: error.message });
-        logStep('SMS error', { phone, error: error.message });
+        errors.push({
+          phone: original,
+          code: 'NETWORK_ERROR',
+          message: error.message
+        });
+        logStep('SMS error', { phone: original, normalized, error: error.message });
       }
     }
 
     // Update quota (deduct from free first, then paid)
+    let newFreeRemaining = freeRemaining;
+    let newPaidBalance = paidBalance;
+    
     if (successCount > 0) {
       let smsToDeduct = successCount;
       let newFreeUsed = freeUsed;
-      let newPaidBalance = paidBalance;
 
       // Use free SMS first
       const freeToUse = Math.min(smsToDeduct, freeRemaining);
@@ -186,6 +278,9 @@ serve(async (req) => {
       if (smsToDeduct > 0) {
         newPaidBalance = Math.max(0, paidBalance - smsToDeduct);
       }
+
+      // Calculate new remaining values
+      newFreeRemaining = Math.max(0, freeQuota - newFreeUsed);
 
       // Upsert usage record
       await supabase
@@ -203,17 +298,15 @@ serve(async (req) => {
       logStep('Quota updated', { newFreeUsed, newPaidBalance });
     }
 
-    // Calculate remaining quota
-    const newFreeRemaining = Math.max(0, freeQuota - (freeUsed + Math.min(successCount, freeRemaining)));
-    const newPaidBalance = successCount > freeRemaining ? paidBalance - (successCount - freeRemaining) : paidBalance;
     const newTotalAvailable = newFreeRemaining + Math.max(0, newPaidBalance);
 
     return new Response(
       JSON.stringify({
-        success: true,
+        ok: successCount > 0,
         sent: successCount,
         failed: failCount,
-        results,
+        messageIds: messageIds.length > 0 ? messageIds : undefined,
+        errors: errors.length > 0 ? errors : undefined,
         quota: {
           free_remaining: newFreeRemaining,
           paid_balance: Math.max(0, newPaidBalance),
