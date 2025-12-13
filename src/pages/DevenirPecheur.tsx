@@ -1,479 +1,305 @@
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { 
-  Fish, 
-  Euro, 
-  Users, 
-  Smartphone,
-  TrendingUp,
-  Clock,
-  MessageSquare,
-  Star,
-  CheckCircle2,
-  ArrowRight,
-  Crown,
-  Zap,
-  Gift
-} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle2, Crown, Zap, ArrowLeft, Users, TrendingUp } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Badge } from "@/components/ui/badge";
 import { FISHERMAN_PLANS, AFFILIATE_CREDITS_RULES } from "@/config/pricing";
 
 const DevenirPecheur = () => {
-  const [searchParams] = useSearchParams();
-  const preselectedPlan = searchParams.get('plan') || null;
-  
+  const plans = [
+    {
+      key: 'standard',
+      data: FISHERMAN_PLANS.STANDARD,
+      description: FISHERMAN_PLANS.STANDARD.positioning,
+      icon: null,
+      features: [
+        `CRM simple (${FISHERMAN_PLANS.STANDARD.crmContacts} contacts)`,
+        `${FISHERMAN_PLANS.STANDARD.smsQuotaMonthly} SMS/mois`,
+        `🎁 ${FISHERMAN_PLANS.STANDARD.openingBonusSms} SMS bonus à l'ouverture`,
+        'IA basique (textes, descriptions)',
+        `${FISHERMAN_PLANS.STANDARD.salePoints} point de vente`,
+        'Stats light',
+        '📧 Emails illimités',
+        `Affiliation : max ${FISHERMAN_PLANS.STANDARD.affiliateSmsCapMonthly} SMS/mois`,
+      ],
+    },
+    {
+      key: 'pro',
+      data: FISHERMAN_PLANS.PRO,
+      badge: 'Recommandé',
+      description: FISHERMAN_PLANS.PRO.positioning,
+      icon: <Crown className="h-5 w-5 text-primary" />,
+      features: [
+        `CRM avancé (${FISHERMAN_PLANS.PRO.crmContacts} contacts + tags)`,
+        `${FISHERMAN_PLANS.PRO.smsQuotaMonthly} SMS/mois`,
+        `🎁 ${FISHERMAN_PLANS.PRO.openingBonusSms} SMS bonus à l'ouverture`,
+        'IA Marine + météo + templates',
+        `${FISHERMAN_PLANS.PRO.salePoints} points de vente`,
+        'Stats campagnes',
+        '💰 Packs SMS moins chers',
+        '🚀 Crédits affiliation illimités',
+      ],
+    },
+    {
+      key: 'elite',
+      data: FISHERMAN_PLANS.ELITE,
+      badge: 'Gros débit',
+      description: FISHERMAN_PLANS.ELITE.positioning,
+      icon: <Zap className="h-5 w-5 text-purple-600" />,
+      features: [
+        `CRM complet (${FISHERMAN_PLANS.ELITE.crmContacts.toLocaleString()} contacts)`,
+        `${FISHERMAN_PLANS.ELITE.smsQuotaMonthly} SMS/mois inclus`,
+        `SMS illimités (${(FISHERMAN_PLANS.ELITE.overagePricePerSmsCents / 100).toFixed(2)}€/SMS au-delà)`,
+        'IA complète + "photo → annonce"',
+        `${FISHERMAN_PLANS.ELITE.salePoints} points de vente`,
+        'Dashboard avancé',
+        'Sender pro / numéro vérifié',
+      ],
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
 
-      {/* Hero */}
-      <section className="container px-4 py-16 bg-gradient-ocean/5">
-        <div className="max-w-4xl mx-auto text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
-            <Fish className="h-4 w-4 text-primary" aria-hidden="true" />
-            <span className="text-sm font-medium">Rejoignez 50+ marins-pêcheurs</span>
-          </div>
-          <h1 className="text-5xl font-bold text-foreground">
-            Vendez votre pêche en direct
-          </h1>
+      <div className="container max-w-7xl mx-auto px-4 py-12">
+        <Button variant="ghost" onClick={() => window.history.back()} className="gap-2 mb-8">
+          <ArrowLeft className="h-4 w-4" />
+          Retour
+        </Button>
+
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold mb-4">Tarifs Pêcheurs QuaiDirect</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Fini les intermédiaires qui grattent vos marges. Créez votre vitrine digitale, 
-            gérez vos ventes et développez votre clientèle fidèle.
+            Choisissez le plan qui correspond à votre activité. Standard et Pro incluent 30 jours d'essai gratuit.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-            <Link to="/pecheur/payment">
-              <Button size="lg" className="gap-2">
-                <Fish className="h-5 w-5" aria-hidden="true" />
-                S&apos;inscrire maintenant
-                <ArrowRight className="h-5 w-5" aria-hidden="true" />
-              </Button>
-            </Link>
-          </div>
         </div>
-      </section>
 
-      {/* Tarifs */}
-      <section className="container px-4 py-16">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-foreground mb-4">
-              Trois formules adaptées à vos besoins
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              Choisissez le plan qui correspond à votre activité
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Plan STANDARD */}
-            <Card className={`border-2 relative ${preselectedPlan === 'standard' || preselectedPlan === 'basic' ? 'border-primary shadow-lg' : ''}`}>
-              {(preselectedPlan === 'standard' || preselectedPlan === 'basic') && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-white text-sm font-medium rounded-full">
-                  Plan sélectionné
-                </div>
-              )}
-              <CardContent className="pt-8 space-y-6">
-                <div>
-                  <h3 className="text-2xl font-bold text-foreground mb-2">Plan Standard</h3>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold text-primary">{FISHERMAN_PLANS.STANDARD.priceCents / 100}€</span>
-                    <span className="text-muted-foreground">/an</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    ({(FISHERMAN_PLANS.STANDARD.priceMonthlyEquivalent / 100).toFixed(2)}€/mois)
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-2 italic">
-                    "{FISHERMAN_PLANS.STANDARD.positioning}"
-                  </p>
-                </div>
-
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-muted-foreground">CRM simple ({FISHERMAN_PLANS.STANDARD.crmContacts} contacts)</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-muted-foreground">{FISHERMAN_PLANS.STANDARD.smsQuotaMonthly} SMS/mois</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Gift className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-foreground font-medium">🎁 {FISHERMAN_PLANS.STANDARD.openingBonusSms} SMS bonus</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-muted-foreground">IA basique (textes, descriptions)</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-muted-foreground">{FISHERMAN_PLANS.STANDARD.salePoints} point de vente</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-muted-foreground">Stats light</span>
-                  </li>
-                </ul>
-
-                <Link to="/pecheur/payment?plan=standard" className="block">
-                  <Button className="w-full" size="lg" variant="outline">
-                    Choisir Standard
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            {/* Plan Pro - Recommandé */}
-            <Card className={`border-2 relative ${preselectedPlan === 'pro' ? 'border-primary shadow-lg' : 'border-primary'}`}>
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-white text-sm font-medium rounded-full flex items-center gap-1">
-                <Crown className="h-3 w-3" />
-                {preselectedPlan === 'pro' ? 'Plan sélectionné' : 'Recommandé'}
-              </div>
-              <CardContent className="pt-8 space-y-6">
-                <div>
-                  <h3 className="text-2xl font-bold text-foreground mb-2">Plan Pro</h3>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold text-primary">{FISHERMAN_PLANS.PRO.priceCents / 100}€</span>
-                    <span className="text-muted-foreground">/an</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    ({(FISHERMAN_PLANS.PRO.priceMonthlyEquivalent / 100).toFixed(2)}€/mois)
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-2 italic">
-                    "{FISHERMAN_PLANS.PRO.positioning}"
-                  </p>
-                </div>
-
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-muted-foreground">CRM avancé ({FISHERMAN_PLANS.PRO.crmContacts} contacts + tags)</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-muted-foreground">{FISHERMAN_PLANS.PRO.smsQuotaMonthly} SMS/mois</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Gift className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-foreground font-medium">🎁 {FISHERMAN_PLANS.PRO.openingBonusSms} SMS bonus</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-muted-foreground">IA Marine + météo + templates</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-muted-foreground">{FISHERMAN_PLANS.PRO.salePoints} points de vente</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-foreground font-medium">Packs SMS moins chers</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-foreground font-medium">Crédits affiliation illimités</span>
-                  </li>
-                </ul>
-
-                <Link to="/pecheur/payment?plan=pro" className="block">
-                  <Button className="w-full" size="lg" variant="default">
-                    Choisir Pro
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            {/* Plan ELITE */}
-            <Card className={`border-2 relative ${preselectedPlan === 'elite' ? 'border-purple-600 shadow-lg' : ''}`}>
-              {preselectedPlan === 'elite' ? (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-purple-600 text-white text-sm font-medium rounded-full">
-                  Plan sélectionné
-                </div>
-              ) : (
-                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-600">
-                  Gros débit
+        {/* Pricing Cards */}
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
+          {plans.map((plan) => (
+            <Card 
+              key={plan.key}
+              className={`relative hover:shadow-lg transition-shadow ${
+                plan.key === 'pro' ? 'border-primary shadow-lg' : ''
+              }`}
+            >
+              {plan.badge && (
+                <Badge className={`absolute -top-3 left-1/2 -translate-x-1/2 ${
+                  plan.key === 'elite' ? 'bg-purple-600' : ''
+                }`}>
+                  {plan.badge}
                 </Badge>
               )}
-              <CardContent className="pt-8 space-y-6">
-                <div>
-                  <h3 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
-                    Plan Elite
-                    <Zap className="h-5 w-5 text-purple-600" />
-                  </h3>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold text-purple-600">{FISHERMAN_PLANS.ELITE.priceCents / 100}€</span>
-                    <span className="text-muted-foreground">/mois</span>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>{plan.data.name}</span>
+                  {plan.icon}
+                </CardTitle>
+                <CardDescription>{plan.description}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-6">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-bold">
+                      {(plan.data.priceCents / 100).toFixed(0)}€
+                    </span>
+                    <span className="text-muted-foreground">
+                      /{plan.data.period === 'year' ? 'an' : 'mois'}
+                    </span>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-2 italic">
-                    "{FISHERMAN_PLANS.ELITE.positioning}"
-                  </p>
+                  {'priceMonthlyEquivalent' in plan.data && plan.data.period === 'year' && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      soit {((plan.data as any).priceMonthlyEquivalent / 100).toFixed(2)}€/mois
+                    </p>
+                  )}
+                  {plan.data.trialDays > 0 && (
+                    <Badge className="bg-green-500 text-white mt-2">
+                      🎁 {plan.data.trialDays} jours offerts
+                    </Badge>
+                  )}
                 </div>
 
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-muted-foreground">CRM complet ({FISHERMAN_PLANS.ELITE.crmContacts.toLocaleString()} contacts)</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-muted-foreground">{FISHERMAN_PLANS.ELITE.smsQuotaMonthly} SMS/mois inclus</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Zap className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-foreground font-medium">SMS illimités ({(FISHERMAN_PLANS.ELITE.overagePricePerSmsCents / 100).toFixed(2)}€/SMS au-delà)</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-muted-foreground">IA complète + "photo → annonce"</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-muted-foreground">{FISHERMAN_PLANS.ELITE.salePoints} points de vente</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-muted-foreground">Dashboard avancé</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="text-muted-foreground">Sender pro / numéro vérifié</span>
-                  </li>
+                <ul className="space-y-3 mb-6">
+                  {plan.features.map((feature, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <CheckCircle2 className={`h-5 w-5 shrink-0 mt-0.5 ${
+                        feature.includes('illimités') || feature.includes('moins chers') ? 'text-green-600' : 'text-primary'
+                      }`} />
+                      <span className={`text-sm ${
+                        feature.includes('illimités') || feature.includes('moins chers') ? 'font-medium' : ''
+                      }`}>{feature}</span>
+                    </li>
+                  ))}
                 </ul>
 
-                <Link to="/pecheur/payment?plan=elite" className="block">
-                  <Button className="w-full bg-purple-600 hover:bg-purple-700" size="lg" variant="default">
-                    Choisir Elite
+                <Link to={`/pecheur/payment?plan=${plan.key}`}>
+                  <Button 
+                    className="w-full" 
+                    size="lg"
+                    variant={plan.key === 'pro' ? 'default' : 'outline'}
+                  >
+                    {plan.data.trialDays > 0 ? 'Démarrer l\'essai gratuit' : 'Commencer'}
                   </Button>
                 </Link>
               </CardContent>
             </Card>
-          </div>
+          ))}
+        </div>
 
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            Packs SMS supplémentaires disponibles après inscription • Commission de 8% sur les paniers
-          </p>
-
-          {/* Programme de Parrainage */}
-          <Card className="mt-12 border-2 border-dashed border-primary/30 bg-primary/5">
-            <CardContent className="pt-6">
-              <div className="flex flex-col md:flex-row items-center gap-6">
-                <div className="flex-shrink-0 h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Users className="h-8 w-8 text-primary" aria-hidden="true" />
-                </div>
-                <div className="flex-1 text-center md:text-left">
-                  <h3 className="text-xl font-bold text-foreground mb-2">🎁 Programme de Parrainage</h3>
-                  <p className="text-muted-foreground mb-3">
-                    Parrainez un collègue pêcheur et recevez <span className="font-semibold text-primary">{AFFILIATE_CREDITS_RULES.REFERRAL_BONUS_SMS} SMS bonus</span> chacun !
-                  </p>
-                  <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-                    <div className="flex items-center gap-2 text-sm">
-                      <CheckCircle2 className="h-4 w-4 text-primary" />
-                      <span>Vous : {AFFILIATE_CREDITS_RULES.REFERRAL_BONUS_SMS} SMS bonus</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <CheckCircle2 className="h-4 w-4 text-primary" />
-                      <span>Votre filleul : {AFFILIATE_CREDITS_RULES.REFERRAL_BONUS_SMS} SMS bonus</span>
-                    </div>
+        {/* Pourquoi PRO */}
+        <Card className="mb-8 border-primary/20 bg-primary/5">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <TrendingUp className="h-6 w-6 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="font-semibold text-primary mb-3">
+                  💡 Pourquoi PRO est le meilleur choix ?
+                </p>
+                <div className="grid md:grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <p className="font-medium mb-1">Packs SMS moins chers</p>
+                    <p className="text-muted-foreground">Pack 1000 : 65€ vs 75€</p>
+                  </div>
+                  <div>
+                    <p className="font-medium mb-1">Bonus 5x plus gros</p>
+                    <p className="text-muted-foreground">1000 SMS à l'ouverture</p>
+                  </div>
+                  <div>
+                    <p className="font-medium mb-1">Affiliation illimitée</p>
+                    <p className="text-muted-foreground">Pas de plafond mensuel</p>
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Affiliation */}
-          <Card className="mt-8 border-green-200 bg-green-50">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <TrendingUp className="h-6 w-6 text-green-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="font-semibold text-green-900 mb-2">
-                    🤝 Vos clients Premium financent vos SMS
-                  </p>
-                  <div className="text-sm text-green-800 space-y-1">
-                    <p>• Chaque Premium (25€/an) = ~{AFFILIATE_CREDITS_RULES.calculateSmsCredits(800)} SMS crédités</p>
-                    <p>• Chaque Premium+ (40€/an) = ~{AFFILIATE_CREDITS_RULES.calculateSmsCredits(1800)} SMS crédités</p>
-                    <p className="text-xs text-green-700 pt-2">
-                      ⚠️ Standard : max {FISHERMAN_PLANS.STANDARD.affiliateSmsCapMonthly} SMS/mois via affiliation • Pro/Elite : illimité
-                    </p>
-                  </div>
-                </div>
+        {/* Comment vos clients financent vos SMS */}
+        <Card className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200 dark:border-blue-800">
+          <CardContent className="pt-6">
+            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+              <span className="text-2xl">💰</span>
+              Comment vos clients financent vos SMS
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Chaque client qui prend un abonnement Premium via votre lien vous rapporte des crédits SMS :
+            </p>
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="p-4 bg-white dark:bg-background rounded-lg border">
+                <p className="text-sm font-medium mb-1">Premium (25€/an)</p>
+                <p className="text-2xl font-bold text-blue-600">~114 SMS</p>
+                <p className="text-xs text-muted-foreground">8€ reversés → 0,07€/SMS</p>
               </div>
+              <div className="p-4 bg-white dark:bg-background rounded-lg border">
+                <p className="text-sm font-medium mb-1">Premium+ (40€/an)</p>
+                <p className="text-2xl font-bold text-purple-600">~257 SMS</p>
+                <p className="text-xs text-muted-foreground">18€ reversés → 0,07€/SMS</p>
+              </div>
+              <div className="p-4 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-950/50 dark:to-emerald-950/50 rounded-lg border border-green-300 dark:border-green-700">
+                <p className="text-sm font-medium mb-1">Exemple : 5% de conversion</p>
+                <p className="text-2xl font-bold text-green-600">~1100 SMS/mois</p>
+                <p className="text-xs text-muted-foreground">Sur 1300 contacts → 65 Premium</p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-4 italic">
+              💡 Avec le plan PRO, vos crédits d'affiliation sont illimités. En Standard, max 200 SMS/mois.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Challenges & Système de Points */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <Card className="border-dashed">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-2xl">🏆</span>
+                <h3 className="font-bold text-lg">Challenges & Récompenses</h3>
+                <Badge variant="secondary">Bientôt</Badge>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Accomplissez des objectifs pour débloquer des bonus SMS :
+              </p>
+              <ul className="space-y-2 text-sm">
+                <li className="flex justify-between items-center p-2 bg-muted/50 rounded">
+                  <span>5 Premium via votre lien</span>
+                  <span className="font-bold text-green-600">+500 SMS</span>
+                </li>
+                <li className="flex justify-between items-center p-2 bg-muted/50 rounded">
+                  <span>10 Premium+ via votre lien</span>
+                  <span className="font-bold text-green-600">+1 500 SMS</span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card className="border-dashed">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-2xl">⭐</span>
+                <h3 className="font-bold text-lg">Système de Points Partenaires</h3>
+                <Badge variant="secondary">Bientôt</Badge>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Évaluez et soyez évalué sur la tenue des points de vente partagés :
+              </p>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>👍 Points positifs → bonus SMS, privatisation de point</li>
+                <li>👎 Trop de négatifs → restriction temporaire d'accès</li>
+              </ul>
+              <p className="text-xs mt-3 italic">
+                Un système de confiance entre pêcheurs pour mieux collaborer.
+              </p>
             </CardContent>
           </Card>
         </div>
-      </section>
 
-      {/* Avantages */}
-      <section className="container px-4 py-16 bg-muted/30">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-foreground mb-4">
-              Pourquoi rejoindre QuaiDirect ?
-            </h2>
-          </div>
+        {/* Additional Information */}
+        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <Card>
+            <CardContent className="pt-6">
+              <h3 className="font-semibold text-lg mb-2">📱 SMS inclus</h3>
+              <p className="text-sm text-muted-foreground">
+                Tous les plans incluent des SMS mensuels et des bonus à l'ouverture. 
+                Besoin de plus ? Achetez des packs SMS (moins chers en PRO).
+              </p>
+            </CardContent>
+          </Card>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            <Card>
-              <CardContent className="pt-6 space-y-3">
-                <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Euro className="h-5 w-5 text-primary" aria-hidden="true" />
-                </div>
-                <h3 className="text-xl font-bold text-foreground">Meilleure rentabilité</h3>
-                <p className="text-muted-foreground">
-                  Vendez 20-40% plus cher qu&apos;en criée en supprimant les intermédiaires. 
-                  Votre travail, votre prix.
-                </p>
-              </CardContent>
-            </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <h3 className="font-semibold text-lg mb-2">🛒 Commission de 8%</h3>
+              <p className="text-sm text-muted-foreground">
+                Sur les paniers vendus via la plateforme uniquement. 
+                Vente en direct = 0% de commission.
+              </p>
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardContent className="pt-6 space-y-3">
-                <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Clock className="h-5 w-5 text-primary" aria-hidden="true" />
-                </div>
-                <h3 className="text-xl font-bold text-foreground">Gain de temps</h3>
-                <p className="text-muted-foreground">
-                  Publiez un arrivage en 2 minutes. Plus de coups de fil, de messages. 
-                  Tout est automatisé.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6 space-y-3">
-                <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Users className="h-5 w-5 text-primary" aria-hidden="true" />
-                </div>
-                <h3 className="text-xl font-bold text-foreground">Clientèle fidèle</h3>
-                <p className="text-muted-foreground">
-                  Créez votre base de clients réguliers qui vous suivent et valorisent 
-                  votre travail.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6 space-y-3">
-                <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Smartphone className="h-5 w-5 text-primary" aria-hidden="true" />
-                </div>
-                <h3 className="text-xl font-bold text-foreground">100% mobile</h3>
-                <p className="text-muted-foreground">
-                  Interface pensée pour être utilisée depuis votre téléphone, 
-                  même en mer avec 4G.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6 space-y-3">
-                <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <MessageSquare className="h-5 w-5 text-primary" aria-hidden="true" />
-                </div>
-                <h3 className="text-xl font-bold text-foreground">Communication simplifiée</h3>
-                <p className="text-muted-foreground">
-                  Emails et WhatsApp automatiques. Vos clients reçoivent vos annonces 
-                  sans effort.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6 space-y-3">
-                <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <TrendingUp className="h-5 w-5 text-primary" aria-hidden="true" />
-                </div>
-                <h3 className="text-xl font-bold text-foreground">Visibilité accrue</h3>
-                <p className="text-muted-foreground">
-                  Profitez du trafic QuaiDirect pour toucher de nouveaux clients 
-                  sans publicité.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+          <Card className="border-2 border-dashed border-primary/30 bg-primary/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 mb-2">
+                <Users className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold text-lg">🤝 Parrainage</h3>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Parrainez un collègue pêcheur : <span className="font-semibold text-primary">{AFFILIATE_CREDITS_RULES.REFERRAL_BONUS_SMS} SMS bonus</span> pour vous deux !
+              </p>
+            </CardContent>
+          </Card>
         </div>
-      </section>
 
-      {/* Témoignages */}
-      <section className="container px-4 py-16">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-foreground mb-4">
-              Ils nous font confiance
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card>
-              <CardContent className="pt-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Fish className="h-6 w-6 text-primary" aria-hidden="true" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-foreground">Sébastien Z.</h3>
-                    <p className="text-sm text-muted-foreground">Pêcheur à Hyères</p>
-                  </div>
-                </div>
-                <p className="text-muted-foreground italic">
-                  "Avec 1300 contacts, j'ai besoin d'un outil qui tient la route. 
-                  Le Plan Pro avec le bonus de 1000 SMS m'a permis de lancer 
-                  ma campagne d'inscription dès le premier jour."
-                </p>
-                <div className="flex gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Fish className="h-6 w-6 text-primary" aria-hidden="true" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-foreground">Marie-Claire D.</h3>
-                    <p className="text-sm text-muted-foreground">Pêcheuse à La Rochelle</p>
-                  </div>
-                </div>
-                <p className="text-muted-foreground italic">
-                  "J'ai commencé avec le Standard pour tester. Maintenant mes clients 
-                  Premium financent mes SMS - je n'ai plus à acheter de packs !"
-                </p>
-                <div className="flex gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA final */}
-      <section className="container px-4 py-16 bg-primary/5">
-        <div className="max-w-2xl mx-auto text-center space-y-6">
-          <h2 className="text-3xl font-bold text-foreground">
-            Prêt à vendre en direct ?
-          </h2>
-          <p className="text-muted-foreground">
-            Rejoignez les pêcheurs qui ont choisi l'autonomie. 
-            30 jours d'essai gratuit, sans engagement.
+        <div className="text-center mt-12">
+          <p className="text-sm text-muted-foreground">
+            Questions ? Contactez-nous à{" "}
+            <a href="mailto:CEO@quaidirect.fr" className="text-primary hover:underline">
+              CEO@quaidirect.fr
+            </a>
           </p>
-          <Link to="/pecheur/payment">
-            <Button size="lg" className="gap-2">
-              Commencer maintenant
-              <ArrowRight className="h-5 w-5" />
-            </Button>
-          </Link>
         </div>
-      </section>
+      </div>
 
       <Footer />
     </div>
