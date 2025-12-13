@@ -85,7 +85,7 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             {/* Original landing - accessible at /home for testing */}
             <Route path="/home" element={<Landing />} />
-          <Route path="/auth" element={<Auth />} />
+            <Route path="/auth" element={<Auth />} />
 
             {/* Lazy-loaded public routes */}
             <Route path="/carte" element={<LazyRoute><Carte /></LazyRoute>} />
@@ -126,7 +126,7 @@ const App = () => (
             <Route path="/compte" element={<LazyRoute><Compte /></LazyRoute>} />
             <Route path="/push-diagnostic" element={<LazyRoute><PushDiagnostic /></LazyRoute>} />
 
-            {/* Pecheur payment routes */
+            {/* Pecheur payment routes */}
             <Route path="/pecheur/payment" element={<LazyRoute><PecheurPayment /></LazyRoute>} />
             <Route path="/pecheur/payment-success" element={<LazyRoute><PecheurPaymentSuccess /></LazyRoute>} />
             {/* Redirect old route to canonical route for backward compatibility */}
