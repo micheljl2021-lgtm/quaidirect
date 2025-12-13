@@ -184,10 +184,10 @@ const PecheurWallet = () => {
 
         {/* Affiliate Section */}
         {affiliateCode && (
-          <Card className="mb-8">
+          <Card className="mb-8 border-primary/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Gift className="h-5 w-5" />
+                <Gift className="h-5 w-5 text-primary" />
                 Programme d'affiliation
               </CardTitle>
               <CardDescription>
@@ -195,7 +195,7 @@ const PecheurWallet = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
                   <label className="text-sm font-medium mb-2 block">Votre lien d'affiliation</label>
                   <div className="flex gap-2">
@@ -203,29 +203,120 @@ const PecheurWallet = () => {
                       type="text"
                       value={`https://quaidirect.fr/premium?ref=${affiliateCode}`}
                       readOnly
-                      className="flex-1 px-3 py-2 border rounded-md bg-muted"
+                      className="flex-1 px-3 py-2 border rounded-md bg-muted text-sm"
                     />
                     <Button onClick={copyAffiliateLink} variant="outline">
                       {copied ? <CheckCircle className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     </Button>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 pt-4">
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm font-medium text-blue-900">Premium (25€/an)</p>
-                    <p className="text-2xl font-bold text-blue-600">114 SMS</p>
-                    <p className="text-xs text-blue-700">crédités par souscription</p>
+
+                {/* Crédits par Premium */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Premium (25€/an)</p>
+                    <p className="text-2xl font-bold text-blue-600">~114 SMS</p>
+                    <p className="text-xs text-blue-700 dark:text-blue-300">crédités par souscription (8€)</p>
                   </div>
-                  <div className="p-4 bg-purple-50 rounded-lg">
-                    <p className="text-sm font-medium text-purple-900">Premium+ (40€/an)</p>
-                    <p className="text-2xl font-bold text-purple-600">257 SMS</p>
-                    <p className="text-xs text-purple-700">crédités par souscription</p>
+                  <div className="p-4 bg-purple-50 dark:bg-purple-950/30 rounded-lg border border-purple-200 dark:border-purple-800">
+                    <p className="text-sm font-medium text-purple-900 dark:text-purple-100">Premium+ (40€/an)</p>
+                    <p className="text-2xl font-bold text-purple-600">~257 SMS</p>
+                    <p className="text-xs text-purple-700 dark:text-purple-300">crédités par souscription (18€)</p>
                   </div>
+                </div>
+
+                {/* Parrainage Pêcheur */}
+                <div className="p-4 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 rounded-lg border border-orange-200 dark:border-orange-800">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl">🤝</span>
+                    <p className="font-semibold text-orange-900 dark:text-orange-100">Parrainage Pêcheur</p>
+                  </div>
+                  <p className="text-orange-800 dark:text-orange-200">
+                    <span className="font-bold text-lg">+300 SMS</span> pour vous ET pour le nouveau pêcheur parrainé
+                  </p>
+                  <p className="text-xs text-orange-600 dark:text-orange-300 mt-1">
+                    Partagez votre code auprès de vos collègues pêcheurs
+                  </p>
+                </div>
+
+                {/* Plafonds selon forfait */}
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <p className="font-medium mb-2">💡 Plafonds d'affiliation selon votre forfait</p>
+                  <ul className="text-sm space-y-1 text-muted-foreground">
+                    <li>• <strong>Standard</strong> : max 200 SMS/mois financés par affiliation</li>
+                    <li>• <strong>PRO / ELITE</strong> : crédits illimités</li>
+                  </ul>
+                  <p className="text-xs mt-2 text-muted-foreground italic">
+                    Passez PRO pour débloquer les crédits illimités !
+                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
         )}
+
+        {/* Challenges Section - Coming Soon */}
+        <Card className="mb-8 border-dashed">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span className="text-xl">🏆</span>
+              Challenges & Récompenses
+              <Badge variant="secondary" className="ml-2">Bientôt</Badge>
+            </CardTitle>
+            <CardDescription>
+              Accomplissez des objectifs et gagnez des bonus SMS
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="p-4 border rounded-lg opacity-60">
+                <p className="font-medium">5 Premium via votre lien</p>
+                <p className="text-xl font-bold text-green-600">+500 SMS</p>
+              </div>
+              <div className="p-4 border rounded-lg opacity-60">
+                <p className="font-medium">10 Premium+ via votre lien</p>
+                <p className="text-xl font-bold text-green-600">+1 500 SMS</p>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground mt-4 text-center">
+              Système de challenges disponible prochainement
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Points System - Coming Soon */}
+        <Card className="mb-8 border-dashed">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span className="text-xl">⭐</span>
+              Système de Points Partenaires
+              <Badge variant="secondary" className="ml-2">Bientôt</Badge>
+            </CardTitle>
+            <CardDescription>
+              Évaluez la tenue des points de vente partagés
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3 text-sm text-muted-foreground">
+              <p>
+                <strong className="text-foreground">👍 Points positifs</strong> : 
+                Bonne tenue du point de vente, propreté, respect des horaires
+              </p>
+              <p>
+                <strong className="text-foreground">👎 Points négatifs</strong> : 
+                Problèmes signalés, non-respect des engagements
+              </p>
+              <div className="p-3 bg-muted rounded-lg mt-4">
+                <p className="font-medium text-foreground mb-1">Récompenses à venir :</p>
+                <ul className="space-y-1">
+                  <li>• Bonus SMS pour les pêcheurs bien notés</li>
+                  <li>• Privatisation d'un point de vente</li>
+                  <li>• Interdiction temporaire en cas de trop de points négatifs</li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Transaction History */}
         <Card>
