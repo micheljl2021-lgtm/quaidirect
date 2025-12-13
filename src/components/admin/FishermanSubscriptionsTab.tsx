@@ -12,7 +12,7 @@ export function FishermanSubscriptionsTab() {
       const { data, error } = await supabase
         .from('payments')
         .select('*')
-        .in('plan', ['fisherman_basic', 'fisherman_pro'])
+        .ilike('plan', 'fisherman_%')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -45,8 +45,12 @@ export function FishermanSubscriptionsTab() {
     switch (plan) {
       case 'fisherman_basic':
         return 'Basic (150€/an)';
+      case 'fisherman_standard':
+        return 'Standard (150€/an)';
       case 'fisherman_pro':
-        return 'Pro (199€/an)';
+        return 'Pro (299€/an)';
+      case 'fisherman_elite':
+        return 'Elite (199€/mois)';
       default:
         return plan;
     }

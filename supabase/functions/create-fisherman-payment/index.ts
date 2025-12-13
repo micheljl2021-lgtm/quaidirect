@@ -66,7 +66,9 @@ serve(async (req) => {
       const hasFishermanSub = allExistingSubs.some(sub => 
         sub.metadata?.payment_type === 'fisherman_onboarding' ||
         sub.metadata?.plan_type === 'basic' ||
-        sub.metadata?.plan_type === 'pro'
+        sub.metadata?.plan_type === 'standard' ||
+        sub.metadata?.plan_type === 'pro' ||
+        sub.metadata?.plan_type === 'elite'
       );
 
       if (hasFishermanSub) {
@@ -124,7 +126,8 @@ serve(async (req) => {
         plan_type: planType,
       },
       subscription_data: {
-        trial_period_days: 30, // 🎁 30 jours d'essai gratuit
+        // Elite n'a pas de période d'essai, Standard/Pro ont 30 jours
+        ...(planType !== 'elite' && { trial_period_days: 30 }),
         metadata: {
           user_id: user.id,
           payment_type: 'fisherman_onboarding',

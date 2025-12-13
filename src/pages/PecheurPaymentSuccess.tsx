@@ -22,12 +22,17 @@ const PecheurPaymentSuccess = () => {
     elite: 'Elite',
   };
   const planAmounts: Record<string, string> = {
-    standard: '150€',
-    pro: '790€',
-    elite: '1990€',
+    standard: '150€/an',
+    pro: '299€/an',
+    elite: '199€/mois',
   };
-  const amount = planAmounts[plan] || '150€';
+  const amount = planAmounts[plan] || '150€/an';
   const planLabel = planLabels[plan] || 'Standard';
+  const planHasTrial: Record<string, boolean> = {
+    standard: true,
+    pro: true,
+    elite: false,
+  };
 
   const checkPaymentStatus = async () => {
     if (!user) return false;
@@ -50,7 +55,7 @@ const PecheurPaymentSuccess = () => {
       .from('payments')
       .select('status')
       .eq('user_id', user.id)
-      .in('plan', ['fisherman_basic', 'fisherman_pro'])
+      .ilike('plan', 'fisherman_%')
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -186,17 +191,19 @@ const PecheurPaymentSuccess = () => {
             </div>
             <CardTitle className="text-3xl">Paiement confirmé !</CardTitle>
             <CardDescription className="text-lg">
-              Votre abonnement <strong>{planLabel}</strong> ({amount}/an) est actif
+              Votre abonnement <strong>{planLabel}</strong> ({amount}) est actif
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
-              <p className="font-medium text-blue-900">🎁 Période d'essai de 30 jours</p>
-              <p className="text-sm text-blue-700 mt-1">
-                Vous ne serez pas débité pendant les 30 premiers jours. 
-                Profitez-en pour tester toutes les fonctionnalités !
-              </p>
-            </div>
+            {planHasTrial[plan] && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
+                <p className="font-medium text-blue-900">🎁 Période d'essai de 30 jours</p>
+                <p className="text-sm text-blue-700 mt-1">
+                  Vous ne serez pas débité pendant les 30 premiers jours. 
+                  Profitez-en pour tester toutes les fonctionnalités !
+                </p>
+              </div>
+            )}
             
             <p className="text-muted-foreground">
               Complétez votre profil pêcheur en 6 étapes pour activer votre compte et commencer à publier vos arrivages.
