@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { SmsMessage, SmsHistoryFilters, SmsHistoryResponse } from '@/types/sms-analytics';
+import { SmsMessage, SmsHistoryFilters, SmsHistoryResponse, SmsMessageWithFisherman } from '@/types/sms-analytics';
 
 /**
  * Hook to fetch SMS history with filters and pagination
@@ -166,7 +166,7 @@ export function useAdminSmsHistory(filters: SmsHistoryFilters = {}) {
       const totalPages = Math.ceil(total / pageSize);
 
       return {
-        messages: (data || []) as any[],
+        messages: (data || []) as SmsMessageWithFisherman[],
         total,
         page,
         pageSize,

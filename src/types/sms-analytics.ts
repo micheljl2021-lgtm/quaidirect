@@ -18,6 +18,12 @@ export interface SmsMessage {
   updated_at: string;
 }
 
+export interface TopFisherman {
+  fisherman_id: string;
+  boat_name: string;
+  count: number;
+}
+
 export interface SmsAnalytics {
   totalSent: number;
   totalFailed: number;
@@ -28,8 +34,15 @@ export interface SmsAnalytics {
   byType: { type: string; count: number; cost: number }[];
   byStatus: { status: string; count: number }[];
   dailyStats: { date: string; count: number; cost: number }[];
-  topFishermen?: { fisherman_id: string; boat_name: string; count: number }[];
+  topFishermen?: TopFisherman[];
   lastUpdated: Date;
+}
+
+export interface SmsMessageWithFisherman extends SmsMessage {
+  fishermen?: {
+    id: string;
+    boat_name: string;
+  };
 }
 
 export interface SmsHistoryFilters {

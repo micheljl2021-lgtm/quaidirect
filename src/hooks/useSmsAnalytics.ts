@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { SmsMessage, SmsAnalytics, TimeRange } from '@/types/sms-analytics';
+import { SmsMessage, SmsAnalytics, TimeRange, TopFisherman, SmsMessageWithFisherman } from '@/types/sms-analytics';
 import { calculateAnalytics, getDateRangeForTimeRange } from '@/lib/sms-analytics';
 
 /**
@@ -55,7 +55,7 @@ export function useSmsAnalytics(fishermanId: string | null, timeRange: TimeRange
 export function useAdminSmsAnalytics(timeRange: TimeRange = '30d') {
   return useQuery({
     queryKey: ['admin-sms-analytics', timeRange],
-    queryFn: async (): Promise<SmsAnalytics & { topFishermen: any[] }> => {
+    queryFn: async (): Promise<SmsAnalytics> => {
       const { from, to } = getDateRangeForTimeRange(timeRange);
 
       // Fetch all SMS messages for the time range
@@ -77,7 +77,7 @@ export function useAdminSmsAnalytics(timeRange: TimeRange = '30d') {
         throw error;
       }
 
-      const messages = (data || []) as any[];
+      const messages = (data || []) as SmsMessageWithFisherman[];
       const analytics = calculateAnalytics(messages);
 
       // Calculate top fishermen by SMS volume
@@ -95,7 +95,7 @@ export function useAdminSmsAnalytics(timeRange: TimeRange = '30d') {
         }
       });
 
-      const topFishermen = Array.from(fishermenMap.entries())
+      const topFishermen: TopFisherman[] = Array.from(fishermenMap.entries())
         .map(([fisherman_id, stats]) => ({
           fisherman_id,
           boat_name: stats.boat_name,
