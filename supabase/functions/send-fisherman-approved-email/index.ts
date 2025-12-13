@@ -8,6 +8,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Escape HTML to prevent XSS attacks
+function escapeHtml(text: string | null | undefined): string {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 interface FishermenApprovedRequest {
   userEmail: string;
   boatName?: string;
@@ -29,8 +40,8 @@ const handler = async (req: Request): Promise<Response> => {
       to: [userEmail],
       subject: "Votre compte pêcheur QuaiDirect est validé !",
       html: `
-        <h1>Félicitations ${boatName ? boatName : ''} !</h1>
-        <p>Votre compte pêcheur <strong>${planLabel}</strong> a été validé par notre équipe.</p>
+        <h1>Félicitations ${boatName ? escapeHtml(boatName) : ''} !</h1>
+        <p>Votre compte pêcheur <strong>${escapeHtml(planLabel)}</strong> a été validé par notre équipe.</p>
         
         <h2>🎉 Vous pouvez maintenant :</h2>
         <ul>

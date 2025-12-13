@@ -8,6 +8,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Escape HTML to prevent XSS attacks
+function escapeHtml(text: string | null | undefined): string {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 interface PaymentConfirmationRequest {
   userEmail: string;
   boatName?: string;
@@ -46,14 +57,14 @@ const handler = async (req: Request): Promise<Response> => {
       subject: `✅ Confirmation de paiement QuaiDirect - ${amount}€`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #0066cc;">✅ Paiement confirmé ${boatName ? `- ${boatName}` : ''}</h1>
+<h1 style="color: #0066cc;">✅ Paiement confirmé ${boatName ? `- ${escapeHtml(boatName)}` : ''}</h1>
           
           <div style="background: #d4edda; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745;">
             <p style="margin: 0; font-size: 18px; font-weight: bold; color: #155724;">
-              Votre paiement de ${amount}€ a été traité avec succès !
+              Votre paiement de ${escapeHtml(amount)}€ a été traité avec succès !
             </p>
             <p style="margin: 10px 0 0 0; color: #155724;">
-              Plan : <strong>QuaiDirect ${planLabel}</strong>
+              Plan : <strong>QuaiDirect ${escapeHtml(planLabel)}</strong>
             </p>
           </div>
 

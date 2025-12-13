@@ -8,6 +8,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Escape HTML to prevent XSS attacks
+function escapeHtml(text: string | null | undefined): string {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 interface FishermanWelcomeRequest {
   userEmail: string;
   boatName?: string;
@@ -40,10 +51,10 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "QuaiDirect <support@quaidirect.fr>",
       to: [userEmail],
-      subject: `Bienvenue sur QuaiDirect ${boatName ? boatName : ''} !`,
+      subject: `Bienvenue sur QuaiDirect ${boatName ? escapeHtml(boatName) : ''} !`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #0066cc;">🎉 Bienvenue sur QuaiDirect ${boatName ? `- ${boatName}` : ''} !</h1>
+          <h1 style="color: #0066cc;">🎉 Bienvenue sur QuaiDirect ${boatName ? `- ${escapeHtml(boatName)}` : ''} !</h1>
           
           <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <p style="margin: 0; font-size: 16px;">
