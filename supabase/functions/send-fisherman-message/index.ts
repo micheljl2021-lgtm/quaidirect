@@ -301,7 +301,7 @@ serve(async (req) => {
           
           if (smsResult.error === 'TWILIO_NOT_CONFIGURED') {
             logStep('SMS skipped - Twilio not configured');
-          } else if (smsResult.success) {
+          } else if (smsResult.ok) {
             smsSuccessCount = smsResult.sent || 0;
             logStep('SMS sent', { successCount: smsSuccessCount });
           } else {
