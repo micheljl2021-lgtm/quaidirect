@@ -488,6 +488,7 @@ export type Database = {
       fishermen: {
         Row: {
           address: string | null
+          affiliate_code: string | null
           ambassador_slot: number | null
           bio: string | null
           boat_name: string
@@ -546,6 +547,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          affiliate_code?: string | null
           ambassador_slot?: number | null
           bio?: string | null
           boat_name: string
@@ -604,6 +606,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          affiliate_code?: string | null
           ambassador_slot?: number | null
           bio?: string | null
           boat_name?: string
