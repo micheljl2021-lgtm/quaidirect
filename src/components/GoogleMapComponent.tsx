@@ -136,6 +136,10 @@ const GoogleMapComponent = ({
 
   const onLoad = useCallback((map: google.maps.Map) => {
     setMap(map);
+    // Force initial center on Hyères, France
+    console.log('[GoogleMap] onLoad: Forcing initial center on Hyères');
+    map.setCenter(defaultMapConfig.center);
+    map.setZoom(defaultMapConfig.zoom);
   }, []);
 
   const onUnmount = useCallback(() => {
@@ -434,11 +438,13 @@ const GoogleMapComponent = ({
   return (
     <GoogleMap
       mapContainerStyle={mapContainerStyle}
-      center={defaultMapConfig.center}
-      zoom={defaultMapConfig.zoom}
       onLoad={onLoad}
       onUnmount={onUnmount}
-      options={mapOptions}
+      options={{
+        ...mapOptions,
+        center: defaultMapConfig.center,
+        zoom: defaultMapConfig.zoom,
+      }}
     >
       {userLocation && (
         <Marker
