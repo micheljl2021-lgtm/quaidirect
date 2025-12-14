@@ -13,7 +13,7 @@ export const FISHERMAN_PLANS = {
     priceCents: 15000, // 150€/an
     priceMonthlyEquivalent: 1250, // 12,50€/mois
     period: 'year' as const,
-    stripePriceId: 'price_1SZYAXH0VhS1yyE0FqJ0imbu',
+    stripePriceId: 'price_1SeIyYH4NF3bNS2FFBprGrJh',
     trialDays: 0,
     smsQuotaMonthly: 50,
     openingBonusSms: 200,
@@ -34,7 +34,7 @@ export const FISHERMAN_PLANS = {
     priceCents: 29900, // 299€/an
     priceMonthlyEquivalent: 2490, // 24,90€/mois
     period: 'year' as const,
-    stripePriceId: 'price_1Sdnn9H0VhS1yyE0JAINCVDH',
+    stripePriceId: 'price_1SeIyaH4NF3bNS2FIV1lEoJX',
     trialDays: 0,
     smsQuotaMonthly: 200,
     openingBonusSms: 1000,
@@ -56,7 +56,7 @@ export const FISHERMAN_PLANS = {
     name: 'Elite',
     priceCents: 19900, // 199€/mois
     period: 'month' as const,
-    stripePriceId: 'price_1SddbuH0VhS1yyE0ZFYhsoQ4',
+    stripePriceId: 'price_1SeIycH4NF3bNS2FbeJAO8XH',
     trialDays: 0,
     smsQuotaMonthly: 1500,
     openingBonusSms: 0, // Pas de bonus car mensuel
@@ -86,14 +86,14 @@ export const SMS_PACKS = {
     quantity: 500,
     priceCents: 4000, // 40€ (prix Standard)
     priceCentsPro: 3500, // 35€ (prix Pro)
-    stripePriceId: 'price_1Sc6emH0VhS1yyE08QedRHLt',
+    stripePriceId: 'price_1SeIyeH4NF3bNS2FNGVr2CxY',
   },
   PACK_LANCEMENT: {
     id: 'pack_lancement',
     quantity: 1000,
     priceCents: 7000, // 70€ → 75€ Standard
     priceCentsPro: 6500, // 65€ Pro
-    stripePriceId: 'price_1Sc6f2H0VhS1yyE0Q35I8Lak',
+    stripePriceId: 'price_1SeIygH4NF3bNS2F8iIdxoVB',
     recommended: true,
   },
   PACK_2000: {
@@ -125,14 +125,14 @@ export const PREMIUM_PLANS = {
     id: 'premium',
     name: 'Premium',
     priceAnnualCents: 2500, // 25€/an
-    stripePriceIdAnnual: 'price_PREMIUM_ANNUAL_25',
+    stripePriceIdAnnual: 'price_1SeIyiH4NF3bNS2FRgtswzuS',
     affiliateCreditCents: 800, // 8€ reversés au pêcheur
   },
   PREMIUM_PLUS: {
     id: 'premium_plus',
     name: 'Premium+',
     priceAnnualCents: 4000, // 40€/an
-    stripePriceIdAnnual: 'price_PREMIUM_PLUS_ANNUAL_40',
+    stripePriceIdAnnual: 'price_1SeIykH4NF3bNS2FIU8x913J',
     affiliateCreditCents: 1800, // 18€ reversés au pêcheur
   },
 } as const;
