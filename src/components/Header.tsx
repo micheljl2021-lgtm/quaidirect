@@ -40,17 +40,17 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between px-4">
+      <div className="container flex h-20 items-center justify-between px-4">
         {/* Logo */}
         <Link 
           to="/" 
-          className="flex items-center h-16 px-3" 
+          className="flex items-center h-20 px-3" 
           aria-label="Accueil QuaiDirect"
         >
           <img 
             src={logoQuaidirect} 
             alt="QuaiDirect" 
-            className="h-12 md:h-14 lg:h-16 w-auto object-contain"
+            className="h-16 md:h-18 lg:h-20 w-auto object-contain"
           />
         </Link>
 
@@ -160,7 +160,7 @@ const Header = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="absolute inset-x-0 top-16 z-[100] bg-background md:hidden border-t border-border shadow-lg">
+          <div className="absolute inset-x-0 top-20 z-[100] bg-background md:hidden border-t border-border shadow-lg">
             <nav className="flex flex-col gap-3 p-6">
               <NavLink 
                 to="/carte" 
