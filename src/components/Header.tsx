@@ -42,13 +42,17 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between px-4">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80" aria-label="Accueil QuaiDirect">
-              <img 
-                src={logoQuaidirect} 
-                alt="QuaiDirect" 
-                className="h-8 w-8 rounded-md"
-              />
-          <span className="text-xl font-bold text-foreground">QuaiDirect</span>
+        <Link 
+          to="/" 
+          className="flex items-center gap-2 h-9 px-3 rounded-md transition-colors hover:bg-accent hover:text-accent-foreground" 
+          aria-label="Accueil QuaiDirect"
+        >
+          <img 
+            src={logoQuaidirect} 
+            alt="QuaiDirect" 
+            className="h-6 w-6 rounded-sm flex-shrink-0"
+          />
+          <span className="text-lg font-bold text-foreground leading-none">QuaiDirect</span>
         </Link>
 
         {/* Desktop Navigation */}
