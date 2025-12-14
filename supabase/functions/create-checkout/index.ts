@@ -166,8 +166,10 @@ serve(async (req) => {
       logStep('No existing customer, will create during checkout');
     }
 
-    // Create checkout session
+    // Create checkout session with 7-day trial
     const origin = req.headers.get('origin') || 'http://localhost:3000';
+    const trialDays = 7; // 7 days free trial for all premium plans
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
@@ -185,6 +187,7 @@ serve(async (req) => {
         plan: plan,
       },
       subscription_data: {
+        trial_period_days: trialDays,
         metadata: {
           user_id: user.id,
           plan: plan,
