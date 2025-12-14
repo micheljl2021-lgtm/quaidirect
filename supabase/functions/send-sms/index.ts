@@ -127,14 +127,34 @@ serve(async (req) => {
     // Check SMS quota
     const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
     
+    // Get fisherman's plan to determine quota
+    const { data: payment } = await supabase
+      .from('payments')
+      .select('plan')
+      .eq('user_id', user.id)
+      .ilike('plan', 'fisherman_%')
+      .in('status', ['active', 'trialing'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    // Plan-aware SMS quotas (same as check-sms-quota)
+    const PLAN_SMS_QUOTAS: Record<string, number> = {
+      standard: 50,
+      pro: 200,
+      elite: 1500,
+    };
+    const planType = payment?.plan?.replace('fisherman_', '') || 'standard';
+    const freeQuota = PLAN_SMS_QUOTAS[planType] || 50;
+
+    logStep('Plan detected', { plan: payment?.plan, planType, freeQuota });
+    
     const { data: usage } = await supabase
       .from('fishermen_sms_usage')
       .select('*')
       .eq('fisherman_id', fisherman.id)
       .eq('month_year', currentMonth)
       .single();
-
-    const freeQuota = usage?.monthly_allocation || 100;
     const freeUsed = usage?.free_sms_used || 0;
     const paidBalance = usage?.paid_sms_balance || 0;
     const freeRemaining = Math.max(0, freeQuota - freeUsed);

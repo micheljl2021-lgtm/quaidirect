@@ -46,7 +46,7 @@ const Header = () => {
           <img 
             src={logoQuaidirect} 
             alt="QuaiDirect" 
-            className="h-10 w-10 rounded-lg"
+            className="h-12 w-12 rounded-lg"
           />
           <span className="text-xl font-bold text-foreground">QuaiDirect</span>
         </Link>
