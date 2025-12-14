@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save, Loader2, MapPin, Clock, Camera } from "lucide-react";
 import { PhotoUpload } from "@/components/PhotoUpload";
-import { DefaultPhotoSelector } from "@/components/DefaultPhotoSelector";
+import { FavoritePhotoSelector } from "@/components/FavoritePhotoSelector";
 
 export default function PecheurPreferences() {
   const { user } = useAuth();
@@ -250,12 +250,12 @@ export default function PecheurPreferences() {
 
             {/* Favorite Photo Selector */}
             <div className="pt-4 border-t">
-              <DefaultPhotoSelector
-                photoUrl={photoUrl}
-                photoBoat1={photoBoat1}
-                photoBoat2={photoBoat2}
-                photoDockSale={photoDockSale}
-                selectedPhotoUrl={favoritePhotoUrl}
+              <FavoritePhotoSelector
+                photoUrl={photoUrl || undefined}
+                photoBoat1={photoBoat1 || undefined}
+                photoBoat2={photoBoat2 || undefined}
+                photoDockSale={photoDockSale || undefined}
+                selectedPhotoUrl={favoritePhotoUrl || undefined}
                 onSelect={setFavoritePhotoUrl}
               />
             </div>
