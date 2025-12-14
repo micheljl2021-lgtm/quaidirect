@@ -453,6 +453,95 @@ serve(async (req) => {
           break;
         }
 
+        const isGuestCheckout = session.metadata?.is_guest === 'true';
+        let finalUserId = userId;
+        
+        // Handle guest checkout - create account automatically
+        if (isGuestCheckout && userId === 'guest') {
+          const customerEmail = session.customer_details?.email;
+          const customerName = session.customer_details?.name;
+          
+          if (!customerEmail) {
+            logStep('ERROR: Guest checkout but no email from Stripe');
+            break;
+          }
+          
+          logStep('Processing guest checkout - creating account', { email: customerEmail });
+          
+          // Check if user already exists with this email
+          const { data: existingUsers } = await supabaseClient.auth.admin.listUsers();
+          const existingUser = existingUsers?.users?.find(u => u.email === customerEmail);
+          
+          if (existingUser) {
+            finalUserId = existingUser.id;
+            logStep('User already exists, using existing account', { userId: finalUserId });
+          } else {
+            // Create new user with random password
+            const tempPassword = crypto.randomUUID();
+            const { data: newUser, error: createError } = await supabaseClient.auth.admin.createUser({
+              email: customerEmail,
+              password: tempPassword,
+              email_confirm: true,
+              user_metadata: {
+                full_name: customerName,
+                created_via: 'stripe_guest_checkout',
+              },
+            });
+            
+            if (createError) {
+              logStep('ERROR creating guest user', { error: createError });
+              break;
+            }
+            
+            finalUserId = newUser.user.id;
+            logStep('Guest user created successfully', { userId: finalUserId, email: customerEmail });
+            
+            // Create profile for new user
+            await supabaseClient.from('profiles').insert({
+              id: finalUserId,
+              email: customerEmail,
+              full_name: customerName,
+            });
+            
+            // Add basic user role
+            await supabaseClient.from('user_roles').insert({
+              user_id: finalUserId,
+              role: 'user',
+            });
+            
+            // Send password reset email so user can set their password
+            const { error: resetError } = await supabaseClient.auth.admin.generateLink({
+              type: 'recovery',
+              email: customerEmail,
+              options: {
+                redirectTo: 'https://quaidirect.fr/reset-password',
+              },
+            });
+            
+            if (resetError) {
+              logStep('WARNING: Could not generate password reset link', { error: resetError });
+            } else {
+              logStep('Password reset link generated for guest user');
+            }
+            
+            // Send welcome email with password setup instructions
+            try {
+              await supabaseClient.functions.invoke('send-premium-welcome-email', {
+                body: { 
+                  userEmail: customerEmail,
+                  userName: customerName,
+                  plan: plan,
+                  isNewAccount: true,
+                },
+                headers: { 'x-internal-secret': internalSecret }
+              });
+              logStep('Guest welcome email with setup instructions sent');
+            } catch (emailErr) {
+              logStep('WARNING: Could not send guest welcome email', { error: emailErr });
+            }
+          }
+        }
+
         const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
         
         // Safely parse dates with fallback to prevent "Invalid time value" errors
@@ -472,7 +561,7 @@ serve(async (req) => {
         const { error: upsertError } = await supabaseClient
           .from('payments')
           .upsert({
-            user_id: userId,
+            user_id: finalUserId,
             stripe_subscription_id: subscription.id,
             stripe_customer_id: subscription.customer as string,
             plan: plan,
@@ -494,7 +583,7 @@ serve(async (req) => {
         const { error: roleError } = await supabaseClient
           .from('user_roles')
           .upsert({
-            user_id: userId,
+            user_id: finalUserId,
             role: 'premium'
           }, {
             onConflict: 'user_id,role',

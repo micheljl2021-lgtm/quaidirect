@@ -69,27 +69,31 @@ export default function PremiumPaywall() {
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleSubscribe = async (priceId: string, plan: string) => {
-    if (!user) {
-      toast({
-        title: "Connexion requise",
-        description: "Veuillez vous connecter pour souscrire à Premium",
-        variant: "destructive",
-      });
-      navigate("/auth");
-      return;
-    }
-
     setLoading(plan);
 
     try {
+      // Allow both authenticated and guest checkouts
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: { priceId, plan },
       });
 
       if (error) throw error;
 
+      // Handle existing subscription case
+      if (data?.hasExistingSubscription) {
+        toast({
+          title: "Déjà abonné",
+          description: "Vous avez déjà un abonnement actif.",
+        });
+        if (data.portalUrl) {
+          window.open(data.portalUrl, "_blank");
+        }
+        return;
+      }
+
       if (data?.url) {
-        window.open(data.url, "_blank");
+        // Redirect in same tab for better UX
+        window.location.href = data.url;
       } else {
         throw new Error("URL de paiement non reçue");
       }
