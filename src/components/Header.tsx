@@ -43,11 +43,11 @@ const Header = () => {
       <div className="container flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80" aria-label="Accueil QuaiDirect">
-          <img 
-            src={logoQuaidirect} 
-            alt="QuaiDirect" 
-            className="h-12 w-12 rounded-lg"
-          />
+              <img 
+                src={logoQuaidirect} 
+                alt="QuaiDirect" 
+                className="h-8 w-8 rounded-md"
+              />
           <span className="text-xl font-bold text-foreground">QuaiDirect</span>
         </Link>
 
