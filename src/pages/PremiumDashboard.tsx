@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { Crown, Fish, MapPin, Clock, Zap, Bell, Calendar, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { Crown, Fish, MapPin, Clock, Zap, Bell, Calendar, CheckCircle2, XCircle, Loader2, Heart, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getRedirectPathByRole } from '@/lib/authRedirect';
 
@@ -21,6 +21,7 @@ interface Drop {
   public_visible_at: string | null;
   is_premium: boolean;
   status: string;
+  fisherman_id: string;
   ports: {
     name: string;
     city: string;
@@ -28,6 +29,11 @@ interface Drop {
   fisherman_sale_points: {
     label: string;
     address: string;
+  } | null;
+  fishermen: {
+    id: string;
+    boat_name: string;
+    company_name: string | null;
   } | null;
   offers: Array<{
     id: string;
@@ -60,6 +66,16 @@ interface Reservation {
   };
 }
 
+interface FollowedFisherman {
+  fisherman_id: string;
+  fishermen: {
+    id: string;
+    boat_name: string;
+    company_name: string | null;
+    photo_url: string | null;
+  };
+}
+
 const PremiumDashboard = () => {
   const { user, userRole, loading } = useAuth();
   const navigate = useNavigate();
@@ -67,6 +83,7 @@ const PremiumDashboard = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [favoritePorts, setFavoritePorts] = useState<string[]>([]);
   const [favoriteSpecies, setFavoriteSpecies] = useState<string[]>([]);
+  const [favoriteFishermen, setFavoriteFishermen] = useState<string[]>([]);
   const [showSettings, setShowSettings] = useState(false);
 
   // Fetch user preferences
@@ -111,7 +128,21 @@ const PremiumDashboard = () => {
     },
   });
 
-  // Load favorite ports and species from follow tables
+  // Fetch all verified fishermen for selection
+  const { data: allFishermen } = useQuery({
+    queryKey: ['all-verified-fishermen'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('fishermen')
+        .select('id, boat_name, company_name, photo_url')
+        .not('verified_at', 'is', null)
+        .order('boat_name');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Load favorite ports, species, and fishermen from follow tables
   useEffect(() => {
     if (!user) return;
 
@@ -126,8 +157,14 @@ const PremiumDashboard = () => {
         .select('species_id')
         .eq('user_id', user.id);
 
+      const { data: followedFishermen } = await supabase
+        .from('fishermen_followers')
+        .select('fisherman_id')
+        .eq('user_id', user.id);
+
       if (followedPorts) setFavoritePorts(followedPorts.map(fp => fp.port_id));
       if (followedSpecies) setFavoriteSpecies(followedSpecies.map(fs => fs.species_id));
+      if (followedFishermen) setFavoriteFishermen(followedFishermen.map(ff => ff.fisherman_id));
     };
 
     loadPreferences();
@@ -140,6 +177,7 @@ const PremiumDashboard = () => {
       // Delete existing follows
       await supabase.from('follow_ports').delete().eq('user_id', user.id);
       await supabase.from('follow_species').delete().eq('user_id', user.id);
+      await supabase.from('fishermen_followers').delete().eq('user_id', user.id);
 
       // Insert new favorites
       if (favoritePorts.length > 0) {
@@ -152,6 +190,12 @@ const PremiumDashboard = () => {
         await supabase
           .from('follow_species')
           .insert(favoriteSpecies.map(species_id => ({ user_id: user.id, species_id })));
+      }
+
+      if (favoriteFishermen.length > 0) {
+        await supabase
+          .from('fishermen_followers')
+          .insert(favoriteFishermen.map(fisherman_id => ({ user_id: user.id, fisherman_id })));
       }
 
       toast({
@@ -203,7 +247,7 @@ const PremiumDashboard = () => {
 
   // Fetch drops premium (avec accès anticipé)
   const { data: drops, isLoading, refetch } = useQuery({
-    queryKey: ['premium-drops', user?.id],
+    queryKey: ['premium-drops', user?.id, favoriteFishermen],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('drops')
@@ -216,6 +260,7 @@ const PremiumDashboard = () => {
           public_visible_at,
           is_premium,
           status,
+          fisherman_id,
           ports (
             name,
             city
@@ -223,6 +268,11 @@ const PremiumDashboard = () => {
           fisherman_sale_points (
             label,
             address
+          ),
+          fishermen (
+            id,
+            boat_name,
+            company_name
           ),
           offers (
             id,
@@ -240,7 +290,16 @@ const PremiumDashboard = () => {
         .order('eta_at', { ascending: true });
 
       if (error) throw error;
-      return data as Drop[];
+      
+      // Sort drops: favorites first, then by eta_at
+      const dropsData = data as Drop[];
+      return dropsData.sort((a, b) => {
+        const aIsFavorite = favoriteFishermen.includes(a.fisherman_id);
+        const bIsFavorite = favoriteFishermen.includes(b.fisherman_id);
+        if (aIsFavorite && !bIsFavorite) return -1;
+        if (!aIsFavorite && bIsFavorite) return 1;
+        return new Date(a.eta_at).getTime() - new Date(b.eta_at).getTime();
+      });
     },
     enabled: !!user,
     refetchInterval: 15000, // Premium users get faster refresh
@@ -489,6 +548,46 @@ const PremiumDashboard = () => {
                         />
                         <label htmlFor={`species-${species.id}`} className="text-sm cursor-pointer">
                           {species.name}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="flex items-center gap-2">
+                    <Heart className="h-4 w-4 text-red-500" />
+                    Pêcheur favori à soutenir (maximum 2)
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Vos pêcheurs favoris apparaîtront en priorité dans la liste des arrivages
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto p-2 border rounded-lg">
+                    {allFishermen?.map(fisherman => (
+                      <div key={fisherman.id} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id={`fisherman-${fisherman.id}`}
+                          checked={favoriteFishermen.includes(fisherman.id)}
+                          onChange={(e) => {
+                            if (e.target.checked && favoriteFishermen.length >= 2) {
+                              toast({
+                                title: 'Limite atteinte',
+                                description: 'Vous pouvez sélectionner maximum 2 pêcheurs favoris',
+                                variant: 'destructive',
+                              });
+                              return;
+                            }
+                            setFavoriteFishermen(prev => 
+                              e.target.checked 
+                                ? [...prev, fisherman.id]
+                                : prev.filter(f => f !== fisherman.id)
+                            );
+                          }}
+                          className="rounded"
+                        />
+                        <label htmlFor={`fisherman-${fisherman.id}`} className="text-sm cursor-pointer">
+                          {fisherman.company_name || fisherman.boat_name}
                         </label>
                       </div>
                     ))}

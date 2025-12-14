@@ -1386,6 +1386,39 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_updates: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          recipient_count: number | null
+          sent_at: string | null
+          sent_by: string | null
+          title: string
+          version: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          recipient_count?: number | null
+          sent_at?: string | null
+          sent_by?: string | null
+          title: string
+          version?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          recipient_count?: number | null
+          sent_at?: string | null
+          sent_by?: string | null
+          title?: string
+          version?: string | null
+        }
+        Relationships: []
+      }
       ports: {
         Row: {
           city: string
