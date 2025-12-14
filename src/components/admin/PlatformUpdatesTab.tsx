@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Send, Plus, CheckCircle2, Clock, Users } from "lucide-react";
+import { Loader2, Send, Plus, CheckCircle2, Clock, Users, Sparkles } from "lucide-react";
+import { getLatestChangelog, generateUpdateContent } from "@/config/changelog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -164,6 +165,25 @@ export const PlatformUpdatesTab = () => {
             <Users className="h-4 w-4" />
             {fishermenCount} pêcheurs vérifiés
           </Badge>
+          <Button
+            variant="outline"
+            onClick={() => {
+              const latest = getLatestChangelog();
+              if (latest) {
+                setTitle(latest.title);
+                setVersion(latest.version);
+                setContent(generateUpdateContent(latest));
+                setShowForm(true);
+                toast({
+                  title: "Suggestion chargée",
+                  description: `Mise à jour ${latest.version} pré-remplie`,
+                });
+              }
+            }}
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            Suggestion auto
+          </Button>
           <Button onClick={() => setShowForm(!showForm)}>
             <Plus className="h-4 w-4 mr-2" />
             Nouvelle mise à jour
