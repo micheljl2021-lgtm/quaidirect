@@ -35,7 +35,7 @@ All colors MUST be HSL.
     --popover-foreground: 200 85% 12%;
     
     --muted: 200 20% 96%;
-    --muted-foreground: 200 15% 45%;
+    --muted-foreground: 200 20% 35%;
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -103,6 +103,14 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-medium;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold;
+  }
+
+  p {
+    @apply text-base leading-relaxed;
   }
 }
