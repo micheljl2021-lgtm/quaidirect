@@ -408,10 +408,10 @@ serve(async (req) => {
       
       if (contactsWithPhone.length > 0) {
         let smsMessage = '';
-        // Include tracking link in SMS too
+        // Include tracking link in SMS - use correct /pecheurs/:slug URL
         const smsProfileUrl = fisherman.affiliate_code 
-          ? `quaidirect.fr/p/${fisherman.slug}?ref=${fisherman.affiliate_code}`
-          : `quaidirect.fr/p/${fisherman.slug}`;
+          ? `https://quaidirect.fr/pecheurs/${fisherman.slug}?ref=${fisherman.affiliate_code}`
+          : `https://quaidirect.fr/pecheurs/${fisherman.slug}`;
         
         switch (message_type) {
           case 'invitation_initiale':
@@ -456,7 +456,8 @@ serve(async (req) => {
       }
     }
 
-    const totalRecipients = emailSuccessCount + smsSuccessCount;
+    // recipient_count = unique contacts touched (not sum of email+sms)
+    const uniqueRecipientCount = contacts?.length || 0;
 
     // Save message
     const { error: messageError } = await supabaseClient
@@ -468,7 +469,7 @@ serve(async (req) => {
         body: body || emailTemplate.html,
         sent_to_group: sent_to_group || null,
         drop_id: drop_id || null,
-        recipient_count: totalRecipients,
+        recipient_count: uniqueRecipientCount,
         email_count: emailSuccessCount,
         sms_count: smsSuccessCount,
         channel: channel,
@@ -493,7 +494,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        recipient_count: totalRecipients,
+        recipient_count: uniqueRecipientCount,
         email_count: emailSuccessCount,
         sms_count: smsSuccessCount,
         affiliate_code: fisherman.affiliate_code,
