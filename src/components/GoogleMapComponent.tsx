@@ -149,7 +149,7 @@ const GoogleMapComponent = ({
     setMap(null);
   }, []);
 
-  // Auto-center map with priority: userLocation > salePoints > drops > default (Hyères)
+  // Auto-center map with priority: userLocation > drops (arrivages) > salePoints > default (Hyères)
   useEffect(() => {
     if (!map) return;
 
@@ -164,23 +164,23 @@ const GoogleMapComponent = ({
     const bounds = new google.maps.LatLngBounds();
     let hasPoints = false;
 
-    // Priorité 2: Centrer sur les points de vente (principale source de données)
-    if (salePoints && salePoints.length > 0) {
-      console.log('[GoogleMap] Found', salePoints.length, 'sale points');
-      salePoints.forEach(sp => {
-        if (sp.latitude && sp.longitude) {
-          bounds.extend(new google.maps.LatLng(sp.latitude, sp.longitude));
+    // Priorité 2: Centrer sur les drops actifs (ARRIVAGES EN PRIORITÉ)
+    if (drops && drops.length > 0) {
+      console.log('[GoogleMap] Found', drops.length, 'drops - centering on arrivals first');
+      drops.forEach(drop => {
+        if (drop.latitude && drop.longitude) {
+          bounds.extend(new google.maps.LatLng(drop.latitude, drop.longitude));
           hasPoints = true;
         }
       });
     }
 
-    // Priorité 3: Centrer sur les drops actifs
-    if (!hasPoints && drops && drops.length > 0) {
-      console.log('[GoogleMap] Found', drops.length, 'drops');
-      drops.forEach(drop => {
-        if (drop.latitude && drop.longitude) {
-          bounds.extend(new google.maps.LatLng(drop.latitude, drop.longitude));
+    // Priorité 3: Centrer sur les points de vente (si pas de drops)
+    if (!hasPoints && salePoints && salePoints.length > 0) {
+      console.log('[GoogleMap] No drops, found', salePoints.length, 'sale points');
+      salePoints.forEach(sp => {
+        if (sp.latitude && sp.longitude) {
+          bounds.extend(new google.maps.LatLng(sp.latitude, sp.longitude));
           hasPoints = true;
         }
       });
@@ -277,23 +277,41 @@ const GoogleMapComponent = ({
       return marker;
     });
 
-    // Drop markers (green with fish icon)
+    // Drop markers (green with fish icon) - PLUS GRANDS ET PRIORITAIRES
+    const isSelected = (dropId: string) => selectedDropId === dropId;
     const dropMarkers = drops.map((drop) => {
+      const selected = isSelected(drop.id);
+      // Marqueurs d'arrivages plus grands (48px vs 40px pour sale points)
+      const markerSize = selected ? 56 : 48;
+      const circleRadius = selected ? 24 : 20;
+      const fontSize = selected ? 22 : 18;
+      
       const marker = new google.maps.Marker({
         position: { lat: drop.latitude, lng: drop.longitude },
         map: map,
-        title: `${drop.species} - ${drop.fishermanName}`,
+        title: `🐟 ${drop.species} - ${drop.fishermanName}`,
         icon: {
           url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-            <svg width="40" height="40" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="20" cy="20" r="16" fill="${selectedDropId === drop.id ? '#10b981' : '#22c55e'}" opacity="${selectedDropId === drop.id ? '1' : '0.9'}" stroke="#FFFFFF" stroke-width="3"/>
-              <text x="20" y="26" font-size="16" fill="#FFFFFF" text-anchor="middle" font-family="Arial">🐟</text>
+            <svg width="${markerSize}" height="${markerSize}" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                  <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+              ${selected ? `<circle cx="${markerSize/2}" cy="${markerSize/2}" r="${circleRadius + 4}" fill="none" stroke="#22c55e" stroke-width="2" opacity="0.5"/>` : ''}
+              <circle cx="${markerSize/2}" cy="${markerSize/2}" r="${circleRadius}" fill="${selected ? '#059669' : '#22c55e'}" stroke="#FFFFFF" stroke-width="3" filter="url(#glow)"/>
+              <text x="${markerSize/2}" y="${markerSize/2 + 6}" font-size="${fontSize}" fill="#FFFFFF" text-anchor="middle" font-family="Arial">🐟</text>
             </svg>
           `)}`,
-          scaledSize: new google.maps.Size(40, 40),
-          anchor: new google.maps.Point(20, 20),
+          scaledSize: new google.maps.Size(markerSize, markerSize),
+          anchor: new google.maps.Point(markerSize / 2, markerSize / 2),
         },
-        zIndex: 1000,
+        // zIndex élevé pour que les drops apparaissent AU-DESSUS des sale points
+        zIndex: selected ? 2000 : 1500,
       });
 
       marker.addListener('click', () => {
