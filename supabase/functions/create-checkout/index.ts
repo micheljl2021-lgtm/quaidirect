@@ -149,15 +149,16 @@ serve(async (req) => {
           return_url: `${req.headers.get('origin') || 'https://quaidirect.fr'}/premium`,
         });
 
+        // Return portal URL instead of error - frontend should handle this
         return new Response(
           JSON.stringify({ 
-            error: 'Vous avez déjà un abonnement actif. Gérez-le via le portail client.',
             hasExistingSubscription: true,
-            portalUrl: portalSession.url 
+            portalUrl: portalSession.url,
+            message: 'Vous avez déjà un abonnement actif.'
           }),
           {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400,
+            status: 200, // Changed to 200 so frontend can handle gracefully
           }
         );
       }
