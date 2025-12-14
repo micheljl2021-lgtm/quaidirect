@@ -1,11 +1,22 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://quaidirect.fr',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schema
+const RequestSchema = z.object({
+  priceId: z.string()
+    .min(1, 'priceId is required')
+    .regex(/^price_/, 'priceId must be a valid Stripe price ID'),
+  planType: z.enum(['standard', 'pro', 'elite'], {
+    errorMap: () => ({ message: 'planType must be standard, pro, or elite' })
+  }),
+});
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -99,15 +110,22 @@ serve(async (req) => {
       logStep('No existing customer');
     }
 
-    const { priceId, planType } = await req.json();
+    // Validate input with Zod
+    const rawBody = await req.json();
+    const validationResult = RequestSchema.safeParse(rawBody);
     
-    if (!priceId || !planType) {
-      throw new Error('Missing priceId or planType');
+    if (!validationResult.success) {
+      const errorMessages = validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+      logStep('Validation failed', { errors: errorMessages });
+      return new Response(
+        JSON.stringify({ error: `Validation error: ${errorMessages}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
-
-    logStep('Request data', { priceId, planType });
-
     
+    const { priceId, planType } = validationResult.data;
+    logStep('Request data validated', { priceId, planType });
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,

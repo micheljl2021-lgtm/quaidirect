@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -22,6 +23,21 @@ const corsHeaders = {
 // Rate limiting configuration
 const RATE_LIMIT = 3; // max requests
 const RATE_WINDOW_MINUTES = 1; // per minute
+
+// Input validation schema
+const InquiryRequestSchema = z.object({
+  email: z.string()
+    .email('Invalid email address')
+    .max(255, 'Email must be less than 255 characters')
+    .transform(val => val.trim().toLowerCase()),
+  message: z.string()
+    .max(2000, 'Message must be less than 2000 characters')
+    .optional()
+    .default('')
+    .transform(val => val.trim()),
+  type: z.enum(['launch_notification', 'question', 'fisherman_interest', 'partnership', 'other'])
+    .default('other'),
+});
 
 const checkRateLimit = async (
   supabase: any,
@@ -62,12 +78,6 @@ const checkRateLimit = async (
   });
   return { allowed: true, remaining: RATE_LIMIT - 1 };
 };
-
-interface InquiryConfirmationRequest {
-  email: string;
-  message: string;
-  type: string;
-}
 
 const getTypeLabel = (type: string): string => {
   const labels: Record<string, string> = {
@@ -112,13 +122,22 @@ const handler = async (req: Request): Promise<Response> => {
         }
       );
     }
-    const { email, message, type }: InquiryConfirmationRequest = await req.json();
 
-    console.log(`send-inquiry-confirmation: Sending to ${email}, type: ${type}`);
-
-    if (!email) {
-      throw new Error("Email is required");
+    // Validate input with Zod
+    const rawBody = await req.json();
+    const validationResult = InquiryRequestSchema.safeParse(rawBody);
+    
+    if (!validationResult.success) {
+      const errorMessages = validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+      console.error("send-inquiry-confirmation: Validation error:", errorMessages);
+      return new Response(
+        JSON.stringify({ error: `Validation error: ${errorMessages}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+
+    const { email, message, type } = validationResult.data;
+    console.log(`send-inquiry-confirmation: Sending to ${email}, type: ${type}`);
 
     if (!RESEND_API_KEY) {
       throw new Error("RESEND_API_KEY is not configured");
