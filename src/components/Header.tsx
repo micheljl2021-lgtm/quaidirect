@@ -46,7 +46,7 @@ const Header = () => {
           <img 
             src={logoQuaidirect} 
             alt="QuaiDirect" 
-            className="h-10 object-contain"
+            className="h-12 object-contain"
           />
         </Link>
 
