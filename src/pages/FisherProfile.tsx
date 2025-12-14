@@ -40,7 +40,7 @@ const FisherProfile = () => {
   const { data: fisherman, isLoading } = useQuery({
     queryKey: ['fisherman', slug],
     queryFn: async () => {
-      // First get public fisherman data
+      // Use public_fishermen view which is accessible to everyone (already includes SEO fields)
       const publicQuery = supabase
         .from('public_fishermen')
         .select('*');
@@ -51,24 +51,9 @@ const FisherProfile = () => {
         : await publicQuery.eq('slug', slug).maybeSingle();
 
       if (publicError) throw publicError;
-      if (!publicData) throw new Error('Pêcheur introuvable');
+      if (!publicData) return null;
       
-      // Get full fisherman data with SEO fields
-      const { data: fullData, error: fullError } = await supabase
-        .from('fishermen')
-        .select(`
-          *,
-          seo_title,
-          seo_meta_description,
-          seo_keywords,
-          seo_long_content,
-          seo_how_to_order,
-          seo_hours_location
-        `)
-        .eq('id', publicData.id)
-        .maybeSingle();
-      
-      // Fetch associated species separately
+      // Fetch associated species separately (species table is publicly accessible)
       const { data: speciesData } = await supabase
         .from('fishermen_species')
         .select(`
@@ -79,7 +64,6 @@ const FisherProfile = () => {
       
       return {
         ...publicData,
-        ...(fullData || {}),
         fishermen_species: speciesData || []
       };
     },
