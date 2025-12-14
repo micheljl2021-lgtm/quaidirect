@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Crown, User, MapPin, Menu, X, Shield } from "lucide-react";
+import { Crown, User, Menu, X, Shield } from "lucide-react";
+import logoQuaidirect from "@/assets/logo-quaidirect.png";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,9 +43,11 @@ const Header = () => {
       <div className="container flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80" aria-label="Accueil QuaiDirect">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-ocean">
-            <MapPin className="h-5 w-5 text-primary-foreground" aria-hidden="true" />
-          </div>
+          <img 
+            src={logoQuaidirect} 
+            alt="QuaiDirect" 
+            className="h-10 w-10 rounded-lg"
+          />
           <span className="text-xl font-bold text-foreground">QuaiDirect</span>
         </Link>
 

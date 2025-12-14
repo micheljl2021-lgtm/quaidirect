@@ -13,7 +13,7 @@ import { SalesTab } from "@/components/admin/SalesTab";
 import { ReservationsTab } from "@/components/admin/ReservationsTab";
 import { OffersTab } from "@/components/admin/OffersTab";
 import { PremiumSubscriptionsTab } from "@/components/admin/PremiumSubscriptionsTab";
-import { FishermanSubscriptionsTab } from "@/components/admin/FishermanSubscriptionsTab";
+import { FishermenSmsTab } from "@/components/admin/FishermenSmsTab";
 import { ContactsTab } from "@/components/admin/ContactsTab";
 import { SupportRequestsTab } from "@/components/admin/SupportRequestsTab";
 import PublicInquiriesTab from "@/components/admin/PublicInquiriesTab";
@@ -84,19 +84,19 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 lg:grid-cols-13 gap-2">
-            <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-            <TabsTrigger value="users">Utilisateurs</TabsTrigger>
-            <TabsTrigger value="fishermen">Pêcheurs</TabsTrigger>
-            <TabsTrigger value="drops">Arrivages</TabsTrigger>
-            <TabsTrigger value="sales">Ventes</TabsTrigger>
-            <TabsTrigger value="reservations">Réservations</TabsTrigger>
-            <TabsTrigger value="offers">Offres</TabsTrigger>
-            <TabsTrigger value="premium">Premium</TabsTrigger>
-            <TabsTrigger value="fisherman-subs">Pêcheurs Abo</TabsTrigger>
-            <TabsTrigger value="contacts">Contacts</TabsTrigger>
-            <TabsTrigger value="support">Demandes</TabsTrigger>
-            <TabsTrigger value="messages" className="relative">
+          <TabsList className="flex w-full overflow-x-auto gap-1 pb-2 scrollbar-thin">
+            <TabsTrigger value="overview" className="whitespace-nowrap">Vue d'ensemble</TabsTrigger>
+            <TabsTrigger value="users" className="whitespace-nowrap">Utilisateurs</TabsTrigger>
+            <TabsTrigger value="fishermen" className="whitespace-nowrap">Pêcheurs</TabsTrigger>
+            <TabsTrigger value="drops" className="whitespace-nowrap">Arrivages</TabsTrigger>
+            <TabsTrigger value="sales" className="whitespace-nowrap">Ventes</TabsTrigger>
+            <TabsTrigger value="reservations" className="whitespace-nowrap">Réservations</TabsTrigger>
+            <TabsTrigger value="offers" className="whitespace-nowrap">Offres</TabsTrigger>
+            <TabsTrigger value="premium" className="whitespace-nowrap">Premium</TabsTrigger>
+            <TabsTrigger value="fisherman-sms" className="whitespace-nowrap">SMS Pêcheurs</TabsTrigger>
+            <TabsTrigger value="contacts" className="whitespace-nowrap">Contacts</TabsTrigger>
+            <TabsTrigger value="support" className="whitespace-nowrap">Demandes</TabsTrigger>
+            <TabsTrigger value="messages" className="relative whitespace-nowrap">
               <MessageSquare className="h-4 w-4 mr-1" />
               Messages
               {newInquiriesCount && newInquiriesCount > 0 ? (
@@ -105,7 +105,7 @@ const AdminDashboard = () => {
                 </span>
               ) : null}
             </TabsTrigger>
-            <TabsTrigger value="updates">
+            <TabsTrigger value="updates" className="whitespace-nowrap">
               <Bell className="h-4 w-4 mr-1" />
               MAJ
             </TabsTrigger>
@@ -143,8 +143,8 @@ const AdminDashboard = () => {
             <PremiumSubscriptionsTab />
           </TabsContent>
 
-          <TabsContent value="fisherman-subs" className="space-y-6">
-            <FishermanSubscriptionsTab />
+          <TabsContent value="fisherman-sms" className="space-y-6">
+            <FishermenSmsTab />
           </TabsContent>
 
           <TabsContent value="contacts" className="space-y-6">

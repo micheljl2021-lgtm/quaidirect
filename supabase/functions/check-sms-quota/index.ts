@@ -2,8 +2,15 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://quaidirect.fr',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+// SMS quotas by plan - must match src/config/pricing.ts
+const PLAN_SMS_QUOTAS: Record<string, number> = {
+  'fisherman_standard': 50,
+  'fisherman_pro': 200,
+  'fisherman_elite': 1500,
 };
 
 const logStep = (step: string, details?: any) => {
@@ -46,7 +53,42 @@ serve(async (req) => {
     if (fishermanError || !fisherman) throw new Error('Fisherman not found');
     logStep('Fisherman found', { fishermanId: fisherman.id });
 
-    // Get current month quota
+    // Get fisherman's active subscription plan
+    const { data: payment, error: paymentError } = await supabaseClient
+      .from('payments')
+      .select('plan, status')
+      .eq('user_id', user.id)
+      .in('status', ['active', 'trialing'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (paymentError) {
+      logStep('Payment query error', { error: paymentError.message });
+    }
+
+    // Determine SMS quota based on plan
+    let monthlyQuota = 0;
+    let planName = 'none';
+    
+    if (payment?.plan) {
+      planName = payment.plan;
+      // Match plan name to quota
+      if (payment.plan.includes('elite')) {
+        monthlyQuota = PLAN_SMS_QUOTAS['fisherman_elite'];
+      } else if (payment.plan.includes('pro')) {
+        monthlyQuota = PLAN_SMS_QUOTAS['fisherman_pro'];
+      } else if (payment.plan.includes('standard') || payment.plan.includes('basic')) {
+        monthlyQuota = PLAN_SMS_QUOTAS['fisherman_standard'];
+      } else {
+        // Default fallback for unknown plans
+        monthlyQuota = PLAN_SMS_QUOTAS['fisherman_standard'];
+      }
+    }
+
+    logStep('Plan detected', { plan: planName, monthlyQuota });
+
+    // Get current month usage
     const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
     const { data: usage, error: usageError } = await supabaseClient
       .from('fishermen_sms_usage')
@@ -57,25 +99,33 @@ serve(async (req) => {
 
     if (usageError) throw usageError;
 
-    const FREE_SMS_QUOTA = 100;
-    const freeRemaining = usage ? FREE_SMS_QUOTA - (usage.free_sms_used || 0) : FREE_SMS_QUOTA;
+    const smsUsed = usage?.free_sms_used || 0;
     const paidBalance = usage?.paid_sms_balance || 0;
-    const totalAvailable = Math.max(0, freeRemaining) + paidBalance;
+    const bonusSms = usage?.bonus_sms_at_signup || 0;
+    
+    // Calculate remaining quota
+    const quotaRemaining = Math.max(0, monthlyQuota - smsUsed);
+    const totalAvailable = quotaRemaining + paidBalance + bonusSms;
 
     logStep('SMS quota calculated', {
-      freeRemaining,
+      plan: planName,
+      monthlyQuota,
+      smsUsed,
+      quotaRemaining,
       paidBalance,
-      totalAvailable,
-      freeUsed: usage?.free_sms_used || 0
+      bonusSms,
+      totalAvailable
     });
 
     return new Response(
       JSON.stringify({
-        free_remaining: Math.max(0, freeRemaining),
+        plan: planName,
+        monthly_quota: monthlyQuota,
+        free_used: smsUsed,
+        free_remaining: quotaRemaining,
         paid_balance: paidBalance,
-        total_available: totalAvailable,
-        free_quota: FREE_SMS_QUOTA,
-        free_used: usage?.free_sms_used || 0
+        bonus_sms: bonusSms,
+        total_available: totalAvailable
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
