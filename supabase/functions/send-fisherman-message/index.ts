@@ -10,7 +10,7 @@ const corsHeaders = {
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-// Use SITE_URL env variable with proper fallback
+// Use SITE_URL env variable - NO fallback to lovable.app
 const SITE_URL = Deno.env.get("SITE_URL") || "https://quaidirect.fr";
 
 // Request validation schema
@@ -97,10 +97,20 @@ interface FishermanData {
   favorite_photo_url?: string;
   photo_boat_1?: string;
   photo_url?: string;
+  affiliate_code?: string;
 }
 
 const getFishermanPhoto = (fisherman: FishermanData): string | null => {
   return fisherman.favorite_photo_url || fisherman.photo_boat_1 || fisherman.photo_url || null;
+};
+
+/**
+ * Build a tracked URL with referrer code
+ */
+const buildTrackedUrl = (baseUrl: string, affiliateCode?: string): string => {
+  if (!affiliateCode) return baseUrl;
+  const separator = baseUrl.includes('?') ? '&' : '?';
+  return `${baseUrl}${separator}ref=${affiliateCode}`;
 };
 
 const getEmailTemplate = (type: string, fisherman: FishermanData, dropDetails?: any) => {
@@ -113,14 +123,17 @@ const getEmailTemplate = (type: string, fisherman: FishermanData, dropDetails?: 
   const safeLocation = escapeHtml(dropDetails?.location || '');
   const safeSpecies = escapeHtml(dropDetails?.species || '');
   
-  const profileUrl = `${SITE_URL}/pecheurs/${fisherman.slug}`;
+  // Build tracked URLs with affiliate code
+  const affiliateCode = fisherman.affiliate_code;
+  const profileUrl = buildTrackedUrl(`${SITE_URL}/pecheurs/${fisherman.slug}`, affiliateCode);
   const dropUrl = dropDetails?.drop_id 
-    ? `${SITE_URL}/drop/${dropDetails.drop_id}` 
-    : `${SITE_URL}/arrivages`;
+    ? buildTrackedUrl(`${SITE_URL}/drop/${dropDetails.drop_id}`, affiliateCode)
+    : buildTrackedUrl(`${SITE_URL}/arrivages`, affiliateCode);
+  const premiumUrl = buildTrackedUrl(`${SITE_URL}/premium`, affiliateCode);
   
   const photoUrl = getFishermanPhoto(fisherman);
   
-  // Common email wrapper with branding
+  // Common email wrapper with branding + premium mention
   const wrapEmail = (content: string, ctaText: string, ctaUrl: string) => `
     <!DOCTYPE html>
     <html lang="fr">
@@ -156,6 +169,13 @@ const getEmailTemplate = (type: string, fisherman: FishermanData, dropDetails?: 
               </div>
             </div>
             <a href="${profileUrl}" style="display: block; text-align: center; margin-top: 16px; color: #0066cc; font-size: 14px; text-decoration: none;">Voir le profil du pêcheur →</a>
+          </div>
+          
+          <!-- Premium mention -->
+          <div style="margin-top: 24px; padding: 16px; background-color: #fef3c7; border-radius: 8px; border: 1px solid #fcd34d;">
+            <p style="margin: 0; font-size: 14px; color: #92400e;">
+              <strong>💡 Astuce :</strong> Créez un compte <a href="${premiumUrl}" style="color: #0066cc; font-weight: 600;">Premium</a> pour recevoir des alertes prioritaires et soutenir directement ce pêcheur !
+            </p>
           </div>
         </div>
         
@@ -266,15 +286,31 @@ serve(async (req) => {
     if (!user?.id) throw new Error('User not authenticated');
     logStep('User authenticated', { userId: user.id });
 
-    // Get fisherman with more fields for email template
+    // Get fisherman with more fields for email template + affiliate_code for tracking
     const { data: fisherman, error: fishermanError } = await supabaseClient
       .from('fishermen')
-      .select('id, boat_name, slug, company_name, main_fishing_zone, favorite_photo_url, photo_boat_1, photo_url')
+      .select('id, boat_name, slug, company_name, main_fishing_zone, favorite_photo_url, photo_boat_1, photo_url, affiliate_code')
       .eq('user_id', user.id)
       .single();
 
     if (fishermanError || !fisherman) throw new Error('Fisherman not found');
-    logStep('Fisherman found', { fishermanId: fisherman.id });
+    logStep('Fisherman found', { fishermanId: fisherman.id, hasAffiliateCode: !!fisherman.affiliate_code });
+
+    // Auto-generate affiliate_code if missing
+    if (!fisherman.affiliate_code) {
+      const newAffiliateCode = fisherman.id.slice(0, 8).toUpperCase();
+      const { error: updateError } = await supabaseClient
+        .from('fishermen')
+        .update({ affiliate_code: newAffiliateCode })
+        .eq('id', fisherman.id);
+      
+      if (!updateError) {
+        fisherman.affiliate_code = newAffiliateCode;
+        logStep('Auto-generated affiliate_code', { affiliateCode: newAffiliateCode });
+      } else {
+        logStep('Failed to auto-generate affiliate_code', { error: updateError });
+      }
+    }
 
     // Rate limiting check
     const { allowed, remaining } = await checkRateLimit(supabaseClient, user.id, 'send-fisherman-message');
@@ -337,7 +373,7 @@ serve(async (req) => {
       throw new Error('Aucun contact à contacter');
     }
 
-    // Prepare email template
+    // Prepare email template with tracked URLs
     const emailTemplate = getEmailTemplate(message_type, fisherman, {
       ...drop_details,
       subject,
@@ -372,16 +408,22 @@ serve(async (req) => {
       
       if (contactsWithPhone.length > 0) {
         let smsMessage = '';
+        // Include tracking link in SMS too
+        const smsProfileUrl = fisherman.affiliate_code 
+          ? `quaidirect.fr/p/${fisherman.slug}?ref=${fisherman.affiliate_code}`
+          : `quaidirect.fr/p/${fisherman.slug}`;
+        
         switch (message_type) {
           case 'invitation_initiale':
-            smsMessage = `${fisherman.boat_name} est maintenant sur QuaiDirect ! Retrouvez mes arrivages sur quaidirect.fr`;
+            smsMessage = `${fisherman.boat_name} est sur QuaiDirect ! Arrivages: ${smsProfileUrl}`;
             break;
           case 'new_drop':
-            smsMessage = `${fisherman.boat_name} - Nouvel arrivage ! ${drop_details?.time || ''} ${drop_details?.location || ''}. Détails sur quaidirect.fr`;
+            smsMessage = `${fisherman.boat_name} - Arrivage ! ${drop_details?.time || ''} ${drop_details?.location || ''}. ${smsProfileUrl}`;
             break;
           case 'custom':
           default:
-            smsMessage = body?.slice(0, 160) || 'Message de votre pêcheur sur QuaiDirect';
+            smsMessage = body?.slice(0, 120) || 'Message de votre pêcheur';
+            smsMessage += ` ${smsProfileUrl}`;
             break;
         }
 
@@ -446,7 +488,7 @@ serve(async (req) => {
         .in('id', contactIdsList);
     }
 
-    logStep('Message saved and contacts updated');
+    logStep('Message saved and contacts updated', { affiliateCode: fisherman.affiliate_code });
 
     return new Response(
       JSON.stringify({
@@ -454,29 +496,17 @@ serve(async (req) => {
         recipient_count: totalRecipients,
         email_count: emailSuccessCount,
         sms_count: smsSuccessCount,
-        message: `${emailSuccessCount} email(s) et ${smsSuccessCount} SMS envoyé(s)`
+        affiliate_code: fisherman.affiliate_code,
       }),
       {
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json',
-          'X-RateLimit-Remaining': String(remaining)
-        },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
     );
-  } catch (error) {
-    let errorMessage = 'Unknown error';
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    } else if (typeof error === 'object' && error !== null) {
-      errorMessage = JSON.stringify(error);
-    } else {
-      errorMessage = String(error);
-    }
-    logStep('ERROR', { message: errorMessage, error });
+  } catch (error: any) {
+    logStep('ERROR', { message: error.message });
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: error.message }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,

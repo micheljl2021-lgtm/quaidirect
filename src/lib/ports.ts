@@ -12,14 +12,28 @@ export const getBasinFromDepartement = (dep: string): FishingBasin => {
   return 'ATLANTIQUE';
 };
 
-export const getPortFileForBasin = (basin: FishingBasin): string => {
+/**
+ * @deprecated Use PortsListModal with dynamic Supabase query instead.
+ * This function is kept for backward compatibility but should not be used.
+ * Ports are now fetched from the database and exported dynamically.
+ */
+export const getPortFileForBasin = (_basin: FishingBasin): string | null => {
+  console.warn('[DEPRECATED] getPortFileForBasin is deprecated. Use PortsListModal for dynamic port access.');
+  return null;
+};
+
+/**
+ * Get departments for a given basin
+ */
+export const getDepartmentsForBasin = (basin: FishingBasin): string[] => {
   switch (basin) {
     case 'MEDITERRANEE':
-      return '/ports/ports-mediterranee.csv';
+      return medDeps;
     case 'MANCHE':
-      return '/ports/ports-manche.csv';
+      return mancheDeps;
     case 'ATLANTIQUE':
+      return atlantiqueDeps;
     default:
-      return '/ports/ports-atlantique.csv';
+      return [];
   }
 };

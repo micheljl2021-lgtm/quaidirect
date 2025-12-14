@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const SITE_URL = Deno.env.get("SITE_URL") || "https://quaidirect.fr";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "https://quaidirect.fr",
@@ -19,10 +20,72 @@ function escapeHtml(text: string | null | undefined): string {
     .replace(/'/g, '&#039;');
 }
 
+// Single source of truth for plan labels
+const PLAN_CONFIG: Record<string, { label: string; priceCents: number; period: string; features: string[] }> = {
+  standard: {
+    label: 'Standard',
+    priceCents: 15000,
+    period: 'an',
+    features: [
+      '✅ Emails illimités à vos clients',
+      '✅ Partage WhatsApp instantané',
+      '✅ IA pour générer vos textes et descriptions',
+      '✅ 50 SMS/mois inclus + 200 SMS bonus ouverture',
+    ],
+  },
+  pro: {
+    label: 'Pro',
+    priceCents: 29900,
+    period: 'an',
+    features: [
+      '✅ Emails illimités à vos clients',
+      '✅ Partage WhatsApp instantané',
+      '✅ IA avancée (prix, météo, marée)',
+      '✅ 200 SMS/mois inclus + 1000 SMS bonus ouverture',
+      '✅ Statistiques et estimation CA',
+      '✅ Multi-points de vente (jusqu\'à 3)',
+      '✅ Support prioritaire',
+    ],
+  },
+  elite: {
+    label: 'Elite',
+    priceCents: 19900,
+    period: 'mois',
+    features: [
+      '✅ Emails illimités à vos clients',
+      '✅ IA complète + génération photo → annonce',
+      '✅ 1500 SMS/mois inclus',
+      '✅ Multi-points de vente (jusqu\'à 10)',
+      '✅ Dashboard avancé',
+      '✅ Numéro SMS vérifié (quand disponible)',
+      '✅ Support prioritaire dédié',
+    ],
+  },
+  // Backward compatibility mappings
+  basic: {
+    label: 'Standard',
+    priceCents: 15000,
+    period: 'an',
+    features: [
+      '✅ Emails illimités à vos clients',
+      '✅ Partage WhatsApp instantané',
+      '✅ IA pour générer vos textes et descriptions',
+      '✅ 50 SMS/mois inclus + 200 SMS bonus ouverture',
+    ],
+  },
+};
+
+const getPlanConfig = (plan: string) => {
+  const normalized = plan.toLowerCase().replace('fisherman_', '');
+  return PLAN_CONFIG[normalized] || PLAN_CONFIG.standard;
+};
+
 interface FishermanWelcomeRequest {
   userEmail: string;
   boatName?: string;
   plan: string;
+  fishermanZone?: string;
+  fishermanPhoto?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -43,68 +106,77 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    const { userEmail, boatName, plan }: FishermanWelcomeRequest = await req.json();
+    const { userEmail, boatName, plan, fishermanZone, fishermanPhoto }: FishermanWelcomeRequest = await req.json();
+    
+    const config = getPlanConfig(plan);
+    const priceFormatted = (config.priceCents / 100).toFixed(0);
+    const planLabel = `${config.label} (${priceFormatted}€/${config.period})`;
 
-    const planLabel = plan === 'pro' ? 'Pro (199€/an)' : 'Basic (150€/an)';
-    const isPro = plan === 'pro';
+    console.log('[FISHERMAN-WELCOME] Sending welcome email', { userEmail, plan, planLabel });
 
     const emailResponse = await resend.emails.send({
       from: "QuaiDirect <support@quaidirect.fr>",
       to: [userEmail],
       subject: `Bienvenue sur QuaiDirect ${boatName ? escapeHtml(boatName) : ''} !`,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #0066cc;">🎉 Bienvenue sur QuaiDirect ${boatName ? `- ${escapeHtml(boatName)}` : ''} !</h1>
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+          <!-- Header -->
+          <div style="background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%); padding: 24px; text-align: center; border-radius: 8px 8px 0 0;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold;">🎉 Bienvenue sur QuaiDirect</h1>
+            ${boatName ? `<p style="color: #e0e7ff; margin: 8px 0 0 0; font-size: 16px;">${escapeHtml(boatName)}</p>` : ''}
+          </div>
           
-          <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p style="margin: 0; font-size: 16px;">
-              <strong>Votre abonnement ${planLabel} est maintenant actif !</strong>
+          <!-- Mini fiche pêcheur -->
+          ${(boatName || fishermanZone || fishermanPhoto) ? `
+          <div style="background-color: #f8fafc; padding: 20px; margin: 0; border-left: 4px solid #0066cc;">
+            <div style="display: flex; align-items: center;">
+              ${fishermanPhoto ? `<img src="${fishermanPhoto}" alt="${escapeHtml(boatName || 'Bateau')}" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover; margin-right: 16px;">` : ''}
+              <div>
+                ${boatName ? `<p style="margin: 0; font-weight: 600; font-size: 16px; color: #1e293b;">${escapeHtml(boatName)}</p>` : ''}
+                ${fishermanZone ? `<p style="margin: 4px 0 0 0; font-size: 14px; color: #64748b;">📍 ${escapeHtml(fishermanZone)}</p>` : ''}
+              </div>
+            </div>
+          </div>
+          ` : ''}
+          
+          <div style="padding: 24px;">
+            <div style="background: #d4edda; padding: 16px; border-radius: 8px; margin: 0 0 24px 0; border-left: 4px solid #28a745;">
+              <p style="margin: 0; font-size: 16px; font-weight: 600; color: #155724;">
+                ✅ Votre abonnement ${planLabel} est maintenant actif !
+              </p>
+            </div>
+
+            <h2 style="color: #1e293b; margin: 0 0 16px 0; font-size: 18px;">🚀 Vos avantages ${config.label} :</h2>
+            <ul style="line-height: 1.8; color: #475569; padding-left: 0; list-style: none; margin: 0 0 24px 0;">
+              ${config.features.map(f => `<li style="margin-bottom: 8px;">${f}</li>`).join('')}
+            </ul>
+
+            <h2 style="color: #1e293b; margin: 0 0 16px 0; font-size: 18px;">📍 Prochaines étapes :</h2>
+            <ol style="line-height: 1.8; color: #475569; margin: 0 0 24px 0; padding-left: 20px;">
+              <li><strong>Complétez votre profil pêcheur</strong> avec vos infos bateau et zones de pêche</li>
+              <li><strong>Ajoutez vos points de vente</strong> (jusqu'à ${plan === 'elite' ? '10' : plan === 'pro' ? '3' : '2'} emplacements)</li>
+              <li><strong>Créez votre premier arrivage</strong> en moins de 2 minutes</li>
+              <li><strong>Importez vos contacts clients</strong> pour les informer automatiquement</li>
+            </ol>
+
+            <div style="text-align: center; margin: 32px 0;">
+              <a href="${SITE_URL}/pecheur/onboarding" 
+                 style="display: inline-block; background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%); color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                Compléter mon profil
+              </a>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div style="background-color: #f1f5f9; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; border-top: 1px solid #e2e8f0;">
+            <p style="margin: 0; color: #64748b; font-size: 14px;">
+              Besoin d'aide ? Répondez à cet email ou contactez <a href="mailto:support@quaidirect.fr" style="color: #0066cc;">support@quaidirect.fr</a>
+            </p>
+            <p style="margin: 12px 0 0 0; color: #94a3b8; font-size: 13px;">
+              Bonne pêche et bonnes ventes !<br>
+              <strong>L'équipe QuaiDirect</strong>
             </p>
           </div>
-
-          <h2 style="color: #333;">🚀 Vos avantages ${isPro ? 'Pro' : 'Basic'} :</h2>
-          <ul style="line-height: 1.8;">
-            <li>✅ Emails illimités à vos clients</li>
-            <li>✅ Partage WhatsApp instantané</li>
-            <li>✅ IA pour générer vos textes et descriptions</li>
-            ${isPro ? `
-            <li>✅ IA avancée (suggestions de prix, météo, marée)</li>
-            <li>✅ Statistiques et estimation CA</li>
-            <li>✅ Multi-points de vente</li>
-            <li>✅ Support prioritaire</li>
-            ` : ''}
-          </ul>
-
-          <h2 style="color: #333;">📍 Prochaines étapes :</h2>
-          <ol style="line-height: 1.8;">
-            <li><strong>Complétez votre profil pêcheur</strong> avec vos infos bateau et zones de pêche</li>
-            <li><strong>Ajoutez vos points de vente</strong> (jusqu'à 2 emplacements)</li>
-            <li><strong>Créez votre premier arrivage</strong> en moins de 2 minutes</li>
-            <li><strong>Importez vos contacts clients</strong> pour les informer automatiquement</li>
-          </ol>
-
-          <div style="margin: 30px 0; text-align: center;">
-            <a href="https://quaidirect.fr/pecheur/onboarding" 
-               style="background: #0066cc; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
-              Compléter mon profil
-            </a>
-          </div>
-
-          <div style="background: #e8f5e9; padding: 16px; border-left: 4px solid #4caf50; margin: 20px 0;">
-            <p style="margin: 0; font-size: 14px;">
-              <strong>✅ Confirmation :</strong> Votre abonnement ${planLabel} (${isPro ? '299€' : '150€'}/an) est maintenant actif.
-              Votre prochaine facturation aura lieu dans un an.
-            </p>
-          </div>
-
-          <p style="margin-top: 30px; color: #666; font-size: 14px;">
-            Besoin d'aide pour démarrer ? Répondez directement à cet email ou contactez-nous à <a href="mailto:support@quaidirect.fr">support@quaidirect.fr</a>
-          </p>
-
-          <p style="color: #666; font-size: 14px;">
-            Bonne pêche et bonnes ventes !<br>
-            <strong>L'équipe QuaiDirect</strong>
-          </p>
         </div>
       `,
     });
