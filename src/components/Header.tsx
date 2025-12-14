@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Crown, User, Menu, X, Shield } from "lucide-react";
-import logoQuaidirect from "@/assets/logo-quaidirect.png";
+import logoIcon from "@/assets/quaidirect_icon_only.png";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,9 +42,9 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-[60px] md:h-[72px] items-center justify-between px-4">
         {/* Logo */}
-        <Link to="/" className="flex items-center pl-0 md:pl-2 transition-opacity hover:opacity-80" aria-label="Accueil QuaiDirect">
+        <Link to="/" className="flex items-center transition-opacity hover:opacity-80" aria-label="Accueil QuaiDirect">
           <img 
-            src={logoQuaidirect} 
+            src={logoIcon} 
             alt="QuaiDirect" 
             className="h-[34px] md:h-[42px] lg:h-[48px] w-auto object-contain"
           />
