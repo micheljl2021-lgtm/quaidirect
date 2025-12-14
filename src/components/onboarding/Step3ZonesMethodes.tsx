@@ -1,7 +1,9 @@
 import { Anchor, Loader2 } from "lucide-react";
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useQuery } from "@tanstack/react-query";
@@ -13,16 +15,69 @@ interface Step3ZonesMethodesProps {
     zoneId?: string;
     fishingZones: string;
     fishingMethods: string[];
+    fishingMethodOther?: string;
   };
   onChange: (field: string, value: any) => void;
 }
 
+interface FishingMethodsSelectorProps {
+  formData: Step3ZonesMethodesProps['formData'];
+  onChange: (field: string, value: any) => void;
+  handleMethodToggle: (methodId: string, checked: boolean) => void;
+}
+
+const FishingMethodsSelector = ({ formData, onChange, handleMethodToggle }: FishingMethodsSelectorProps) => {
+  const showOtherInput = formData.fishingMethods?.includes('autre');
+  
+  return (
+    <div className="space-y-3">
+      <Label>Méthodes de pêche *</Label>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {FISHING_METHODS.map((method) => (
+          <div key={method.id} className="flex items-center space-x-2 p-2 border rounded-lg hover:bg-muted/50 transition-colors">
+            <Checkbox
+              id={method.id}
+              checked={formData.fishingMethods?.includes(method.id)}
+              onCheckedChange={(checked) => handleMethodToggle(method.id, checked as boolean)}
+            />
+            <label
+              htmlFor={method.id}
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
+            >
+              {method.label}
+            </label>
+          </div>
+        ))}
+      </div>
+      {showOtherInput && (
+        <div className="mt-2">
+          <Input
+            placeholder="Précisez votre méthode de pêche..."
+            value={formData.fishingMethodOther || ''}
+            onChange={(e) => onChange('fishingMethodOther', e.target.value)}
+          />
+        </div>
+      )}
+      <p className="text-xs text-muted-foreground">Sélectionnez toutes les méthodes que vous utilisez</p>
+    </div>
+  );
+};
+
 const FISHING_METHODS = [
-  { id: "filet", label: "Filets" },
-  { id: "palangre", label: "Palangre" },
+  { id: "chalut", label: "Chalut" },
+  { id: "senne", label: "Senne" },
+  { id: "drague", label: "Drague" },
+  { id: "filet_maillant", label: "Filet maillant" },
+  { id: "tremail", label: "Trémail" },
+  { id: "filet", label: "Filets (autres)" },
+  { id: "nasse", label: "Nasse" },
   { id: "casier", label: "Casier" },
-  { id: "ligne", label: "Ligne" },
-  { id: "autre", label: "Autre" },
+  { id: "palangre", label: "Palangre" },
+  { id: "ligne", label: "Ligne / Canne" },
+  { id: "traîne", label: "Traîne" },
+  { id: "peche_pied", label: "Pêche à pied" },
+  { id: "plongee", label: "Plongée" },
+  { id: "autre", label: "Autre (préciser)" },
 ];
 
 export function Step3ZonesMethodes({ formData, onChange }: Step3ZonesMethodesProps) {
@@ -120,27 +175,7 @@ export function Step3ZonesMethodes({ formData, onChange }: Step3ZonesMethodesPro
       </div>
 
       {/* Fishing Methods */}
-      <div className="space-y-3">
-        <Label>Méthodes de pêche *</Label>
-        <div className="space-y-3">
-          {FISHING_METHODS.map((method) => (
-            <div key={method.id} className="flex items-center space-x-2">
-              <Checkbox
-                id={method.id}
-                checked={formData.fishingMethods?.includes(method.id)}
-                onCheckedChange={(checked) => handleMethodToggle(method.id, checked as boolean)}
-              />
-              <label
-                htmlFor={method.id}
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-              >
-                {method.label}
-              </label>
-            </div>
-          ))}
-        </div>
-        <p className="text-xs text-muted-foreground">Sélectionnez toutes les méthodes que vous utilisez</p>
-      </div>
+      <FishingMethodsSelector formData={formData} onChange={onChange} handleMethodToggle={handleMethodToggle} />
 
       {/* Alert Box */}
       <Alert className="bg-blue-50 border-blue-200">

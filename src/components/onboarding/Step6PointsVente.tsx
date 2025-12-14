@@ -1,11 +1,12 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { Plus, Trash2, MapPin, Loader2, CheckCircle } from 'lucide-react';
+import { useState, useCallback, useRef } from 'react';
+import { Plus, Trash2, MapPin, Loader2, CheckCircle, Map } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLoadScript, Autocomplete } from '@react-google-maps/api';
+import { MapPickerDialog } from './MapPickerDialog';
 
 const libraries: ("places")[] = ["places"];
 
@@ -27,6 +28,7 @@ interface Step6PointsVenteProps {
 
 export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) => {
   const [showSecondPoint, setShowSecondPoint] = useState(!!formData.salePoint2Label);
+  const [mapPickerPoint, setMapPickerPoint] = useState<1 | 2 | null>(null);
   const autocomplete1Ref = useRef<google.maps.places.Autocomplete | null>(null);
   const autocomplete2Ref = useRef<google.maps.places.Autocomplete | null>(null);
 
@@ -78,6 +80,18 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
     types: ['address', 'establishment'],
   };
 
+  const handleMapSelect = (pointNumber: 1 | 2, lat: number, lng: number, address: string) => {
+    if (pointNumber === 1) {
+      onChange('salePoint1Lat', lat);
+      onChange('salePoint1Lng', lng);
+      onChange('salePoint1Address', address);
+    } else {
+      onChange('salePoint2Lat', lat);
+      onChange('salePoint2Lng', lng);
+      onChange('salePoint2Address', address);
+    }
+  };
+
   const renderAddressInput = (
     id: string,
     value: string,
@@ -85,49 +99,63 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
     lng: number | undefined,
     onLoadFn: (autocomplete: google.maps.places.Autocomplete) => void,
     onPlaceChangedFn: () => void,
-    onChangeFn: (value: string) => void
+    onChangeFn: (value: string) => void,
+    pointNumber: 1 | 2
   ) => {
-    if (loadError) {
-      return (
-        <div className="space-y-2">
-          <Input
-            id={id}
-            placeholder="Ex: Quai Cronstadt, Port de Hyères..."
-            value={value}
-            onChange={(e) => onChangeFn(e.target.value)}
-          />
-          <p className="text-xs text-destructive">Impossible de charger l'autocomplétion</p>
-        </div>
-      );
-    }
-
-    if (!isLoaded) {
-      return (
-        <div className="flex items-center gap-2 text-muted-foreground h-10">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Chargement...
-        </div>
-      );
-    }
-
     return (
-      <div className="space-y-2">
-        <Autocomplete
-          onLoad={onLoadFn}
-          onPlaceChanged={onPlaceChangedFn}
-          options={autocompleteOptions}
+      <div className="space-y-3">
+        {/* Map picker button - Primary action */}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setMapPickerPoint(pointNumber)}
+          className="w-full justify-start gap-2 h-12 border-primary/50 hover:border-primary hover:bg-primary/5"
         >
-          <Input
-            id={id}
-            placeholder="Tapez une adresse pour la rechercher..."
-            value={value}
-            onChange={(e) => onChangeFn(e.target.value)}
-          />
-        </Autocomplete>
+          <Map className="h-5 w-5 text-primary" />
+          <span className="font-medium">Choisir sur la carte</span>
+          {lat && lng && <CheckCircle className="h-4 w-4 text-green-600 ml-auto" />}
+        </Button>
+
+        {/* Autocomplete as secondary option */}
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+            ou
+          </span>
+          {loadError ? (
+            <Input
+              id={id}
+              placeholder="Tapez une adresse..."
+              value={value}
+              onChange={(e) => onChangeFn(e.target.value)}
+              className="pl-10"
+            />
+          ) : !isLoaded ? (
+            <div className="flex items-center gap-2 text-muted-foreground h-10 pl-10">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Chargement...
+            </div>
+          ) : (
+            <Autocomplete
+              onLoad={onLoadFn}
+              onPlaceChanged={onPlaceChangedFn}
+              options={autocompleteOptions}
+            >
+              <Input
+                id={id}
+                placeholder="Tapez une adresse pour la rechercher..."
+                value={value}
+                onChange={(e) => onChangeFn(e.target.value)}
+                className="pl-10"
+              />
+            </Autocomplete>
+          )}
+        </div>
+
+        {/* GPS coordinates indicator */}
         {lat && lng && (
-          <div className="flex items-center gap-2 text-xs text-green-600">
+          <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 p-2 rounded-md">
             <CheckCircle className="h-3 w-3" />
-            Coordonnées GPS enregistrées ({lat.toFixed(4)}, {lng.toFixed(4)})
+            <span>Coordonnées GPS enregistrées ({lat.toFixed(4)}, {lng.toFixed(4)})</span>
           </div>
         )}
       </div>
@@ -142,6 +170,19 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
           Où vends-tu habituellement ton poisson ? (1 à 2 points maximum)
         </p>
       </div>
+
+      {/* Map Picker Dialog */}
+      <MapPickerDialog
+        open={mapPickerPoint !== null}
+        onOpenChange={(open) => !open && setMapPickerPoint(null)}
+        onSelect={(lat, lng, address) => {
+          if (mapPickerPoint) {
+            handleMapSelect(mapPickerPoint, lat, lng, address);
+          }
+        }}
+        initialLat={mapPickerPoint === 1 ? formData.salePoint1Lat : formData.salePoint2Lat}
+        initialLng={mapPickerPoint === 1 ? formData.salePoint1Lng : formData.salePoint2Lng}
+      />
 
       {/* Point de vente 1 */}
       <Card>
@@ -172,7 +213,8 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
               formData.salePoint1Lng,
               onLoad1,
               handlePlaceChanged1,
-              (val) => onChange('salePoint1Address', val)
+              (val) => onChange('salePoint1Address', val),
+              1
             )}
           </div>
 
@@ -234,7 +276,8 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
                 formData.salePoint2Lng,
                 onLoad2,
                 handlePlaceChanged2,
-                (val) => onChange('salePoint2Address', val)
+                (val) => onChange('salePoint2Address', val),
+                2
               )}
             </div>
 

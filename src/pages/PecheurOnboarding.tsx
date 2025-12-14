@@ -47,6 +47,7 @@ interface FormData {
   zoneId: string;
   fishingZones: string;
   fishingMethods: string[];
+  fishingMethodOther: string;
   // Step 4
   selectedSpecies: string[];
   // Step 5
@@ -100,6 +101,7 @@ const getInitialFormData = (): FormData => {
     zoneId: "",
     fishingZones: "",
     fishingMethods: [],
+    fishingMethodOther: "",
     selectedSpecies: [],
     photoBoat1: "",
     photoBoat2: "",
@@ -232,6 +234,7 @@ const PecheurOnboarding = () => {
           zoneId: fisherman.zone_id || "",
           fishingZones: Array.isArray(fisherman.fishing_zones) ? fisherman.fishing_zones.join(', ') : "",
           fishingMethods: Array.isArray(fisherman.fishing_methods) ? fisherman.fishing_methods : [],
+          fishingMethodOther: savedData.fishingMethodOther || "",
           selectedSpecies: savedData.selectedSpecies || [],
           photoBoat1: fisherman.photo_boat_1 || "",
           photoBoat2: fisherman.photo_boat_2 || "",
