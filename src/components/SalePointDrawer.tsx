@@ -4,15 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Clock, Phone, Heart, Fish } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 interface SalePoint {
   id: string;
   label: string;
   address: string;
-  description: string | null;
-  is_primary: boolean;
+  description?: string | null;
+  is_primary?: boolean;
   photo_url: string | null;
   fishermen: {
     id: string;
@@ -22,7 +22,7 @@ interface SalePoint {
     fishing_methods: string[] | null;
     company_name: string | null;
     slug: string | null;
-  };
+  } | null;
 }
 
 interface SalePointDrawerProps {
@@ -34,6 +34,12 @@ interface SalePointDrawerProps {
 const SalePointDrawer = ({ open, onOpenChange, salePoint }: SalePointDrawerProps) => {
   const navigate = useNavigate();
   const [isFavorite, setIsFavorite] = useState(false);
+  const [activeTab, setActiveTab] = useState("salepoint");
+
+  // Reset tab when salePoint changes or drawer opens
+  useEffect(() => {
+    if (open) setActiveTab("salepoint");
+  }, [salePoint?.id, open]);
 
   if (!salePoint) return null;
 
@@ -43,7 +49,11 @@ const SalePointDrawer = ({ open, onOpenChange, salePoint }: SalePointDrawerProps
   };
 
   const handleViewArrivals = () => {
-    navigate(`/arrivages?fisherman=${salePoint.fishermen.id}`);
+    if (salePoint.fishermen?.id) {
+      navigate(`/arrivages?fisherman=${salePoint.fishermen.id}`);
+    } else {
+      navigate('/arrivages');
+    }
     onOpenChange(false);
   };
 
@@ -54,19 +64,29 @@ const SalePointDrawer = ({ open, onOpenChange, salePoint }: SalePointDrawerProps
           <SheetTitle className="text-2xl">{salePoint.label}</SheetTitle>
         </SheetHeader>
 
-        <Tabs defaultValue="salepoint" className="mt-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="salepoint">Point de vente</TabsTrigger>
-            <TabsTrigger value="fisherman">Fiche Pêcheur</TabsTrigger>
+            <TabsTrigger 
+              value="salepoint"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Point de vente
+            </TabsTrigger>
+            <TabsTrigger 
+              value="fisherman"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Fiche Pêcheur
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="fisherman" className="space-y-4 mt-4">
             {/* Photo du pêcheur */}
             <div className="aspect-video rounded-lg overflow-hidden bg-gradient-ocean flex items-center justify-center">
-              {salePoint.fishermen.photo_url ? (
+              {salePoint.fishermen?.photo_url ? (
                 <img
                   src={salePoint.fishermen.photo_url}
-                  alt={salePoint.fishermen.boat_name}
+                  alt={salePoint.fishermen?.boat_name || 'Pêcheur'}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -77,9 +97,9 @@ const SalePointDrawer = ({ open, onOpenChange, salePoint }: SalePointDrawerProps
             {/* Nom du bateau */}
             <div>
               <h3 className="text-xl font-bold text-foreground">
-                {salePoint.fishermen.boat_name}
+                {salePoint.fishermen?.boat_name || 'Pêcheur'}
               </h3>
-              {salePoint.fishermen.company_name && (
+              {salePoint.fishermen?.company_name && (
                 <p className="text-sm text-muted-foreground">
                   {salePoint.fishermen.company_name}
                 </p>
@@ -87,7 +107,7 @@ const SalePointDrawer = ({ open, onOpenChange, salePoint }: SalePointDrawerProps
             </div>
 
             {/* Méthodes de pêche */}
-            {salePoint.fishermen.fishing_methods && salePoint.fishermen.fishing_methods.length > 0 && (
+            {salePoint.fishermen?.fishing_methods && salePoint.fishermen.fishing_methods.length > 0 && (
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-2">
                   Méthodes de pêche
@@ -103,7 +123,7 @@ const SalePointDrawer = ({ open, onOpenChange, salePoint }: SalePointDrawerProps
             )}
 
             {/* Bio */}
-            {salePoint.fishermen.bio && (
+            {salePoint.fishermen?.bio && (
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-2">
                   À propos
@@ -139,9 +159,9 @@ const SalePointDrawer = ({ open, onOpenChange, salePoint }: SalePointDrawerProps
           <TabsContent value="salepoint" className="space-y-4 mt-4">
             {/* Photo du point de vente */}
             <div className="aspect-video rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-              {salePoint.photo_url || salePoint.fishermen.photo_url ? (
+              {salePoint.photo_url || salePoint.fishermen?.photo_url ? (
                 <img
-                  src={salePoint.photo_url || salePoint.fishermen.photo_url}
+                  src={salePoint.photo_url || salePoint.fishermen?.photo_url || ''}
                   alt={salePoint.label}
                   className="w-full h-full object-cover"
                 />

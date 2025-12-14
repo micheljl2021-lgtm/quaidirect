@@ -136,6 +136,8 @@ const App = () => (
                 <LazyRoute><EditSalePoints /></LazyRoute>
               </ProtectedFisherRoute>
             } />
+            {/* Redirect old route to canonical route */}
+            <Route path="/pecheur/edit-sale-points" element={<Navigate to="/pecheur/points-de-vente" replace />} />
             <Route path="/pecheur/contacts" element={
               <ProtectedFisherRoute>
                 <LazyRoute><PecheurContacts /></LazyRoute>

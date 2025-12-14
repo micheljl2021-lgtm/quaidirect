@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+  `text-sm font-medium transition-colors ${
+    isActive 
+      ? "text-primary font-semibold underline underline-offset-4" 
+      : "text-muted-foreground hover:text-foreground"
+  }`;
+
+const mobileNavLinkClass = ({ isActive }: { isActive: boolean }) =>
+  `text-base font-medium transition-colors py-2 ${
+    isActive 
+      ? "text-primary font-semibold" 
+      : "text-foreground hover:text-primary"
+  }`;
 
 const Header = () => {
   const { user, userRole, signOut } = useAuth();
@@ -36,42 +50,42 @@ const Header = () => {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
-          <Link to="/carte" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <NavLink to="/carte" className={navLinkClass}>
             Carte des points de vente
-          </Link>
-          <Link to="/arrivages" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          </NavLink>
+          <NavLink to="/arrivages" className={navLinkClass}>
             Arrivages
-          </Link>
-          <Link to="/recettes" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          </NavLink>
+          <NavLink to="/recettes" className={navLinkClass}>
             Recettes
-          </Link>
-          <Link to="/panier" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          </NavLink>
+          <NavLink to="/panier" className={navLinkClass}>
             Panier
-          </Link>
-          <Link to="/premium" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          </NavLink>
+          <NavLink to="/premium" className={navLinkClass}>
             Premium
-          </Link>
+          </NavLink>
           {userRole === 'user' && (
-            <Link to="/dashboard/user" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <NavLink to="/dashboard/user" className={navLinkClass}>
               Mon dashboard
-            </Link>
+            </NavLink>
           )}
           {userRole === 'premium' && (
-            <Link to="/dashboard/premium" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+            <NavLink to="/dashboard/premium" className={({ isActive }) => `${navLinkClass({ isActive })} flex items-center gap-1`}>
               <Crown className="h-4 w-4" aria-hidden="true" />
               Dashboard Premium
-            </Link>
+            </NavLink>
           )}
           {userRole === 'fisherman' && (
-            <Link to="/dashboard/pecheur" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <NavLink to="/dashboard/pecheur" className={navLinkClass}>
               Dashboard pêcheur
-            </Link>
+            </NavLink>
           )}
           {userRole === 'admin' && (
-            <Link to="/dashboard/admin" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+            <NavLink to="/dashboard/admin" className={({ isActive }) => `${navLinkClass({ isActive })} flex items-center gap-1`}>
               <Shield className="h-4 w-4" aria-hidden="true" />
               Dashboard Admin
-            </Link>
+            </NavLink>
           )}
         </nav>
 
@@ -142,78 +156,78 @@ const Header = () => {
         {isMenuOpen && (
           <div className="absolute inset-x-0 top-16 z-[100] bg-background md:hidden border-t border-border shadow-lg">
             <nav className="flex flex-col gap-3 p-6">
-              <Link 
+              <NavLink 
                 to="/carte" 
-                className="text-base font-medium text-foreground hover:text-primary transition-colors py-2"
+                className={mobileNavLinkClass}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Carte des points de vente
-              </Link>
-              <Link 
+              </NavLink>
+              <NavLink 
                 to="/arrivages" 
-                className="text-base font-medium text-foreground hover:text-primary transition-colors py-2"
+                className={mobileNavLinkClass}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Arrivages
-              </Link>
-              <Link 
+              </NavLink>
+              <NavLink 
                 to="/recettes" 
-                className="text-base font-medium text-foreground hover:text-primary transition-colors py-2"
+                className={mobileNavLinkClass}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Recettes
-              </Link>
-              <Link 
+              </NavLink>
+              <NavLink 
                 to="/panier" 
-                className="text-base font-medium text-foreground hover:text-primary transition-colors py-2"
+                className={mobileNavLinkClass}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Panier
-              </Link>
-              <Link 
+              </NavLink>
+              <NavLink 
                 to="/premium" 
-                className="text-base font-medium text-foreground hover:text-primary transition-colors py-2"
+                className={mobileNavLinkClass}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Premium
-              </Link>
+              </NavLink>
               {userRole === 'user' && (
-                <Link 
+                <NavLink 
                   to="/dashboard/user" 
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  className={mobileNavLinkClass}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Mon dashboard
-                </Link>
+                </NavLink>
               )}
               {userRole === 'premium' && (
-                <Link 
+                <NavLink 
                   to="/dashboard/premium" 
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
+                  className={({ isActive }) => `${mobileNavLinkClass({ isActive })} flex items-center gap-2`}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <Crown className="h-4 w-4" />
                   Dashboard Premium
-                </Link>
+                </NavLink>
               )}
               {userRole === 'fisherman' && (
-                <Link 
+                <NavLink 
                   to="/dashboard/pecheur" 
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  className={mobileNavLinkClass}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Dashboard pêcheur
-                </Link>
+                </NavLink>
               )}
               {userRole === 'admin' && (
-                <Link 
+                <NavLink 
                   to="/dashboard/admin" 
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
+                  className={({ isActive }) => `${mobileNavLinkClass({ isActive })} flex items-center gap-2`}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <Shield className="h-4 w-4" />
                   Dashboard Admin
-                </Link>
+                </NavLink>
               )}
               
               <div className="border-t my-2" />

@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useSalePoints } from '@/hooks/useSalePoints';
 import { useQuery } from '@tanstack/react-query';
+import { LIMITS } from '@/lib/constants';
 
 interface Drop {
   id: string;
@@ -90,6 +91,10 @@ const Arrivages = () => {
   const { data: drops, isLoading, error } = useQuery({
     queryKey: ['drops', user?.id],
     queryFn: async () => {
+      // Grace period: show arrivals up to X hours after their sale_start_time
+      const graceMs = LIMITS.ARRIVAL_GRACE_HOURS * 60 * 60 * 1000;
+      const minStartTime = new Date(Date.now() - graceMs).toISOString();
+
       const { data, error } = await supabase
         .from('drops')
       .select(`
@@ -130,7 +135,7 @@ const Arrivages = () => {
         )
       `)
         .in('status', ['scheduled', 'landed'])
-        .gte('sale_start_time', new Date().toISOString())
+        .gte('sale_start_time', minStartTime)
         .order('sale_start_time', { ascending: true });
 
       if (error) throw error;
