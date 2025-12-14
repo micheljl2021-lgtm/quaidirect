@@ -35,7 +35,19 @@ export const useSalePoints = () => {
       if (!response.ok) {
         throw new Error('Erreur lors du chargement des points de vente');
       }
-      return response.json();
+      const data = await response.json();
+      
+      // Normalize fishermen key - Edge Function may return with technical prefix
+      return data.map((sp: Record<string, unknown>) => {
+        // Check for technical prefix key from Supabase join
+        const fishermenKey = Object.keys(sp).find(k => k.startsWith('fishermen'));
+        const fishermen = fishermenKey ? sp[fishermenKey] : null;
+        
+        return {
+          ...sp,
+          fishermen: fishermen as SalePoint['fishermen'],
+        };
+      });
     },
     staleTime: 10 * 60 * 1000, // 10 minutes - sale points rarely change
     gcTime: 30 * 60 * 1000, // 30 minutes garbage collection

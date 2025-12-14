@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Header from "@/components/Header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Loader2, MessageSquare } from "lucide-react";
+import { Shield, Loader2, MessageSquare, Bell } from "lucide-react";
 import { OverviewTab } from "@/components/admin/OverviewTab";
 import { ImprovedUsersTab } from "@/components/admin/ImprovedUsersTab";
 import { ImprovedFishermenTab } from "@/components/admin/ImprovedFishermenTab";
@@ -17,6 +17,7 @@ import { FishermanSubscriptionsTab } from "@/components/admin/FishermanSubscript
 import { ContactsTab } from "@/components/admin/ContactsTab";
 import { SupportRequestsTab } from "@/components/admin/SupportRequestsTab";
 import PublicInquiriesTab from "@/components/admin/PublicInquiriesTab";
+import { PlatformUpdatesTab } from "@/components/admin/PlatformUpdatesTab";
 import { getRedirectPathByRole } from "@/lib/authRedirect";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,7 +84,7 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 lg:grid-cols-12 gap-2">
+          <TabsList className="grid w-full grid-cols-6 lg:grid-cols-13 gap-2">
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
             <TabsTrigger value="users">Utilisateurs</TabsTrigger>
             <TabsTrigger value="fishermen">Pêcheurs</TabsTrigger>
@@ -103,6 +104,10 @@ const AdminDashboard = () => {
                   {newInquiriesCount}
                 </span>
               ) : null}
+            </TabsTrigger>
+            <TabsTrigger value="updates">
+              <Bell className="h-4 w-4 mr-1" />
+              MAJ
             </TabsTrigger>
           </TabsList>
 
@@ -152,6 +157,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="messages" className="space-y-6">
             <PublicInquiriesTab />
+          </TabsContent>
+
+          <TabsContent value="updates" className="space-y-6">
+            <PlatformUpdatesTab />
           </TabsContent>
         </Tabs>
       </div>

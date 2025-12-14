@@ -103,3 +103,6 @@ verify_jwt = false  # Called by webhook after basket order - sends confirmation 
 
 [functions.send-inquiry-confirmation]
 verify_jwt = false  # Public endpoint - sends confirmation to anonymous inquiries
+
+[functions.send-platform-update]
+verify_jwt = true  # Admin only - sends platform update emails to fishermen
