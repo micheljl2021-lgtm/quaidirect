@@ -120,12 +120,8 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
           <Input
             id={id}
             placeholder="Tapez une adresse pour la rechercher..."
-            defaultValue={value}
-            onChange={(e) => {
-              if (!e.target.value) {
-                onChangeFn('');
-              }
-            }}
+            value={value}
+            onChange={(e) => onChangeFn(e.target.value)}
           />
         </Autocomplete>
         {lat && lng && (

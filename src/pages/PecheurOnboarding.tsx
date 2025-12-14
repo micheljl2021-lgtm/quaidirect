@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +25,7 @@ import { Step3ZonesMethodes } from "@/components/onboarding/Step3ZonesMethodes";
 import { Step4Especes } from "@/components/onboarding/Step4Especes";
 import { Step5Photos } from "@/components/onboarding/Step5Photos";
 import { Step6PointsVente } from "@/components/onboarding/Step6PointsVente";
+import { PortsListModal } from "@/components/onboarding/PortsListModal";
 
 interface FormData {
   // Step 1
@@ -69,14 +70,20 @@ interface FormData {
   salePoint2Lat: number | undefined;
   salePoint2Lng: number | undefined;
 }
+const STORAGE_KEY = 'quaidirect_onboarding_data';
 
-const PecheurOnboarding = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [currentStep, setCurrentStep] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [fishermenId, setFishermenId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<FormData>({
+const getInitialFormData = (): FormData => {
+  // Try to restore from sessionStorage first
+  try {
+    const saved = sessionStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.warn('Could not restore onboarding data from sessionStorage');
+  }
+  
+  return {
     siret: "",
     boatName: "",
     ownerName: "",
@@ -112,9 +119,40 @@ const PecheurOnboarding = () => {
     salePoint2Description: "",
     salePoint2Lat: undefined,
     salePoint2Lng: undefined,
-  });
+  };
+};
+
+const PecheurOnboarding = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [fishermenId, setFishermenId] = useState<string | null>(null);
+  const [formData, setFormData] = useState<FormData>(getInitialFormData);
   
-  const { basin, portFile } = usePortFile(formData.postalCode?.substring(0, 2));
+  const { basin } = usePortFile(formData.postalCode?.substring(0, 2));
+
+  // Save to sessionStorage whenever formData changes (debounced)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      try {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+      } catch (e) {
+        console.warn('Could not save onboarding data to sessionStorage');
+      }
+    }, 500); // Debounce 500ms
+    
+    return () => clearTimeout(timeoutId);
+  }, [formData]);
+
+  // Clear sessionStorage after successful submission
+  const clearSessionData = useCallback(() => {
+    try {
+      sessionStorage.removeItem(STORAGE_KEY);
+    } catch (e) {
+      // Ignore
+    }
+  }, []);
 
   // Load existing data on mount
   useEffect(() => {
@@ -449,6 +487,9 @@ const PecheurOnboarding = () => {
         if (speciesError) throw speciesError;
       }
 
+      // Clear sessionStorage after successful submission
+      clearSessionData();
+
       toast.success("Profil créé avec succès !");
       navigate(`/onboarding/confirmation?slug=${fishermanData.slug}`);
     } catch (error) {
@@ -520,8 +561,8 @@ const PecheurOnboarding = () => {
             <Step6PointsVente formData={formData} onChange={handleFieldChange} />
           )}
 
-          {/* Port file info */}
-          {portFile && currentStep === 1 && (
+          {/* Port list modal */}
+          {basin && currentStep === 1 && (
             <div className="mt-4 p-4 bg-muted/30 rounded-lg">
               <p className="font-medium text-sm mb-2">
                 Ports disponibles (
@@ -532,14 +573,7 @@ const PecheurOnboarding = () => {
                   : 'Atlantique'}
                 )
               </p>
-              <a
-                href={portFile}
-                target="_blank"
-                rel="noreferrer"
-                className="text-primary underline text-sm hover:text-primary/80"
-              >
-                Ouvrir la liste des ports
-              </a>
+              <PortsListModal basin={basin} />
             </div>
           )}
 
