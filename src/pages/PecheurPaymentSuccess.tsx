@@ -7,6 +7,14 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { FISHERMAN_PLANS } from '@/config/pricing';
+
+// Helper to format price from config
+const formatPlanPrice = (plan: typeof FISHERMAN_PLANS.STANDARD | typeof FISHERMAN_PLANS.PRO | typeof FISHERMAN_PLANS.ELITE) => {
+  const amount = plan.priceCents / 100;
+  const suffix = plan.period === 'month' ? '/mois' : '/an';
+  return `${amount}€${suffix}`;
+};
 
 const PecheurPaymentSuccess = () => {
   const navigate = useNavigate();
@@ -14,30 +22,27 @@ const PecheurPaymentSuccess = () => {
   const { user } = useAuth();
   const [paymentStatus, setPaymentStatus] = useState<'checking' | 'confirmed' | 'timeout'>('checking');
   const [pollingAttempts, setPollingAttempts] = useState(0);
+  const [confirmedPlan, setConfirmedPlan] = useState<{ label: string; amount: string } | null>(null);
   
-  const plan = searchParams.get('plan') || 'standard';
-  const planLabels: Record<string, string> = {
-    standard: 'Standard',
-    pro: 'Pro',
-    elite: 'Elite',
-  };
-  const planAmounts: Record<string, string> = {
-    standard: '150€/an',
-    pro: '299€/an',
-    elite: '199€/mois',
-  };
-  const amount = planAmounts[plan] || '150€/an';
-  const planLabel = planLabels[plan] || 'Standard';
-  const planHasTrial: Record<string, boolean> = {
-    standard: false,
-    pro: false,
-    elite: false,
+  // Fallback from URL param
+  const planParam = searchParams.get('plan') || 'standard';
+  
+  // Get plan info from centralized config
+  const getPlanInfo = (planKey: string) => {
+    const key = planKey.toUpperCase() as keyof typeof FISHERMAN_PLANS;
+    const plan = FISHERMAN_PLANS[key] || FISHERMAN_PLANS.STANDARD;
+    return {
+      label: plan.name,
+      amount: formatPlanPrice(plan),
+      hasTrial: plan.trialDays > 0,
+      trialDays: plan.trialDays,
+    };
   };
 
   const checkPaymentStatus = async () => {
     if (!user) return false;
     
-    // Vérifier si le rôle fisherman a été assigné (preuve que le webhook a fonctionné)
+    // Vérifier si le rôle fisherman a été assigné
     const { data: roleData } = await supabase
       .from('user_roles')
       .select('role')
@@ -46,6 +51,27 @@ const PecheurPaymentSuccess = () => {
       .maybeSingle();
 
     if (roleData) {
+      // Get actual plan from payments table
+      const { data: paymentData } = await supabase
+        .from('payments')
+        .select('plan, status')
+        .eq('user_id', user.id)
+        .ilike('plan', 'fisherman_%')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (paymentData) {
+        // Extract plan key from payment (e.g., "fisherman_standard" -> "standard")
+        const planKey = paymentData.plan.replace('fisherman_', '');
+        const info = getPlanInfo(planKey);
+        setConfirmedPlan({ label: info.label, amount: info.amount });
+      } else {
+        // Fallback to URL param
+        const info = getPlanInfo(planParam);
+        setConfirmedPlan({ label: info.label, amount: info.amount });
+      }
+      
       setPaymentStatus('confirmed');
       return true;
     }
@@ -53,7 +79,7 @@ const PecheurPaymentSuccess = () => {
     // Fallback: vérifier aussi la table payments
     const { data: paymentData } = await supabase
       .from('payments')
-      .select('status')
+      .select('status, plan')
       .eq('user_id', user.id)
       .ilike('plan', 'fisherman_%')
       .order('created_at', { ascending: false })
@@ -61,6 +87,9 @@ const PecheurPaymentSuccess = () => {
       .maybeSingle();
 
     if (paymentData?.status === 'active' || paymentData?.status === 'trialing') {
+      const planKey = paymentData.plan.replace('fisherman_', '');
+      const info = getPlanInfo(planKey);
+      setConfirmedPlan({ label: info.label, amount: info.amount });
       setPaymentStatus('confirmed');
       return true;
     }
@@ -84,18 +113,20 @@ const PecheurPaymentSuccess = () => {
         clearInterval(pollInterval);
       } else {
         setPollingAttempts(prev => prev + 1);
-        if (pollingAttempts >= 15) { // 15 * 2s = 30s
+        if (pollingAttempts >= 15) {
           clearInterval(pollInterval);
           setPaymentStatus('timeout');
         }
       }
     }, 2000);
 
-    // Vérification initiale
     checkPaymentStatus();
 
     return () => clearInterval(pollInterval);
   }, [user, pollingAttempts]);
+
+  // Fallback display info
+  const displayInfo = confirmedPlan || getPlanInfo(planParam);
 
   if (paymentStatus === 'checking') {
     return (
@@ -130,7 +161,7 @@ const PecheurPaymentSuccess = () => {
               </div>
               <CardTitle className="text-3xl">Paiement en cours de traitement</CardTitle>
               <CardDescription className="text-lg">
-                Votre paiement de <strong>{amount}</strong> est en cours de traitement
+                Votre paiement de <strong>{displayInfo.amount}</strong> est en cours de traitement
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -138,8 +169,7 @@ const PecheurPaymentSuccess = () => {
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Vérification en cours</AlertTitle>
                 <AlertDescription>
-                  La confirmation de votre paiement prend plus de temps que prévu. 
-                  Cela peut arriver si notre système de paiement est en cours de synchronisation avec Stripe.
+                  La confirmation de votre paiement prend plus de temps que prévu.
                 </AlertDescription>
               </Alert>
 
@@ -152,21 +182,12 @@ const PecheurPaymentSuccess = () => {
                 </ul>
               </div>
               
-              <Button 
-                onClick={handleRetry} 
-                size="lg" 
-                className="w-full"
-              >
+              <Button onClick={handleRetry} size="lg" className="w-full">
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Réessayer la vérification
               </Button>
               
-              <Button 
-                variant="outline" 
-                onClick={() => navigate('/')} 
-                size="lg" 
-                className="w-full"
-              >
+              <Button variant="outline" onClick={() => navigate('/')} size="lg" className="w-full">
                 <Home className="h-4 w-4 mr-2" />
                 Retour à l'accueil
               </Button>
@@ -191,26 +212,20 @@ const PecheurPaymentSuccess = () => {
             </div>
             <CardTitle className="text-3xl">Paiement confirmé !</CardTitle>
             <CardDescription className="text-lg">
-              Votre abonnement <strong>{planLabel}</strong> ({amount}) est actif
+              Votre abonnement <strong>{displayInfo.label}</strong> ({displayInfo.amount}) est actif
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {planHasTrial[plan] && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
-                <p className="font-medium text-blue-900">🎁 Période d'essai de 30 jours</p>
-                <p className="text-sm text-blue-700 mt-1">
-                  Vous ne serez pas débité pendant les 30 premiers jours. 
-                  Profitez-en pour tester toutes les fonctionnalités !
-                </p>
-              </div>
-            )}
-            
             <p className="text-muted-foreground">
-              Complétez votre profil pêcheur en 6 étapes pour activer votre compte et commencer à publier vos arrivages.
+              Finalisez votre profil pêcheur en 6 étapes pour activer votre compte et commencer à publier vos arrivages.
             </p>
             
-            <Button onClick={() => navigate('/pecheur/onboarding')} size="lg" className="w-full bg-green-600 hover:bg-green-700 text-white text-lg py-6">
-              🚀 Compléter mon profil pêcheur
+            <Button 
+              onClick={() => navigate('/pecheur/onboarding')} 
+              size="lg" 
+              className="w-full bg-green-600 hover:bg-green-700 text-white text-lg py-6"
+            >
+              Finaliser mon profil
             </Button>
             <Button 
               variant="outline" 

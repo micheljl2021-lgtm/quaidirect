@@ -503,6 +503,7 @@ export type Database = {
           display_name_preference: string | null
           email: string | null
           facebook_url: string | null
+          favorite_photo_url: string | null
           fishing_methods:
             | Database["public"]["Enums"]["fishing_method"][]
             | null
@@ -560,6 +561,7 @@ export type Database = {
           display_name_preference?: string | null
           email?: string | null
           facebook_url?: string | null
+          favorite_photo_url?: string | null
           fishing_methods?:
             | Database["public"]["Enums"]["fishing_method"][]
             | null
@@ -617,6 +619,7 @@ export type Database = {
           display_name_preference?: string | null
           email?: string | null
           facebook_url?: string | null
+          favorite_photo_url?: string | null
           fishing_methods?:
             | Database["public"]["Enums"]["fishing_method"][]
             | null

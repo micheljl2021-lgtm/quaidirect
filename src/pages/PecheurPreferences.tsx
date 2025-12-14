@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save, Loader2, MapPin, Clock, Camera } from "lucide-react";
 import { PhotoUpload } from "@/components/PhotoUpload";
+import { DefaultPhotoSelector } from "@/components/DefaultPhotoSelector";
 
 export default function PecheurPreferences() {
   const { user } = useAuth();
@@ -26,6 +27,7 @@ export default function PecheurPreferences() {
   const [photoBoat1, setPhotoBoat1] = useState<string | null>(null);
   const [photoBoat2, setPhotoBoat2] = useState<string | null>(null);
   const [photoDockSale, setPhotoDockSale] = useState<string | null>(null);
+  const [favoritePhotoUrl, setFavoritePhotoUrl] = useState<string | null>(null);
 
   const TIME_SLOTS = [
     { id: "matin", label: "Matin (7h–9h)" },
@@ -47,7 +49,7 @@ export default function PecheurPreferences() {
     try {
       const { data: fishermanData, error: fishermanError } = await supabase
         .from("fishermen")
-        .select("id, default_sale_point_id, default_time_slot, photo_url, photo_boat_1, photo_boat_2, photo_dock_sale")
+        .select("id, default_sale_point_id, default_time_slot, photo_url, photo_boat_1, photo_boat_2, photo_dock_sale, favorite_photo_url")
         .eq("user_id", user?.id)
         .single();
 
@@ -60,6 +62,7 @@ export default function PecheurPreferences() {
       setPhotoBoat1(fishermanData.photo_boat_1);
       setPhotoBoat2(fishermanData.photo_boat_2);
       setPhotoDockSale(fishermanData.photo_dock_sale);
+      setFavoritePhotoUrl(fishermanData.favorite_photo_url);
 
       // Load sale points
       const { data: salePointsData, error: salePointsError } = await supabase
@@ -92,6 +95,7 @@ export default function PecheurPreferences() {
           photo_boat_1: photoBoat1,
           photo_boat_2: photoBoat2,
           photo_dock_sale: photoDockSale,
+          favorite_photo_url: favoritePhotoUrl,
         })
         .eq("id", fishermanId);
 
@@ -241,6 +245,18 @@ export default function PecheurPreferences() {
                 value={photoDockSale}
                 onChange={setPhotoDockSale}
                 bucket="fishermen-photos"
+              />
+            </div>
+
+            {/* Favorite Photo Selector */}
+            <div className="pt-4 border-t">
+              <DefaultPhotoSelector
+                photoUrl={photoUrl}
+                photoBoat1={photoBoat1}
+                photoBoat2={photoBoat2}
+                photoDockSale={photoDockSale}
+                selectedPhotoUrl={favoritePhotoUrl}
+                onSelect={setFavoritePhotoUrl}
               />
             </div>
 
