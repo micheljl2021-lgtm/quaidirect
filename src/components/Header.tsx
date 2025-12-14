@@ -40,7 +40,7 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-20 items-center justify-between px-4">
+      <div className="container flex h-24 items-center justify-between px-4">
         {/* Logo */}
         <Link 
           to="/" 
@@ -50,7 +50,7 @@ const Header = () => {
           <img 
             src={logoQuaidirect} 
             alt="QuaiDirect" 
-            className="h-14 md:h-16 w-auto object-contain scale-100"
+            className="h-20 md:h-24 lg:h-28 w-auto object-contain"
           />
         </Link>
 
