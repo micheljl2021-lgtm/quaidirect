@@ -145,12 +145,13 @@ const GoogleMapComponent = ({
     setMap(null);
   }, []);
 
-  // Auto-center: userLocation > drops > salePoints > default (NOT all ports)
+  // Auto-center map with priority: userLocation > salePoints > drops > default (Hyères)
   useEffect(() => {
     if (!map) return;
 
     // Priorité 1: Position utilisateur
     if (userLocation) {
+      console.log('[GoogleMap] Centering on user location:', userLocation);
       map.setCenter(userLocation);
       map.setZoom(12);
       return;
@@ -159,18 +160,9 @@ const GoogleMapComponent = ({
     const bounds = new google.maps.LatLngBounds();
     let hasPoints = false;
 
-    // Priorité 2: Centrer sur les drops actifs
-    if (drops && drops.length > 0) {
-      drops.forEach(drop => {
-        if (drop.latitude && drop.longitude) {
-          bounds.extend(new google.maps.LatLng(drop.latitude, drop.longitude));
-          hasPoints = true;
-        }
-      });
-    }
-
-    // Priorité 3: Centrer sur les points de vente (si pas de drops)
-    if (!hasPoints && salePoints && salePoints.length > 0) {
+    // Priorité 2: Centrer sur les points de vente (principale source de données)
+    if (salePoints && salePoints.length > 0) {
+      console.log('[GoogleMap] Found', salePoints.length, 'sale points');
       salePoints.forEach(sp => {
         if (sp.latitude && sp.longitude) {
           bounds.extend(new google.maps.LatLng(sp.latitude, sp.longitude));
@@ -179,17 +171,30 @@ const GoogleMapComponent = ({
       });
     }
 
+    // Priorité 3: Centrer sur les drops actifs
+    if (!hasPoints && drops && drops.length > 0) {
+      console.log('[GoogleMap] Found', drops.length, 'drops');
+      drops.forEach(drop => {
+        if (drop.latitude && drop.longitude) {
+          bounds.extend(new google.maps.LatLng(drop.latitude, drop.longitude));
+          hasPoints = true;
+        }
+      });
+    }
+
     if (hasPoints) {
+      console.log('[GoogleMap] Fitting bounds to points');
       map.fitBounds(bounds);
       const listener = google.maps.event.addListener(map, 'idle', () => {
         const currentZoom = map.getZoom();
-        if (currentZoom && currentZoom > 15) {
+        if (currentZoom && currentZoom > 14) {
           map.setZoom(12);
         }
         google.maps.event.removeListener(listener);
       });
     } else {
-      // Priorité 4: Centre par défaut (Hyères)
+      // Priorité 4: Centre par défaut (Hyères, France)
+      console.log('[GoogleMap] No points found, centering on Hyères (default)');
       map.setCenter(defaultMapConfig.center);
       map.setZoom(defaultMapConfig.zoom);
     }

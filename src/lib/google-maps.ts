@@ -112,13 +112,14 @@ export const googleMapsLoaderConfig = {
 
 /**
  * Configuration par défaut pour les cartes Google Maps
+ * Centre: Hyères, France (Côte d'Azur)
  */
 export const defaultMapConfig = {
   center: {
-    lat: 43.1177,
-    lng: 6.1298, // Hyères, France
+    lat: 43.1167,
+    lng: 6.1333, // Hyères, France
   },
-  zoom: 10,
+  zoom: 11, // Zoom plus large pour voir la côte
 };
 
 /**
