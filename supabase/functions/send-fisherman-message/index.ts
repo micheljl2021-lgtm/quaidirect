@@ -4,11 +4,14 @@ import { Resend } from "https://esm.sh/resend@4.0.0";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://quaidirect.fr',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+
+// Use SITE_URL env variable with proper fallback
+const SITE_URL = Deno.env.get("SITE_URL") || "https://quaidirect.fr";
 
 // Request validation schema
 const RequestSchema = z.object({
@@ -27,8 +30,8 @@ const RequestSchema = z.object({
 });
 
 // Rate limiting configuration
-const RATE_LIMIT = 3; // max messages
-const RATE_WINDOW_MINUTES = 1; // per minute
+const RATE_LIMIT = 3;
+const RATE_WINDOW_MINUTES = 1;
 
 const checkRateLimit = async (
   supabase: any,
@@ -70,7 +73,7 @@ const checkRateLimit = async (
   return { allowed: true, remaining: RATE_LIMIT - 1 };
 };
 
-// Security: HTML escape function to prevent XSS attacks
+// Security: HTML escape function
 const escapeHtml = (unsafe: string): string => {
   if (!unsafe) return '';
   return unsafe
@@ -86,51 +89,154 @@ const logStep = (step: string, details?: any) => {
   console.log(`[SEND-FISHERMAN-MESSAGE] ${step}${detailsStr}`);
 };
 
-const getEmailTemplate = (type: string, fishermanName: string, dropDetails?: any) => {
-  // Escape all user-provided content to prevent XSS
-  const safeFishermanName = escapeHtml(fishermanName);
+interface FishermanData {
+  boat_name: string;
+  slug: string;
+  company_name?: string;
+  main_fishing_zone?: string;
+  favorite_photo_url?: string;
+  photo_boat_1?: string;
+  photo_url?: string;
+}
+
+const getFishermanPhoto = (fisherman: FishermanData): string | null => {
+  return fisherman.favorite_photo_url || fisherman.photo_boat_1 || fisherman.photo_url || null;
+};
+
+const getEmailTemplate = (type: string, fisherman: FishermanData, dropDetails?: any) => {
+  const safeFishermanName = escapeHtml(fisherman.boat_name);
+  const safeCompanyName = escapeHtml(fisherman.company_name || '');
+  const safeZone = escapeHtml(fisherman.main_fishing_zone || '');
   const safeSubject = escapeHtml(dropDetails?.subject || '');
   const safeBody = escapeHtml(dropDetails?.body || '');
   const safeTime = escapeHtml(dropDetails?.time || '');
   const safeLocation = escapeHtml(dropDetails?.location || '');
   const safeSpecies = escapeHtml(dropDetails?.species || '');
   
+  const profileUrl = `${SITE_URL}/pecheurs/${fisherman.slug}`;
+  const dropUrl = dropDetails?.drop_id 
+    ? `${SITE_URL}/drop/${dropDetails.drop_id}` 
+    : `${SITE_URL}/arrivages`;
+  
+  const photoUrl = getFishermanPhoto(fisherman);
+  
+  // Common email wrapper with branding
+  const wrapEmail = (content: string, ctaText: string, ctaUrl: string) => `
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%); padding: 24px; text-align: center;">
+          <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold;">🐟 QuaiDirect</h1>
+          <p style="color: #e0e7ff; margin: 8px 0 0 0; font-size: 14px;">Poisson frais, direct du pêcheur</p>
+        </div>
+        
+        <!-- Content -->
+        <div style="padding: 32px 24px;">
+          ${content}
+          
+          <!-- CTA Button -->
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="${ctaUrl}" style="display: inline-block; background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%); color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">${ctaText}</a>
+          </div>
+          
+          <!-- Fisherman Mini Card -->
+          <div style="background-color: #f8fafc; border-radius: 12px; padding: 20px; margin-top: 24px; border: 1px solid #e2e8f0;">
+            <div style="display: flex; align-items: center;">
+              ${photoUrl ? `<img src="${photoUrl}" alt="${safeFishermanName}" style="width: 64px; height: 64px; border-radius: 8px; object-fit: cover; margin-right: 16px;">` : ''}
+              <div>
+                <p style="margin: 0; font-weight: 600; font-size: 16px; color: #1e293b;">${safeFishermanName}</p>
+                ${safeCompanyName ? `<p style="margin: 4px 0 0 0; font-size: 14px; color: #64748b;">${safeCompanyName}</p>` : ''}
+                ${safeZone ? `<p style="margin: 4px 0 0 0; font-size: 13px; color: #94a3b8;">📍 ${safeZone}</p>` : ''}
+              </div>
+            </div>
+            <a href="${profileUrl}" style="display: block; text-align: center; margin-top: 16px; color: #0066cc; font-size: 14px; text-decoration: none;">Voir le profil du pêcheur →</a>
+          </div>
+        </div>
+        
+        <!-- Footer -->
+        <div style="background-color: #f1f5f9; padding: 24px; text-align: center; border-top: 1px solid #e2e8f0;">
+          <p style="margin: 0; font-size: 13px; color: #64748b;">
+            Vous recevez cet email car vous êtes inscrit aux alertes de ${safeFishermanName}.
+          </p>
+          <p style="margin: 12px 0 0 0; font-size: 13px; color: #94a3b8;">
+            <a href="${SITE_URL}" style="color: #0066cc; text-decoration: none;">QuaiDirect</a> • Poisson frais en circuit court
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+  
   switch (type) {
     case 'invitation_initiale':
       return {
-        subject: `${safeFishermanName} rejoint QuaiDirect !`,
-        html: `
-          <h1>Bonjour !</h1>
-          <p>Je suis maintenant sur <strong>QuaiDirect</strong> !</p>
-          <p>Retrouvez tous mes arrivages et points de vente sur ma page :</p>
-          <p><a href="${dropDetails?.profileUrl}" style="background: #0066cc; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">Voir mon profil</a></p>
-          <p>À très bientôt,<br>${safeFishermanName}</p>
-        `
+        subject: `${safeFishermanName} vous invite à découvrir ses arrivages !`,
+        html: wrapEmail(
+          `
+            <h2 style="color: #1e293b; margin: 0 0 16px 0; font-size: 22px;">Bonjour !</h2>
+            <p style="color: #475569; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;">
+              <strong>${safeFishermanName}</strong> est maintenant sur <strong>QuaiDirect</strong> et souhaite vous tenir informé(e) de ses prochains arrivages.
+            </p>
+            <p style="color: #475569; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;">
+              Retrouvez sur sa page :
+            </p>
+            <ul style="color: #475569; font-size: 15px; line-height: 1.8; margin: 0 0 16px 0; padding-left: 20px;">
+              <li>Ses prochains arrivages et points de vente</li>
+              <li>Les espèces qu'il pêche</li>
+              <li>Ses horaires de vente à quai</li>
+            </ul>
+            <p style="color: #475569; font-size: 16px; line-height: 1.6; margin: 0;">
+              Vous pouvez aussi créer un compte gratuit pour recevoir des alertes en priorité !
+            </p>
+          `,
+          'Voir le profil',
+          profileUrl
+        )
       };
+      
     case 'new_drop':
       return {
-        subject: `${safeFishermanName} - Nouvel arrivage disponible !`,
-        html: `
-          <h1>Nouvel arrivage !</h1>
-          <p><strong>${safeFishermanName}</strong> vend du poisson frais :</p>
-          <ul>
-            <li><strong>Quand :</strong> ${safeTime}</li>
-            <li><strong>Où :</strong> ${safeLocation}</li>
-            <li><strong>Espèces :</strong> ${safeSpecies}</li>
-          </ul>
-          <p><a href="${dropDetails?.dropUrl}" style="background: #0066cc; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">Voir les détails</a></p>
-          <p>À très bientôt,<br>${safeFishermanName}</p>
-        `
+        subject: `🐟 ${safeFishermanName} - Nouvel arrivage disponible !`,
+        html: wrapEmail(
+          `
+            <h2 style="color: #1e293b; margin: 0 0 16px 0; font-size: 22px;">Nouvel arrivage !</h2>
+            <p style="color: #475569; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
+              <strong>${safeFishermanName}</strong> vient de publier un nouvel arrivage de poisson frais.
+            </p>
+            
+            <div style="background-color: #eff6ff; border-left: 4px solid #0066cc; padding: 16px; border-radius: 0 8px 8px 0; margin-bottom: 24px;">
+              ${safeTime ? `<p style="margin: 0 0 8px 0; font-size: 15px; color: #1e40af;"><strong>🕐 Quand :</strong> ${safeTime}</p>` : ''}
+              ${safeLocation ? `<p style="margin: 0 0 8px 0; font-size: 15px; color: #1e40af;"><strong>📍 Où :</strong> ${safeLocation}</p>` : ''}
+              ${safeSpecies ? `<p style="margin: 0; font-size: 15px; color: #1e40af;"><strong>🐟 Espèces :</strong> ${safeSpecies}</p>` : ''}
+            </div>
+            
+            <p style="color: #475569; font-size: 15px; line-height: 1.6; margin: 0;">
+              Rendez-vous à quai pour découvrir la pêche du jour !
+            </p>
+          `,
+          'Voir l\'arrivage',
+          dropUrl
+        )
       };
+      
     case 'custom':
     default:
       return {
         subject: safeSubject || `Message de ${safeFishermanName}`,
-        html: `
-          <h1>Message de ${safeFishermanName}</h1>
-          <p>${safeBody}</p>
-          <p>Cordialement,<br>${safeFishermanName}</p>
-        `
+        html: wrapEmail(
+          `
+            <h2 style="color: #1e293b; margin: 0 0 16px 0; font-size: 22px;">Message de ${safeFishermanName}</h2>
+            <div style="color: #475569; font-size: 16px; line-height: 1.6; white-space: pre-wrap;">${safeBody}</div>
+          `,
+          'Voir le profil',
+          profileUrl
+        )
       };
   }
 };
@@ -160,10 +266,10 @@ serve(async (req) => {
     if (!user?.id) throw new Error('User not authenticated');
     logStep('User authenticated', { userId: user.id });
 
-    // Récupérer le fisherman
+    // Get fisherman with more fields for email template
     const { data: fisherman, error: fishermanError } = await supabaseClient
       .from('fishermen')
-      .select('id, boat_name, slug')
+      .select('id, boat_name, slug, company_name, main_fishing_zone, favorite_photo_url, photo_boat_1, photo_url')
       .eq('user_id', user.id)
       .single();
 
@@ -209,13 +315,12 @@ serve(async (req) => {
 
     const { message_type, subject, body, sent_to_group, drop_id, drop_details, contact_ids, channel } = parseResult.data;
 
-    // Récupérer les contacts
+    // Get contacts
     let query = supabaseClient
       .from('fishermen_contacts')
       .select('*')
       .eq('fisherman_id', fisherman.id);
 
-    // Si contact_ids fourni, filtrer par ces IDs spécifiques
     if (contact_ids && Array.isArray(contact_ids) && contact_ids.length > 0) {
       query = query.in('id', contact_ids);
       logStep('Filtering by specific contact_ids', { count: contact_ids.length });
@@ -232,14 +337,12 @@ serve(async (req) => {
       throw new Error('Aucun contact à contacter');
     }
 
-    // Préparer le template email
-    const origin = req.headers.get('origin') || 'https://quaidirect.lovable.app';
-    const emailTemplate = getEmailTemplate(message_type, fisherman.boat_name, {
+    // Prepare email template
+    const emailTemplate = getEmailTemplate(message_type, fisherman, {
       ...drop_details,
       subject,
       body,
-      profileUrl: `${origin}/pecheur/${fisherman.slug}`,
-      dropUrl: drop_id ? `${origin}/arrivages?drop=${drop_id}` : `${origin}/arrivages`,
+      drop_id,
     });
 
     let emailSuccessCount = 0;
@@ -268,7 +371,6 @@ serve(async (req) => {
       const contactsWithPhone = contacts.filter(c => c.phone);
       
       if (contactsWithPhone.length > 0) {
-        // Prepare SMS message (plain text, shorter)
         let smsMessage = '';
         switch (message_type) {
           case 'invitation_initiale':
@@ -283,7 +385,6 @@ serve(async (req) => {
             break;
         }
 
-        // Call send-sms edge function
         const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
         const phones = contactsWithPhone.map(c => c.phone);
         
@@ -315,7 +416,7 @@ serve(async (req) => {
 
     const totalRecipients = emailSuccessCount + smsSuccessCount;
 
-    // Enregistrer le message
+    // Save message
     const { error: messageError } = await supabaseClient
       .from('fishermen_messages')
       .insert({
@@ -336,7 +437,7 @@ serve(async (req) => {
       throw new Error(messageError.message || 'Failed to save message');
     }
 
-    // Mettre à jour last_contacted_at pour les contacts
+    // Update last_contacted_at for contacts
     if (contacts && contacts.length > 0) {
       const contactIdsList = contacts.map(c => c.id);
       await supabaseClient
