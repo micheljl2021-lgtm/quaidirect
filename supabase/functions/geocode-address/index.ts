@@ -1,13 +1,17 @@
-
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://quaidirect.fr',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface GeocodeRequest {
-  address: string;
-}
+// Input validation schema
+const GeocodeRequestSchema = z.object({
+  address: z.string()
+    .min(3, 'Address must be at least 3 characters')
+    .max(500, 'Address must be less than 500 characters')
+    .transform(val => val.trim()),
+});
 
 interface GeocodeResponse {
   lat: number;
@@ -26,16 +30,21 @@ Deno.serve(async (req) => {
       throw new Error('serveur_google_map_clee_api not configured');
     }
 
-    const { address }: GeocodeRequest = await req.json();
-
-    if (!address) {
+    // Validate input with Zod
+    const rawBody = await req.json();
+    const validationResult = GeocodeRequestSchema.safeParse(rawBody);
+    
+    if (!validationResult.success) {
+      const errorMessages = validationResult.error.errors.map(e => e.message).join(', ');
+      console.error('[Geocode] Validation error:', errorMessages);
       return new Response(
-        JSON.stringify({ error: 'Address is required' }),
+        JSON.stringify({ error: `Validation error: ${errorMessages}` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`[Geocode] Geocoding address: ${address}`);
+    const { address } = validationResult.data;
+    console.log(`[Geocode] Geocoding address: ${address.substring(0, 50)}...`);
 
     const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
     const geocodeResponse = await fetch(geocodeUrl);

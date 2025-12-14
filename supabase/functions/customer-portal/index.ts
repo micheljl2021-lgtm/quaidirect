@@ -3,7 +3,7 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://quaidirect.fr',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
@@ -49,7 +49,7 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep('Found Stripe customer', { customerId });
 
-    const origin = req.headers.get('origin') || 'http://localhost:3000';
+    const origin = req.headers.get('origin') || 'https://quaidirect.fr';
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: `${origin}/premium`,

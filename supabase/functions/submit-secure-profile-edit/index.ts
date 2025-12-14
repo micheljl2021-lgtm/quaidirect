@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "https://quaidirect.fr",
@@ -9,6 +10,44 @@ const corsHeaders = {
 // Rate limiting configuration
 const RATE_LIMIT = 5; // max requests
 const RATE_WINDOW_MINUTES = 1; // per minute
+
+// URL regex pattern for validation
+const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i;
+
+// Input validation schema with comprehensive field validation
+const ProfileEditSchema = z.object({
+  token: z.string().min(1, 'Token is required'),
+  boat_name: z.string().max(100, 'Boat name must be less than 100 characters').optional(),
+  company_name: z.string().max(200, 'Company name must be less than 200 characters').optional(),
+  description: z.string().max(2000, 'Description must be less than 2000 characters').optional(),
+  phone: z.string()
+    .regex(/^(\+33|0)[1-9]\d{8}$/, 'Invalid French phone number format')
+    .optional()
+    .or(z.literal('')),
+  fishing_methods: z.array(z.string().max(50)).max(10, 'Maximum 10 fishing methods').optional(),
+  fishing_zones: z.array(z.string().max(100)).max(20, 'Maximum 20 fishing zones').optional(),
+  main_fishing_zone: z.string().max(100, 'Main fishing zone must be less than 100 characters').optional(),
+  photo_url: z.string().url('Invalid photo URL').max(500).optional().or(z.literal('')),
+  photo_boat_1: z.string().url('Invalid photo URL').max(500).optional().or(z.literal('')),
+  photo_boat_2: z.string().url('Invalid photo URL').max(500).optional().or(z.literal('')),
+  photo_dock_sale: z.string().url('Invalid photo URL').max(500).optional().or(z.literal('')),
+  instagram_url: z.string()
+    .regex(/^(https?:\/\/)?(www\.)?instagram\.com\/[a-zA-Z0-9._]+\/?$/, 'Invalid Instagram URL')
+    .max(200)
+    .optional()
+    .or(z.literal('')),
+  facebook_url: z.string()
+    .regex(/^(https?:\/\/)?(www\.)?facebook\.com\/[a-zA-Z0-9.]+\/?$/, 'Invalid Facebook URL')
+    .max(200)
+    .optional()
+    .or(z.literal('')),
+  website_url: z.string()
+    .regex(urlPattern, 'Invalid website URL')
+    .max(200)
+    .optional()
+    .or(z.literal('')),
+  bio: z.string().max(1000, 'Bio must be less than 1000 characters').optional(),
+});
 
 const checkRateLimit = async (
   supabase: any,
@@ -50,24 +89,15 @@ const checkRateLimit = async (
   return { allowed: true, remaining: RATE_LIMIT - 1 };
 };
 
-interface ProfileEditData {
-  token: string;
-  boat_name?: string;
-  company_name?: string;
-  description?: string;
-  phone?: string;
-  fishing_methods?: string[];
-  fishing_zones?: string[];
-  main_fishing_zone?: string;
-  photo_url?: string;
-  photo_boat_1?: string;
-  photo_boat_2?: string;
-  photo_dock_sale?: string;
-  instagram_url?: string;
-  facebook_url?: string;
-  website_url?: string;
-  bio?: string;
-}
+// Sanitize text to prevent XSS
+const sanitizeText = (text: string | undefined): string | undefined => {
+  if (!text) return text;
+  return text
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+};
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
@@ -100,8 +130,20 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { token, ...updateData }: ProfileEditData = await req.json();
-    if (!token) throw new Error("Token manquant");
+    // Validate input with Zod
+    const rawBody = await req.json();
+    const validationResult = ProfileEditSchema.safeParse(rawBody);
+    
+    if (!validationResult.success) {
+      const errorMessages = validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+      console.error("[SUBMIT-PROFILE-EDIT] Validation error:", errorMessages);
+      return new Response(
+        JSON.stringify({ success: false, error: `Validation error: ${errorMessages}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { token, ...updateData } = validationResult.data;
 
     // Revalider le token
     const { data: tokenData, error: tokenError } = await supabaseClient
@@ -136,8 +178,17 @@ const handler = async (req: Request): Promise<Response> => {
       'instagram_url', 'facebook_url', 'website_url', 'bio'
     ];
 
+    // Filter and sanitize update data
     const filteredUpdate = Object.fromEntries(
-      Object.entries(updateData).filter(([key]) => allowedFields.includes(key))
+      Object.entries(updateData)
+        .filter(([key]) => allowedFields.includes(key))
+        .map(([key, value]) => {
+          // Sanitize text fields
+          if (typeof value === 'string' && !key.includes('url')) {
+            return [key, sanitizeText(value)];
+          }
+          return [key, value];
+        })
     );
 
     // Mettre à jour le profil
