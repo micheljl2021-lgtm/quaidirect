@@ -44,13 +44,13 @@ const Header = () => {
         {/* Logo */}
         <Link 
           to="/" 
-          className="flex items-center h-9 px-2 rounded-md transition-colors hover:bg-accent/50" 
+          className="flex items-center h-16 px-3" 
           aria-label="Accueil QuaiDirect"
         >
           <img 
             src={logoQuaidirect} 
             alt="QuaiDirect" 
-            className="h-10 md:h-12 lg:h-14 w-auto object-contain"
+            className="h-12 md:h-14 lg:h-16 w-auto object-contain"
           />
         </Link>
 
