@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const SITE_URL = Deno.env.get("SITE_URL") || "https://quaidirect.fr";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "https://quaidirect.fr",
@@ -18,6 +19,75 @@ function escapeHtml(text: string | null | undefined): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+// Single source of truth for plan labels (mirrors pricing.ts)
+const PLAN_CONFIG: Record<string, { label: string; features: string[] }> = {
+  standard: {
+    label: 'Standard',
+    features: [
+      '✅ Emails illimités à vos clients',
+      '✅ Partage WhatsApp instantané',
+      '✅ IA pour générer vos textes et descriptions',
+      '✅ 50 SMS/mois inclus',
+    ],
+  },
+  pro: {
+    label: 'Pro',
+    features: [
+      '✅ Emails illimités à vos clients',
+      '✅ IA avancée (prix, météo, marée)',
+      '✅ 200 SMS/mois inclus',
+      '✅ Statistiques et estimation CA',
+      '✅ Multi-points de vente',
+      '✅ Support prioritaire',
+    ],
+  },
+  elite: {
+    label: 'Elite',
+    features: [
+      '✅ Emails illimités à vos clients',
+      '✅ IA complète + photo → annonce',
+      '✅ 1500 SMS/mois inclus',
+      '✅ Dashboard avancé',
+      '✅ Support prioritaire dédié',
+    ],
+  },
+  premium: {
+    label: 'Premium',
+    features: [
+      '✅ Notifications push + email',
+      '✅ Accès prioritaire aux arrivages',
+      '✅ Soutien direct aux pêcheurs',
+    ],
+  },
+  premium_plus: {
+    label: 'Premium+',
+    features: [
+      '✅ Notifications push + email + SMS',
+      '✅ Accès prioritaire aux arrivages',
+      '✅ Contribution au pool SMS pêcheurs',
+      '✅ Soutien direct aux pêcheurs',
+    ],
+  },
+  // Backward compatibility
+  basic: {
+    label: 'Standard',
+    features: [
+      '✅ Emails illimités à vos clients',
+      '✅ Partage WhatsApp instantané',
+      '✅ IA pour générer vos textes et descriptions',
+      '✅ 50 SMS/mois inclus',
+    ],
+  },
+};
+
+const getPlanConfig = (plan: string) => {
+  const normalized = plan.toLowerCase()
+    .replace('fisherman_', '')
+    .replace('_annual', '')
+    .replace('_monthly', '');
+  return PLAN_CONFIG[normalized] || PLAN_CONFIG.standard;
+};
 
 interface PaymentConfirmationRequest {
   userEmail: string;
@@ -48,93 +118,97 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { userEmail, boatName, plan, amountPaid, invoiceUrl, nextBillingDate }: PaymentConfirmationRequest = await req.json();
 
-    const planLabel = plan === 'pro' ? 'Pro' : 'Basic';
+    const config = getPlanConfig(plan);
     const amount = (amountPaid / 100).toFixed(2);
+    const isFishermanPlan = plan.toLowerCase().includes('fisherman') || ['standard', 'pro', 'elite', 'basic'].includes(plan.toLowerCase());
+    const dashboardUrl = isFishermanPlan ? `${SITE_URL}/dashboard/pecheur` : `${SITE_URL}/dashboard/premium`;
+
+    console.log('[PAYMENT-CONFIRMATION] Sending confirmation email', { userEmail, plan, planLabel: config.label, amount });
 
     const emailResponse = await resend.emails.send({
       from: "QuaiDirect <support@quaidirect.fr>",
       to: [userEmail],
       subject: `✅ Confirmation de paiement QuaiDirect - ${amount}€`,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-<h1 style="color: #0066cc;">✅ Paiement confirmé ${boatName ? `- ${escapeHtml(boatName)}` : ''}</h1>
-          
-          <div style="background: #d4edda; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745;">
-            <p style="margin: 0; font-size: 18px; font-weight: bold; color: #155724;">
-              Votre paiement de ${escapeHtml(amount)}€ a été traité avec succès !
-            </p>
-            <p style="margin: 10px 0 0 0; color: #155724;">
-              Plan : <strong>QuaiDirect ${escapeHtml(planLabel)}</strong>
-            </p>
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+          <!-- Header -->
+          <div style="background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%); padding: 24px; text-align: center; border-radius: 8px 8px 0 0;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold;">✅ Paiement confirmé</h1>
+            ${boatName ? `<p style="color: #e0e7ff; margin: 8px 0 0 0; font-size: 16px;">${escapeHtml(boatName)}</p>` : ''}
           </div>
-
-          <h2 style="color: #333;">📋 Détails de votre abonnement</h2>
           
-          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-            <tr style="border-bottom: 1px solid #ddd;">
-              <td style="padding: 12px 0; color: #666;">Plan souscrit</td>
-              <td style="padding: 12px 0; text-align: right; font-weight: bold;">QuaiDirect ${planLabel}</td>
-            </tr>
-            <tr style="border-bottom: 1px solid #ddd;">
-              <td style="padding: 12px 0; color: #666;">Montant payé</td>
-              <td style="padding: 12px 0; text-align: right; font-weight: bold;">${amount}€</td>
-            </tr>
-            <tr style="border-bottom: 1px solid #ddd;">
-              <td style="padding: 12px 0; color: #666;">Prochaine facturation</td>
-              <td style="padding: 12px 0; text-align: right; font-weight: bold;">
-                ${new Date(nextBillingDate).toLocaleDateString('fr-FR', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </td>
-            </tr>
-          </table>
+          <div style="padding: 24px;">
+            <div style="background: #d4edda; padding: 20px; border-radius: 8px; margin: 0 0 24px 0; border-left: 4px solid #28a745;">
+              <p style="margin: 0; font-size: 18px; font-weight: bold; color: #155724;">
+                Votre paiement de ${escapeHtml(amount)}€ a été traité avec succès !
+              </p>
+              <p style="margin: 10px 0 0 0; color: #155724;">
+                Plan : <strong>QuaiDirect ${escapeHtml(config.label)}</strong>
+              </p>
+            </div>
 
-          ${invoiceUrl ? `
-          <div style="margin: 20px 0; text-align: center;">
-            <a href="${invoiceUrl}" 
-               style="background: #6c757d; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-              📄 Télécharger ma facture
-            </a>
-          </div>
-          ` : ''}
+            <h2 style="color: #1e293b; margin: 0 0 16px 0; font-size: 18px;">📋 Détails de votre abonnement</h2>
+            
+            <table style="width: 100%; border-collapse: collapse; margin: 0 0 24px 0;">
+              <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 12px 0; color: #64748b;">Plan souscrit</td>
+                <td style="padding: 12px 0; text-align: right; font-weight: bold; color: #1e293b;">QuaiDirect ${escapeHtml(config.label)}</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 12px 0; color: #64748b;">Montant payé</td>
+                <td style="padding: 12px 0; text-align: right; font-weight: bold; color: #1e293b;">${escapeHtml(amount)}€</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 12px 0; color: #64748b;">Prochaine facturation</td>
+                <td style="padding: 12px 0; text-align: right; font-weight: bold; color: #1e293b;">
+                  ${new Date(nextBillingDate).toLocaleDateString('fr-FR', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </td>
+              </tr>
+            </table>
 
-          <h2 style="color: #333;">🎉 Profitez de tous vos avantages</h2>
-          <ul style="line-height: 1.8;">
-            <li>✅ Emails illimités à vos clients</li>
-            <li>✅ Partage WhatsApp instantané</li>
-            <li>✅ IA pour générer vos textes et descriptions</li>
-            ${plan === 'pro' ? `
-            <li>✅ IA avancée (prix, météo, marée)</li>
-            <li>✅ Statistiques et estimation CA</li>
-            <li>✅ Multi-points de vente</li>
-            <li>✅ Support prioritaire</li>
+            ${invoiceUrl ? `
+            <div style="text-align: center; margin: 0 0 24px 0;">
+              <a href="${invoiceUrl}" 
+                 style="display: inline-block; background: #6c757d; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+                📄 Télécharger ma facture
+              </a>
+            </div>
             ` : ''}
-          </ul>
 
-          <div style="margin: 30px 0; text-align: center;">
-            <a href="https://quaidirect.fr/dashboard/pecheur" 
-               style="background: #0066cc; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
-              Accéder à mon tableau de bord
-            </a>
+            <h2 style="color: #1e293b; margin: 0 0 16px 0; font-size: 18px;">🎉 Vos avantages</h2>
+            <ul style="line-height: 1.8; color: #475569; padding-left: 0; list-style: none; margin: 0 0 24px 0;">
+              ${config.features.map(f => `<li style="margin-bottom: 8px;">${f}</li>`).join('')}
+            </ul>
+
+            <div style="text-align: center; margin: 32px 0;">
+              <a href="${dashboardUrl}" 
+                 style="display: inline-block; background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%); color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                Accéder à mon tableau de bord
+              </a>
+            </div>
+
+            <div style="background: #e7f3ff; padding: 16px; border-radius: 6px; margin: 0 0 24px 0;">
+              <p style="margin: 0; font-size: 14px; color: #1e40af;">
+                <strong>💡 Info :</strong> Votre abonnement se renouvellera automatiquement. 
+                Vous pouvez gérer ou annuler à tout moment depuis votre espace Stripe.
+              </p>
+            </div>
           </div>
 
-          <div style="background: #e7f3ff; padding: 16px; border-radius: 6px; margin: 20px 0;">
-            <p style="margin: 0; font-size: 14px;">
-              <strong>💡 Conseil :</strong> Votre abonnement se renouvellera automatiquement chaque année. 
-              Vous pouvez gérer ou annuler votre abonnement à tout moment depuis votre espace Stripe.
+          <!-- Footer -->
+          <div style="background-color: #f1f5f9; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; border-top: 1px solid #e2e8f0;">
+            <p style="margin: 0; color: #64748b; font-size: 14px;">
+              Une question ? Contactez <a href="mailto:support@quaidirect.fr" style="color: #0066cc;">support@quaidirect.fr</a>
+            </p>
+            <p style="margin: 12px 0 0 0; color: #94a3b8; font-size: 13px;">
+              Merci de votre confiance,<br>
+              <strong>L'équipe QuaiDirect</strong>
             </p>
           </div>
-
-          <p style="margin-top: 30px; color: #666; font-size: 14px;">
-            Une question sur votre facture ? Contactez-nous à <a href="mailto:support@quaidirect.fr">support@quaidirect.fr</a>
-          </p>
-
-          <p style="color: #666; font-size: 14px;">
-            Merci de votre confiance,<br>
-            <strong>L'équipe QuaiDirect</strong>
-          </p>
         </div>
       `,
     });
