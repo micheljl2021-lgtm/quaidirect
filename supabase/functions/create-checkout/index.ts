@@ -3,60 +3,13 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://quaidirect.fr',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
-};
-
-// Rate limiting configuration
-const RATE_LIMIT = 10; // max requests
-const RATE_WINDOW_MINUTES = 1; // per minute
-
-const checkRateLimit = async (
-  supabase: any,
-  identifier: string,
-  endpoint: string
-): Promise<{ allowed: boolean; remaining: number }> => {
-  const windowStart = new Date(Date.now() - RATE_WINDOW_MINUTES * 60 * 1000).toISOString();
-  
-  // Get current request count in window
-  const { data: existing, error: fetchError } = await supabase
-    .from('rate_limits')
-    .select('id, request_count')
-    .eq('identifier', identifier)
-    .eq('endpoint', endpoint)
-    .gte('window_start', windowStart)
-    .single();
-
-  if (fetchError && fetchError.code !== 'PGRST116') {
-    console.error('Rate limit check error:', fetchError);
-    return { allowed: true, remaining: RATE_LIMIT }; // Allow on error
-  }
-
-  if (existing) {
-    if (existing.request_count >= RATE_LIMIT) {
-      return { allowed: false, remaining: 0 };
-    }
-    // Increment counter
-    await supabase
-      .from('rate_limits')
-      .update({ request_count: existing.request_count + 1 })
-      .eq('id', existing.id);
-    return { allowed: true, remaining: RATE_LIMIT - existing.request_count - 1 };
-  }
-
-  // Create new entry
-  await supabase.from('rate_limits').insert({
-    identifier,
-    endpoint,
-    request_count: 1,
-    window_start: new Date().toISOString(),
-  });
-  return { allowed: true, remaining: RATE_LIMIT - 1 };
 };
 
 serve(async (req) => {
@@ -69,111 +22,92 @@ serve(async (req) => {
     Deno.env.get('SUPABASE_ANON_KEY') ?? ''
   );
 
-  const supabaseAdmin = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    { auth: { persistSession: false } }
-  );
-
   try {
     logStep('Function started');
 
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) throw new Error('No authorization header provided');
+    let user = null;
+    let isGuest = false;
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    
-    const user = userData.user;
-    if (!user?.email) throw new Error('User not authenticated or email not available');
-    logStep('User authenticated', { userId: user.id, email: user.email });
-
-    // Rate limiting check
-    const { allowed, remaining } = await checkRateLimit(supabaseAdmin, user.id, 'create-checkout');
-    if (!allowed) {
-      logStep('Rate limit exceeded', { userId: user.id });
-      return new Response(
-        JSON.stringify({ error: 'Trop de requêtes. Veuillez patienter quelques minutes.' }),
-        {
-          headers: { 
-            ...corsHeaders, 
-            'Content-Type': 'application/json',
-            'X-RateLimit-Remaining': '0',
-            'Retry-After': '60'
-          },
-          status: 429,
-        }
-      );
+    // Check if user is authenticated
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+      if (!userError && userData.user?.email) {
+        user = userData.user;
+        logStep('User authenticated', { userId: user.id, email: user.email });
+      }
     }
-    logStep('Rate limit check passed', { remaining });
+
+    // If no authenticated user, this is a guest checkout
+    if (!user) {
+      isGuest = true;
+      logStep('Guest checkout mode - no authentication required');
+    }
 
     const { priceId, plan } = await req.json();
     if (!priceId || !plan) throw new Error('Missing priceId or plan');
-    logStep('Request data validated', { priceId, plan });
+    logStep('Request data validated', { priceId, plan, isGuest });
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2025-08-27.basil',
     });
 
-    // Check if customer exists
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId: string | undefined;
-    
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-      logStep('Existing customer found', { customerId });
 
-      // CRITICAL: Check for existing active/trialing subscription to prevent duplicates
-      const existingActiveSubs = await stripe.subscriptions.list({
-        customer: customerId,
-        status: 'active',
-        limit: 1
-      });
+    // For authenticated users, check existing customer and subscription
+    if (user) {
+      const customers = await stripe.customers.list({ email: user.email, limit: 1 });
       
-      const existingTrialingSubs = await stripe.subscriptions.list({
-        customer: customerId,
-        status: 'trialing',
-        limit: 1
-      });
+      if (customers.data.length > 0) {
+        customerId = customers.data[0].id;
+        logStep('Existing customer found', { customerId });
 
-      if (existingActiveSubs.data.length > 0 || existingTrialingSubs.data.length > 0) {
-        logStep('User already has an active/trialing subscription', { 
-          activeCount: existingActiveSubs.data.length,
-          trialingCount: existingTrialingSubs.data.length 
+        // Check for existing active/trialing subscription
+        const existingActiveSubs = await stripe.subscriptions.list({
+          customer: customerId,
+          status: 'active',
+          limit: 1
         });
         
-        // Create portal session for user to manage existing subscription
-        const portalSession = await stripe.billingPortal.sessions.create({
+        const existingTrialingSubs = await stripe.subscriptions.list({
           customer: customerId,
-          return_url: `${req.headers.get('origin') || 'https://quaidirect.fr'}/premium`,
+          status: 'trialing',
+          limit: 1
         });
 
-        // Return portal URL instead of error - frontend should handle this
-        return new Response(
-          JSON.stringify({ 
-            hasExistingSubscription: true,
-            portalUrl: portalSession.url,
-            message: 'Vous avez déjà un abonnement actif.'
-          }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200, // Changed to 200 so frontend can handle gracefully
-          }
-        );
+        if (existingActiveSubs.data.length > 0 || existingTrialingSubs.data.length > 0) {
+          logStep('User already has an active/trialing subscription', { 
+            activeCount: existingActiveSubs.data.length,
+            trialingCount: existingTrialingSubs.data.length 
+          });
+          
+          const portalSession = await stripe.billingPortal.sessions.create({
+            customer: customerId,
+            return_url: `${req.headers.get('origin') || 'https://quaidirect.fr'}/premium`,
+          });
+
+          return new Response(
+            JSON.stringify({ 
+              hasExistingSubscription: true,
+              portalUrl: portalSession.url,
+              message: 'Vous avez déjà un abonnement actif.'
+            }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200,
+            }
+          );
+        }
+        logStep('No existing subscription, proceeding with checkout');
       }
-      logStep('No existing subscription, proceeding with checkout');
-    } else {
-      logStep('No existing customer, will create during checkout');
     }
 
-    // Create checkout session with 7-day trial
-    const origin = req.headers.get('origin') || 'http://localhost:3000';
-    const trialDays = 7; // 7 days free trial for all premium plans
+    // Create checkout session
+    const origin = req.headers.get('origin') || 'https://quaidirect.fr';
+    const trialDays = 7;
 
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      customer_email: customerId ? undefined : user.email,
+    const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       line_items: [
         {
           price: priceId,
@@ -181,31 +115,42 @@ serve(async (req) => {
         },
       ],
       mode: 'subscription',
-      success_url: `${origin}/premium/success`,
+      success_url: `${origin}/premium/success?session_id={CHECKOUT_SESSION_ID}&guest=${isGuest}`,
       cancel_url: `${origin}/premium?canceled=true`,
       metadata: {
-        user_id: user.id,
+        user_id: user?.id || 'guest',
         plan: plan,
+        is_guest: isGuest ? 'true' : 'false',
       },
       subscription_data: {
         trial_period_days: trialDays,
         metadata: {
-          user_id: user.id,
+          user_id: user?.id || 'guest',
           plan: plan,
+          is_guest: isGuest ? 'true' : 'false',
         },
       },
-    });
+    };
 
-    logStep('Checkout session created', { sessionId: session.id, url: session.url });
+    // Configure based on guest vs authenticated
+    if (isGuest) {
+      // Guest mode: let Stripe collect email, create customer
+      sessionConfig.customer_creation = 'always';
+      logStep('Guest session configured with customer_creation');
+    } else if (customerId) {
+      sessionConfig.customer = customerId;
+    } else if (user?.email) {
+      sessionConfig.customer_email = user.email;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
+
+    logStep('Checkout session created', { sessionId: session.id, url: session.url, isGuest });
 
     return new Response(
       JSON.stringify({ url: session.url, sessionId: session.id }),
       {
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json',
-          'X-RateLimit-Remaining': String(remaining)
-        },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
     );
