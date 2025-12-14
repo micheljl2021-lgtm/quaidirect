@@ -14,6 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { Filter, Search, MapPin, Fish, Locate, Loader2, AlertTriangle } from "lucide-react";
 import { useSalePoints } from "@/hooks/useSalePoints";
+import { LIMITS } from "@/lib/constants";
 
 type GeoStatus = 'idle' | 'loading' | 'granted' | 'denied' | 'error';
 
@@ -104,6 +105,10 @@ const Carte = () => {
   const { data: arrivages, isLoading: arrivagesLoading } = useQuery({
     queryKey: ['arrivages-map'],
     queryFn: async () => {
+      // Grace period: show arrivals up to X hours after their sale_start_time
+      const graceMs = LIMITS.ARRIVAL_GRACE_HOURS * 60 * 60 * 1000;
+      const minStartTime = new Date(Date.now() - graceMs).toISOString();
+
       const { data, error } = await supabase
         .from('drops')
         .select(`
@@ -142,7 +147,7 @@ const Carte = () => {
           )
         `)
         .in('status', ['scheduled', 'landed'])
-        .gte('sale_start_time', new Date().toISOString())
+        .gte('sale_start_time', minStartTime)
         .order('eta_at', { ascending: true });
 
       if (error) throw error;

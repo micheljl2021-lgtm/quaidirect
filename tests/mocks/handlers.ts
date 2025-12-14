@@ -48,18 +48,27 @@ export const handlers = [
     });
   }),
 
-  http.post(`${SUPABASE_URL}/functions/v1/get-public-sale-points`, async () => {
-    return HttpResponse.json({
-      salePoints: [
-        {
-          id: 'sale-point-1',
-          label: 'Port de Hyères',
-          address: '123 Quai du Port',
-          latitude: 43.1,
-          longitude: 6.1,
+  http.get(`${SUPABASE_URL}/functions/v1/get-public-sale-points`, async () => {
+    return HttpResponse.json([
+      {
+        id: 'sale-point-1',
+        label: 'Port de Hyères',
+        address: '123 Quai du Port',
+        latitude: 43.1,
+        longitude: 6.1,
+        photo_url: null,
+        fisherman_id: 'fisherman-1',
+        fishermen: {
+          id: 'fisherman-1',
+          boat_name: 'Test Boat',
+          photo_url: null,
+          bio: 'Bio test',
+          fishing_methods: ['Ligne'],
+          company_name: null,
+          slug: 'test-boat',
         },
-      ],
-    });
+      },
+    ]);
   }),
 
   // Mock storage upload

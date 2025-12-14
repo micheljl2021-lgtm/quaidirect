@@ -59,18 +59,14 @@ const CLIENT_LEVELS = {
   },
 };
 
-const HERO_VARIANTS = [
-  "Soutenez vos pêcheurs : profitez des arrivages 30 min avant tout le monde",
-  "Premium : alertes prioritaires et pré-réservations. La mer ne prévient pas",
-  "Du poisson frais plus vite. Aidez ceux qui sortent en mer",
-];
+// Fixed hero message - no more random rotation
+const HERO_MESSAGE = "Soutenez vos pêcheurs : profitez des arrivages 30 min avant tout le monde";
 
 export default function PremiumPaywall() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
   const [loading, setLoading] = useState<string | null>(null);
-  const [heroVariant] = useState(HERO_VARIANTS[Math.floor(Math.random() * HERO_VARIANTS.length)]);
 
   const handleSubscribe = async (priceId: string, plan: string) => {
     if (!user) {
@@ -130,7 +126,7 @@ export default function PremiumPaywall() {
           </div>
           
           <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            {heroVariant}
+            {HERO_MESSAGE}
           </h1>
           
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">

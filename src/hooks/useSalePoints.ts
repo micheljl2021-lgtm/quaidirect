@@ -8,6 +8,8 @@ interface SalePoint {
   longitude: number | null;
   photo_url: string | null;
   fisherman_id: string;
+  description?: string | null;
+  is_primary?: boolean;
   fishermen: {
     id: string;
     boat_name: string;
@@ -16,7 +18,7 @@ interface SalePoint {
     fishing_methods: string[] | null;
     company_name: string | null;
     slug: string | null;
-  };
+  } | null;
 }
 
 /**
