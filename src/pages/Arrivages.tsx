@@ -21,16 +21,18 @@ interface Drop {
   id: string;
   port_id: string;
   fisherman_id: string;
+  sale_point_id?: string | null;
   eta_at: string | null;
   sale_start_time: string | null;
   visible_at: string;
   public_visible_at: string | null;
   is_premium: boolean;
   ports: {
+    id?: string;
     name: string;
     city: string;
-  };
-  public_fishermen: {
+  } | null;
+  fishermen: {
     id: string;
     boat_name: string;
     company_name: string | null;
@@ -43,6 +45,14 @@ interface Drop {
     id: string;
     photo_url: string;
     display_order: number;
+  }>;
+  drop_species?: Array<{
+    id: string;
+    species: {
+      id: string;
+      name: string;
+      scientific_name: string | null;
+    };
   }>;
   offers?: Array<{
     id: string;
@@ -97,43 +107,51 @@ const Arrivages = () => {
 
       const { data, error } = await supabase
         .from('drops')
-      .select(`
-        *,
-        public_fishermen!fisherman_id (
-          id,
-          boat_name,
-          company_name,
-          display_name_preference,
-          photo_url,
-          main_fishing_zone,
-          is_ambassador
-        ),
-        ports (
-          id,
-          name,
-          city
-        ),
-        drop_photos (
-          id,
-          photo_url,
-          display_order
-        ),
-        offers (
-          id,
-          title,
-          unit_price,
-          available_units,
-          species (
+        .select(`
+          *,
+          fishermen (
+            id,
+            boat_name,
+            company_name,
+            display_name_preference,
+            photo_url,
+            main_fishing_zone,
+            is_ambassador
+          ),
+          ports (
             id,
             name,
-            scientific_name
+            city
           ),
-          offer_photos (
+          drop_photos (
+            id,
             photo_url,
             display_order
+          ),
+          drop_species (
+            id,
+            species (
+              id,
+              name,
+              scientific_name
+            )
+          ),
+          offers (
+            id,
+            title,
+            unit_price,
+            available_units,
+            species (
+              id,
+              name,
+              scientific_name
+            ),
+            offer_photos (
+              photo_url,
+              display_order
+            )
           )
-        )
-      `)
+        `)
         .in('status', ['scheduled', 'landed'])
         .gte('sale_start_time', minStartTime)
         .order('sale_start_time', { ascending: true });
@@ -222,7 +240,7 @@ const Arrivages = () => {
   const uniqueZones = useMemo(() => {
     if (!drops) return [];
     const zones = drops
-      .map(d => d.public_fishermen?.main_fishing_zone)
+      .map(d => d.fishermen?.main_fishing_zone)
       .filter((zone): zone is string => !!zone);
     return Array.from(new Set(zones));
   }, [drops]);
@@ -231,9 +249,16 @@ const Arrivages = () => {
     if (!drops) return [];
     const speciesMap = new Map<string, string>();
     drops.forEach(d => {
+      // Get species from offers first
       d.offers?.forEach(o => {
         if (o && o.species?.id && o.species?.name) {
           speciesMap.set(o.species.id, o.species.name);
+        }
+      });
+      // Fallback to drop_species if no offers
+      d.drop_species?.forEach(ds => {
+        if (ds.species?.id && ds.species?.name) {
+          speciesMap.set(ds.species.id, ds.species.name);
         }
       });
     });
@@ -262,12 +287,12 @@ const Arrivages = () => {
   const uniqueFishermen = useMemo(() => {
     if (!drops) return [];
     const fishermen = drops
-      .filter(d => d.public_fishermen?.id)
+      .filter(d => d.fishermen?.id)
       .map(d => ({
-        id: d.public_fishermen!.id,
-        name: d.public_fishermen!.display_name_preference === 'company_name'
-          ? (d.public_fishermen!.company_name || d.public_fishermen!.boat_name)
-          : d.public_fishermen!.boat_name
+        id: d.fishermen!.id,
+        name: d.fishermen!.display_name_preference === 'company_name'
+          ? (d.fishermen!.company_name || d.fishermen!.boat_name)
+          : d.fishermen!.boat_name
       }));
     const uniqueMap = new Map(fishermen.map(f => [f.id, f.name]));
     return Array.from(uniqueMap, ([id, name]) => ({ id, name }));
@@ -278,14 +303,15 @@ const Arrivages = () => {
     if (!drops) return [];
     return drops.filter(drop => {
       // Filtre zone
-      if (filterZone !== 'all' && drop.public_fishermen?.main_fishing_zone !== filterZone) {
+      if (filterZone !== 'all' && drop.fishermen?.main_fishing_zone !== filterZone) {
         return false;
       }
       
-      // Filtre espèce
+      // Filtre espèce - check both offers and drop_species
       if (filterSpecies !== 'all') {
-        const hasSpecies = drop.offers?.some(o => o.species && o.species.id === filterSpecies);
-        if (!hasSpecies) return false;
+        const hasSpeciesInOffers = drop.offers?.some(o => o.species && o.species.id === filterSpecies);
+        const hasSpeciesInDropSpecies = drop.drop_species?.some(ds => ds.species?.id === filterSpecies);
+        if (!hasSpeciesInOffers && !hasSpeciesInDropSpecies) return false;
       }
       
       // Filtre port - Prendre en compte port_id ET sale_point_id
@@ -298,7 +324,7 @@ const Arrivages = () => {
       }
       
       // Filtre pêcheur
-      if (filterFisherman !== 'all' && drop.public_fishermen?.id !== filterFisherman) {
+      if (filterFisherman !== 'all' && drop.fishermen?.id !== filterFisherman) {
         return false;
       }
       
@@ -506,8 +532,6 @@ const Arrivages = () => {
         {/* Liste des drops */}
         <div className="space-y-4">
         {filteredDrops?.map((drop) => {
-            if (!drop.public_fishermen) return null;
-            
             const etaDate = drop.eta_at ? new Date(drop.eta_at) : null;
             const saleDate = drop.sale_start_time ? new Date(drop.sale_start_time) : null;
             
@@ -517,9 +541,9 @@ const Arrivages = () => {
               ? `${drop.ports.name}, ${drop.ports.city}` 
               : (salePoint?.address || salePoint?.label || 'Point de vente');
             
-            const displayName = drop.public_fishermen.display_name_preference === 'company_name'
-              ? (drop.public_fishermen.company_name || drop.public_fishermen.boat_name)
-              : drop.public_fishermen.boat_name;
+            const displayName = drop.fishermen?.display_name_preference === 'company_name'
+              ? (drop.fishermen?.company_name || drop.fishermen?.boat_name || 'Pêcheur')
+              : (drop.fishermen?.boat_name || 'Pêcheur');
             
             // Pour chaque drop, créer une card par offre (ou une seule si pas d'offres)
             if (drop.offers && drop.offers.length > 0) {
@@ -542,8 +566,8 @@ const Arrivages = () => {
                       dropPhotos={drop.drop_photos}
                       fisherman={{
                         name: displayName,
-                        boat: drop.public_fishermen.boat_name,
-                        isAmbassador: drop.public_fishermen.is_ambassador
+                        boat: drop.fishermen?.boat_name || 'Bateau',
+                        isAmbassador: drop.fishermen?.is_ambassador
                       }}
                     />
                   </div>
@@ -551,13 +575,18 @@ const Arrivages = () => {
               }
             }
             
-            // Si pas d'offres valides, afficher quand même le drop avec les photos générales
+            // Fallback: use drop_species if no offers
+            const speciesFromDropSpecies = drop.drop_species?.[0]?.species;
+            const speciesName = speciesFromDropSpecies?.name || 'Arrivage';
+            const scientificName = speciesFromDropSpecies?.scientific_name || '';
+            
+            // Si pas d'offres valides, afficher quand même le drop avec drop_species
             return (
               <div key={drop.id}>
                 <ArrivageCard
                   id={drop.id}
-                  species="Arrivage général"
-                  scientificName=""
+                  species={speciesName}
+                  scientificName={scientificName}
                   port={portName}
                   eta={etaDate || saleDate!}
                   saleStartTime={saleDate}
@@ -567,8 +596,8 @@ const Arrivages = () => {
                   dropPhotos={drop.drop_photos}
                   fisherman={{
                     name: displayName,
-                    boat: drop.public_fishermen.boat_name,
-                    isAmbassador: drop.public_fishermen.is_ambassador
+                    boat: drop.fishermen?.boat_name || 'Bateau',
+                    isAmbassador: drop.fishermen?.is_ambassador
                   }}
                 />
               </div>
