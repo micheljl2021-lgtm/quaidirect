@@ -2374,10 +2374,12 @@ export type Database = {
     Views: {
       public_fishermen: {
         Row: {
+          affiliate_code: string | null
           ambassador_slot: number | null
           bio: string | null
           boat_name: string | null
           boat_registration: string | null
+          client_message: string | null
           company_name: string | null
           created_at: string | null
           default_sale_point_id: string | null
@@ -2385,6 +2387,7 @@ export type Database = {
           description: string | null
           display_name_preference: string | null
           facebook_url: string | null
+          favorite_photo_url: string | null
           fishing_methods:
             | Database["public"]["Enums"]["fishing_method"][]
             | null
@@ -2417,10 +2420,12 @@ export type Database = {
           zone_id: string | null
         }
         Insert: {
+          affiliate_code?: string | null
           ambassador_slot?: number | null
           bio?: string | null
           boat_name?: string | null
           boat_registration?: string | null
+          client_message?: string | null
           company_name?: string | null
           created_at?: string | null
           default_sale_point_id?: string | null
@@ -2428,6 +2433,7 @@ export type Database = {
           description?: string | null
           display_name_preference?: string | null
           facebook_url?: string | null
+          favorite_photo_url?: string | null
           fishing_methods?:
             | Database["public"]["Enums"]["fishing_method"][]
             | null
@@ -2460,10 +2466,12 @@ export type Database = {
           zone_id?: string | null
         }
         Update: {
+          affiliate_code?: string | null
           ambassador_slot?: number | null
           bio?: string | null
           boat_name?: string | null
           boat_registration?: string | null
+          client_message?: string | null
           company_name?: string | null
           created_at?: string | null
           default_sale_point_id?: string | null
@@ -2471,6 +2479,7 @@ export type Database = {
           description?: string | null
           display_name_preference?: string | null
           facebook_url?: string | null
+          favorite_photo_url?: string | null
           fishing_methods?:
             | Database["public"]["Enums"]["fishing_method"][]
             | null

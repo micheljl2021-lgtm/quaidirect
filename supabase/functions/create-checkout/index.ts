@@ -2,9 +2,22 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// Allowed origins for CORS and security
+const ALLOWED_ORIGINS = [
+  'https://quaidirect.fr',
+  'https://www.quaidirect.fr',
+  'http://localhost:5173',
+  'http://localhost:3000',
+];
+
+const getCorsHeaders = (origin: string | null): Record<string, string> => {
+  // Validate origin against allowlist
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  };
 };
 
 const logStep = (step: string, details?: any) => {
@@ -13,8 +26,23 @@ const logStep = (step: string, details?: any) => {
 };
 
 serve(async (req) => {
+  const origin = req.headers.get('origin');
+  const corsHeaders = getCorsHeaders(origin);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Security: Validate origin
+  if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
+    logStep('SECURITY: Rejected request from unauthorized origin', { origin });
+    return new Response(
+      JSON.stringify({ error: 'Accès non autorisé' }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 403,
+      }
+    );
   }
 
   const supabaseClient = createClient(
@@ -23,7 +51,7 @@ serve(async (req) => {
   );
 
   try {
-    logStep('Function started');
+    logStep('Function started', { origin });
 
     const authHeader = req.headers.get('Authorization');
     let user = null;
@@ -84,7 +112,7 @@ serve(async (req) => {
           
           const portalSession = await stripe.billingPortal.sessions.create({
             customer: customerId,
-            return_url: `${req.headers.get('origin') || 'https://quaidirect.fr'}/premium`,
+            return_url: `${origin}/premium`,
           });
 
           return new Response(
@@ -104,7 +132,6 @@ serve(async (req) => {
     }
 
     // Create checkout session
-    const origin = req.headers.get('origin') || 'https://quaidirect.fr';
     const trialDays = 7;
 
     const sessionConfig: Stripe.Checkout.SessionCreateParams = {
