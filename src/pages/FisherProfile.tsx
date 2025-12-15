@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Helmet } from 'react-helmet';
+import { useEffect } from 'react';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -191,15 +192,23 @@ const FisherProfile = () => {
     );
   }
 
+  // Auto-redirect to homepage if fisherman not found
+  useEffect(() => {
+    if (!isLoading && !fisherman) {
+      const timeout = setTimeout(() => {
+        navigate('/', { replace: true });
+      }, 2000);
+      return () => clearTimeout(timeout);
+    }
+  }, [isLoading, fisherman, navigate]);
+
   if (!fisherman) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card>
-          <CardContent className="pt-6">
-            <p>Pêcheur introuvable</p>
-            <Button onClick={() => navigate('/')} className="mt-4">
-              Retour à l'accueil
-            </Button>
+          <CardContent className="pt-6 text-center">
+            <p className="text-muted-foreground">Pêcheur introuvable</p>
+            <p className="text-sm text-muted-foreground mt-2">Redirection vers l'accueil...</p>
           </CardContent>
         </Card>
       </div>

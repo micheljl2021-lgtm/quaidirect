@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -92,6 +93,16 @@ const DropDetail = () => {
     );
   }
 
+  // Auto-redirect to homepage if drop not found
+  useEffect(() => {
+    if (!isLoading && (error || !drop)) {
+      const timeout = setTimeout(() => {
+        navigate('/', { replace: true });
+      }, 2000);
+      return () => clearTimeout(timeout);
+    }
+  }, [isLoading, error, drop, navigate]);
+
   if (error || !drop) {
     return (
       <div className="min-h-screen bg-background">
@@ -99,10 +110,8 @@ const DropDetail = () => {
         <div className="container max-w-4xl mx-auto px-4 py-8">
           <Card>
             <CardContent className="pt-6 text-center">
-              <p className="text-muted-foreground mb-4">Arrivage introuvable</p>
-              <Button onClick={() => navigate('/arrivages')}>
-                Retour aux arrivages
-              </Button>
+              <p className="text-muted-foreground">Arrivage introuvable</p>
+              <p className="text-sm text-muted-foreground mt-2">Redirection vers l'accueil...</p>
             </CardContent>
           </Card>
         </div>

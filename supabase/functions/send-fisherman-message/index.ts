@@ -90,8 +90,9 @@ const logStep = (step: string, details?: any) => {
 };
 
 interface FishermanData {
+  id: string;
   boat_name: string;
-  slug: string;
+  slug: string | null;
   company_name?: string;
   main_fishing_zone?: string;
   favorite_photo_url?: string;
@@ -123,9 +124,10 @@ const getEmailTemplate = (type: string, fisherman: FishermanData, dropDetails?: 
   const safeLocation = escapeHtml(dropDetails?.location || '');
   const safeSpecies = escapeHtml(dropDetails?.species || '');
   
-  // Build tracked URLs with affiliate code
+  // Build tracked URLs with affiliate code - fallback to ID if slug is missing
   const affiliateCode = fisherman.affiliate_code;
-  const profileUrl = buildTrackedUrl(`${SITE_URL}/pecheurs/${fisherman.slug}`, affiliateCode);
+  const fishermanSlugOrId = fisherman.slug || fisherman.id;
+  const profileUrl = buildTrackedUrl(`${SITE_URL}/pecheurs/${fishermanSlugOrId}`, affiliateCode);
   const dropUrl = dropDetails?.drop_id 
     ? buildTrackedUrl(`${SITE_URL}/drop/${dropDetails.drop_id}`, affiliateCode)
     : buildTrackedUrl(`${SITE_URL}/arrivages`, affiliateCode);
@@ -408,10 +410,11 @@ serve(async (req) => {
       
       if (contactsWithPhone.length > 0) {
         let smsMessage = '';
-        // Include tracking link in SMS - use correct /pecheurs/:slug URL
+        // Include tracking link in SMS - fallback to ID if slug missing
+        const smsSlugOrId = fisherman.slug || fisherman.id;
         const smsProfileUrl = fisherman.affiliate_code 
-          ? `https://quaidirect.fr/pecheurs/${fisherman.slug}?ref=${fisherman.affiliate_code}`
-          : `https://quaidirect.fr/pecheurs/${fisherman.slug}`;
+          ? `https://quaidirect.fr/pecheurs/${smsSlugOrId}?ref=${fisherman.affiliate_code}`
+          : `https://quaidirect.fr/pecheurs/${smsSlugOrId}`;
         
         switch (message_type) {
           case 'invitation_initiale':
