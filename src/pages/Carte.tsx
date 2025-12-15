@@ -5,14 +5,17 @@ import Footer from "@/components/Footer";
 import ArrivageCard from "@/components/ArrivageCard";
 import { ArrivageCardSkeletonGrid } from "@/components/ArrivageCardSkeleton";
 import GoogleMapComponent from "@/components/GoogleMapComponent";
+import MapSelectionPanel from "@/components/MapSelectionPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSalePoints } from "@/hooks/useSalePoints";
+import { getDropLocationLabel } from "@/lib/dropLocationUtils";
 import { Search, Fish, Locate, Loader2, AlertTriangle } from "lucide-react";
 import { LIMITS } from "@/lib/constants";
+import { toast } from "sonner";
 
 type GeoStatus = 'idle' | 'loading' | 'granted' | 'denied' | 'error';
 
@@ -21,6 +24,12 @@ const Carte = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [geoStatus, setGeoStatus] = useState<GeoStatus>('idle');
+  
+  // Map selection state for panel
+  const [selectionOpen, setSelectionOpen] = useState(false);
+  const [selectedType, setSelectedType] = useState<'drop' | 'salePoint' | null>(null);
+  const [selectedDropId, setSelectedDropId] = useState<string | null>(null);
+  const [selectedSalePointId, setSelectedSalePointId] = useState<string | null>(null);
 
   // Get user's geolocation with enhanced options and error handling
   const requestGeolocation = useCallback(() => {
@@ -154,20 +163,27 @@ const Carte = () => {
     refetchInterval: 30000,
   });
 
-  // Transform arrivages for display (no sale point data exposed)
+  // Transform arrivages for display using consistent location helper
   const transformedArrivages = arrivages?.map(arrivage => {
     const hasOffers = arrivage.offers && arrivage.offers.length > 0 && arrivage.offers[0]?.unit_price;
+    const locationLabel = getDropLocationLabel({
+      isAuthenticated: !!user,
+      salePointId: arrivage.sale_point_id,
+      salePoints: validSalePoints,
+      port: arrivage.ports,
+    });
     return {
       id: arrivage.id,
       species: arrivage.offers[0]?.species?.name || 'Poisson',
       scientificName: arrivage.offers[0]?.species?.scientific_name || '',
-      port: arrivage.ports?.name || 'Lieu de vente',
+      port: locationLabel,
       eta: new Date(arrivage.eta_at),
       saleStartTime: arrivage.sale_start_time ? new Date(arrivage.sale_start_time) : undefined,
       pricePerPiece: hasOffers ? arrivage.offers[0].unit_price : undefined,
       quantity: arrivage.offers[0]?.available_units || 0,
       isPremium: arrivage.is_premium,
       dropPhotos: arrivage.drop_photos,
+      salePointId: arrivage.sale_point_id,
       fisherman: {
         name: arrivage.fishermen?.boat_name || 'Pêcheur',
         boat: arrivage.fishermen?.boat_name || '',
@@ -177,13 +193,13 @@ const Carte = () => {
     };
   }) || [];
 
-  // Transform arrivages for map markers (using only drop/port coordinates, not sale points)
+  // Transform arrivages for map markers
   const mapDrops = arrivages?.filter(arrivage => {
-    // Only use drop coords or port coords - sale point coords are not exposed publicly
     const lat = arrivage.latitude || arrivage.ports?.latitude;
     const lng = arrivage.longitude || arrivage.ports?.longitude;
     return lat && lng && arrivage.offers && arrivage.offers.length > 0;
   }).map(arrivage => {
+    const firstPhoto = arrivage.drop_photos?.sort((a, b) => a.display_order - b.display_order)?.[0]?.photo_url;
     return {
       id: arrivage.id,
       latitude: arrivage.latitude || arrivage.ports?.latitude || 0,
@@ -195,8 +211,47 @@ const Carte = () => {
         : 'À confirmer',
       fishermanName: arrivage.fishermen?.boat_name || 'Pêcheur',
       availableUnits: arrivage.offers[0]?.available_units || 0,
+      salePointId: arrivage.sale_point_id,
+      photoUrl: firstPhoto,
     };
   }) || [];
+
+  // Handlers for map marker clicks
+  const handleDropClick = (dropId: string | null) => {
+    if (dropId) {
+      setSelectedDropId(dropId);
+      setSelectedSalePointId(null);
+      setSelectedType('drop');
+      setSelectionOpen(true);
+    }
+  };
+
+  const handleSalePointClick = (salePointId: string | null) => {
+    if (salePointId && user) {
+      setSelectedSalePointId(salePointId);
+      setSelectedDropId(null);
+      setSelectedType('salePoint');
+      setSelectionOpen(true);
+    } else if (!user && salePointId) {
+      toast.info("Connectez-vous pour voir les détails des points de vente");
+    }
+  };
+
+  const handleClosePanel = () => {
+    setSelectionOpen(false);
+    setSelectedType(null);
+    setSelectedDropId(null);
+    setSelectedSalePointId(null);
+  };
+
+  // Get selected items for panel
+  const selectedDrop = selectedDropId ? mapDrops.find(d => d.id === selectedDropId) : null;
+  const selectedSalePoint = selectedSalePointId ? validSalePoints.find(sp => sp.id === selectedSalePointId) : null;
+  
+  // Find related drop for a sale point (if any active drop is at this sale point)
+  const relatedDrop = selectedSalePointId 
+    ? mapDrops.find(d => d.salePointId === selectedSalePointId) 
+    : null;
 
   const filteredArrivages = transformedArrivages.filter(arrivage => {
     const matchesSearch = !searchQuery || 
@@ -254,7 +309,11 @@ const Carte = () => {
               salePoints={validSalePoints}
               drops={mapDrops}
               selectedPortId={null}
+              selectedDropId={selectedDropId}
+              selectedSalePointId={selectedSalePointId}
               onPortClick={() => {}}
+              onDropClick={handleDropClick}
+              onSalePointClick={handleSalePointClick}
               userLocation={userLocation}
             />
           </div>
@@ -332,6 +391,17 @@ const Carte = () => {
           </div>
         )}
       </div>
+      
+      {/* Selection Panel */}
+      <MapSelectionPanel
+        isOpen={selectionOpen}
+        onClose={handleClosePanel}
+        selectedType={selectedType}
+        selectedDrop={selectedDrop}
+        selectedSalePoint={selectedSalePoint as any}
+        relatedDrop={relatedDrop}
+      />
+      
       <Footer />
     </div>
   );

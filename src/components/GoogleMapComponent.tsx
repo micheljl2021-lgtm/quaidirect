@@ -21,6 +21,13 @@ interface SalePoint {
   latitude: number;
   longitude: number;
   fisherman_id: string;
+  photo_url?: string;
+  fisherman?: {
+    id: string;
+    boat_name: string;
+    photo_url?: string;
+    slug?: string;
+  };
 }
 
 interface Drop {
@@ -88,6 +95,7 @@ const GoogleMapComponent = ({
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [activeInfoWindow, setActiveInfoWindow] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<'port' | 'salePoint' | 'drop' | null>(null);
+  const [hoverInfoWindow, setHoverInfoWindow] = useState<string | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const clustererRef = useRef<MarkerClusterer | null>(null);
 
@@ -270,6 +278,15 @@ const GoogleMapComponent = ({
         }
         setActiveInfoWindow(salePoint.id);
         setActiveType('salePoint');
+        setHoverInfoWindow(null); // Close hover on click
+      });
+
+      // Hover listeners for preview
+      marker.addListener('mouseover', () => {
+        setHoverInfoWindow(salePoint.id);
+      });
+      marker.addListener('mouseout', () => {
+        setHoverInfoWindow(null);
       });
 
       return marker;
@@ -501,27 +518,56 @@ const GoogleMapComponent = ({
         </InfoWindow>
       )}
 
-      {activeInfoWindow && activeType === 'salePoint' && salePoints.find(sp => sp.id === activeInfoWindow) && (
-        <InfoWindow
-          position={{
-            lat: salePoints.find(sp => sp.id === activeInfoWindow)!.latitude,
-            lng: salePoints.find(sp => sp.id === activeInfoWindow)!.longitude,
-          }}
-          onCloseClick={() => {
-            setActiveInfoWindow(null);
-            setActiveType(null);
-            if (onSalePointClick) onSalePointClick(null);
-          }}
-        >
-          <div className="p-2">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-lg">🐟</span>
-              <h3 className="font-semibold">{salePoints.find(sp => sp.id === activeInfoWindow)!.label}</h3>
+      {/* Hover InfoWindow for SalePoints (preview with photo) */}
+      {hoverInfoWindow && !activeInfoWindow && salePoints.find(sp => sp.id === hoverInfoWindow) && (() => {
+        const sp = salePoints.find(s => s.id === hoverInfoWindow)!;
+        return (
+          <InfoWindow
+            position={{ lat: sp.latitude, lng: sp.longitude }}
+            options={{ disableAutoPan: true }}
+          >
+            <div className="p-2 min-w-[150px]">
+              {sp.photo_url && (
+                <img
+                  src={sp.photo_url}
+                  alt={sp.label}
+                  className="w-full h-20 object-cover rounded mb-2"
+                />
+              )}
+              <h3 className="font-semibold text-sm">{sp.label}</h3>
             </div>
-            <p className="text-sm text-muted-foreground">{salePoints.find(sp => sp.id === activeInfoWindow)!.address}</p>
-          </div>
-        </InfoWindow>
-      )}
+          </InfoWindow>
+        );
+      })()}
+
+      {activeInfoWindow && activeType === 'salePoint' && salePoints.find(sp => sp.id === activeInfoWindow) && (() => {
+        const sp = salePoints.find(s => s.id === activeInfoWindow)!;
+        return (
+          <InfoWindow
+            position={{ lat: sp.latitude, lng: sp.longitude }}
+            onCloseClick={() => {
+              setActiveInfoWindow(null);
+              setActiveType(null);
+              if (onSalePointClick) onSalePointClick(null);
+            }}
+          >
+            <div className="p-2">
+              {sp.photo_url && (
+                <img
+                  src={sp.photo_url}
+                  alt={sp.label}
+                  className="w-full h-24 object-cover rounded mb-2"
+                />
+              )}
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-lg">⚓</span>
+                <h3 className="font-semibold">{sp.label}</h3>
+              </div>
+              <p className="text-sm text-muted-foreground">{sp.address}</p>
+            </div>
+          </InfoWindow>
+        );
+      })()}
 
       {activeInfoWindow && activeType === 'drop' && drops.find(d => d.id === activeInfoWindow) && (
         <InfoWindow
