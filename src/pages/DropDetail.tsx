@@ -26,7 +26,7 @@ const DropDetail = () => {
         .from('drops')
         .select(`
           *,
-          fishermen (
+          public_fishermen!fisherman_id (
             id,
             boat_name,
             company_name,
@@ -110,10 +110,12 @@ const DropDetail = () => {
     );
   }
 
-  const displayName = drop.fishermen
-    ? (drop.fishermen.display_name_preference === 'company_name'
-        ? (drop.fishermen.company_name || drop.fishermen.boat_name)
-        : drop.fishermen.boat_name)
+  // Use public_fishermen view for anonymous access
+  const fishermanData = (drop as any).public_fishermen;
+  const displayName = fishermanData
+    ? (fishermanData.display_name_preference === 'company_name'
+        ? (fishermanData.company_name || fishermanData.boat_name)
+        : fishermanData.boat_name)
     : 'Pêcheur inconnu';
 
   const photos = drop.drop_photos
@@ -168,16 +170,16 @@ const DropDetail = () => {
             <div className="flex items-start justify-between">
               <div className="space-y-2">
                 <CardTitle className="text-2xl">Arrivage de {displayName}</CardTitle>
-              {drop.fishermen?.is_ambassador && (
+              {fishermanData?.is_ambassador && (
                   <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500">
                     🏆 Ambassadeur
                   </Badge>
                 )}
               </div>
-              {drop.fishermen && (
+              {fishermanData && (
                 <Button
                   variant="outline"
-                  onClick={() => navigate(`/pecheurs/${drop.fishermen?.slug || drop.fishermen?.id}`)}
+                  onClick={() => navigate(`/pecheurs/${fishermanData?.slug || fishermanData?.id}`)}
                   className="gap-2"
                 >
                   <User className="h-4 w-4" aria-hidden="true" />

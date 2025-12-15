@@ -5,10 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useLoadScript, Autocomplete } from '@react-google-maps/api';
+import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
 import { MapPickerDialog } from './MapPickerDialog';
-
-const libraries: ("places")[] = ["places"];
+import { googleMapsLoaderConfig } from '@/lib/google-maps';
 
 interface Step6PointsVenteProps {
   formData: {
@@ -32,10 +31,8 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
   const autocomplete1Ref = useRef<google.maps.places.Autocomplete | null>(null);
   const autocomplete2Ref = useRef<google.maps.places.Autocomplete | null>(null);
 
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
-    libraries,
-  });
+  // Use centralized loader config to avoid multiple loads
+  const { isLoaded, loadError } = useJsApiLoader(googleMapsLoaderConfig);
 
   const handlePlaceChanged1 = useCallback(() => {
     if (autocomplete1Ref.current) {
