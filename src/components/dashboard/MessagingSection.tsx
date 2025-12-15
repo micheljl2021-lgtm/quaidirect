@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Mail, Send, MessageSquare, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 interface MessagingSectionProps {
   fishermanId: string;
@@ -28,8 +30,33 @@ const MessagingSection = ({ fishermanId }: MessagingSectionProps) => {
   const [selectedContacts, setSelectedContacts] = useState<any[]>([]);
   const [channel, setChannel] = useState<Channel>('email');
 
+  // Fetch latest drop for "new_drop" message type
+  const { data: latestDrop } = useQuery({
+    queryKey: ['latest-drop', fishermanId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('drops')
+        .select(`
+          id,
+          sale_start_time,
+          fisherman_sale_points (label, address),
+          ports (name, city),
+          drop_species (species:species_id (name))
+        `)
+        .eq('fisherman_id', fishermanId)
+        .in('status', ['scheduled', 'landed'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!fishermanId,
+  });
+
   // Fetch SMS quota
-  const { data: smsQuota, isLoading: quotaLoading, error: quotaError } = useQuery({
+  const { data: smsQuota, error: quotaError } = useQuery({
     queryKey: ['sms-quota'],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke('check-sms-quota');
@@ -44,11 +71,11 @@ const MessagingSection = ({ fishermanId }: MessagingSectionProps) => {
         free_remaining: number;
         paid_balance: number;
         total_available: number;
-        monthly_quota: number; // Fixed: was free_quota
+        monthly_quota: number;
         free_used: number;
       };
     },
-    retry: false, // Don't retry on Twilio config errors
+    retry: false,
   });
 
   // Check if Twilio/SMS is not configured
@@ -59,7 +86,15 @@ const MessagingSection = ({ fishermanId }: MessagingSectionProps) => {
   const contactsWithPhone = selectedContacts.filter(c => c.phone).length;
 
   const sendMessageMutation = useMutation({
-    mutationFn: async (data: { message_type: string; body: string; sent_to_group: string; contact_ids?: string[]; channel: Channel }) => {
+    mutationFn: async (data: { 
+      message_type: string; 
+      body: string; 
+      sent_to_group: string; 
+      contact_ids?: string[]; 
+      channel: Channel;
+      drop_id?: string;
+      drop_details?: { time?: string; location?: string; species?: string };
+    }) => {
       const { data: result, error } = await supabase.functions.invoke('send-fisherman-message', {
         body: data
       });
@@ -124,12 +159,37 @@ const MessagingSection = ({ fishermanId }: MessagingSectionProps) => {
 
     const contactIds = selectedContacts.map(c => c.id);
 
+    // Build drop_details for new_drop messages
+    let dropDetails = undefined;
+    if (messageType === 'new_drop' && latestDrop) {
+      const location = latestDrop.fisherman_sale_points?.label 
+        || latestDrop.ports?.name 
+        || 'Point de vente';
+      
+      const speciesNames = latestDrop.drop_species
+        ?.map((ds: any) => ds.species?.name)
+        .filter(Boolean)
+        .join(', ') || '';
+      
+      const time = latestDrop.sale_start_time 
+        ? format(new Date(latestDrop.sale_start_time), "EEEE d MMMM 'à' HH:mm", { locale: fr })
+        : '';
+      
+      dropDetails = {
+        time,
+        location,
+        species: speciesNames,
+      };
+    }
+
     sendMessageMutation.mutate({
       message_type: messageType,
       body: messageBody,
       sent_to_group: selectedGroup,
       contact_ids: contactIds,
       channel,
+      drop_id: messageType === 'new_drop' && latestDrop ? latestDrop.id : undefined,
+      drop_details: dropDetails,
     });
   };
 
