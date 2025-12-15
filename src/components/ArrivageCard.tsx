@@ -1,4 +1,5 @@
 import { useState, memo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -53,7 +54,7 @@ const ArrivageCard = ({
   canReserve = false,
   variant = 'compact'
 }: ArrivageCardProps) => {
-  // id is used for memo comparison and future click handlers
+  const navigate = useNavigate();
   const [imgError, setImgError] = useState(false);
   const displayTime = saleStartTime || eta;
   const timeToSale = formatDistanceToNow(displayTime, { addSuffix: true, locale: fr });
@@ -74,9 +75,13 @@ const ArrivageCard = ({
   const stockPercentage = availableUnits && totalUnits 
     ? (availableUnits / totalUnits) * 100 
     : 100;
+
+  const handleCardClick = () => {
+    navigate(`/drop/${id}`);
+  };
   
   return (
-    <Card className="group overflow-hidden hover:shadow-ocean transition-all duration-300 cursor-pointer">
+    <Card className="group overflow-hidden hover:shadow-ocean transition-all duration-300 cursor-pointer" onClick={handleCardClick}>
       {/* Images du point de vente */}
       {displayPhotos && displayPhotos.length > 0 ? (
         <div className="relative">
