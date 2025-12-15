@@ -67,13 +67,20 @@ serve(async (req) => {
       auth: { persistSession: false },
     });
 
-    // Rate limiting - use IP address for unauthenticated endpoint
-    const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
-    const { allowed, remaining } = await checkRateLimit(supabaseClient, clientIP, 'get-public-sale-points');
+    // Rate limiting - build robust identifier (avoid "unknown" global)
+    const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+      || req.headers.get('x-real-ip')
+      || 'noip';
+    const userAgent = req.headers.get('user-agent') || 'no-ua';
+    // Create hash-like identifier from IP + shortened user-agent
+    const uaHash = userAgent.substring(0, 32);
+    const identifier = `${clientIP}:${uaHash}`;
+    
+    const { allowed, remaining } = await checkRateLimit(supabaseClient, identifier, 'get-public-sale-points');
     if (!allowed) {
-      console.log(`[GET-PUBLIC-SALE-POINTS] Rate limit exceeded for IP ${clientIP}`);
+      console.log(`[GET-PUBLIC-SALE-POINTS] Rate limit exceeded for identifier: ${identifier}`);
       return new Response(
-        JSON.stringify({ error: 'Trop de requêtes. Veuillez patienter.' }),
+        JSON.stringify({ error: 'Trop de requêtes. Veuillez patienter une minute.' }),
         {
           headers: { 
             ...corsHeaders, 
