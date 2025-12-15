@@ -19,7 +19,7 @@ import fishermanBoatImage from "@/assets/landing/fisherman-boat.jpg";
 import pecheDurableLogo from "@/assets/logo-peche-durable.png";
 
 import { useLandingStats } from "@/hooks/useLandingStats";
-import { useSalePoints, findSalePointById } from "@/hooks/useSalePoints";
+// Note: useSalePoints removed - sale points not exposed to anonymous users
 
 // Contact Section Component
 function ContactSection() {
@@ -171,12 +171,12 @@ const Landing = () => {
   const navigate = useNavigate();
   const { fishermenCount, usersCount } = useLandingStats();
   
-  // Fetch sale points via centralized hook (cached 10 min)
-  const { data: salePoints } = useSalePoints();
+  // Note: Sale points NOT fetched for anonymous users (security rule)
+  // We use a simple fallback text for arrivals without port
 
   // Fetch latest arrivages for preview
   const { data: latestArrivages } = useQuery({
-    queryKey: ['latest-arrivages', salePoints?.length],
+    queryKey: ['latest-arrivages'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('drops')
@@ -185,7 +185,6 @@ const Landing = () => {
           eta_at,
           sale_start_time,
           is_premium,
-          sale_point_id,
           ports (
             id,
             name,
@@ -212,30 +211,25 @@ const Landing = () => {
 
       if (error) throw error;
 
-      return data?.map(arrivage => {
-        const salePoint = findSalePointById(salePoints, arrivage.sale_point_id);
-
-        return {
-          id: arrivage.id,
-          species: arrivage.offers[0]?.species?.name || 'Poisson',
-          scientificName: arrivage.offers[0]?.species?.scientific_name || '',
-          port: arrivage.ports?.name || salePoint?.address || salePoint?.label || 'Point de vente',
-          eta: new Date(arrivage.eta_at),
-          saleStartTime: arrivage.sale_start_time ? new Date(arrivage.sale_start_time) : undefined,
-          pricePerPiece: arrivage.offers[0]?.unit_price || 0,
-          quantity: arrivage.offers[0]?.available_units || 0,
-          isPremium: arrivage.is_premium,
-          fisherman: {
-            name: arrivage.fishermen?.boat_name || 'Pêcheur',
-            boat: arrivage.fishermen?.boat_name || '',
-            isAmbassador: arrivage.fishermen?.is_ambassador || false,
-            isPartnerAmbassador: arrivage.fishermen?.is_ambassador && arrivage.fishermen?.ambassador_slot === 1,
-          },
-        };
-      }) || [];
+      return data?.map(arrivage => ({
+        id: arrivage.id,
+        species: arrivage.offers[0]?.species?.name || 'Poisson',
+        scientificName: arrivage.offers[0]?.species?.scientific_name || '',
+        port: arrivage.ports?.name || 'Point de vente',
+        eta: new Date(arrivage.eta_at),
+        saleStartTime: arrivage.sale_start_time ? new Date(arrivage.sale_start_time) : undefined,
+        pricePerPiece: arrivage.offers[0]?.unit_price || 0,
+        quantity: arrivage.offers[0]?.available_units || 0,
+        isPremium: arrivage.is_premium,
+        fisherman: {
+          name: arrivage.fishermen?.boat_name || 'Pêcheur',
+          boat: arrivage.fishermen?.boat_name || '',
+          isAmbassador: arrivage.fishermen?.is_ambassador || false,
+          isPartnerAmbassador: arrivage.fishermen?.is_ambassador && arrivage.fishermen?.ambassador_slot === 1,
+        },
+      })) || [];
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes for arrivals
-    enabled: !!salePoints, // Wait for sale points to be loaded
+    staleTime: 2 * 60 * 1000,
   });
 
   // Fetch latest offer photos for carousel

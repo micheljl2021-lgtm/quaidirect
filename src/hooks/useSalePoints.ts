@@ -22,12 +22,12 @@ interface SalePoint {
   } | null;
 }
 
-interface UseSalePointsOptions {
+export interface UseSalePointsOptions {
   enabled?: boolean;
   userId?: string;
 }
 
-interface UseSalePointsResult {
+export interface UseSalePointsResult {
   data: SalePoint[] | undefined;
   isLoading: boolean;
   isError: boolean;
@@ -40,12 +40,15 @@ interface UseSalePointsResult {
  * IMPORTANT: Requiert une authentification (verify_jwt=true)
  * - Si userId est absent ou enabled=false: aucun appel réseau, retourne []
  * - Si 401/403: retourne [] avec flag isUnauthorized=true
+ * 
+ * @param options.userId - L'ID utilisateur authentifié (obligatoire pour fetch)
+ * @param options.enabled - Active/désactive le fetch (default: true)
  */
-export const useSalePoints = (options?: UseSalePointsOptions): UseSalePointsResult => {
-  const { enabled = true, userId } = options || {};
+export const useSalePoints = (options: UseSalePointsOptions = {}): UseSalePointsResult => {
+  const { enabled = true, userId } = options;
   
   // Only fetch if user is authenticated AND enabled
-  const shouldFetch = !!userId && enabled !== false;
+  const shouldFetch = !!userId && enabled;
 
   const query = useQuery<SalePoint[], Error>({
     queryKey: ['sale-points', userId || 'anonymous'],
