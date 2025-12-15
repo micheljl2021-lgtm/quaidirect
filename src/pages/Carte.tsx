@@ -9,12 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useSalePoints } from "@/hooks/useSalePoints";
 import { Search, Fish, Locate, Loader2, AlertTriangle } from "lucide-react";
 import { LIMITS } from "@/lib/constants";
 
 type GeoStatus = 'idle' | 'loading' | 'granted' | 'denied' | 'error';
 
 const Carte = () => {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [geoStatus, setGeoStatus] = useState<GeoStatus>('idle');
@@ -70,8 +73,13 @@ const Carte = () => {
     requestGeolocation();
   }, [requestGeolocation]);
 
-  // Sale points are no longer exposed publicly on the map
-  // Fishermen locations are only visible through their arrivals (drops)
+  // Sale points: only fetch for authenticated users
+  const { data: salePointsData } = useSalePoints();
+  
+  // Filter sale points: only show for authenticated users with valid lat/lng
+  const validSalePoints = user && salePointsData
+    ? salePointsData.filter(sp => sp.latitude != null && sp.longitude != null)
+    : [];
 
   // Fetch real ports from database
   const { data: ports } = useQuery({
@@ -86,8 +94,6 @@ const Carte = () => {
       return data;
     },
   });
-
-  // Sale point click handler removed - no longer displaying sale points publicly
 
   // Fetch real arrivages from database (without joining sale points to avoid RLS)
   const { data: arrivages, isLoading: arrivagesLoading } = useQuery({
@@ -241,7 +247,7 @@ const Carte = () => {
           <div className="aspect-video md:aspect-[21/9] rounded-lg overflow-hidden border border-border shadow-lg">
             <GoogleMapComponent 
               ports={ports || []}
-              salePoints={[]} // Sale points not exposed publicly
+              salePoints={validSalePoints}
               drops={mapDrops}
               selectedPortId={null}
               onPortClick={() => {}}
