@@ -5,22 +5,16 @@ import Footer from "@/components/Footer";
 import ArrivageCard from "@/components/ArrivageCard";
 import { ArrivageCardSkeletonGrid } from "@/components/ArrivageCardSkeleton";
 import GoogleMapComponent from "@/components/GoogleMapComponent";
-import SalePointDrawer from "@/components/SalePointDrawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
-import { Filter, Search, MapPin, Fish, Locate, Loader2, AlertTriangle } from "lucide-react";
-import { useSalePoints } from "@/hooks/useSalePoints";
+import { Search, Fish, Locate, Loader2, AlertTriangle } from "lucide-react";
 import { LIMITS } from "@/lib/constants";
 
 type GeoStatus = 'idle' | 'loading' | 'granted' | 'denied' | 'error';
 
 const Carte = () => {
-  const [selectedSalePoint, setSelectedSalePoint] = useState<any | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [geoStatus, setGeoStatus] = useState<GeoStatus>('idle');
@@ -76,8 +70,8 @@ const Carte = () => {
     requestGeolocation();
   }, [requestGeolocation]);
 
-  // Fetch sale points via centralized hook (cached 10 min)
-  const { data: salePoints } = useSalePoints();
+  // Sale points are no longer exposed publicly on the map
+  // Fishermen locations are only visible through their arrivals (drops)
 
   // Fetch real ports from database
   const { data: ports } = useQuery({
@@ -93,13 +87,7 @@ const Carte = () => {
     },
   });
 
-  const handleSalePointClick = (salePointId: string) => {
-    const salePoint = salePoints?.find(sp => sp.id === salePointId);
-    if (salePoint) {
-      setSelectedSalePoint(salePoint);
-      setDrawerOpen(true);
-    }
-  };
+  // Sale point click handler removed - no longer displaying sale points publicly
 
   // Fetch real arrivages from database (without joining sale points to avoid RLS)
   const { data: arrivages, isLoading: arrivagesLoading } = useQuery({
@@ -156,17 +144,14 @@ const Carte = () => {
     refetchInterval: 30000,
   });
 
-  // Trouver le point de vente associé pour chaque arrivage
+  // Transform arrivages for display (no sale point data exposed)
   const transformedArrivages = arrivages?.map(arrivage => {
-    const salePoint = salePoints?.find((sp: any) => sp.id === arrivage.sale_point_id);
     const hasOffers = arrivage.offers && arrivage.offers.length > 0 && arrivage.offers[0]?.unit_price;
     return {
       id: arrivage.id,
       species: arrivage.offers[0]?.species?.name || 'Poisson',
       scientificName: arrivage.offers[0]?.species?.scientific_name || '',
-      port: arrivage.ports?.name
-        ? arrivage.ports.name
-        : (salePoint?.address || salePoint?.label || 'Point de vente'),
+      port: arrivage.ports?.name || 'Lieu de vente',
       eta: new Date(arrivage.eta_at),
       saleStartTime: arrivage.sale_start_time ? new Date(arrivage.sale_start_time) : undefined,
       pricePerPiece: hasOffers ? arrivage.offers[0].unit_price : undefined,
@@ -182,21 +167,17 @@ const Carte = () => {
     };
   }) || [];
 
-  // Transform arrivages for map markers
+  // Transform arrivages for map markers (using only drop/port coordinates, not sale points)
   const mapDrops = arrivages?.filter(arrivage => {
-    const salePoint = salePoints?.find((sp: any) => sp.id === arrivage.sale_point_id);
-
-    // Vérifier qu'on a des coordonnées (priorité: drop coords > sale point > port)
-    const lat = arrivage.latitude || salePoint?.latitude || arrivage.ports?.latitude;
-    const lng = arrivage.longitude || salePoint?.longitude || arrivage.ports?.longitude;
+    // Only use drop coords or port coords - sale point coords are not exposed publicly
+    const lat = arrivage.latitude || arrivage.ports?.latitude;
+    const lng = arrivage.longitude || arrivage.ports?.longitude;
     return lat && lng && arrivage.offers && arrivage.offers.length > 0;
   }).map(arrivage => {
-    const salePoint = salePoints?.find((sp: any) => sp.id === arrivage.sale_point_id);
-
     return {
       id: arrivage.id,
-      latitude: arrivage.latitude || salePoint?.latitude || arrivage.ports?.latitude || 0,
-      longitude: arrivage.longitude || salePoint?.longitude || arrivage.ports?.longitude || 0,
+      latitude: arrivage.latitude || arrivage.ports?.latitude || 0,
+      longitude: arrivage.longitude || arrivage.ports?.longitude || 0,
       species: arrivage.offers[0]?.species?.name || 'Poisson',
       price: arrivage.offers[0]?.unit_price || 0,
       saleTime: arrivage.sale_start_time
@@ -260,11 +241,10 @@ const Carte = () => {
           <div className="aspect-video md:aspect-[21/9] rounded-lg overflow-hidden border border-border shadow-lg">
             <GoogleMapComponent 
               ports={ports || []}
-              salePoints={salePoints || []}
+              salePoints={[]} // Sale points not exposed publicly
               drops={mapDrops}
               selectedPortId={null}
               onPortClick={() => {}}
-              onSalePointClick={handleSalePointClick}
               userLocation={userLocation}
             />
           </div>
@@ -299,12 +279,7 @@ const Carte = () => {
           </div>
         </div>
 
-        {/* Sale Point Drawer */}
-        <SalePointDrawer
-          open={drawerOpen}
-          onOpenChange={setDrawerOpen}
-          salePoint={selectedSalePoint}
-        />
+        {/* Sale Point Drawer removed - no longer exposing sale points publicly */}
 
         {/* Arrivages grid */}
         {arrivagesLoading ? (

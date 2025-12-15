@@ -107,9 +107,9 @@ const App = () => (
             <Route path="/ambassadeur-partenaire" element={<LazyRoute><AmbassadorPartner /></LazyRoute>} />
             <Route path="/drop/:id" element={<LazyRoute><DropDetail /></LazyRoute>} />
             <Route path="/pecheurs/:slug" element={<LazyRoute><FisherProfile /></LazyRoute>} />
-            {/* Redirect /boutique/:slug and /p/:slug to /pecheurs/:slug for backward compatibility */}
+            {/* Legacy routes: render FisherProfile directly to preserve slug */}
             <Route path="/boutique/:slug" element={<LazyRoute><FisherProfile /></LazyRoute>} />
-            <Route path="/p/:slug" element={<RedirectWithParams to="/pecheurs" />} />
+            <Route path="/p/:slug" element={<LazyRoute><FisherProfile /></LazyRoute>} />
             <Route path="/reset-password" element={<LazyRoute><ResetPassword /></LazyRoute>} />
             <Route path="/onboarding/confirmation" element={<LazyRoute><OnboardingConfirmation /></LazyRoute>} />
             <Route path="/secure/profile/edit" element={<LazyRoute><SecureProfileEdit /></LazyRoute>} />
