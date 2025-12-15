@@ -436,10 +436,10 @@ const PecheurPayment = () => {
                   <Gift className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="font-medium text-green-900 mb-2">
-                      🎁 Profitez de 30 jours d'essai gratuit (Standard & Pro)
+                      🎁 Profitez de 7 jours d'essai gratuit (Standard & Pro)
                     </p>
                     <p className="text-sm text-green-800">
-                      Votre carte bancaire sera vérifiée mais <strong>pas débitée</strong> pendant 30 jours. 
+                      Votre carte bancaire sera vérifiée mais <strong>pas débitée</strong> pendant 7 jours. 
                       Vous pouvez annuler à tout moment avant la fin de l'essai sans frais.
                     </p>
                   </div>
