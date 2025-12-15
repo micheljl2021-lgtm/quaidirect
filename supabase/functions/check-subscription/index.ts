@@ -53,12 +53,12 @@ serve(async (req) => {
     const user = userData.user;
     logStep('User authenticated', { userId: user.id });
 
-    // Check for active subscription in payments table
+    // Check for active or trialing subscription in payments table
     const { data: payment, error: paymentError } = await supabaseClient
       .from('payments')
       .select('*')
       .eq('user_id', user.id)
-      .eq('status', 'active')
+      .in('status', ['active', 'trialing'])
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -68,7 +68,33 @@ serve(async (req) => {
       throw paymentError;
     }
 
+    // If no payment found, check user_roles as fallback (for cases where payment processing is delayed)
     if (!payment) {
+      logStep('No active payment found, checking user_roles fallback');
+      
+      const { data: premiumRole } = await supabaseClient
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'premium')
+        .maybeSingle();
+      
+      if (premiumRole) {
+        logStep('Premium role found in user_roles (fallback)');
+        return new Response(
+          JSON.stringify({ 
+            subscribed: true, 
+            plan: 'premium',
+            currentPeriodEnd: null,
+            fallback: true
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          }
+        );
+      }
+      
       logStep('No active subscription found');
       return new Response(
         JSON.stringify({ 
