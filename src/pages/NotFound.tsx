@@ -7,7 +7,10 @@ const NotFound = () => {
   const [countdown, setCountdown] = useState(3);
 
   useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
+    // Log 404 only in development
+    if (import.meta.env.DEV) {
+      console.error("404 Error:", location.pathname);
+    }
     
     // Auto-redirect after countdown
     const interval = setInterval(() => {

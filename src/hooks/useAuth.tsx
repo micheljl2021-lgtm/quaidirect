@@ -206,9 +206,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // Force local logout - always clears localStorage even if session doesn't exist on server
       await supabase.auth.signOut({ scope: 'local' });
-    } catch (error) {
+    } catch {
       // Ignore errors - we'll clean up locally anyway
-      console.log('Logout error (ignored):', error);
     }
     
     // Always reset local state, regardless of API response

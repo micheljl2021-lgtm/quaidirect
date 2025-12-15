@@ -57,8 +57,6 @@ const EditSalePoints = lazy(() => import("./pages/EditSalePoints"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const MarineAIRefactored = lazy(() => import("./pages/MarineAIRefactored"));
 const CreateArrivageWizard = lazy(() => import("./pages/CreateArrivageWizard"));
-const PecheursLanding = lazy(() => import("./pages/PecheursLanding"));
-
 const PecheurWallet = lazy(() => import("./pages/PecheurWallet"));
 const AdminPushTest = lazy(() => import("./pages/AdminPushTest"));
 
@@ -87,11 +85,9 @@ const App = () => (
       <BrowserRouter>
         <MaintenanceGuard>
           <Routes>
-            {/* Pre-launch page - covers the main landing */}
+            {/* Main landing page */}
             <Route path="/" element={<Landing />} />
-            {/* Original landing - accessible at /home for testing */}
-            <Route path="/home" element={<Landing />} />
-          <Route path="/auth" element={<Auth />} />
+            <Route path="/auth" element={<Auth />} />
 
             {/* Lazy-loaded public routes */}
             <Route path="/carte" element={<LazyRoute><Carte /></LazyRoute>} />
@@ -108,7 +104,8 @@ const App = () => (
             <Route path="/arrivages" element={<LazyRoute><Arrivages /></LazyRoute>} />
             <Route path="/comment-ca-marche" element={<LazyRoute><CommentCaMarche /></LazyRoute>} />
             <Route path="/devenir-pecheur" element={<LazyRoute><DevenirPecheur /></LazyRoute>} />
-            <Route path="/pecheurs" element={<LazyRoute><PecheursLanding /></LazyRoute>} />
+            {/* Redirect legacy routes to canonical page */}
+            <Route path="/pecheurs" element={<Navigate to="/devenir-pecheur" replace />} />
             <Route path="/pecheurs/tarifs" element={<Navigate to="/devenir-pecheur" replace />} />
             <Route path="/ambassadeur-partenaire" element={<LazyRoute><AmbassadorPartner /></LazyRoute>} />
             <Route path="/drop/:id" element={<LazyRoute><DropDetail /></LazyRoute>} />
