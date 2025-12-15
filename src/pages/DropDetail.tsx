@@ -194,7 +194,11 @@ const DropDetail = () => {
               <span>
                 {drop.ports 
                   ? `${drop.ports.name}, ${drop.ports.city}`
-                  : drop.fisherman_sale_points?.label || 'Point de vente'}
+                  : user 
+                    ? (drop.fisherman_sale_points?.label 
+                        ? `${drop.fisherman_sale_points.label}${drop.fisherman_sale_points.address ? ` - ${drop.fisherman_sale_points.address}` : ''}`
+                        : 'Point de vente partenaire')
+                    : 'Point de vente partenaire'}
               </span>
             </div>
             {saleDateTime && (

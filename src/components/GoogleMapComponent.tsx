@@ -70,11 +70,8 @@ const GoogleMapComponent = ({
   const [hasTimedOut, setHasTimedOut] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { isLoaded, loadError } = useJsApiLoader({
-    ...googleMapsLoaderConfig,
-    // Force reload on retry
-    id: `google-map-script-${loadAttempt}`,
-  });
+  // Use centralized loader config - do NOT override the id to prevent multiple loads
+  const { isLoaded, loadError } = useJsApiLoader(googleMapsLoaderConfig);
 
   const mapOptions = useMemo(() => ({
     styles: quaiDirectMapStyles,
@@ -127,10 +124,11 @@ const GoogleMapComponent = ({
   }, [isLoaded, loadError]);
 
   const handleRetry = useCallback(() => {
-    console.info('[Google Maps] Retrying load...');
+    console.info('[Google Maps] Retrying by reloading page...');
     setHasTimedOut(false);
+    // Use loadAttempt to force re-render of GoogleMap component, not to reload API
     setLoadAttempt(prev => prev + 1);
-    // Force page reload for clean API reload
+    // Page reload is the safest way to retry Google Maps API
     window.location.reload();
   }, []);
 

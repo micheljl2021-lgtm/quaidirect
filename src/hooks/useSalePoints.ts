@@ -22,29 +22,55 @@ interface SalePoint {
   } | null;
 }
 
+interface UseSalePointsOptions {
+  enabled?: boolean;
+  userId?: string;
+}
+
+interface UseSalePointsResult {
+  data: SalePoint[] | undefined;
+  isLoading: boolean;
+  isError: boolean;
+  isUnauthorized: boolean;
+  error: Error | null;
+}
+
 /**
- * Hook centralisé pour récupérer les points de vente publics
- * Utilise supabase.functions.invoke pour gérer l'auth automatiquement
- * Retourne un tableau vide si non autorisé (401) sans erreur bloquante
+ * Hook centralisé pour récupérer les points de vente
+ * IMPORTANT: Requiert une authentification (verify_jwt=true)
+ * - Si userId est absent ou enabled=false: aucun appel réseau, retourne []
+ * - Si 401/403: retourne [] avec flag isUnauthorized=true
  */
-export const useSalePoints = () => {
-  return useQuery<SalePoint[]>({
-    queryKey: ['sale-points-public'],
+export const useSalePoints = (options?: UseSalePointsOptions): UseSalePointsResult => {
+  const { enabled = true, userId } = options || {};
+  
+  // Only fetch if user is authenticated AND enabled
+  const shouldFetch = !!userId && enabled !== false;
+
+  const query = useQuery<SalePoint[], Error>({
+    queryKey: ['sale-points', userId || 'anonymous'],
     queryFn: async (): Promise<SalePoint[]> => {
+      // Double-check: don't fetch if no userId
+      if (!userId) {
+        console.log('[useSalePoints] No userId - returning empty array (no network call)');
+        return [];
+      }
+
       const { data, error } = await supabase.functions.invoke('get-public-sale-points');
       
-      // Si 401 ou erreur d'auth, retourner tableau vide sans throw
+      // If 401/403 or auth error, return empty array without throw
       if (error) {
-        // Check for auth-related errors (401, unauthorized, etc.)
         const errorMessage = error.message?.toLowerCase() || '';
         if (
           errorMessage.includes('401') ||
+          errorMessage.includes('403') ||
           errorMessage.includes('unauthorized') ||
           errorMessage.includes('jwt') ||
           errorMessage.includes('auth')
         ) {
-          console.log('[useSalePoints] Unauthorized - returning empty array for public access');
-          return [];
+          console.log('[useSalePoints] Unauthorized - returning empty array');
+          // Return empty but let isError be true for isUnauthorized detection
+          throw new Error('UNAUTHORIZED');
         }
         console.error('[useSalePoints] Error:', error);
         throw error;
@@ -56,7 +82,6 @@ export const useSalePoints = () => {
       
       // Normalize fishermen key and cast to proper type
       return data.map((sp: Record<string, unknown>): SalePoint => {
-        // Check for technical prefix key from Supabase join
         const fishermenKey = Object.keys(sp).find(k => k.startsWith('fishermen'));
         const fishermen = fishermenKey ? sp[fishermenKey] : null;
         
@@ -74,11 +99,23 @@ export const useSalePoints = () => {
         };
       });
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes - sale points rarely change
-    gcTime: 30 * 60 * 1000, // 30 minutes garbage collection
-    refetchOnWindowFocus: false, // Don't refetch on window focus
-    retry: false, // Don't retry on auth errors
+    enabled: shouldFetch, // Prevents any network call if user not authenticated
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnWindowFocus: false,
+    retry: false,
   });
+
+  // Detect unauthorized error
+  const isUnauthorized = query.isError && query.error?.message === 'UNAUTHORIZED';
+
+  return {
+    data: query.isError ? [] : query.data,
+    isLoading: query.isLoading,
+    isError: query.isError && !isUnauthorized,
+    isUnauthorized,
+    error: isUnauthorized ? null : query.error,
+  };
 };
 
 /**

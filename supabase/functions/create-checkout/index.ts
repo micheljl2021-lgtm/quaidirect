@@ -2,17 +2,34 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-// Allowed origins for CORS and security
-const ALLOWED_ORIGINS = [
-  'https://quaidirect.fr',
-  'https://www.quaidirect.fr',
-  'http://localhost:5173',
-  'http://localhost:3000',
-];
+// Read allowed origins from env or use defaults (production + staging + local)
+const envOrigins = Deno.env.get('ALLOWED_ORIGINS');
+const ALLOWED_ORIGINS = envOrigins
+  ? envOrigins.split(',').map(o => o.trim()).filter(Boolean)
+  : [
+      'https://quaidirect.fr',
+      'https://www.quaidirect.fr',
+      'https://staging.quaidirect.fr',
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://localhost:8080',
+    ];
+
+// Also allow Lovable preview domains dynamically
+const LOVABLE_PREVIEW_PATTERN = /^https:\/\/[a-z0-9-]+\.lovableproject\.com$/;
+const LOVABLE_DEV_PATTERN = /^https:\/\/[a-z0-9-]+\.lovable\.dev$/;
+
+const isOriginAllowed = (origin: string | null): boolean => {
+  if (!origin) return false;
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  if (LOVABLE_PREVIEW_PATTERN.test(origin)) return true;
+  if (LOVABLE_DEV_PATTERN.test(origin)) return true;
+  return false;
+};
 
 const getCorsHeaders = (origin: string | null): Record<string, string> => {
   // Validate origin against allowlist
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allowedOrigin = isOriginAllowed(origin) ? origin! : ALLOWED_ORIGINS[0];
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -33,8 +50,8 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Security: Validate origin
-  if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
+  // Security: Validate origin against allowlist and patterns
+  if (!isOriginAllowed(origin)) {
     logStep('SECURITY: Rejected request from unauthorized origin', { origin });
     return new Response(
       JSON.stringify({ error: 'Accès non autorisé' }),
