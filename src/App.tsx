@@ -58,7 +58,7 @@ const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const MarineAIRefactored = lazy(() => import("./pages/MarineAIRefactored"));
 const CreateArrivageWizard = lazy(() => import("./pages/CreateArrivageWizard"));
 const PecheursLanding = lazy(() => import("./pages/PecheursLanding"));
-const PecheursTarifs = lazy(() => import("./pages/PecheursTarifs"));
+
 const PecheurWallet = lazy(() => import("./pages/PecheurWallet"));
 const AdminPushTest = lazy(() => import("./pages/AdminPushTest"));
 
@@ -109,7 +109,7 @@ const App = () => (
             <Route path="/comment-ca-marche" element={<LazyRoute><CommentCaMarche /></LazyRoute>} />
             <Route path="/devenir-pecheur" element={<LazyRoute><DevenirPecheur /></LazyRoute>} />
             <Route path="/pecheurs" element={<LazyRoute><PecheursLanding /></LazyRoute>} />
-            <Route path="/pecheurs/tarifs" element={<LazyRoute><PecheursTarifs /></LazyRoute>} />
+            <Route path="/pecheurs/tarifs" element={<Navigate to="/devenir-pecheur" replace />} />
             <Route path="/ambassadeur-partenaire" element={<LazyRoute><AmbassadorPartner /></LazyRoute>} />
             <Route path="/drop/:id" element={<LazyRoute><DropDetail /></LazyRoute>} />
             <Route path="/pecheurs/:slug" element={<LazyRoute><FisherProfile /></LazyRoute>} />

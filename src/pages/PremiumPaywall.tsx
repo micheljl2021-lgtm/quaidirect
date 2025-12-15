@@ -38,7 +38,7 @@ const CLIENT_LEVELS = {
       { icon: Crown, title: "✨ Badge Premium visible" },
       { icon: Heart, title: "🎣 Choix d'un pêcheur favori à soutenir" },
     ],
-    badgeAnnual: "2 mois offerts",
+    badgeAnnual: "7 jours d'essai gratuit",
   },
   premiumPlus: {
     name: "Premium+",
@@ -55,7 +55,7 @@ const CLIENT_LEVELS = {
       { icon: Star, title: "🌟 Badge Premium+ distinctif" },
       { icon: Heart, title: "🎣 Choix d'un pêcheur favori à soutenir" },
     ],
-    badgeAnnual: "2 mois offerts",
+    badgeAnnual: "7 jours d'essai gratuit",
   },
 };
 

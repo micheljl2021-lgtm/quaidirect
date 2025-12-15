@@ -192,7 +192,7 @@ supabase/
 ## 💳 Flux d'abonnement Pêcheur
 
 1. L'utilisateur choisit un plan (Basic 150€/an ou Pro 199€/an)
-2. Redirection vers Stripe Checkout (30 jours d'essai)
+2. Redirection vers Stripe Checkout (7 jours d'essai)
 3. Webhook Stripe → création du paiement en base
 4. Redirection vers formulaire d'onboarding
 5. Validation admin → accès au dashboard pêcheur

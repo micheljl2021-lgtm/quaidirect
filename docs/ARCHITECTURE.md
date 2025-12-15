@@ -187,8 +187,8 @@ public/                  # Assets statiques, SW, manifest
 
 | Plan | Prix | Trial | Stripe Price ID |
 |------|------|-------|-----------------|
-| Fisherman Basic | 150€/an | 30 jours | `price_BASIC_150_YEAR` |
-| Fisherman Pro | 199€/an | 30 jours | `price_PRO_199_YEAR` |
+| Fisherman Basic | 150€/an | 7 jours | `price_BASIC_150_YEAR` |
+| Fisherman Pro | 199€/an | 7 jours | `price_PRO_199_YEAR` |
 | Client Premium | 25€/an | - | `price_PREMIUM_ANNUAL_25` |
 | Client Premium | 2.50€/mois | - | `price_PREMIUM_MONTHLY_2_50` |
 
