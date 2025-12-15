@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { AlertTriangle } from 'lucide-react';
 import { 
   MapPin, 
   Fish, 
@@ -26,6 +27,7 @@ import {
   Clock,
   ArrowLeft
 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import PushNotificationToggle from '@/components/PushNotificationToggle';
 
 const FisherProfile = () => {
@@ -204,6 +206,9 @@ const FisherProfile = () => {
     );
   }
 
+  // Check if profile is not yet verified
+  const isUnverified = !fisherman.verified_at;
+
   // Collect photos for carousel
   const photos = [fisherman.photo_boat_1, fisherman.photo_boat_2, fisherman.photo_dock_sale]
     .filter(Boolean) as string[];
@@ -307,6 +312,16 @@ const FisherProfile = () => {
 
       {/* Main Content */}
       <div className="container max-w-5xl px-4 py-8">
+        {/* Unverified Profile Warning */}
+        {isUnverified && (
+          <Alert className="mb-6 border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
+            <AlertTriangle className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-800 dark:text-amber-200">
+              Ce profil est en cours de validation par notre équipe. Certaines fonctionnalités peuvent être limitées.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* CTA Principal + Stats */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
