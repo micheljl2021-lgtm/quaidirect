@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-maps/api';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import { MapPin, AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { googleMapsLoaderConfig, defaultMapConfig, quaiDirectMapStyles, isGoogleMapsConfigured } from '@/lib/google-maps';
 import { Button } from '@/components/ui/button';
 
@@ -66,6 +67,7 @@ const GoogleMapComponent = ({
   onDropClick,
   userLocation,
 }: GoogleMapComponentProps) => {
+  const navigate = useNavigate();
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [hasTimedOut, setHasTimedOut] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -124,12 +126,10 @@ const GoogleMapComponent = ({
   }, [isLoaded, loadError]);
 
   const handleRetry = useCallback(() => {
-    console.info('[Google Maps] Retrying by reloading page...');
+    console.info('[Google Maps] Retrying by re-mounting map...');
     setHasTimedOut(false);
-    // Use loadAttempt to force re-render of GoogleMap component, not to reload API
+    // Force re-mount of the GoogleMap component (does not reload the whole page)
     setLoadAttempt(prev => prev + 1);
-    // Page reload is the safest way to retry Google Maps API
-    window.location.reload();
   }, []);
 
   const onLoad = useCallback((map: google.maps.Map) => {
@@ -453,6 +453,7 @@ const GoogleMapComponent = ({
 
   return (
     <GoogleMap
+      key={`google-map-${loadAttempt}`}
       mapContainerStyle={mapContainerStyle}
       onLoad={onLoad}
       onUnmount={onUnmount}
@@ -547,12 +548,15 @@ const GoogleMapComponent = ({
               <p className="text-sm"><strong>Horaire:</strong> {drops.find(d => d.id === activeInfoWindow)!.saleTime}</p>
               <p className="text-sm"><strong>Dispo:</strong> {drops.find(d => d.id === activeInfoWindow)!.availableUnits} unités</p>
             </div>
-            <button
-              onClick={() => window.location.href = `/drop/${drops.find(d => d.id === activeInfoWindow)!.id}`}
-              className="w-full bg-primary text-primary-foreground px-3 py-1.5 rounded text-sm font-medium hover:bg-primary/90 transition-colors"
+            <Button
+              onClick={() => {
+                const dropId = drops.find(d => d.id === activeInfoWindow)!.id;
+                navigate(`/drop/${dropId}`);
+              }}
+              className="w-full"
             >
               Voir détails
-            </button>
+            </Button>
           </div>
         </InfoWindow>
       )}
