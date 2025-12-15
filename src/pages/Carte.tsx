@@ -73,10 +73,14 @@ const Carte = () => {
     requestGeolocation();
   }, [requestGeolocation]);
 
-  // Sale points: only fetch for authenticated users
-  const { data: salePointsData } = useSalePoints();
+  // Sale points: ONLY fetch for authenticated users (no network call if anonymous)
+  // This prevents any data leak to anonymous users per TESTS_ANONYME_CHECKLIST.md
+  const { data: salePointsData } = useSalePoints({ 
+    userId: user?.id, 
+    enabled: !!user 
+  });
   
-  // Filter sale points: only show for authenticated users with valid lat/lng
+  // Filter sale points: only for authenticated users with valid lat/lng
   const validSalePoints = user && salePointsData
     ? salePointsData.filter(sp => sp.latitude != null && sp.longitude != null)
     : [];

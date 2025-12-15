@@ -57,10 +57,16 @@ Vérifier que les parcours anonymes fonctionnent correctement après les correct
 ### 7. Origin validation (create-checkout)
 - [ ] Depuis site tiers, tenter d'appeler `create-checkout` → doit retourner 403
 - [ ] Console log doit afficher "SECURITY: Rejected request from unauthorized origin"
+- [ ] Depuis preview Lovable (*.lovableproject.com ou *.lovable.dev) → doit fonctionner
 
 ### 8. Points de vente protégés
+- [ ] En incognito sur `/carte`: aucun appel réseau à `get-public-sale-points` (Network tab)
 - [ ] Tenter d'appeler `get-public-sale-points` sans auth → doit retourner 401
 - [ ] Via Supabase client anonyme, vérifier que `fisherman_sale_points` retourne 0 lignes
+
+### 9. Adresse masquée pour anonymes
+- [ ] En incognito sur `/drop/:id`: adresse affichée = "Point de vente partenaire" (pas l'adresse réelle)
+- [ ] Connecté sur `/drop/:id`: adresse complète visible (label + adresse)
 
 ---
 
