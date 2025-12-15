@@ -2,7 +2,7 @@ import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedFisherRoute } from "@/components/ProtectedFisherRoute";
 import { MaintenanceGuard } from "@/components/MaintenanceGuard";
@@ -71,6 +71,12 @@ const LazyRoute = ({ children }: { children: React.ReactNode }) => (
 const RedirectWithParams = ({ to }: { to: string }) => {
   const location = useLocation();
   return <Navigate to={`${to}${location.search}`} replace />;
+};
+
+// Redirect component for legacy drop routes with :id param
+const RedirectDropLegacy = () => {
+  const { id } = useParams();
+  return <Navigate to={`/drop/${id}`} replace />;
 };
 
 const App = () => (
@@ -181,15 +187,41 @@ const App = () => (
                 <LazyRoute><EditFisherProfile /></LazyRoute>
               </ProtectedFisherRoute>
             } />
-            <Route path="/pecheur/ambassadeur" element={<LazyRoute><PecheurAmbassadorStatus /></LazyRoute>} />
-            <Route path="/pecheur/ia-marin" element={<LazyRoute><MarineAIRefactored /></LazyRoute>} />
-            <Route path="/pecheur/support" element={<LazyRoute><PecheurSupport /></LazyRoute>} />
-            <Route path="/pecheur/preferences" element={<LazyRoute><PecheurPreferences /></LazyRoute>} />
+            <Route path="/pecheur/ambassadeur" element={
+              <ProtectedFisherRoute>
+                <LazyRoute><PecheurAmbassadorStatus /></LazyRoute>
+              </ProtectedFisherRoute>
+            } />
+            <Route path="/pecheur/ia-marin" element={
+              <ProtectedFisherRoute>
+                <LazyRoute><MarineAIRefactored /></LazyRoute>
+              </ProtectedFisherRoute>
+            } />
+            <Route path="/pecheur/support" element={
+              <ProtectedFisherRoute>
+                <LazyRoute><PecheurSupport /></LazyRoute>
+              </ProtectedFisherRoute>
+            } />
+            <Route path="/pecheur/preferences" element={
+              <ProtectedFisherRoute>
+                <LazyRoute><PecheurPreferences /></LazyRoute>
+              </ProtectedFisherRoute>
+            } />
             <Route path="/dashboard/pecheur/wallet" element={
               <ProtectedFisherRoute>
                 <LazyRoute><PecheurWallet /></LazyRoute>
               </ProtectedFisherRoute>
             } />
+
+            {/* Legacy redirects for backward compatibility */}
+            <Route path="/pecheur/dashboard" element={<Navigate to="/dashboard/pecheur" replace />} />
+            <Route path="/pecheur/creer-arrivage" element={<RedirectWithParams to="/pecheur/nouvel-arrivage" />} />
+            <Route path="/arrivage/:id" element={<RedirectDropLegacy />} />
+            <Route path="/premium/paywall" element={<Navigate to="/premium" replace />} />
+            <Route path="/premium/dashboard" element={<Navigate to="/dashboard/premium" replace />} />
+            <Route path="/admin" element={<Navigate to="/dashboard/admin" replace />} />
+            <Route path="/demo/tracabilite" element={<Navigate to="/demo-tracabilite" replace />} />
+            <Route path="/annonce-simple" element={<Navigate to="/pecheur/annonce-simple" replace />} />
 
             {/* Catch-all 404 */}
             <Route path="*" element={<NotFound />} />

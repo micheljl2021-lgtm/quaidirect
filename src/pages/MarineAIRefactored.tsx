@@ -37,8 +37,13 @@ export default function MarineAIRefactored() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!user || !isVerifiedFisherman) {
-      navigate('/pecheur/dashboard');
+    // Wait for auth loading before making any decision
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    if (!isVerifiedFisherman) {
+      navigate('/dashboard/pecheur');
     }
   }, [user, isVerifiedFisherman, navigate]);
 
