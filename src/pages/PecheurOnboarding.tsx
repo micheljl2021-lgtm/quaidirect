@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Save, X } from "lucide-react";
-import { usePortFile } from "@/hooks/usePortFile";
+import { getBasinFromDepartement } from "@/lib/ports";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -132,7 +132,12 @@ const PecheurOnboarding = () => {
   const [fishermenId, setFishermenId] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>(getInitialFormData);
   
-  const { basin } = usePortFile(formData.postalCode?.substring(0, 2));
+  // Derive basin from postal code
+  const basin = useMemo(() => {
+    if (!formData.postalCode || formData.postalCode.length < 2) return null;
+    const dep = formData.postalCode.substring(0, 2);
+    return getBasinFromDepartement(dep);
+  }, [formData.postalCode]);
 
   // Save to sessionStorage whenever formData changes (debounced)
   useEffect(() => {

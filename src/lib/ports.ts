@@ -18,7 +18,7 @@ export const getBasinFromDepartement = (dep: string): FishingBasin => {
  * Ports are now fetched from the database and exported dynamically.
  */
 export const getPortFileForBasin = (_basin: FishingBasin): string | null => {
-  console.warn('[DEPRECATED] getPortFileForBasin is deprecated. Use PortsListModal for dynamic port access.');
+  // Deprecated - Use PortsListModal for dynamic port access
   return null;
 };
 
