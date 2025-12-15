@@ -6,19 +6,38 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Loader2, Save, ArrowLeft } from 'lucide-react';
+import { Loader2, Save, ArrowLeft, MapPin, Fish, Heart, Bell, Users } from 'lucide-react';
 import Header from '@/components/Header';
+
+interface Fisherman {
+  id: string;
+  boat_name: string;
+  company_name: string | null;
+  photo_url: string | null;
+}
 
 const PremiumSettings = () => {
   const navigate = useNavigate();
   const { user, userRole } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  
+  // Ports & Species
   const [ports, setPorts] = useState<any[]>([]);
   const [species, setSpecies] = useState<any[]>([]);
   const [selectedPorts, setSelectedPorts] = useState<string[]>([]);
   const [selectedSpecies, setSelectedSpecies] = useState<string[]>([]);
+  
+  // Fishermen favorites
+  const [fishermen, setFishermen] = useState<Fisherman[]>([]);
+  const [selectedFishermen, setSelectedFishermen] = useState<string[]>([]);
+  
+  // Notifications
+  const [notifNewDrop, setNotifNewDrop] = useState(true);
+  const [notifMarketing, setNotifMarketing] = useState(false);
 
   // Vérification du rôle premium
   useEffect(() => {
@@ -36,34 +55,33 @@ const PremiumSettings = () => {
     if (!user) return;
     
     try {
-      // Charger les ports
-      const { data: portsData } = await supabase
-        .from('ports')
-        .select('*')
-        .order('name');
+      // Charger ports, espèces, pêcheurs en parallèle
+      const [portsRes, speciesRes, fishermenRes] = await Promise.all([
+        supabase.from('ports').select('*').order('name'),
+        supabase.from('species').select('*').order('name'),
+        supabase.from('public_fishermen').select('id, boat_name, company_name, photo_url').not('id', 'is', null)
+      ]);
       
-      // Charger les espèces
-      const { data: speciesData } = await supabase
-        .from('species')
-        .select('*')
-        .order('name');
+      setPorts(portsRes.data || []);
+      setSpecies(speciesRes.data || []);
+      setFishermen(fishermenRes.data || []);
+
+      // Charger les préférences existantes en parallèle
+      const [followPorts, followSpecies, followFishermen, notifPrefs] = await Promise.all([
+        supabase.from('follow_ports').select('port_id').eq('user_id', user.id),
+        supabase.from('follow_species').select('species_id').eq('user_id', user.id),
+        supabase.from('fishermen_followers').select('fisherman_id').eq('user_id', user.id),
+        supabase.from('notification_preferences').select('*').eq('user_id', user.id).maybeSingle()
+      ]);
+
+      setSelectedPorts(followPorts.data?.map(fp => fp.port_id) || []);
+      setSelectedSpecies(followSpecies.data?.map(fs => fs.species_id) || []);
+      setSelectedFishermen(followFishermen.data?.map(ff => ff.fisherman_id) || []);
       
-      setPorts(portsData || []);
-      setSpecies(speciesData || []);
-
-      // Charger les préférences existantes
-      const { data: followPorts } = await supabase
-        .from('follow_ports')
-        .select('port_id')
-        .eq('user_id', user.id);
-
-      const { data: followSpecies } = await supabase
-        .from('follow_species')
-        .select('species_id')
-        .eq('user_id', user.id);
-
-      setSelectedPorts(followPorts?.map(fp => fp.port_id) || []);
-      setSelectedSpecies(followSpecies?.map(fs => fs.species_id) || []);
+      if (notifPrefs.data) {
+        setNotifNewDrop(notifPrefs.data.push_enabled ?? true);
+        setNotifMarketing(notifPrefs.data.email_enabled ?? false);
+      }
     } catch (error) {
       console.error('Erreur chargement données:', error);
       toast.error('Erreur lors du chargement des données');
@@ -92,31 +110,71 @@ const PremiumSettings = () => {
     }
   };
 
+  const handleFishermanToggle = (fishermanId: string) => {
+    if (selectedFishermen.includes(fishermanId)) {
+      setSelectedFishermen(selectedFishermen.filter(id => id !== fishermanId));
+    } else {
+      if (selectedFishermen.length >= 2) {
+        toast.error('Vous pouvez sélectionner maximum 2 pêcheurs favoris');
+        return;
+      }
+      setSelectedFishermen([...selectedFishermen, fishermanId]);
+    }
+  };
+
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
 
     try {
       // Supprimer les anciennes préférences
-      await supabase.from('follow_ports').delete().eq('user_id', user.id);
-      await supabase.from('follow_species').delete().eq('user_id', user.id);
+      await Promise.all([
+        supabase.from('follow_ports').delete().eq('user_id', user.id),
+        supabase.from('follow_species').delete().eq('user_id', user.id),
+        supabase.from('fishermen_followers').delete().eq('user_id', user.id)
+      ]);
 
-      // Insérer les nouvelles préférences ports
+      // Insérer les nouvelles préférences
+      const insertPromises = [];
+      
       if (selectedPorts.length > 0) {
-        await supabase.from('follow_ports').insert(
-          selectedPorts.map(portId => ({ user_id: user.id, port_id: portId }))
+        insertPromises.push(
+          supabase.from('follow_ports').insert(
+            selectedPorts.map(portId => ({ user_id: user.id, port_id: portId }))
+          )
         );
       }
 
-      // Insérer les nouvelles préférences espèces
       if (selectedSpecies.length > 0) {
-        await supabase.from('follow_species').insert(
-          selectedSpecies.map(speciesId => ({ user_id: user.id, species_id: speciesId }))
+        insertPromises.push(
+          supabase.from('follow_species').insert(
+            selectedSpecies.map(speciesId => ({ user_id: user.id, species_id: speciesId }))
+          )
         );
       }
+
+      if (selectedFishermen.length > 0) {
+        insertPromises.push(
+          supabase.from('fishermen_followers').insert(
+            selectedFishermen.map(fishermanId => ({ user_id: user.id, fisherman_id: fishermanId }))
+          )
+        );
+      }
+
+      // Sauvegarder les préférences de notification
+      insertPromises.push(
+        supabase.from('notification_preferences').upsert({
+          user_id: user.id,
+          push_enabled: notifNewDrop,
+          email_enabled: notifMarketing,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' })
+      );
+
+      await Promise.all(insertPromises);
 
       toast.success('Préférences enregistrées avec succès');
-      navigate('/');
+      navigate('/compte');
     } catch (error) {
       console.error('Erreur sauvegarde:', error);
       toast.error('Erreur lors de la sauvegarde');
@@ -133,7 +191,6 @@ const PremiumSettings = () => {
     );
   }
 
-  // Double vérification après chargement
   if (userRole !== 'premium') {
     return null;
   }
@@ -145,7 +202,7 @@ const PremiumSettings = () => {
       <div className="container max-w-4xl mx-auto px-4 py-8">
         <Button
           variant="ghost"
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/compte')}
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -160,11 +217,15 @@ const PremiumSettings = () => {
             </p>
           </div>
 
+          {/* Ports favoris */}
           <Card>
             <CardHeader>
-              <CardTitle>Ports favoris</CardTitle>
+              <div className="flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-primary" />
+                <CardTitle>Ports favoris</CardTitle>
+              </div>
               <CardDescription>
-                Sélectionnez jusqu'à 2 ports pour recevoir des alertes prioritaires (maximum 2)
+                Sélectionnez jusqu'à 2 ports pour recevoir des alertes prioritaires
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -201,13 +262,77 @@ const PremiumSettings = () => {
                     </div>
                   ) : null;
                 })}
+                {selectedPorts.length === 0 && (
+                  <p className="text-sm text-muted-foreground">Aucun port sélectionné</p>
+                )}
               </div>
             </CardContent>
           </Card>
 
+          {/* Pêcheurs favoris */}
           <Card>
             <CardHeader>
-              <CardTitle>Espèces favorites</CardTitle>
+              <div className="flex items-center gap-2">
+                <Heart className="h-5 w-5 text-destructive" />
+                <CardTitle>Pêcheurs favoris</CardTitle>
+              </div>
+              <CardDescription>
+                Sélectionnez jusqu'à 2 pêcheurs pour soutenir et recevoir leurs arrivages en priorité
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                {selectedFishermen.length}/2 pêcheurs sélectionnés
+              </p>
+              
+              {fishermen.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Aucun pêcheur disponible pour le moment</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {fishermen.map(fisherman => {
+                    const isSelected = selectedFishermen.includes(fisherman.id);
+                    const isDisabled = !isSelected && selectedFishermen.length >= 2;
+                    
+                    return (
+                      <div 
+                        key={fisherman.id} 
+                        className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                          isSelected 
+                            ? 'bg-destructive/10 border-destructive' 
+                            : isDisabled 
+                              ? 'opacity-50 cursor-not-allowed bg-muted'
+                              : 'bg-card hover:bg-accent'
+                        }`}
+                        onClick={() => !isDisabled && handleFishermanToggle(fisherman.id)}
+                      >
+                        <Checkbox 
+                          checked={isSelected}
+                          disabled={isDisabled}
+                          className="pointer-events-none"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{fisherman.boat_name}</p>
+                          {fisherman.company_name && (
+                            <p className="text-xs text-muted-foreground truncate">{fisherman.company_name}</p>
+                          )}
+                        </div>
+                        {isSelected && <Heart className="h-4 w-4 text-destructive fill-destructive" />}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Espèces favorites */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Fish className="h-5 w-5 text-primary" />
+                <CardTitle>Espèces favorites</CardTitle>
+              </div>
               <CardDescription>
                 Sélectionnez les espèces pour lesquelles vous souhaitez recevoir des alertes
               </CardDescription>
@@ -233,8 +358,50 @@ const PremiumSettings = () => {
             </CardContent>
           </Card>
 
+          {/* Notifications */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Bell className="h-5 w-5 text-primary" />
+                <CardTitle>Notifications</CardTitle>
+              </div>
+              <CardDescription>
+                Gérez vos alertes et préférences de communication
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="notif-drop" className="font-medium">Nouveaux arrivages</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Recevoir une notification lors d'un nouvel arrivage correspondant à vos préférences
+                  </p>
+                </div>
+                <Switch
+                  id="notif-drop"
+                  checked={notifNewDrop}
+                  onCheckedChange={setNotifNewDrop}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="notif-marketing" className="font-medium">Actualités & offres</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Recevoir des informations sur les nouveautés QuaiDirect
+                  </p>
+                </div>
+                <Switch
+                  id="notif-marketing"
+                  checked={notifMarketing}
+                  onCheckedChange={setNotifMarketing}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
           <div className="flex justify-end gap-4">
-            <Button variant="outline" onClick={() => navigate('/')}>
+            <Button variant="outline" onClick={() => navigate('/compte')}>
               Annuler
             </Button>
             <Button onClick={handleSave} disabled={saving}>
