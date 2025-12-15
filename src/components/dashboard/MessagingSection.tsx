@@ -29,20 +29,30 @@ const MessagingSection = ({ fishermanId }: MessagingSectionProps) => {
   const [channel, setChannel] = useState<Channel>('email');
 
   // Fetch SMS quota
-  const { data: smsQuota, isLoading: quotaLoading } = useQuery({
+  const { data: smsQuota, isLoading: quotaLoading, error: quotaError } = useQuery({
     queryKey: ['sms-quota'],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke('check-sms-quota');
-      if (error) throw error;
+      if (error) {
+        // Handle Twilio not configured (503)
+        if (error.message?.includes('not configured') || error.message?.includes('503')) {
+          return null;
+        }
+        throw error;
+      }
       return data as {
         free_remaining: number;
         paid_balance: number;
         total_available: number;
-        free_quota: number;
+        monthly_quota: number; // Fixed: was free_quota
         free_used: number;
       };
     },
+    retry: false, // Don't retry on Twilio config errors
   });
+
+  // Check if Twilio/SMS is not configured
+  const isSmsNotConfigured = quotaError?.message?.includes('not configured') || quotaError?.message?.includes('503');
 
   // Count contacts with phone vs email
   const contactsWithEmail = selectedContacts.filter(c => c.email).length;
@@ -166,14 +176,24 @@ const MessagingSection = ({ fishermanId }: MessagingSectionProps) => {
           </RadioGroup>
         </div>
 
+        {/* SMS Not Configured Warning */}
+        {(channel === 'sms' || channel === 'both') && isSmsNotConfigured && (
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              L'envoi de SMS n'est pas encore configuré. Seuls les emails peuvent être envoyés pour l'instant.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* SMS Quota Display */}
-        {(channel === 'sms' || channel === 'both') && smsQuota && (
+        {(channel === 'sms' || channel === 'both') && smsQuota && !isSmsNotConfigured && (
           <div className="p-3 rounded-lg bg-muted/50 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Quota SMS disponible</span>
               <span className="font-medium">{smsQuota.total_available} SMS</span>
             </div>
-            <Progress value={(smsQuota.free_used / smsQuota.free_quota) * 100} className="h-1.5" />
+            <Progress value={smsQuota.monthly_quota > 0 ? (smsQuota.free_used / smsQuota.monthly_quota) * 100 : 0} className="h-1.5" />
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>{smsQuota.free_remaining} gratuits + {smsQuota.paid_balance} achetés</span>
               <a href="/pecheur/preferences" className="text-primary hover:underline">Acheter des SMS</a>

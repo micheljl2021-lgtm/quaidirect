@@ -2548,6 +2548,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_wallet_balance: {
+        Args: { p_amount: number; p_fisherman_id: string }
+        Returns: undefined
+      }
       reset_monthly_free_sms: { Args: never; Returns: undefined }
     }
     Enums: {

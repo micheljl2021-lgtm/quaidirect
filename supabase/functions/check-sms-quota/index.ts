@@ -1,10 +1,28 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://quaidirect.fr',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// Dynamic CORS - same pattern as create-checkout
+const ALLOWED_ORIGINS = [
+  'https://quaidirect.fr',
+  'https://www.quaidirect.fr',
+  'http://localhost:5173',
+  'http://localhost:3000',
+];
+
+// Accept Lovable preview domains dynamically
+const isAllowedOrigin = (origin: string | null): boolean => {
+  if (!origin) return false;
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  // Allow Lovable preview domains
+  if (origin.endsWith('.lovableproject.com') || origin.endsWith('.lovable.dev')) return true;
+  return false;
 };
+
+const getCorsHeaders = (origin: string | null) => ({
+  'Access-Control-Allow-Origin': isAllowedOrigin(origin) ? origin! : 'https://quaidirect.fr',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+});
 
 // SMS quotas by plan - must match src/config/pricing.ts
 const PLAN_SMS_QUOTAS: Record<string, number> = {
@@ -19,6 +37,9 @@ const logStep = (step: string, details?: any) => {
 };
 
 serve(async (req) => {
+  const origin = req.headers.get('origin');
+  const corsHeaders = getCorsHeaders(origin);
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
