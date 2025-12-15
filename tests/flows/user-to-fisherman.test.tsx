@@ -120,7 +120,7 @@ describe('User to Fisherman PRO+ Flow', () => {
         plan: 'fisherman_pro',
         status: 'active',
         stripe_customer_id: 'cus_test123',
-        trial_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        trial_end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       };
 
       mockSupabase.from.mockReturnValue({

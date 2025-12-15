@@ -107,7 +107,7 @@ Ces fonctions sont appelées par Stripe, des triggers DB, ou d'autres fonctions 
 ```
 
 **Contenu:**
-- Bienvenue + période d'essai 30 jours
+- Bienvenue + période d'essai 7 jours
 - Avantages du plan (différenciés Basic/Pro)
 - Prochaines étapes
 - Lien dashboard

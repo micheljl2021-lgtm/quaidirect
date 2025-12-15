@@ -136,7 +136,7 @@ const { error } = await supabase
 ## Important Notes
 
 ### Payment Flow
-- Fisherman subscriptions use Stripe with 30-day trial
+- Fisherman subscriptions use Stripe with 7-day trial
 - Webhook endpoint: `stripe-webhook` Edge Function
 - Test mode: use Stripe test keys and test cards
 
