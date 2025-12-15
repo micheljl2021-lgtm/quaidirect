@@ -16,7 +16,7 @@ Vérifier que les parcours anonymes fonctionnent correctement après les correct
 ### 2. Fiche pêcheur publique (email)
 - [ ] Ouvrir `/pecheurs/:slug` en incognito (simuler clic depuis email)
 - [ ] Vérifier que le profil s'affiche (boat_name, bio, zones, espèces)
-- [ ] Si pêcheur non-vérifié : vérifier affichage du disclaimer "profil en cours de validation" (si implémenté)
+- [ ] **Si pêcheur non-vérifié** : vérifier affichage du disclaimer "Ce profil est en cours de validation par notre équipe" ✅ IMPLÉMENTÉ
 - [ ] Vérifier qu'aucune donnée sensible n'est visible (email, téléphone, SIRET, adresse)
 
 ### 3. Premium guest checkout
@@ -102,12 +102,23 @@ describe('Anonymous Routes', () => {
 | Test | Statut | Date | Notes |
 |------|--------|------|-------|
 | 1. Route /p/:slug | ⏳ | | |
-| 2. Fiche pêcheur publique | ⏳ | | |
-| 3. Premium guest checkout | ⏳ | | |
+| 2. Fiche pêcheur publique | ⏳ | | Badge "profil en cours de validation" implémenté |
+| 3. Premium guest checkout | ⏳ | | Origin validation étendue aux previews Lovable |
 | 4. Carte sans sale points | ⏳ | | |
 | 5. Pêcheur connecté | ⏳ | | |
 | 6. Client connecté | ⏳ | | |
 | 7. Origin validation | ⏳ | | |
 | 8. Sale points protégés | ⏳ | | |
+| 9. Adresse masquée anonyme | ⏳ | | |
 
 Légende: ✅ OK | ❌ KO | ⏳ À tester
+
+---
+
+## Corrections implémentées (15 décembre 2025)
+
+- ✅ Vue `public_fishermen` recréée avec `SECURITY INVOKER` (supprime warning linter)
+- ✅ CORS dynamique dans `check-sms-quota` (aligné avec `create-checkout`)
+- ✅ `MessagingSection.tsx` : fix `monthly_quota` + gestion Twilio non configuré
+- ✅ Badge "profil en cours de validation" dans `FisherProfile.tsx`
+- ✅ Fonction RPC `increment_wallet_balance` créée pour incrémentation atomique SMS
