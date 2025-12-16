@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Send, Plus, CheckCircle2, Clock, Users, Sparkles } from "lucide-react";
+import { Loader2, Send, Plus, CheckCircle2, Clock, Users, Sparkles, BookOpen } from "lucide-react";
 import { getLatestChangelog, generateUpdateContent } from "@/config/changelog";
 import {
   AlertDialog,
@@ -20,6 +20,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { TransformationsList } from "./TransformationsList";
 
 interface PlatformUpdate {
   id: string;
@@ -36,10 +43,24 @@ export const PlatformUpdatesTab = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
+  const [showTransformations, setShowTransformations] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [version, setVersion] = useState("");
   const [confirmSendId, setConfirmSendId] = useState<string | null>(null);
+
+  // Handler pour générer email depuis les transformations sélectionnées
+  const handleGenerateFromSelection = (selectedContent: string, selectedTitle: string) => {
+    setTitle(selectedTitle);
+    setContent(selectedContent);
+    setVersion("");
+    setShowTransformations(false);
+    setShowForm(true);
+    toast({
+      title: "Sélection appliquée",
+      description: "Le formulaire a été pré-rempli avec vos transformations",
+    });
+  };
 
   // Fetch platform updates
   const { data: updates, isLoading } = useQuery({
@@ -165,6 +186,13 @@ export const PlatformUpdatesTab = () => {
             <Users className="h-4 w-4" />
             {fishermenCount} pêcheurs vérifiés
           </Badge>
+          <Button
+            variant="outline"
+            onClick={() => setShowTransformations(true)}
+          >
+            <BookOpen className="h-4 w-4 mr-2" />
+            Voir transformations
+          </Button>
           <Button
             variant="outline"
             onClick={() => {
@@ -340,6 +368,18 @@ export const PlatformUpdatesTab = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Transformations Dialog */}
+      <Dialog open={showTransformations} onOpenChange={setShowTransformations}>
+        <DialogContent className="max-w-3xl h-[80vh] flex flex-col p-0">
+          <DialogHeader className="p-4 pb-0">
+            <DialogTitle>Cahier des Transformations</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            <TransformationsList onGenerateEmail={handleGenerateFromSelection} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
