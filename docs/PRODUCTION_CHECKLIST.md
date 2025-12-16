@@ -18,7 +18,6 @@ Le webhook Stripe doit être configuré manuellement dans le Dashboard Stripe :
      - `customer.subscription.created`
      - `customer.subscription.updated`
      - `customer.subscription.deleted`
-     - `customer.subscription.trial_will_end`
 4. Copier le **Signing secret** généré
 5. Dans Lovable Cloud > Secrets, mettre à jour `STRIPE_WEBHOOK_SECRET` avec cette valeur
 
@@ -69,7 +68,6 @@ Vérifier que tous les emails transactionnels fonctionnent :
 
 - [ ] Email bienvenue utilisateur (inscription)
 - [ ] Email bienvenue pêcheur (après paiement)
-- [ ] Email rappel fin d'essai (3 jours avant)
 - [ ] Email confirmation paiement (renouvellement)
 - [ ] Email réponse support admin
 

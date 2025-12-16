@@ -859,53 +859,12 @@ serve(async (req) => {
       }
 
       case 'customer.subscription.trial_will_end': {
+        // Trial periods disabled - this event handler is kept for backward compatibility
+        // but no longer sends reminder emails since trials are no longer offered
         const subscription = event.data.object as Stripe.Subscription;
-        logStep('Trial will end event received', { subscriptionId: subscription.id, trialEnd: subscription.trial_end });
-
-        const { data: trialPayment } = await supabaseClient
-          .from('payments')
-          .select('user_id, plan')
-          .eq('stripe_subscription_id', subscription.id)
-          .single();
-
-        if (trialPayment) {
-          try {
-            const { data: trialUserData } = await supabaseClient.auth.admin.getUserById(trialPayment.user_id);
-            const { data: trialFishermenData } = await supabaseClient
-              .from('fishermen')
-              .select('boat_name')
-              .eq('user_id', trialPayment.user_id)
-              .maybeSingle();
-
-            // Create customer portal session for management link
-            const portalSession = await stripe.billingPortal.sessions.create({
-              customer: subscription.customer as string,
-              return_url: 'https://quaidirect.fr/dashboard/pecheur',
-            });
-
-            // Extract plan type for email
-            const planType = trialPayment.plan?.replace('fisherman_', '') || 'basic';
-
-            const { error: reminderError } = await supabaseClient.functions.invoke('send-trial-ending-reminder', {
-              body: {
-                userEmail: trialUserData?.user?.email,
-                boatName: trialFishermenData?.boat_name,
-                plan: planType,
-                trialEndDate: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : new Date().toISOString(),
-                customerPortalUrl: portalSession.url,
-              },
-              headers: { 'x-internal-secret': internalSecret }
-            });
-
-            if (reminderError) {
-              logStep('WARNING: Failed to send trial ending reminder', { error: reminderError });
-            } else {
-              logStep('Trial ending reminder sent successfully');
-            }
-          } catch (emailError) {
-            logStep('WARNING: Error sending trial ending reminder', emailError);
-          }
-        }
+        logStep('Trial will end event received (trials disabled, no action taken)', { 
+          subscriptionId: subscription.id 
+        });
         break;
       }
 
