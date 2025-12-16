@@ -1,20 +1,28 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const getAllowedOrigin = (req: Request): string => {
-  const origin = req.headers.get('origin') || '';
-  const allowedOrigins = [
-    'https://quaidirect.fr',
-    'https://www.quaidirect.fr',
-    'http://localhost:5173',
-    'http://localhost:8080',
-  ];
+// Dynamic CORS - same pattern as check-sms-quota
+const ALLOWED_ORIGINS = [
+  'https://quaidirect.fr',
+  'https://www.quaidirect.fr',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:8080',
+];
+
+// Accept Lovable preview domains dynamically
+const isAllowedOrigin = (origin: string | null): boolean => {
+  if (!origin) return false;
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
   // Allow Lovable preview domains
-  if (origin.includes('.lovableproject.com') || origin.includes('.lovable.app')) {
-    return origin;
-  }
-  return allowedOrigins.includes(origin) ? origin : 'https://quaidirect.fr';
+  if (origin.endsWith('.lovableproject.com') || origin.endsWith('.lovable.dev')) return true;
+  return false;
 };
+
+const getCorsHeaders = (origin: string | null) => ({
+  'Access-Control-Allow-Origin': isAllowedOrigin(origin) ? origin! : 'https://quaidirect.fr',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+});
 
 interface SendSmsRequest {
   phones: string[];
@@ -53,11 +61,9 @@ function normalizePhoneToE164(phone: string): string | null {
 }
 
 serve(async (req) => {
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": getAllowedOrigin(req),
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  };
-
+  const origin = req.headers.get('origin');
+  const corsHeaders = getCorsHeaders(origin);
+  
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
