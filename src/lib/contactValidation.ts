@@ -8,6 +8,13 @@ import type { Database } from '@/integrations/supabase/types';
 type Contact = Database['public']['Tables']['fishermen_contacts']['Row'];
 
 /**
+ * Normalize phone number by removing spaces, dashes, and dots
+ */
+export function normalizePhone(phone: string): string {
+  return phone.replace(/[\s.-]/g, '');
+}
+
+/**
  * Check if a contact is a duplicate of existing contacts
  */
 export function isDuplicate(
@@ -26,7 +33,6 @@ export function isDuplicate(
     
     // Check phone match (normalize phone numbers for comparison)
     if (contact.phone && existing.phone) {
-      const normalizePhone = (phone: string) => phone.replace(/[\s.-]/g, '');
       if (normalizePhone(contact.phone) === normalizePhone(existing.phone)) {
         return true;
       }
