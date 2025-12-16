@@ -2,7 +2,7 @@
  * ContactImporter - Modern file import component with drag & drop support
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, FileText } from "lucide-react";
@@ -30,6 +30,7 @@ export default function ContactImporter({
   const [selectedContacts, setSelectedContacts] = useState<Set<number>>(new Set());
   const [isDragging, setIsDragging] = useState(false);
   const [detectedFormat, setDetectedFormat] = useState<FileFormat | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Handle file parsing
   const handleFileContent = useCallback(async (file: File) => {
@@ -194,14 +195,12 @@ export default function ContactImporter({
                 <p className="text-sm text-muted-foreground mb-4">
                   ou cliquez pour parcourir
                 </p>
-                <label htmlFor="file-upload">
-                  <Button type="button" variant="outline" onClick={() => document.getElementById('file-upload')?.click()}>
-                    <FileText className="h-4 w-4 mr-2" />
-                    Parcourir les fichiers
-                  </Button>
-                </label>
+                <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  Parcourir les fichiers
+                </Button>
                 <input
-                  id="file-upload"
+                  ref={fileInputRef}
                   type="file"
                   accept=".csv,.vcf,.vcard,.xlsx,.xls,.json"
                   onChange={handleFileChange}
@@ -209,9 +208,10 @@ export default function ContactImporter({
                 />
               </div>
               <div className="text-xs text-muted-foreground space-y-1">
+                <p className="font-semibold">Formats acceptés:</p>
                 <p>• CSV: email, phone, first_name, last_name, contact_group</p>
                 <p>• VCF: Contacts iPhone/Android/Outlook</p>
-                <p>• Excel: Feuille avec les mêmes colonnes que CSV</p>
+                <p>• Excel: 1ère ligne = en-têtes, colonnes dans l'ordre CSV</p>
                 <p>• JSON: Tableau d'objets avec les mêmes propriétés</p>
               </div>
             </div>

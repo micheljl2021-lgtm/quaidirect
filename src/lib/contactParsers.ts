@@ -54,11 +54,14 @@ export function parseVCF(fileContent: string): ParsedContact[] {
       contact.email = emailMatch[1].trim().replace(/\r/g, '');
     }
     
-    // Parse ORG (Organization) - add to notes
+    // Parse ORG (Organization) - optionally set as professionnels group
     const orgMatch = vcard.match(/ORG:(.+)/);
     if (orgMatch) {
       const org = orgMatch[1].trim().replace(/\r/g, '');
-      contact.contact_group = 'professionnels';
+      // Only set to professionnels if the default group is still being used
+      if (!contact.contact_group || contact.contact_group === 'general') {
+        contact.contact_group = 'professionnels';
+      }
     }
     
     // Validate the contact
@@ -98,7 +101,7 @@ export async function parseExcel(file: File): Promise<ParsedContact[]> {
     reader.onload = (e) => {
       try {
         const data = e.target?.result;
-        const workbook = XLSX.read(data, { type: 'binary' });
+        const workbook = XLSX.read(data, { type: 'array' });
         
         // Get first sheet
         const firstSheetName = workbook.SheetNames[0];
@@ -114,9 +117,8 @@ export async function parseExcel(file: File): Promise<ParsedContact[]> {
           const row = jsonData[i];
           if (!row || row.length === 0) continue;
           
-          // Try to map columns intelligently
-          // Common formats: email, phone, first_name, last_name, contact_group
-          // Or: Email, Phone, First Name, Last Name, Group
+          // Expected column order: email, phone, first_name, last_name, contact_group
+          // Document this format in the UI
           const email = (row[0] || '').toString().trim();
           const phone = (row[1] || '').toString().trim();
           const first_name = (row[2] || '').toString().trim();
@@ -161,7 +163,7 @@ export async function parseExcel(file: File): Promise<ParsedContact[]> {
       reject(new Error('Erreur lors de la lecture du fichier'));
     };
     
-    reader.readAsBinaryString(file);
+    reader.readAsArrayBuffer(file);
   });
 }
 
