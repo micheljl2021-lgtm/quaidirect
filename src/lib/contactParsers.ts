@@ -35,10 +35,10 @@ export function parseVCF(fileContent: string): ParsedContact[] {
     
     // Parse N (Name structured - alternative)
     if (!contact.first_name) {
-      const nMatch = vcard.match(/N:([^;]*);([^;]*)/);
+      const nMatch = vcard.match(/N:([^;\n]*);([^;\n]*)/);
       if (nMatch) {
-        contact.last_name = nMatch[1].trim() || null;
-        contact.first_name = nMatch[2].trim() || null;
+        contact.last_name = nMatch[1].trim().replace(/\r/g, '') || null;
+        contact.first_name = nMatch[2].trim().replace(/\r/g, '') || null;
       }
     }
     
