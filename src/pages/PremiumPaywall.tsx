@@ -38,7 +38,6 @@ const CLIENT_LEVELS = {
       { icon: Crown, title: "✨ Badge Premium visible" },
       { icon: Heart, title: "🎣 Choix d'un pêcheur favori à soutenir" },
     ],
-    badgeAnnual: "7 jours d'essai gratuit",
   },
   premiumPlus: {
     name: "Premium+",
@@ -55,7 +54,6 @@ const CLIENT_LEVELS = {
       { icon: Star, title: "🌟 Badge Premium+ distinctif" },
       { icon: Heart, title: "🎣 Choix d'un pêcheur favori à soutenir" },
     ],
-    badgeAnnual: "7 jours d'essai gratuit",
   },
 };
 
@@ -197,9 +195,6 @@ export default function PremiumPaywall() {
                 <p className="text-sm text-primary font-medium mt-1">
                   Soit 2,08€/mois
                 </p>
-                <Badge className="mt-2 bg-green-500 text-white">
-                  {CLIENT_LEVELS.premium.badgeAnnual}
-                </Badge>
               </div>
               
               <ul className="space-y-3 mb-4">
@@ -256,9 +251,6 @@ export default function PremiumPaywall() {
                 <p className="text-sm text-primary font-medium mt-1">
                   Soit 3,33€/mois
                 </p>
-                <Badge className="mt-2 bg-green-500 text-white">
-                  {CLIENT_LEVELS.premiumPlus.badgeAnnual}
-                </Badge>
               </div>
               
               <ul className="space-y-3 mb-4">

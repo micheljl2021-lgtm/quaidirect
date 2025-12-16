@@ -149,8 +149,6 @@ serve(async (req) => {
     }
 
     // Create checkout session
-    const trialDays = 7;
-
     const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       line_items: [
         {
@@ -167,7 +165,6 @@ serve(async (req) => {
         is_guest: isGuest ? 'true' : 'false',
       },
       subscription_data: {
-        trial_period_days: trialDays,
         metadata: {
           user_id: user?.id || 'guest',
           plan: plan,

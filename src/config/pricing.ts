@@ -14,7 +14,6 @@ export const FISHERMAN_PLANS = {
     priceMonthlyEquivalent: 1250, // 12,50€/mois
     period: 'year' as const,
     stripePriceId: 'price_1SddZqH0VhS1yyE0Zx6yVfwJ', // LIVE price ID
-    trialDays: 7,
     smsQuotaMonthly: 50,
     openingBonusSms: 200,
     crmContacts: 500,
@@ -35,7 +34,6 @@ export const FISHERMAN_PLANS = {
     priceMonthlyEquivalent: 2490, // 24,90€/mois
     period: 'year' as const,
     stripePriceId: 'price_1Sdnn9H0VhS1yyE0JAINCVDH', // LIVE price ID
-    trialDays: 7,
     smsQuotaMonthly: 200,
     openingBonusSms: 1000,
     crmContacts: 2000,
@@ -57,7 +55,6 @@ export const FISHERMAN_PLANS = {
     priceCents: 19900, // 199€/mois
     period: 'month' as const,
     stripePriceId: 'price_1SddbuH0VhS1yyE0ZFYhsoQ4', // LIVE price ID
-    trialDays: 7,
     smsQuotaMonthly: 1500,
     openingBonusSms: 0, // Pas de bonus car mensuel
     openingBonusAnnualSms: 2000, // Si passage en annuel
@@ -126,7 +123,6 @@ export const PREMIUM_PLANS = {
     name: 'Premium',
     priceAnnualCents: 2500, // 25€/an
     stripePriceIdAnnual: 'price_1SZ48UH0VhS1yyE0iYmXen3H', // LIVE price ID
-    trialDays: 7,
     affiliateCreditCents: 800, // 8€ reversés au pêcheur
   },
   PREMIUM_PLUS: {
@@ -134,7 +130,6 @@ export const PREMIUM_PLANS = {
     name: 'Premium+',
     priceAnnualCents: 4000, // 40€/an
     stripePriceIdAnnual: 'price_1SZ49DH0VhS1yyE06HJyLC65', // LIVE price ID
-    trialDays: 7,
     affiliateCreditCents: 1800, // 18€ reversés au pêcheur
   },
 } as const;
