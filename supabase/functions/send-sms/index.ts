@@ -1,9 +1,19 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+const getAllowedOrigin = (req: Request): string => {
+  const origin = req.headers.get('origin') || '';
+  const allowedOrigins = [
+    'https://quaidirect.fr',
+    'https://www.quaidirect.fr',
+    'http://localhost:5173',
+    'http://localhost:8080',
+  ];
+  // Allow Lovable preview domains
+  if (origin.includes('.lovableproject.com') || origin.includes('.lovable.app')) {
+    return origin;
+  }
+  return allowedOrigins.includes(origin) ? origin : 'https://quaidirect.fr';
 };
 
 interface SendSmsRequest {
@@ -43,6 +53,11 @@ function normalizePhoneToE164(phone: string): string | null {
 }
 
 serve(async (req) => {
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": getAllowedOrigin(req),
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
