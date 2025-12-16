@@ -31,7 +31,7 @@ export default function Download() {
       }
     } else {
       // Rediriger vers l'app si pas installable
-      window.location.href = window.location.origin;
+      navigate('/');
     }
   };
 
@@ -145,7 +145,7 @@ export default function Download() {
                 </ol>
                 
                 <Button 
-                  onClick={() => window.location.href = window.location.origin}
+                  onClick={() => navigate('/')}
                   className="w-full bg-primary hover:bg-primary-light"
                 >
                   <Globe className="mr-2 h-4 w-4" />

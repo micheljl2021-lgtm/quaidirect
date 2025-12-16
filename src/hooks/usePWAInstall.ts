@@ -23,17 +23,18 @@ export const usePWAInstall = () => {
       setIsInstallable(true);
     };
 
-    window.addEventListener('beforeinstallprompt', handler);
-
-    // Vérifier si l'app a été installée
-    window.addEventListener('appinstalled', () => {
+    const installedHandler = () => {
       setIsInstalled(true);
       setIsInstallable(false);
       setDeferredPrompt(null);
-    });
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+    window.addEventListener('appinstalled', installedHandler);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', installedHandler);
     };
   }, []);
 
@@ -44,7 +45,6 @@ export const usePWAInstall = () => {
     const { outcome } = await deferredPrompt.userChoice;
     
     if (outcome === 'accepted') {
-      console.log('PWA installée avec succès');
       setIsInstalled(true);
     }
     
