@@ -96,16 +96,16 @@ export const SMS_PACKS = {
   PACK_2000: {
     id: 'pack_2000',
     quantity: 2000,
-    priceCents: 12000, // 120€ → 140€ Standard
+    priceCents: 12000, // 120€
     priceCentsPro: 12000, // 120€ Pro
-    stripePriceId: 'price_SMS_PACK_2000', // À créer
+    stripePriceId: 'price_1Sf5bYH0VhS1yyE08bHzIfSV', // LIVE price ID
   },
   PACK_5000: {
     id: 'pack_5000',
     quantity: 5000,
     priceCents: 25000, // 250€
     priceCentsPro: 22000, // 220€ Pro
-    stripePriceId: 'price_SMS_PACK_5000', // À créer
+    stripePriceId: 'price_1Sf5bYH0VhS1yyE0OuldCI5M', // LIVE price ID
   },
 } as const;
 
