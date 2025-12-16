@@ -59,6 +59,7 @@ const MarineAIRefactored = lazy(() => import("./pages/MarineAIRefactored"));
 const CreateArrivageWizard = lazy(() => import("./pages/CreateArrivageWizard"));
 const PecheurWallet = lazy(() => import("./pages/PecheurWallet"));
 const AdminPushTest = lazy(() => import("./pages/AdminPushTest"));
+const Download = lazy(() => import("./pages/Download"));
 
 // Wrapper for lazy-loaded routes
 const LazyRoute = ({ children }: { children: React.ReactNode }) => (
@@ -104,6 +105,7 @@ const App = () => (
             <Route path="/arrivages" element={<LazyRoute><Arrivages /></LazyRoute>} />
             <Route path="/comment-ca-marche" element={<LazyRoute><CommentCaMarche /></LazyRoute>} />
             <Route path="/devenir-pecheur" element={<LazyRoute><DevenirPecheur /></LazyRoute>} />
+            <Route path="/telecharger" element={<LazyRoute><Download /></LazyRoute>} />
             {/* Redirect legacy routes to canonical page */}
             <Route path="/pecheurs" element={<Navigate to="/devenir-pecheur" replace />} />
             <Route path="/pecheurs/tarifs" element={<Navigate to="/devenir-pecheur" replace />} />
