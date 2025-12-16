@@ -12,6 +12,21 @@ If you discover a security vulnerability, please report it by:
 3. Include steps to reproduce the vulnerability
 4. Allow reasonable time for a fix before public disclosure
 
+## ⚠️ IMPORTANT: Key Rotation Required
+
+**If API keys or secrets were previously committed to the repository, they must be rotated immediately**, even after removing them from tracking. Git history preserves all previous commits, so exposed keys remain accessible.
+
+### Keys That Need Rotation After Exposure:
+- Supabase API keys (Project ID, Publishable Key)
+- Google Maps API Key
+- Any other API keys or secrets that were committed
+
+### How to Rotate Keys:
+1. **Supabase**: Generate new project or rotate keys in project settings
+2. **Google Maps**: Create a new API key and delete the old one in Google Cloud Console
+3. **Other services**: Follow the provider's key rotation procedure
+4. Update your local `.env` file with the new keys
+
 ## Environment Variables and Secrets
 
 ### Critical Security Rules
