@@ -31,6 +31,14 @@ npm install
 npm run dev
 ```
 
+## ⚙️ Configuration
+
+Pour configurer l'application, consultez la [Checklist de Configuration](docs/CONFIGURATION_CHECKLIST.md).
+
+### Variables d'environnement requises
+
+Voir `docs/CONFIGURATION_CHECKLIST.md` pour la liste complète des variables à configurer.
+
 ## 🔐 Variables d'environnement
 
 Créer un fichier `.env` à la racine avec :
