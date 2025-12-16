@@ -126,9 +126,6 @@ serve(async (req) => {
     const { priceId, planType } = validationResult.data;
     logStep('Request data validated', { priceId, planType });
 
-    // Get trial days based on plan type
-    const trialDays = 7; // 7 days free trial for all fisherman plans
-
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
@@ -147,7 +144,6 @@ serve(async (req) => {
         plan_type: planType,
       },
       subscription_data: {
-        trial_period_days: trialDays,
         metadata: {
           user_id: user.id,
           payment_type: 'fisherman_onboarding',

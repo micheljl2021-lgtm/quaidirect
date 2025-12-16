@@ -20,17 +20,14 @@ export const SUBSCRIPTION_PLANS = {
   STANDARD: {
     price: FISHERMAN_PLANS.STANDARD.priceCents,
     name: FISHERMAN_PLANS.STANDARD.name,
-    trialDays: FISHERMAN_PLANS.STANDARD.trialDays,
   },
   PRO: {
     price: FISHERMAN_PLANS.PRO.priceCents,
     name: FISHERMAN_PLANS.PRO.name,
-    trialDays: FISHERMAN_PLANS.PRO.trialDays,
   },
   ELITE: {
     price: FISHERMAN_PLANS.ELITE.priceCents,
     name: FISHERMAN_PLANS.ELITE.name,
-    trialDays: FISHERMAN_PLANS.ELITE.trialDays,
   },
 } as const;
 

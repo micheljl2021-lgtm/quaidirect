@@ -34,8 +34,6 @@ const PecheurPaymentSuccess = () => {
     return {
       label: plan.name,
       amount: formatPlanPrice(plan),
-      hasTrial: plan.trialDays > 0,
-      trialDays: plan.trialDays,
     };
   };
 
