@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Upload, Plus, Trash2, Users, Download, AlertCircle, CheckCircle2, ArrowLeft, Pencil } from "lucide-react";
+import { Upload, Plus, Trash2, Users, Download, AlertCircle, CheckCircle2, ArrowLeft, Pencil, FileUp } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -24,6 +25,7 @@ import {
   validateFrenchPhone,
   type ParsedContact 
 } from "@/lib/validators";
+import ContactImporter from "@/components/contacts/ContactImporter";
 import type { Database } from "@/integrations/supabase/types";
 
 // Type alias for Contact from Supabase schema
@@ -138,6 +140,38 @@ const PecheurContacts = () => {
     onSuccess: (count) => {
       toast.success(`${count} contacts importés avec succès`);
       setCsvContent("");
+      queryClient.invalidateQueries({ queryKey: ['fisherman-contacts'] });
+    },
+    onError: (error) => {
+      toast.error(getUserFriendlyError(error));
+    }
+  });
+
+  // Import from file (multi-format)
+  const importFromFile = useMutation({
+    mutationFn: async (contactsToImport: ParsedContact[]) => {
+      if (contactsToImport.length === 0) {
+        throw new Error('Aucun contact valide à importer');
+      }
+
+      const contacts = contactsToImport.map(c => ({
+        fisherman_id: fisherman?.id,
+        email: c.email,
+        phone: c.phone,
+        first_name: c.first_name,
+        last_name: c.last_name,
+        contact_group: c.contact_group
+      }));
+
+      const { error } = await supabase
+        .from('fishermen_contacts')
+        .insert(contacts);
+
+      if (error) throw error;
+      return contacts.length;
+    },
+    onSuccess: (count) => {
+      toast.success(`${count} contacts importés avec succès`);
       queryClient.invalidateQueries({ queryKey: ['fisherman-contacts'] });
     },
     onError: (error) => {
@@ -301,212 +335,238 @@ const PecheurContacts = () => {
         </div>
 
         <div className="grid gap-6 mb-6">
-          {/* Import CSV */}
+          {/* Import Section with Tabs */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Upload className="h-5 w-5" />
-                Importer des contacts (CSV)
+                Importer des contacts
               </CardTitle>
               <CardDescription>
-                Format attendu: email, phone, first_name, last_name, contact_group
-                <br />
-                <span className="text-xs">Séparateur détecté automatiquement (virgule ou point-virgule)</span>
+                Importez vos contacts depuis différents formats
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <Textarea
-                placeholder="email,phone,first_name,last_name,contact_group&#10;client@example.com,0612345678,Jean,Dupont,reguliers"
-                value={csvContent}
-                onChange={(e) => setCsvContent(e.target.value)}
-                rows={6}
-              />
+            <CardContent>
+              <Tabs defaultValue="file" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="file">
+                    <FileUp className="h-4 w-4 mr-2" />
+                    Import fichier
+                  </TabsTrigger>
+                  <TabsTrigger value="csv">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Coller CSV
+                  </TabsTrigger>
+                  <TabsTrigger value="manual">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Manuel
+                  </TabsTrigger>
+                </TabsList>
 
-              {/* Preview */}
-              {csvPreview && csvPreview.contacts.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-4 text-sm">
-                    <span className="text-muted-foreground">
-                      Séparateur détecté: <code className="bg-muted px-1 rounded">{csvPreview.separator === ';' ? 'point-virgule' : 'virgule'}</code>
-                    </span>
-                    <Badge variant="default" className="bg-green-600">
-                      <CheckCircle2 className="h-3 w-3 mr-1" />
-                      {csvPreview.validCount} valides
-                    </Badge>
-                    {csvPreview.invalidCount > 0 && (
-                      <Badge variant="destructive">
-                        <AlertCircle className="h-3 w-3 mr-1" />
-                        {csvPreview.invalidCount} invalides
-                      </Badge>
-                    )}
-                  </div>
+                {/* File Import Tab */}
+                <TabsContent value="file" className="mt-4">
+                  <ContactImporter
+                    existingContacts={contacts || []}
+                    onImport={(contactsToImport) => importFromFile.mutate(contactsToImport)}
+                    isImporting={importFromFile.isPending}
+                  />
+                </TabsContent>
 
-                  {/* Preview table (first 5) */}
-                  <div className="border rounded-md overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-[40px]">État</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Téléphone</TableHead>
-                          <TableHead>Nom</TableHead>
-                          <TableHead>Groupe</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {csvPreview.contacts.slice(0, 5).map((contact, idx) => (
-                          <TableRow key={idx} className={!contact.isValid ? 'bg-destructive/10' : ''}>
-                            <TableCell>
-                              {contact.isValid ? (
-                                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                              ) : (
-                                <AlertCircle className="h-4 w-4 text-destructive" />
-                              )}
-                            </TableCell>
-                            <TableCell className="text-sm">
-                              {contact.email || '-'}
-                              {contact.errors.includes('Email invalide') && (
-                                <span className="text-destructive text-xs block">Format invalide</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-sm">
-                              {contact.phone || '-'}
-                              {contact.errors.includes('Téléphone invalide') && (
-                                <span className="text-destructive text-xs block">Format invalide</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-sm">
-                              {contact.first_name} {contact.last_name}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="text-xs">{contact.contact_group}</Badge>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                    {csvPreview.contacts.length > 5 && (
-                      <div className="text-center py-2 text-sm text-muted-foreground border-t">
-                        ... et {csvPreview.contacts.length - 5} autres lignes
+                {/* CSV Paste Tab */}
+                <TabsContent value="csv" className="mt-4">
+                  <div className="space-y-4">
+                    <div className="text-sm text-muted-foreground">
+                      Format attendu: email, phone, first_name, last_name, contact_group
+                      <br />
+                      <span className="text-xs">Séparateur détecté automatiquement (virgule ou point-virgule)</span>
+                    </div>
+                    <Textarea
+                      placeholder="email,phone,first_name,last_name,contact_group&#10;client@example.com,0612345678,Jean,Dupont,reguliers"
+                      value={csvContent}
+                      onChange={(e) => setCsvContent(e.target.value)}
+                      rows={6}
+                    />
+
+                    {/* Preview */}
+                    {csvPreview && csvPreview.contacts.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-4 text-sm">
+                          <span className="text-muted-foreground">
+                            Séparateur détecté: <code className="bg-muted px-1 rounded">{csvPreview.separator === ';' ? 'point-virgule' : 'virgule'}</code>
+                          </span>
+                          <Badge variant="default" className="bg-green-600">
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            {csvPreview.validCount} valides
+                          </Badge>
+                          {csvPreview.invalidCount > 0 && (
+                            <Badge variant="destructive">
+                              <AlertCircle className="h-3 w-3 mr-1" />
+                              {csvPreview.invalidCount} invalides
+                            </Badge>
+                          )}
+                        </div>
+
+                        {/* Preview table (first 5) */}
+                        <div className="border rounded-md overflow-hidden">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="w-[40px]">État</TableHead>
+                                <TableHead>Email</TableHead>
+                                <TableHead>Téléphone</TableHead>
+                                <TableHead>Nom</TableHead>
+                                <TableHead>Groupe</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {csvPreview.contacts.slice(0, 5).map((contact, idx) => (
+                                <TableRow key={idx} className={!contact.isValid ? 'bg-destructive/10' : ''}>
+                                  <TableCell>
+                                    {contact.isValid ? (
+                                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                    ) : (
+                                      <AlertCircle className="h-4 w-4 text-destructive" />
+                                    )}
+                                  </TableCell>
+                                  <TableCell className="text-sm">
+                                    {contact.email || '-'}
+                                    {contact.errors.includes('Email invalide') && (
+                                      <span className="text-destructive text-xs block">Format invalide</span>
+                                    )}
+                                  </TableCell>
+                                  <TableCell className="text-sm">
+                                    {contact.phone || '-'}
+                                    {contact.errors.includes('Téléphone invalide') && (
+                                      <span className="text-destructive text-xs block">Format invalide</span>
+                                    )}
+                                  </TableCell>
+                                  <TableCell className="text-sm">
+                                    {contact.first_name} {contact.last_name}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge variant="outline" className="text-xs">{contact.contact_group}</Badge>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                          {csvPreview.contacts.length > 5 && (
+                            <div className="text-center py-2 text-sm text-muted-foreground border-t">
+                              ... et {csvPreview.contacts.length - 5} autres lignes
+                            </div>
+                          )}
+                        </div>
+
+                        {csvPreview.invalidCount > 0 && (
+                          <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription>
+                              {csvPreview.invalidCount} contact(s) invalide(s) seront ignorés lors de l'import.
+                            </AlertDescription>
+                          </Alert>
+                        )}
                       </div>
                     )}
-                  </div>
 
-                  {csvPreview.invalidCount > 0 && (
-                    <Alert variant="destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>
-                        {csvPreview.invalidCount} contact(s) invalide(s) seront ignorés lors de l'import.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </div>
-              )}
-
-              <Button 
-                onClick={() => importCSV.mutate()}
-                disabled={!csvPreview || csvPreview.validCount === 0 || importCSV.isPending}
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                Importer {csvPreview?.validCount || 0} contact(s) valide(s)
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Ajout manuel */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Plus className="h-5 w-5" />
-                Ajouter un contact manuellement
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {!showManualForm ? (
-                <Button onClick={() => setShowManualForm(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nouveau contact
-                </Button>
-              ) : (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label>Email</Label>
-                      <Input
-                        type="email"
-                        value={manualContact.email}
-                        onChange={(e) => {
-                          setManualContact({...manualContact, email: e.target.value});
-                          setFormErrors({...formErrors, email: ''});
-                        }}
-                        placeholder="client@example.com"
-                        className={formErrors.email ? 'border-destructive' : ''}
-                      />
-                      {formErrors.email && (
-                        <p className="text-xs text-destructive mt-1">{formErrors.email}</p>
-                      )}
-                    </div>
-                    <div>
-                      <Label>Téléphone</Label>
-                      <Input
-                        value={manualContact.phone}
-                        onChange={(e) => {
-                          setManualContact({...manualContact, phone: e.target.value});
-                          setFormErrors({...formErrors, phone: ''});
-                        }}
-                        placeholder="06 12 34 56 78"
-                        className={formErrors.phone ? 'border-destructive' : ''}
-                      />
-                      {formErrors.phone && (
-                        <p className="text-xs text-destructive mt-1">{formErrors.phone}</p>
-                      )}
-                    </div>
-                    <div>
-                      <Label>Prénom</Label>
-                      <Input
-                        value={manualContact.first_name}
-                        onChange={(e) => setManualContact({...manualContact, first_name: e.target.value})}
-                      />
-                    </div>
-                    <div>
-                      <Label>Nom</Label>
-                      <Input
-                        value={manualContact.last_name}
-                        onChange={(e) => setManualContact({...manualContact, last_name: e.target.value})}
-                      />
-                    </div>
-                    <div>
-                      <Label>Groupe</Label>
-                      <Input
-                        value={manualContact.contact_group}
-                        onChange={(e) => setManualContact({...manualContact, contact_group: e.target.value})}
-                        placeholder="general"
-                      />
-                    </div>
-                    <div>
-                      <Label>Notes</Label>
-                      <Input
-                        value={manualContact.notes}
-                        onChange={(e) => setManualContact({...manualContact, notes: e.target.value})}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
                     <Button 
-                      onClick={() => addManualContact.mutate()}
-                      disabled={addManualContact.isPending}
+                      onClick={() => importCSV.mutate()}
+                      disabled={!csvPreview || csvPreview.validCount === 0 || importCSV.isPending}
                     >
-                      Ajouter
-                    </Button>
-                    <Button variant="outline" onClick={() => {
-                      setShowManualForm(false);
-                      setFormErrors({});
-                    }}>
-                      Annuler
+                      <Upload className="h-4 w-4 mr-2" />
+                      Importer {csvPreview?.validCount || 0} contact(s) valide(s)
                     </Button>
                   </div>
-                </div>
-              )}
+                </TabsContent>
+
+                {/* Manual Tab */}
+                <TabsContent value="manual" className="mt-4">
+                  {!showManualForm ? (
+                    <Button onClick={() => setShowManualForm(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Nouveau contact
+                    </Button>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label>Email</Label>
+                          <Input
+                            type="email"
+                            value={manualContact.email}
+                            onChange={(e) => {
+                              setManualContact({...manualContact, email: e.target.value});
+                              setFormErrors({...formErrors, email: ''});
+                            }}
+                            placeholder="client@example.com"
+                            className={formErrors.email ? 'border-destructive' : ''}
+                          />
+                          {formErrors.email && (
+                            <p className="text-xs text-destructive mt-1">{formErrors.email}</p>
+                          )}
+                        </div>
+                        <div>
+                          <Label>Téléphone</Label>
+                          <Input
+                            value={manualContact.phone}
+                            onChange={(e) => {
+                              setManualContact({...manualContact, phone: e.target.value});
+                              setFormErrors({...formErrors, phone: ''});
+                            }}
+                            placeholder="06 12 34 56 78"
+                            className={formErrors.phone ? 'border-destructive' : ''}
+                          />
+                          {formErrors.phone && (
+                            <p className="text-xs text-destructive mt-1">{formErrors.phone}</p>
+                          )}
+                        </div>
+                        <div>
+                          <Label>Prénom</Label>
+                          <Input
+                            value={manualContact.first_name}
+                            onChange={(e) => setManualContact({...manualContact, first_name: e.target.value})}
+                          />
+                        </div>
+                        <div>
+                          <Label>Nom</Label>
+                          <Input
+                            value={manualContact.last_name}
+                            onChange={(e) => setManualContact({...manualContact, last_name: e.target.value})}
+                          />
+                        </div>
+                        <div>
+                          <Label>Groupe</Label>
+                          <Input
+                            value={manualContact.contact_group}
+                            onChange={(e) => setManualContact({...manualContact, contact_group: e.target.value})}
+                            placeholder="general"
+                          />
+                        </div>
+                        <div>
+                          <Label>Notes</Label>
+                          <Input
+                            value={manualContact.notes}
+                            onChange={(e) => setManualContact({...manualContact, notes: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          onClick={() => addManualContact.mutate()}
+                          disabled={addManualContact.isPending}
+                        >
+                          Ajouter
+                        </Button>
+                        <Button variant="outline" onClick={() => {
+                          setShowManualForm(false);
+                          setFormErrors({});
+                        }}>
+                          Annuler
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
 
