@@ -117,6 +117,7 @@ export interface ParsedContact {
   contact_group: string;
   isValid: boolean;
   errors: string[];
+  isDuplicate?: boolean;
 }
 
 export function detectCSVSeparator(csv: string): string {
