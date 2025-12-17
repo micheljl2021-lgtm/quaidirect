@@ -89,9 +89,29 @@ const Carte = () => {
     enabled: !!user 
   });
   
-  // Filter sale points: only for authenticated users with valid lat/lng
+  // Filter and transform sale points for map (fishermen -> fisherman)
   const validSalePoints = user && salePointsData
-    ? salePointsData.filter(sp => sp.latitude != null && sp.longitude != null)
+    ? salePointsData
+        .filter(sp => sp.latitude != null && sp.longitude != null)
+        .map(sp => ({
+          id: sp.id,
+          label: sp.label,
+          address: sp.address,
+          latitude: sp.latitude as number,
+          longitude: sp.longitude as number,
+          fisherman_id: sp.fisherman_id,
+          photo_url: sp.photo_url,
+          description: sp.description,
+          is_primary: sp.is_primary,
+          fisherman: sp.fishermen ? {
+            id: sp.fishermen.id,
+            boat_name: sp.fishermen.boat_name,
+            photo_url: sp.fishermen.photo_url,
+            slug: sp.fishermen.slug,
+            bio: sp.fishermen.bio,
+            fishing_methods: sp.fishermen.fishing_methods,
+          } : undefined,
+        }))
     : [];
 
   // Fetch real ports from database
@@ -246,7 +266,25 @@ const Carte = () => {
 
   // Get selected items for panel
   const selectedDrop = selectedDropId ? mapDrops.find(d => d.id === selectedDropId) : null;
-  const selectedSalePoint = selectedSalePointId ? validSalePoints.find(sp => sp.id === selectedSalePointId) : null;
+  
+  // Transform sale point to match panel interface (fishermen -> fisherman)
+  const rawSalePoint = selectedSalePointId ? validSalePoints.find(sp => sp.id === selectedSalePointId) : null;
+  const selectedSalePoint = rawSalePoint ? {
+    id: rawSalePoint.id,
+    label: rawSalePoint.label,
+    address: rawSalePoint.address,
+    description: rawSalePoint.description,
+    photo_url: rawSalePoint.photo_url,
+    fisherman_id: rawSalePoint.fisherman_id,
+    fisherman: rawSalePoint.fisherman ? {
+      id: rawSalePoint.fisherman.id,
+      boat_name: rawSalePoint.fisherman.boat_name,
+      photo_url: rawSalePoint.fisherman.photo_url,
+      slug: rawSalePoint.fisherman.slug,
+      bio: rawSalePoint.fisherman.bio,
+      fishing_methods: rawSalePoint.fisherman.fishing_methods,
+    } : undefined,
+  } : null;
   
   // Find related drop for a sale point (if any active drop is at this sale point)
   const relatedDrop = selectedSalePointId 
@@ -398,7 +436,7 @@ const Carte = () => {
         onClose={handleClosePanel}
         selectedType={selectedType}
         selectedDrop={selectedDrop}
-        selectedSalePoint={selectedSalePoint as any}
+        selectedSalePoint={selectedSalePoint}
         relatedDrop={relatedDrop}
       />
       

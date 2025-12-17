@@ -1,12 +1,15 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { MapPin, Clock, Fish, User, X, ExternalLink, Anchor } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { MapPin, Clock, Fish, User, ExternalLink, Anchor, Calendar, Heart } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
+import { LIMITS } from '@/lib/constants';
 
 interface Drop {
   id: string;
@@ -22,12 +25,16 @@ interface SalePoint {
   id: string;
   label: string;
   address: string;
+  description?: string | null;
   photo_url?: string;
+  fisherman_id?: string;
   fisherman?: {
     id: string;
     boat_name: string;
     photo_url?: string;
     slug?: string;
+    bio?: string | null;
+    fishing_methods?: string[] | null;
   };
 }
 
@@ -37,7 +44,7 @@ interface MapSelectionPanelProps {
   selectedType: 'drop' | 'salePoint' | null;
   selectedDrop?: Drop | null;
   selectedSalePoint?: SalePoint | null;
-  relatedDrop?: Drop | null; // Drop linked to a sale point
+  relatedDrop?: Drop | null;
 }
 
 const MapSelectionPanel = ({
@@ -46,15 +53,48 @@ const MapSelectionPanel = ({
   selectedType,
   selectedDrop,
   selectedSalePoint,
-  relatedDrop,
 }: MapSelectionPanelProps) => {
   const navigate = useNavigate();
+
+  // Fetch all recent arrivals for this sale point
+  const { data: salePointArrivals } = useQuery({
+    queryKey: ['sale-point-arrivals', selectedSalePoint?.id],
+    queryFn: async () => {
+      if (!selectedSalePoint?.id) return [];
+      
+      const graceMs = LIMITS.ARRIVAL_GRACE_HOURS * 60 * 60 * 1000;
+      const minStartTime = new Date(Date.now() - graceMs).toISOString();
+
+      const { data, error } = await supabase
+        .from('drops')
+        .select(`
+          id,
+          eta_at,
+          sale_start_time,
+          offers (
+            unit_price,
+            available_units,
+            species (name)
+          ),
+          fishermen (boat_name),
+          drop_photos (photo_url, display_order)
+        `)
+        .eq('sale_point_id', selectedSalePoint.id)
+        .in('status', ['scheduled', 'landed'])
+        .gte('sale_start_time', minStartTime)
+        .order('sale_start_time', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: isOpen && selectedType === 'salePoint' && !!selectedSalePoint?.id,
+  });
 
   if (!isOpen) return null;
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="bottom" className="h-auto max-h-[60vh] rounded-t-xl">
+      <SheetContent side="bottom" className="h-auto max-h-[70vh] rounded-t-xl overflow-y-auto">
         <SheetHeader className="pb-4">
           <div className="flex items-center justify-between">
             <SheetTitle className="flex items-center gap-2">
@@ -120,89 +160,195 @@ const MapSelectionPanel = ({
           </div>
         )}
 
-        {/* Sale Point Details */}
+        {/* Sale Point Details with ALL arrivals */}
         {selectedType === 'salePoint' && selectedSalePoint && (
           <div className="space-y-4">
-            {selectedSalePoint.photo_url && (
-              <div className="relative h-32 rounded-lg overflow-hidden">
+            {/* Photo du point de vente ou pêcheur */}
+            <div className="relative h-40 rounded-lg overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5">
+              {(selectedSalePoint.photo_url || selectedSalePoint.fisherman?.photo_url) ? (
                 <img
-                  src={selectedSalePoint.photo_url}
+                  src={selectedSalePoint.photo_url || selectedSalePoint.fisherman?.photo_url || ''}
                   alt={selectedSalePoint.label}
                   className="w-full h-full object-cover"
                 />
-              </div>
-            )}
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <MapPin className="h-16 w-16 text-muted-foreground/30" />
+                </div>
+              )}
+            </div>
+
+            {/* Nom et adresse */}
             <div>
-              <h3 className="font-semibold text-lg">{selectedSalePoint.label}</h3>
-              <p className="text-muted-foreground flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
+              <h3 className="font-semibold text-xl">{selectedSalePoint.label}</h3>
+              <p className="text-muted-foreground flex items-center gap-2 mt-1">
+                <MapPin className="h-4 w-4 flex-shrink-0" />
                 {selectedSalePoint.address}
               </p>
             </div>
 
-            {/* Related Drop if exists */}
-            {relatedDrop && (
-              <Card className="border-primary/30 bg-primary/5">
-                <CardHeader className="py-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Fish className="h-4 w-4 text-primary" />
-                    Arrivage disponible
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="py-2">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-medium">{relatedDrop.species}</p>
-                      <p className="text-sm text-muted-foreground">{relatedDrop.saleTime}</p>
-                    </div>
-                    <Button 
-                      size="sm"
-                      onClick={() => {
-                        navigate(`/drop/${relatedDrop.id}`);
-                        onClose();
-                      }}
-                    >
-                      Voir
-                    </Button>
+            {/* Arrivages à ce point de vente */}
+            {salePointArrivals && salePointArrivals.length > 0 && (
+              <>
+                <Separator />
+                <div>
+                  <h4 className="font-semibold text-base mb-3 flex items-center gap-2">
+                    <Fish className="h-5 w-5 text-primary" />
+                    Arrivages disponibles ({salePointArrivals.length})
+                  </h4>
+                  <div className="space-y-3 max-h-[180px] overflow-y-auto">
+                    {salePointArrivals.map((arrival) => {
+                      const firstPhoto = arrival.drop_photos?.sort((a: any, b: any) => a.display_order - b.display_order)?.[0]?.photo_url;
+                      const species = arrival.offers?.[0]?.species?.name || 'Poisson';
+                      const price = arrival.offers?.[0]?.unit_price || 0;
+                      const units = arrival.offers?.[0]?.available_units || 0;
+                      const saleTime = arrival.sale_start_time 
+                        ? format(new Date(arrival.sale_start_time), 'HH:mm', { locale: fr })
+                        : 'À confirmer';
+                      const saleDate = arrival.sale_start_time
+                        ? format(new Date(arrival.sale_start_time), 'EEEE d MMMM', { locale: fr })
+                        : '';
+
+                      return (
+                        <Card 
+                          key={arrival.id} 
+                          className="cursor-pointer hover:bg-accent/50 transition-colors"
+                          onClick={() => {
+                            navigate(`/drop/${arrival.id}`);
+                            onClose();
+                          }}
+                        >
+                          <CardContent className="p-3">
+                            <div className="flex gap-3">
+                              {firstPhoto && (
+                                <img 
+                                  src={firstPhoto} 
+                                  alt={species}
+                                  className="w-16 h-16 object-cover rounded"
+                                />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-start">
+                                  <p className="font-semibold truncate">{species}</p>
+                                  <Badge variant="secondary" className="ml-2 flex-shrink-0">
+                                    {price.toFixed(2)}€
+                                  </Badge>
+                                </div>
+                                <p className="text-sm text-muted-foreground capitalize">{saleDate}</p>
+                                <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="h-3 w-3" /> {saleTime}
+                                  </span>
+                                  <span>{units} unités</span>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
+                </div>
+              </>
+            )}
+
+            {salePointArrivals && salePointArrivals.length === 0 && (
+              <Card className="bg-muted/50">
+                <CardContent className="py-6 text-center">
+                  <Fish className="h-8 w-8 mx-auto text-muted-foreground/50 mb-2" />
+                  <p className="text-muted-foreground">Aucun arrivage prévu pour le moment</p>
                 </CardContent>
               </Card>
             )}
 
+            <Separator />
+
             {/* Fisherman Card */}
             {selectedSalePoint.fisherman && (
-              <Card>
-                <CardContent className="pt-4">
-                  <div className="flex items-center gap-4">
-                    {selectedSalePoint.fisherman.photo_url ? (
-                      <img
-                        src={selectedSalePoint.fisherman.photo_url}
-                        alt={selectedSalePoint.fisherman.boat_name}
-                        className="w-16 h-16 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-                        <User className="h-8 w-8 text-muted-foreground" />
+              <div>
+                <h4 className="font-semibold text-base mb-3 flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Le pêcheur
+                </h4>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-start gap-4">
+                      {selectedSalePoint.fisherman.photo_url ? (
+                        <img
+                          src={selectedSalePoint.fisherman.photo_url}
+                          alt={selectedSalePoint.fisherman.boat_name}
+                          className="w-20 h-20 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 rounded-lg bg-muted flex items-center justify-center">
+                          <User className="h-10 w-10 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <p className="font-semibold text-lg">{selectedSalePoint.fisherman.boat_name}</p>
+                        {selectedSalePoint.fisherman.fishing_methods && selectedSalePoint.fisherman.fishing_methods.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {selectedSalePoint.fisherman.fishing_methods.slice(0, 3).map((method) => (
+                              <Badge key={method} variant="outline" className="text-xs">
+                                {method}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                        {selectedSalePoint.fisherman.bio && (
+                          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                            {selectedSalePoint.fisherman.bio}
+                          </p>
+                        )}
+                        <Button
+                          variant="link"
+                          className="p-0 h-auto text-primary mt-2"
+                          onClick={() => {
+                            const target = selectedSalePoint.fisherman?.slug || selectedSalePoint.fisherman?.id;
+                            navigate(`/pecheurs/${target}`);
+                            onClose();
+                          }}
+                        >
+                          Voir le profil complet →
+                        </Button>
                       </div>
-                    )}
-                    <div className="flex-1">
-                      <p className="font-semibold">{selectedSalePoint.fisherman.boat_name}</p>
-                      <Button
-                        variant="link"
-                        className="p-0 h-auto text-primary"
-                        onClick={() => {
-                          const target = selectedSalePoint.fisherman?.slug || selectedSalePoint.fisherman?.id;
-                          navigate(`/pecheurs/${target}`);
-                          onClose();
-                        }}
-                      >
-                        Voir le profil →
-                      </Button>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
             )}
+
+            {/* Description du point de vente */}
+            {selectedSalePoint.description && (
+              <>
+                <Separator />
+                <div>
+                  <h4 className="font-semibold text-base mb-2">À propos de ce point de vente</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {selectedSalePoint.description}
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* Action buttons */}
+            <div className="pt-4 space-y-2">
+              <Button 
+                className="w-full" 
+                variant="outline"
+                onClick={() => {
+                  if (selectedSalePoint.fisherman?.id) {
+                    navigate(`/arrivages?fisherman=${selectedSalePoint.fisherman.id}`);
+                  } else {
+                    navigate('/arrivages');
+                  }
+                  onClose();
+                }}
+              >
+                <Fish className="h-4 w-4 mr-2" />
+                Tous les arrivages de ce pêcheur
+              </Button>
+            </div>
           </div>
         )}
       </SheetContent>

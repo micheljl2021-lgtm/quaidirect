@@ -518,7 +518,7 @@ const GoogleMapComponent = ({
         </InfoWindow>
       )}
 
-      {/* Hover InfoWindow for SalePoints (preview with photo) */}
+      {/* Hover InfoWindow for SalePoints (preview with photo + info) */}
       {hoverInfoWindow && !activeInfoWindow && salePoints.find(sp => sp.id === hoverInfoWindow) && (() => {
         const sp = salePoints.find(s => s.id === hoverInfoWindow)!;
         return (
@@ -526,15 +526,22 @@ const GoogleMapComponent = ({
             position={{ lat: sp.latitude, lng: sp.longitude }}
             options={{ disableAutoPan: true }}
           >
-            <div className="p-2 min-w-[150px]">
-              {sp.photo_url && (
+            <div className="p-2 min-w-[200px] max-w-[280px]">
+              {(sp.photo_url || sp.fisherman?.photo_url) && (
                 <img
-                  src={sp.photo_url}
+                  src={sp.photo_url || sp.fisherman?.photo_url || ''}
                   alt={sp.label}
-                  className="w-full h-20 object-cover rounded mb-2"
+                  className="w-full h-24 object-cover rounded mb-2"
                 />
               )}
-              <h3 className="font-semibold text-sm">{sp.label}</h3>
+              <h3 className="font-semibold text-sm mb-1">{sp.label}</h3>
+              <p className="text-xs text-gray-600 mb-1 line-clamp-2">{sp.address}</p>
+              {sp.fisherman?.boat_name && (
+                <p className="text-xs text-blue-600 font-medium">
+                  🚢 {sp.fisherman.boat_name}
+                </p>
+              )}
+              <p className="text-xs text-gray-500 mt-1 italic">Cliquez pour voir les détails</p>
             </div>
           </InfoWindow>
         );
