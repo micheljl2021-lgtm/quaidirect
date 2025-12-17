@@ -34,8 +34,8 @@ const CLIENT_LEVELS = {
     features: [
       { icon: Check, title: "Tout Standard inclus" },
       { icon: Crown, title: "✨ Personnaliser votre badge Premium (couleur)" },
-      { icon: Mail, title: "📧 Email sur 2 points de vente favoris" },
-      { icon: Star, title: "⚡ Accès anticipé 30min" },
+      { icon: Mail, title: "📧 Emails : arrivages, espèces, points de vente" },
+      { icon: Bell, title: "🔔 Choix : Push ou Email" },
       { icon: Heart, title: "🎣 Choix d'un pêcheur favori à soutenir" },
     ],
   },
@@ -45,19 +45,20 @@ const CLIENT_LEVELS = {
     priceAnnual: "40€",
     priceIdMonthly: "price_1SZ48yH0VhS1yyE0bijfw3y7",
     priceIdAnnual: "price_1SZ49DH0VhS1yyE06HJyLC65",
-    description: "Tout Premium + Espèces favorites",
+    description: "Tout Premium + SMS inclus",
     features: [
       { icon: Check, title: "Tout Premium inclus" },
+      { icon: MessageSquare, title: "📱 Alertes SMS en plus des emails" },
       { icon: Mail, title: "📧 Email sur 5 points de vente favoris" },
-      { icon: MessageSquare, title: "🐟 Suivre 10 espèces favorites (email)" },
+      { icon: MessageSquare, title: "🐟 Suivre 10 espèces favorites" },
+      { icon: Bell, title: "🔔 Choix : Push / Email / SMS" },
       { icon: Heart, title: "💰 Contribution cagnotte SMS pêcheurs" },
-      { icon: Star, title: "🌟 Badge Premium+ distinctif" },
     ],
   },
 };
 
 // Fixed hero message - no more random rotation
-const HERO_MESSAGE = "Soutenez vos pêcheurs : profitez des arrivages 30 min avant tout le monde";
+const HERO_MESSAGE = "Recevez une alerte dès que vos marins pêcheurs artisans préférés débarquent leur pêche";
 
 export default function PremiumPaywall() {
   const navigate = useNavigate();
