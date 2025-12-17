@@ -85,15 +85,7 @@ const DropDetail = () => {
     enabled: !!id,
   });
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
-      </div>
-    );
-  }
-
-  // Auto-redirect to homepage if drop not found
+  // Auto-redirect to homepage if drop not found - useEffect MUST be before any returns
   useEffect(() => {
     if (!isLoading && (error || !drop)) {
       const timeout = setTimeout(() => {
@@ -102,6 +94,14 @@ const DropDetail = () => {
       return () => clearTimeout(timeout);
     }
   }, [isLoading, error, drop, navigate]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
+      </div>
+    );
+  }
 
   if (error || !drop) {
     return (
