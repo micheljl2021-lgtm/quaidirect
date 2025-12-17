@@ -430,6 +430,45 @@ export type Database = {
           },
         ]
       }
+      feedback: {
+        Row: {
+          created_at: string | null
+          description: string
+          email: string
+          id: string
+          page: string
+          screenshot_url: string | null
+          status: string | null
+          type: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          email: string
+          id?: string
+          page: string
+          screenshot_url?: string | null
+          status?: string | null
+          type: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          email?: string
+          id?: string
+          page?: string
+          screenshot_url?: string | null
+          status?: string | null
+          type?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       fisherman_sale_points: {
         Row: {
           address: string
