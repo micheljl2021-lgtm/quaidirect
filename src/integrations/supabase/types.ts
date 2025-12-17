@@ -199,6 +199,35 @@ export type Database = {
         }
         Relationships: []
       }
+      client_follow_sale_points: {
+        Row: {
+          created_at: string | null
+          id: string
+          sale_point_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          sale_point_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          sale_point_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_follow_sale_points_sale_point_id_fkey"
+            columns: ["sale_point_id"]
+            isOneToOne: false
+            referencedRelation: "fisherman_sale_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drop_photos: {
         Row: {
           created_at: string
@@ -1523,6 +1552,7 @@ export type Database = {
           id: string
           phone: string | null
           postal_code: string | null
+          premium_badge_color: string | null
           updated_at: string
         }
         Insert: {
@@ -1534,6 +1564,7 @@ export type Database = {
           id: string
           phone?: string | null
           postal_code?: string | null
+          premium_badge_color?: string | null
           updated_at?: string
         }
         Update: {
@@ -1545,6 +1576,7 @@ export type Database = {
           id?: string
           phone?: string | null
           postal_code?: string | null
+          premium_badge_color?: string | null
           updated_at?: string
         }
         Relationships: []
