@@ -53,8 +53,8 @@ describe('Pricing Configuration', () => {
     it('should have correct PACK_LANCEMENT as recommended', () => {
       expect(SMS_PACKS.PACK_LANCEMENT.recommended).toBe(true);
       expect(SMS_PACKS.PACK_LANCEMENT.quantity).toBe(1000);
-      expect(SMS_PACKS.PACK_LANCEMENT.priceCents).toBe(7000);
-      expect(SMS_PACKS.PACK_LANCEMENT.priceCentsPro).toBe(6500);
+      expect(SMS_PACKS.PACK_LANCEMENT.priceCents).toBe(9500);
+      expect(SMS_PACKS.PACK_LANCEMENT.priceCentsPro).toBe(8500);
     });
 
     it('should have better prices for PRO plan', () => {
