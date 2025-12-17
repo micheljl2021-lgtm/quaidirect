@@ -416,7 +416,7 @@ const PecheurPayment = () => {
                           <p className="text-2xl font-bold">{pack.priceCents / 100}€</p>
                           <p className="text-xs text-muted-foreground">Standard</p>
                         </div>
-                        {pack.priceCentsPro !== pack.priceCents && (
+                        {(pack.priceCentsPro as number) !== (pack.priceCents as number) && (
                           <div className="pt-1 border-t">
                             <p className="text-lg font-bold text-green-600">{pack.priceCentsPro / 100}€</p>
                             <p className="text-xs text-green-600 font-medium">PRO (-{Math.round((1 - pack.priceCentsPro / pack.priceCents) * 100)}%)</p>
