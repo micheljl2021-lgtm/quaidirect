@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useClientSubscriptionLevel } from '@/hooks/useClientSubscriptionLevel';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import Header from '@/components/Header';
+import ClientPreferencesPanel from '@/components/ClientPreferencesPanel';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
-import { Crown, Fish, MapPin, Clock, Zap, Bell, Calendar, CheckCircle2, XCircle, Loader2, Heart, Star } from 'lucide-react';
+import { Crown, Fish, MapPin, Clock, Zap, Bell, Calendar, CheckCircle2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getRedirectPathByRole } from '@/lib/authRedirect';
 
@@ -66,151 +67,26 @@ interface Reservation {
   };
 }
 
-interface FollowedFisherman {
-  fisherman_id: string;
-  fishermen: {
-    id: string;
-    boat_name: string;
-    company_name: string | null;
-    photo_url: string | null;
-  };
-}
-
 const PremiumDashboard = () => {
   const { user, userRole, loading } = useAuth();
+  const { level, isPremium, isPremiumPlus } = useClientSubscriptionLevel();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [favoritePorts, setFavoritePorts] = useState<string[]>([]);
-  const [favoriteSpecies, setFavoriteSpecies] = useState<string[]>([]);
-  const [favoriteFishermen, setFavoriteFishermen] = useState<string[]>([]);
-  const [showSettings, setShowSettings] = useState(false);
+  const [showPreferences, setShowPreferences] = useState(false);
 
-  // Fetch user preferences
-  const { data: profile } = useQuery({
-    queryKey: ['user-profile', user?.id],
+  // Load favorite fishermen for sorting
+  const { data: favoriteFishermen } = useQuery({
+    queryKey: ['favorite-fishermen', user?.id],
     queryFn: async () => {
-      if (!user) return null;
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      if (error) throw error;
-      return data;
+      const { data } = await supabase
+        .from('fishermen_followers')
+        .select('fisherman_id')
+        .eq('user_id', user!.id);
+      return data?.map(f => f.fisherman_id) || [];
     },
     enabled: !!user,
   });
-
-  // Fetch all ports for selection
-  const { data: allPorts } = useQuery({
-    queryKey: ['all-ports'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('ports')
-        .select('*')
-        .order('name');
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Fetch all species for selection
-  const { data: allSpecies } = useQuery({
-    queryKey: ['all-species'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('species')
-        .select('*')
-        .order('name');
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Fetch all verified fishermen for selection
-  const { data: allFishermen } = useQuery({
-    queryKey: ['all-verified-fishermen'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('fishermen')
-        .select('id, boat_name, company_name, photo_url')
-        .not('verified_at', 'is', null)
-        .order('boat_name');
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Load favorite ports, species, and fishermen from follow tables
-  useEffect(() => {
-    if (!user) return;
-
-    const loadPreferences = async () => {
-      const { data: followedPorts } = await supabase
-        .from('follow_ports')
-        .select('port_id')
-        .eq('user_id', user.id);
-      
-      const { data: followedSpecies } = await supabase
-        .from('follow_species')
-        .select('species_id')
-        .eq('user_id', user.id);
-
-      const { data: followedFishermen } = await supabase
-        .from('fishermen_followers')
-        .select('fisherman_id')
-        .eq('user_id', user.id);
-
-      if (followedPorts) setFavoritePorts(followedPorts.map(fp => fp.port_id));
-      if (followedSpecies) setFavoriteSpecies(followedSpecies.map(fs => fs.species_id));
-      if (followedFishermen) setFavoriteFishermen(followedFishermen.map(ff => ff.fisherman_id));
-    };
-
-    loadPreferences();
-  }, [user]);
-
-  const saveFavorites = async () => {
-    if (!user) return;
-
-    try {
-      // Delete existing follows
-      await supabase.from('follow_ports').delete().eq('user_id', user.id);
-      await supabase.from('follow_species').delete().eq('user_id', user.id);
-      await supabase.from('fishermen_followers').delete().eq('user_id', user.id);
-
-      // Insert new favorites
-      if (favoritePorts.length > 0) {
-        await supabase
-          .from('follow_ports')
-          .insert(favoritePorts.map(port_id => ({ user_id: user.id, port_id })));
-      }
-
-      if (favoriteSpecies.length > 0) {
-        await supabase
-          .from('follow_species')
-          .insert(favoriteSpecies.map(species_id => ({ user_id: user.id, species_id })));
-      }
-
-      if (favoriteFishermen.length > 0) {
-        await supabase
-          .from('fishermen_followers')
-          .insert(favoriteFishermen.map(fisherman_id => ({ user_id: user.id, fisherman_id })));
-      }
-
-      toast({
-        title: 'Préférences enregistrées',
-        description: 'Vous recevrez des alertes pour vos favoris',
-      });
-      setShowSettings(false);
-    } catch (error: any) {
-      toast({
-        title: 'Erreur',
-        description: error.message,
-        variant: 'destructive',
-      });
-    }
-  };
 
   useEffect(() => {
     if (loading) return;
@@ -294,15 +170,15 @@ const PremiumDashboard = () => {
       // Sort drops: favorites first, then by eta_at
       const dropsData = data as Drop[];
       return dropsData.sort((a, b) => {
-        const aIsFavorite = favoriteFishermen.includes(a.fisherman_id);
-        const bIsFavorite = favoriteFishermen.includes(b.fisherman_id);
+        const aIsFavorite = favoriteFishermen?.includes(a.fisherman_id);
+        const bIsFavorite = favoriteFishermen?.includes(b.fisherman_id);
         if (aIsFavorite && !bIsFavorite) return -1;
         if (!aIsFavorite && bIsFavorite) return 1;
         return new Date(a.eta_at).getTime() - new Date(b.eta_at).getTime();
       });
     },
     enabled: !!user,
-    refetchInterval: 15000, // Premium users get faster refresh
+    refetchInterval: 15000,
   });
 
   // Fetch user reservations
@@ -352,7 +228,7 @@ const PremiumDashboard = () => {
           schema: 'public',
           table: 'drops',
         },
-        (payload) => {
+        () => {
           toast({
             title: '🎣 Nouvel arrivage disponible !',
             description: 'Un nouvel arrivage vient d\'être annoncé',
@@ -398,9 +274,8 @@ const PremiumDashboard = () => {
     }
   };
 
-  const handleReserve = async (offerId: string, dropId: string) => {
+  const handleReserve = async (offerId: string) => {
     try {
-      // Check if user already has a reservation for this drop
       const { data: existingReservations } = await supabase
         .from('reservations')
         .select('id')
@@ -417,7 +292,6 @@ const PremiumDashboard = () => {
         return;
       }
 
-      // Create reservation (1 unit by default, can be modified later)
       const { error } = await supabase
         .from('reservations')
         .insert({
@@ -425,7 +299,7 @@ const PremiumDashboard = () => {
           offer_id: offerId,
           quantity: 1,
           status: 'pending',
-          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24h expiry
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         });
 
       if (error) throw error;
@@ -451,6 +325,8 @@ const PremiumDashboard = () => {
     return access.type === 'premium';
   }) || [];
 
+  const levelLabel = isPremiumPlus ? 'Premium+' : isPremium ? 'Premium' : 'Follower';
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -466,10 +342,10 @@ const PremiumDashboard = () => {
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-                    Compte Premium Actif
+                    Compte {levelLabel} Actif
                     <Badge className="gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
                       <Crown className="h-3 w-3" />
-                      Premium
+                      {levelLabel}
                     </Badge>
                   </h1>
                   <p className="text-muted-foreground">
@@ -477,130 +353,19 @@ const PremiumDashboard = () => {
                   </p>
                 </div>
               </div>
-              <Button variant="outline" onClick={() => setShowSettings(!showSettings)}>
-                Mes préférences
+              <Button variant="outline" onClick={() => setShowPreferences(!showPreferences)}>
+                {showPreferences ? 'Masquer préférences' : 'Mes préférences'}
               </Button>
             </div>
-
-            {/* Settings Panel */}
-            {showSettings && (
-              <div className="mt-6 pt-6 border-t space-y-6">
-                {favoritePorts.length === 0 && favoriteSpecies.length === 0 && (
-                  <div className="bg-muted/50 rounded-lg p-6 text-center mb-4">
-                    <Bell className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                    <h3 className="font-semibold mb-2">Configurez vos préférences</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Sélectionnez vos ports et espèces favoris pour recevoir des alertes ciblées
-                    </p>
-                  </div>
-                )}
-                <div className="space-y-3">
-                  <Label>Ports favoris (maximum 2)</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {allPorts?.map(port => (
-                      <div key={port.id} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id={`port-${port.id}`}
-                          checked={favoritePorts.includes(port.id)}
-                          onChange={(e) => {
-                            if (e.target.checked && favoritePorts.length >= 2) {
-                              toast({
-                                title: 'Limite atteinte',
-                                description: 'Vous pouvez sélectionner maximum 2 ports',
-                                variant: 'destructive',
-                              });
-                              return;
-                            }
-                            setFavoritePorts(prev => 
-                              e.target.checked 
-                                ? [...prev, port.id]
-                                : prev.filter(p => p !== port.id)
-                            );
-                          }}
-                          className="rounded"
-                        />
-                        <label htmlFor={`port-${port.id}`} className="text-sm cursor-pointer">
-                          {port.name} ({port.city})
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <Label>Espèces favorites</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto p-2 border rounded-lg">
-                    {allSpecies?.map(species => (
-                      <div key={species.id} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id={`species-${species.id}`}
-                          checked={favoriteSpecies.includes(species.id)}
-                          onChange={(e) => {
-                            setFavoriteSpecies(prev => 
-                              e.target.checked 
-                                ? [...prev, species.id]
-                                : prev.filter(s => s !== species.id)
-                            );
-                          }}
-                          className="rounded"
-                        />
-                        <label htmlFor={`species-${species.id}`} className="text-sm cursor-pointer">
-                          {species.name}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <Label className="flex items-center gap-2">
-                    <Heart className="h-4 w-4 text-red-500" />
-                    Pêcheur favori à soutenir (maximum 2)
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    Vos pêcheurs favoris apparaîtront en priorité dans la liste des arrivages
-                  </p>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto p-2 border rounded-lg">
-                    {allFishermen?.map(fisherman => (
-                      <div key={fisherman.id} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id={`fisherman-${fisherman.id}`}
-                          checked={favoriteFishermen.includes(fisherman.id)}
-                          onChange={(e) => {
-                            if (e.target.checked && favoriteFishermen.length >= 2) {
-                              toast({
-                                title: 'Limite atteinte',
-                                description: 'Vous pouvez sélectionner maximum 2 pêcheurs favoris',
-                                variant: 'destructive',
-                              });
-                              return;
-                            }
-                            setFavoriteFishermen(prev => 
-                              e.target.checked 
-                                ? [...prev, fisherman.id]
-                                : prev.filter(f => f !== fisherman.id)
-                            );
-                          }}
-                          className="rounded"
-                        />
-                        <label htmlFor={`fisherman-${fisherman.id}`} className="text-sm cursor-pointer">
-                          {fisherman.company_name || fisherman.boat_name}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <Button onClick={saveFavorites} className="w-full">
-                  Enregistrer mes préférences
-                </Button>
-              </div>
-            )}
           </CardContent>
         </Card>
+
+        {/* Preferences Panel */}
+        {showPreferences && (
+          <div className="mb-8">
+            <ClientPreferencesPanel />
+          </div>
+        )}
 
         {/* Premium Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -762,15 +527,19 @@ const PremiumDashboard = () => {
                     ? `${drop.ports.name}, ${drop.ports.city}` 
                     : 'Lieu non spécifié';
                 const access = getAccessType(drop);
+                const isFavorite = favoriteFishermen?.includes(drop.fisherman_id);
                 
                 return (
-                  <Card key={drop.id} className="hover:shadow-lg transition-shadow">
+                  <Card key={drop.id} className={`hover:shadow-lg transition-shadow ${isFavorite ? 'ring-2 ring-red-200' : ''}`}>
                     <CardHeader>
                       <div className="flex items-start justify-between gap-2">
                         <div className="space-y-1 flex-1 min-w-0">
                           <CardTitle className="flex items-center gap-2 text-lg">
                             <MapPin className="h-5 w-5 text-primary flex-shrink-0" />
                             <span className="line-clamp-1">{location}</span>
+                            {isFavorite && (
+                              <span className="text-red-500 text-xs">❤️</span>
+                            )}
                           </CardTitle>
                           <CardDescription className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
@@ -786,35 +555,33 @@ const PremiumDashboard = () => {
                     <CardContent>
                       <div className="space-y-3">
                         {drop.offers.length > 0 ? (
-                          <>
-                            <div className="space-y-2">
-                              {drop.offers.map((offer) => (
-                                <div key={offer.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                                    <Fish className="h-5 w-5 text-primary flex-shrink-0" />
-                                    <div className="min-w-0">
-                                      <p className="font-medium line-clamp-1">{offer.species.name}</p>
-                                      <p className="text-sm text-muted-foreground">
-                                        {offer.available_units}/{offer.total_units} disponibles
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <div className="text-right flex-shrink-0 ml-2">
-                                    <p className="font-bold text-lg text-primary">{offer.unit_price}€</p>
-                                    {access.type === 'premium' && offer.available_units > 0 && (
-                                      <Button
-                                        size="sm"
-                                        className="mt-1"
-                                        onClick={() => handleReserve(offer.id, drop.id)}
-                                      >
-                                        Réserver
-                                      </Button>
-                                    )}
+                          <div className="space-y-2">
+                            {drop.offers.map((offer) => (
+                              <div key={offer.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  <Fish className="h-5 w-5 text-primary flex-shrink-0" />
+                                  <div className="min-w-0">
+                                    <p className="font-medium line-clamp-1">{offer.species.name}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {offer.available_units}/{offer.total_units} disponibles
+                                    </p>
                                   </div>
                                 </div>
-                              ))}
-                            </div>
-                          </>
+                                <div className="text-right flex-shrink-0 ml-2">
+                                  <p className="font-bold text-lg text-primary">{offer.unit_price}€</p>
+                                  {access.type === 'premium' && offer.available_units > 0 && (
+                                    <Button
+                                      size="sm"
+                                      className="mt-1"
+                                      onClick={() => handleReserve(offer.id)}
+                                    >
+                                      Réserver
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         ) : (
                           <p className="text-sm text-muted-foreground text-center py-2">
                             Aucune offre disponible

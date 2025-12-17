@@ -9,18 +9,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import Header from "@/components/Header";
 
-// Définition des niveaux clients
+// Définition des niveaux clients - Mise à jour avec les vraies fonctionnalités
 const CLIENT_LEVELS = {
   follower: {
-    name: "Follower",
+    name: "Standard",
     price: "Gratuit",
     priceId: null,
     period: "",
     description: "Accès de base",
     features: [
       { icon: MapPin, title: "Voir les arrivages publics" },
-      { icon: Heart, title: "Suivre vos pêcheurs favoris" },
-      { icon: MapPin, title: "Suivre vos ports favoris" },
+      { icon: Heart, title: "Suivre 2 pêcheurs favoris" },
+      { icon: MapPin, title: "Suivre 1 port préféré (alertes rayon 10km)" },
       { icon: Bell, title: "🔔 Notifications Push" },
     ],
   },
@@ -30,12 +30,12 @@ const CLIENT_LEVELS = {
     priceAnnual: "25€",
     priceIdMonthly: "price_1SZ489H0VhS1yyE0Nc9KZhy1",
     priceIdAnnual: "price_1SZ48UH0VhS1yyE0iYmXen3H",
-    description: "Notifications prioritaires",
+    description: "Notifications email + Badge",
     features: [
-      { icon: Check, title: "Tout Follower inclus" },
-      { icon: Mail, title: "📧 Notifications Email" },
+      { icon: Check, title: "Tout Standard inclus" },
+      { icon: Crown, title: "✨ Personnaliser votre badge Premium (couleur)" },
+      { icon: Mail, title: "📧 Email sur 2 points de vente favoris" },
       { icon: Star, title: "⚡ Accès anticipé 30min" },
-      { icon: Crown, title: "✨ Badge Premium visible" },
       { icon: Heart, title: "🎣 Choix d'un pêcheur favori à soutenir" },
     ],
   },
@@ -45,14 +45,13 @@ const CLIENT_LEVELS = {
     priceAnnual: "40€",
     priceIdMonthly: "price_1SZ48yH0VhS1yyE0bijfw3y7",
     priceIdAnnual: "price_1SZ49DH0VhS1yyE06HJyLC65",
-    description: "Notifications + SMS + Soutien",
+    description: "Tout Premium + Espèces favorites",
     features: [
       { icon: Check, title: "Tout Premium inclus" },
-      { icon: MessageSquare, title: "📱 Notifications SMS" },
-      { icon: Bell, title: "🚨 Alertes 'dernières pièces'" },
-      { icon: Heart, title: "💰 Contribution cagnotte pêcheurs" },
+      { icon: Mail, title: "📧 Email sur 5 points de vente favoris" },
+      { icon: MessageSquare, title: "🐟 Suivre 10 espèces favorites (email)" },
+      { icon: Heart, title: "💰 Contribution cagnotte SMS pêcheurs" },
       { icon: Star, title: "🌟 Badge Premium+ distinctif" },
-      { icon: Heart, title: "🎣 Choix d'un pêcheur favori à soutenir" },
     ],
   },
 };

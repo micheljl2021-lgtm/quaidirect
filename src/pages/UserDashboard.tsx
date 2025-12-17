@@ -4,11 +4,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import Header from '@/components/Header';
+import ClientPreferencesPanel from '@/components/ClientPreferencesPanel';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Fish, MapPin, Clock, TrendingUp, Calendar, ArrowRight, Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import { getRedirectPathByRole } from '@/lib/authRedirect';
 
 interface Drop {
@@ -41,7 +41,6 @@ interface Drop {
 const UserDashboard = () => {
   const { user, userRole, loading } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -52,7 +51,6 @@ const UserDashboard = () => {
       return;
     }
     
-    // Redirect users with higher roles to their appropriate dashboard
     if (userRole && userRole !== 'user') {
       navigate(getRedirectPathByRole(userRole));
       return;
@@ -73,7 +71,6 @@ const UserDashboard = () => {
     );
   }
 
-  // Fetch drops publics disponibles
   const { data: drops, isLoading } = useQuery({
     queryKey: ['public-drops', user?.id],
     queryFn: async () => {
@@ -117,21 +114,6 @@ const UserDashboard = () => {
     refetchInterval: 30000,
   });
 
-  // Fetch forfaits disponibles
-  const { data: packages } = useQuery({
-    queryKey: ['packages'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('subscription_packages')
-        .select('*')
-        .eq('is_active', true)
-        .order('price', { ascending: true });
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
   const getTimeUntil = (date: Date) => {
     const diff = date.getTime() - currentTime.getTime();
     if (diff < 0) return 'Maintenant disponible';
@@ -162,6 +144,11 @@ const UserDashboard = () => {
           </p>
         </div>
 
+        {/* Preferences Panel */}
+        <div className="mb-8">
+          <ClientPreferencesPanel />
+        </div>
+
         {/* Info Premium Banner */}
         <Card className="mb-8 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
           <CardContent className="pt-6">
@@ -174,7 +161,7 @@ const UserDashboard = () => {
                   Passez Premium pour des avantages exclusifs
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Accédez aux drops 30 minutes avant tout le monde et réservez votre poisson en priorité
+                  Accédez aux drops 30 minutes avant tout le monde, recevez des alertes email et soutenez vos pêcheurs favoris
                 </p>
                 <Button onClick={() => navigate('/premium')} className="gap-2">
                   Découvrir Premium
@@ -341,43 +328,6 @@ const UserDashboard = () => {
               </CardContent>
             </Card>
           )}
-        </div>
-
-        {/* Paniers disponibles */}
-        <div>
-          <h2 className="text-2xl font-bold text-foreground mb-4">
-            Nos paniers
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {packages?.slice(0, 3).map((pkg) => (
-              <Card key={pkg.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle>{pkg.name}</CardTitle>
-                  <CardDescription>{pkg.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="text-center">
-                    <p className="text-3xl font-bold text-primary">{pkg.price}€</p>
-                    <p className="text-sm text-muted-foreground">
-                      Pour {pkg.duration_days} jours
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Quota poisson</span>
-                      <span className="font-medium">{pkg.fish_quota} pièces</span>
-                    </div>
-                  </div>
-                  <Button 
-                    className="w-full"
-                    onClick={() => navigate('/panier')}
-                  >
-                    Souscrire
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
         </div>
       </div>
     </div>
