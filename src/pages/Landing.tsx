@@ -15,7 +15,6 @@ import { PremiumCardsSection } from "@/components/PremiumCardsSection";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import fishingPortImage from "@/assets/landing/fishing-port.jpg";
-import pecheDurableLogo from "@/assets/logo-peche-durable.png";
 import { useArrivagesWithHistory } from "@/hooks/useArrivagesWithHistory";
 
 // Contact Section Component
@@ -265,29 +264,6 @@ const Landing = () => {
               Tracé, prix justes, qualité garantie.
             </p>
           </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/carte">
-              <Button size="lg" className="gap-2 bg-gradient-ocean hover:opacity-90 transition-opacity text-lg px-8 h-14">
-                <MapPin className="h-5 w-5" aria-hidden="true" />
-                Voir les arrivages
-              </Button>
-            </Link>
-            <Link to="/premium">
-              <Button size="lg" variant="outline" className="gap-2 text-lg px-8 h-14 border-2 border-white bg-white text-primary hover:bg-white/90">
-                <Crown className="h-5 w-5" aria-hidden="true" />
-                Premium
-              </Button>
-            </Link>
-          </div>
-
-          <div className="mt-8 flex justify-center items-center gap-8">
-            <img 
-              src={pecheDurableLogo} 
-              alt="Pêche Durable et Responsable" 
-              className="h-20 opacity-90"
-            />
-          </div>
         </div>
       </section>
 
@@ -335,50 +311,15 @@ const Landing = () => {
           ) : hasArrivages ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                {/* Bucket: Sous 24h */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm font-medium text-orange-600 bg-orange-50 dark:bg-orange-950/30 px-3 py-2 rounded-lg">
-                    <Clock className="h-4 w-4" />
-                    <span>Sous 24h</span>
-                  </div>
-                  {arrivageBuckets.sous24h ? (
-                    <ArrivageCard {...transformArrivage(arrivageBuckets.sous24h)!} />
-                  ) : (
-                    <Card className="h-48 flex items-center justify-center bg-muted/30">
-                      <p className="text-muted-foreground text-sm">Aucun arrivage prévu</p>
-                    </Card>
-                  )}
-                </div>
-
-                {/* Bucket: Sous 72h */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm font-medium text-blue-600 bg-blue-50 dark:bg-blue-950/30 px-3 py-2 rounded-lg">
-                    <Clock className="h-4 w-4" />
-                    <span>Sous 72h</span>
-                  </div>
-                  {arrivageBuckets.sous72h ? (
-                    <ArrivageCard {...transformArrivage(arrivageBuckets.sous72h)!} />
-                  ) : (
-                    <Card className="h-48 flex items-center justify-center bg-muted/30">
-                      <p className="text-muted-foreground text-sm">Aucun arrivage prévu</p>
-                    </Card>
-                  )}
-                </div>
-
-                {/* Bucket: Proche 5 jours */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm font-medium text-green-600 bg-green-50 dark:bg-green-950/30 px-3 py-2 rounded-lg">
-                    <Clock className="h-4 w-4" />
-                    <span>Sous 5 jours</span>
-                  </div>
-                  {arrivageBuckets.proche5j ? (
-                    <ArrivageCard {...transformArrivage(arrivageBuckets.proche5j)!} />
-                  ) : (
-                    <Card className="h-48 flex items-center justify-center bg-muted/30">
-                      <p className="text-muted-foreground text-sm">Aucun arrivage prévu</p>
-                    </Card>
-                  )}
-                </div>
+                {arrivageBuckets.sous24h && (
+                  <ArrivageCard {...transformArrivage(arrivageBuckets.sous24h)!} />
+                )}
+                {arrivageBuckets.sous72h && (
+                  <ArrivageCard {...transformArrivage(arrivageBuckets.sous72h)!} />
+                )}
+                {arrivageBuckets.proche5j && (
+                  <ArrivageCard {...transformArrivage(arrivageBuckets.proche5j)!} />
+                )}
               </div>
 
               <div className="text-center">

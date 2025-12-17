@@ -152,8 +152,24 @@ const ArrivageCard = ({
           )}
         </div>
       ) : (
-        <div className="aspect-video bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
-          <MapPin className="h-12 w-12 text-muted-foreground/30" aria-hidden="true" />
+        <div className="relative aspect-video overflow-hidden bg-muted">
+          <img 
+            src="https://images.unsplash.com/photo-1534604973900-c43ab4c2e0ab?w=400&q=80" 
+            alt="Pêche du jour"
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute top-3 left-3 bg-black/60 text-white text-[10px] px-2 py-1 rounded flex items-center gap-1">
+            <ImageIcon className="h-3 w-3" aria-hidden="true" />
+            Photo d'illustration
+          </div>
+          {isPremium && (
+            <div className="absolute top-3 right-3">
+              <Badge className="gap-1 bg-premium text-premium-foreground border-0 shadow-md">
+                <Crown className="h-3 w-3" aria-hidden="true" />
+                Premium
+              </Badge>
+            </div>
+          )}
         </div>
       )}
 
