@@ -25,7 +25,8 @@ export const ContactSelector = ({ fishermanId, selectedGroup, onSelectedContacts
         .from('fishermen_contacts')
         .select('*')
         .eq('fisherman_id', fishermanId)
-        .order('last_name', { ascending: true });
+        .order('last_name', { ascending: true })
+        .range(0, 4999);
 
       if (error) throw error;
       return data;
