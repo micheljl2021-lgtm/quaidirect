@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedFisherRoute } from "@/components/ProtectedFisherRoute";
 import { MaintenanceGuard } from "@/components/MaintenanceGuard";
 import PageLoader from "@/components/PageLoader";
+import { FeedbackButton } from "@/components/FeedbackButton";
 
 // Critical pages - loaded immediately
 import Landing from "./pages/Landing";
@@ -226,6 +227,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </MaintenanceGuard>
+        <FeedbackButton />
       </BrowserRouter>
     </TooltipProvider>
   </AuthProvider>
