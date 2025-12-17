@@ -64,7 +64,7 @@ const PecheurContacts = () => {
     enabled: !!user?.id
   });
 
-  // Récupérer tous les contacts
+  // Récupérer tous les contacts (jusqu'à 5000)
   const { data: contacts, isLoading } = useQuery({
     queryKey: ['fisherman-contacts', fisherman?.id],
     queryFn: async () => {
@@ -72,7 +72,8 @@ const PecheurContacts = () => {
         .from('fishermen_contacts')
         .select('*')
         .eq('fisherman_id', fisherman?.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(0, 4999);
       if (error) throw error;
       return data;
     },
@@ -325,6 +326,11 @@ const PecheurContacts = () => {
             <p className="text-muted-foreground">
               Gérez votre base de contacts pour envoyer des messages groupés
             </p>
+            {contacts && contacts.length > 0 && (
+              <p className="text-sm font-medium text-primary mt-1">
+                📋 {contacts.length} contacts au total
+              </p>
+            )}
           </div>
           {contacts && contacts.length > 0 && (
             <Button variant="outline" onClick={handleExport}>
