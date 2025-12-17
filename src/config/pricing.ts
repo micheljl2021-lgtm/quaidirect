@@ -83,14 +83,14 @@ export const SMS_PACKS = {
     quantity: 500,
     priceCents: 4900, // 49€ (marge ~15% sur 0,085€/SMS)
     priceCentsPro: 4500, // 45€ (prix Pro)
-    stripePriceId: 'price_1Sc6emH0VhS1yyE08QedRHLt', // LIVE price ID - À METTRE À JOUR
+    stripePriceId: 'price_1SfEWXH0VhS1yyE0OmXygkqR', // LIVE price ID
   },
   PACK_LANCEMENT: {
     id: 'pack_lancement',
     quantity: 1000,
     priceCents: 9500, // 95€ (marge ~15% sur 0,085€/SMS)
     priceCentsPro: 8500, // 85€ Pro
-    stripePriceId: 'price_1Sc6f2H0VhS1yyE0Q35I8Lak', // LIVE price ID - À METTRE À JOUR
+    stripePriceId: 'price_1SfEWYH0VhS1yyE08IPly0M5', // LIVE price ID
     recommended: true,
   },
   PACK_2000: {
@@ -98,14 +98,14 @@ export const SMS_PACKS = {
     quantity: 2000,
     priceCents: 19500, // 195€ (marge ~15% sur 0,085€/SMS)
     priceCentsPro: 18000, // 180€ Pro
-    stripePriceId: 'price_1Sf5bYH0VhS1yyE08bHzIfSV', // LIVE price ID - À METTRE À JOUR
+    stripePriceId: 'price_1SfEWZH0VhS1yyE08ZMrSWI8', // LIVE price ID
   },
   PACK_5000: {
     id: 'pack_5000',
     quantity: 5000,
     priceCents: 45000, // 450€ (marge ~15% sur 0,085€/SMS)
     priceCentsPro: 42000, // 420€ Pro
-    stripePriceId: 'price_1Sf5bYH0VhS1yyE0OuldCI5M', // LIVE price ID - À METTRE À JOUR
+    stripePriceId: 'price_1SfEWaH0VhS1yyE0c51EBSe2', // LIVE price ID
   },
 } as const;
 

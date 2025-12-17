@@ -8,8 +8,9 @@ import { Progress } from '@/components/ui/progress';
 
 const SMS_PACKS = [
   { id: 'pack_500', quantity: 500, price: '49€', description: '500 SMS' },
-  { id: 'pack_2000', quantity: 2000, price: '149€', description: '2000 SMS', badge: 'Populaire' },
-  { id: 'pack_5000', quantity: 5000, price: '299€', description: '5000 SMS', badge: 'Meilleur prix' },
+  { id: 'pack_lancement', quantity: 1000, price: '95€', description: '1000 SMS', badge: 'Populaire' },
+  { id: 'pack_2000', quantity: 2000, price: '195€', description: '2000 SMS' },
+  { id: 'pack_5000', quantity: 5000, price: '450€', description: '5000 SMS', badge: 'Meilleur prix' },
 ];
 
 export function SmsQuotaManager() {

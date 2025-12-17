@@ -14,8 +14,9 @@ const logStep = (step: string, details?: any) => {
 
 const SMS_PACKS = {
   'pack_500': { quantity: 500, price: 4900, name: 'Pack 500 SMS' }, // €49.00
-  'pack_2000': { quantity: 2000, price: 14900, name: 'Pack 2000 SMS' }, // €149.00
-  'pack_5000': { quantity: 5000, price: 29900, name: 'Pack 5000 SMS' }, // €299.00
+  'pack_lancement': { quantity: 1000, price: 9500, name: 'Pack 1000 SMS' }, // €95.00
+  'pack_2000': { quantity: 2000, price: 19500, name: 'Pack 2000 SMS' }, // €195.00
+  'pack_5000': { quantity: 5000, price: 45000, name: 'Pack 5000 SMS' }, // €450.00
 };
 
 serve(async (req) => {
