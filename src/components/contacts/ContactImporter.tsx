@@ -1,11 +1,15 @@
 /**
  * ContactImporter - Modern file import component with drag & drop support
+ * Includes group assignment for batch imports
  */
 
 import { useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, FileText } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Upload, FileText, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { parseCSVContacts, type ParsedContact } from "@/lib/validators";
 import { parseVCF, parseExcel, parseJSON, detectFileFormat, type FileFormat } from "@/lib/contactParsers";
@@ -14,6 +18,16 @@ import ContactPreview from "./ContactPreview";
 import type { Database } from "@/integrations/supabase/types";
 
 type Contact = Database['public']['Tables']['fishermen_contacts']['Row'];
+
+// Predefined contact groups
+const CONTACT_GROUPS = [
+  { value: 'general', label: 'Général' },
+  { value: 'reguliers', label: 'Clients réguliers' },
+  { value: 'occasionnels', label: 'Clients occasionnels' },
+  { value: 'professionnels', label: 'Professionnels (restos, poissonniers)' },
+  { value: 'vip', label: 'VIP' },
+  { value: 'custom', label: 'Autre (personnalisé)' },
+] as const;
 
 interface ContactImporterProps {
   existingContacts: Contact[];
@@ -30,7 +44,17 @@ export default function ContactImporter({
   const [selectedContacts, setSelectedContacts] = useState<Set<number>>(new Set());
   const [isDragging, setIsDragging] = useState(false);
   const [detectedFormat, setDetectedFormat] = useState<FileFormat | null>(null);
+  const [importGroup, setImportGroup] = useState<string>('general');
+  const [customGroupName, setCustomGroupName] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Get the actual group name to use
+  const getGroupName = () => {
+    if (importGroup === 'custom') {
+      return customGroupName.trim() || 'general';
+    }
+    return importGroup;
+  };
 
   // Handle file parsing
   const handleFileContent = useCallback(async (file: File) => {
@@ -139,11 +163,17 @@ export default function ContactImporter({
     }
   };
 
-  // Handle import
+  // Handle import with group assignment
   const handleImport = () => {
+    const groupName = getGroupName();
+    
     const contactsToImport = Array.from(selectedContacts)
       .map(idx => parsedContacts[idx])
-      .filter(c => c.isValid && !c.isDuplicate);
+      .filter(c => c.isValid && !c.isDuplicate)
+      .map(contact => ({
+        ...contact,
+        contact_group: groupName // Override with selected group
+      }));
     
     if (contactsToImport.length === 0) {
       toast.error('Aucun contact sélectionné pour l\'import');
@@ -158,6 +188,8 @@ export default function ContactImporter({
     setParsedContacts([]);
     setSelectedContacts(new Set());
     setDetectedFormat(null);
+    setImportGroup('general');
+    setCustomGroupName('');
   };
 
   return (
@@ -225,6 +257,46 @@ export default function ContactImporter({
                 Format détecté: <span className="font-medium uppercase">{detectedFormat}</span>
               </div>
             )}
+
+            {/* Group Selector */}
+            <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <Tag className="h-4 w-4 text-primary" />
+                Assigner tous les contacts au groupe :
+              </div>
+              
+              <Select value={importGroup} onValueChange={setImportGroup}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Sélectionner un groupe..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {CONTACT_GROUPS.map((group) => (
+                    <SelectItem key={group.value} value={group.value}>
+                      {group.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {importGroup === 'custom' && (
+                <div className="space-y-2">
+                  <Label htmlFor="customGroup" className="text-sm">
+                    Nom du nouveau groupe :
+                  </Label>
+                  <Input
+                    id="customGroup"
+                    value={customGroupName}
+                    onChange={(e) => setCustomGroupName(e.target.value)}
+                    placeholder="Ex: Marché du samedi, Livraison restos..."
+                    className="w-full"
+                  />
+                </div>
+              )}
+
+              <p className="text-xs text-muted-foreground">
+                Les {selectedContacts.size} contacts sélectionnés seront ajoutés au groupe "{getGroupName()}"
+              </p>
+            </div>
             
             <ContactPreview
               contacts={parsedContacts}
@@ -236,7 +308,7 @@ export default function ContactImporter({
             <div className="flex gap-2">
               <Button
                 onClick={handleImport}
-                disabled={selectedContacts.size === 0 || isImporting}
+                disabled={selectedContacts.size === 0 || isImporting || (importGroup === 'custom' && !customGroupName.trim())}
               >
                 <Upload className="h-4 w-4 mr-2" />
                 {isImporting ? 'Import en cours...' : `Importer ${selectedContacts.size} contact(s)`}
