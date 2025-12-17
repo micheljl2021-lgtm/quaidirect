@@ -1,25 +1,22 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Crown, MapPin, Bell, Shield, Users, Anchor, ArrowRight, Send, Loader2, CheckCircle, MessageSquare } from "lucide-react";
+import { Crown, MapPin, Bell, Shield, Users, Anchor, Send, Loader2, CheckCircle, MessageSquare, Clock } from "lucide-react";
 import { toast } from "sonner";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ArrivageCard from "@/components/ArrivageCard";
 import PhotoCarousel from "@/components/PhotoCarousel";
+import { PremiumCardsSection } from "@/components/PremiumCardsSection";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import freshFishImage from "@/assets/landing/fresh-fish.jpg";
 import fishingPortImage from "@/assets/landing/fishing-port.jpg";
-import fishermanBoatImage from "@/assets/landing/fisherman-boat.jpg";
 import pecheDurableLogo from "@/assets/logo-peche-durable.png";
-
-import { useLandingStats } from "@/hooks/useLandingStats";
-// Note: useSalePoints removed - sale points not exposed to anonymous users
+import { useArrivagesWithHistory } from "@/hooks/useArrivagesWithHistory";
 
 // Contact Section Component
 function ContactSection() {
@@ -40,7 +37,6 @@ function ContactSection() {
     setIsSubmitting(true);
     
     try {
-      // Insert into database
       const { error: dbError } = await supabase
         .from('launch_subscribers')
         .insert({ 
@@ -57,7 +53,6 @@ function ContactSection() {
           throw dbError;
         }
       } else {
-        // Send confirmation email
         await supabase.functions.invoke('send-inquiry-confirmation', {
           body: { email: email.trim().toLowerCase(), message: message.trim(), type }
         });
@@ -169,68 +164,48 @@ function ContactSection() {
 
 const Landing = () => {
   const navigate = useNavigate();
-  const { fishermenCount, usersCount } = useLandingStats();
-  
-  // Note: Sale points NOT fetched for anonymous users (security rule)
-  // We use a simple fallback text for arrivals without port
+  const { data: arrivagesGrouped, isLoading: arrivagesLoading } = useArrivagesWithHistory();
 
-  // Fetch latest arrivages for preview
-  const { data: latestArrivages } = useQuery({
-    queryKey: ['latest-arrivages'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('drops')
-        .select(`
-          id,
-          eta_at,
-          sale_start_time,
-          is_premium,
-          ports (
-            id,
-            name,
-            city
-          ),
-          offers (
-            unit_price,
-            available_units,
-            species (
-              name,
-              scientific_name
-            )
-          ),
-          fishermen (
-            boat_name,
-            is_ambassador,
-            ambassador_slot
-          )
-        `)
-        .eq('status', 'scheduled')
-        .gte('sale_start_time', new Date().toISOString())
-        .order('eta_at', { ascending: true })
-        .limit(3);
+  // Trier les arrivages actifs par buckets temporels
+  const arrivageBuckets = useMemo(() => {
+    if (!arrivagesGrouped?.active) return { sous24h: null, sous72h: null, proche5j: null };
 
-      if (error) throw error;
+    const now = new Date();
+    
+    const withHours = arrivagesGrouped.active.map(a => ({
+      ...a,
+      hoursUntilSale: (new Date(a.sale_start_time).getTime() - now.getTime()) / (1000 * 60 * 60)
+    }));
 
-      return data?.map(arrivage => ({
-        id: arrivage.id,
-        species: arrivage.offers[0]?.species?.name || 'Poisson',
-        scientificName: arrivage.offers[0]?.species?.scientific_name || '',
-        port: arrivage.ports?.name || 'Point de vente',
-        eta: new Date(arrivage.eta_at),
-        saleStartTime: arrivage.sale_start_time ? new Date(arrivage.sale_start_time) : undefined,
-        pricePerPiece: arrivage.offers[0]?.unit_price || 0,
-        quantity: arrivage.offers[0]?.available_units || 0,
-        isPremium: arrivage.is_premium,
-        fisherman: {
-          name: arrivage.fishermen?.boat_name || 'Pêcheur',
-          boat: arrivage.fishermen?.boat_name || '',
-          isAmbassador: arrivage.fishermen?.is_ambassador || false,
-          isPartnerAmbassador: arrivage.fishermen?.is_ambassador && arrivage.fishermen?.ambassador_slot === 1,
-        },
-      })) || [];
-    },
-    staleTime: 2 * 60 * 1000,
-  });
+    return {
+      sous24h: withHours.find(a => a.hoursUntilSale >= 0 && a.hoursUntilSale <= 24),
+      sous72h: withHours.find(a => a.hoursUntilSale > 24 && a.hoursUntilSale <= 72),
+      proche5j: withHours.find(a => a.hoursUntilSale > 72 && a.hoursUntilSale <= 120),
+    };
+  }, [arrivagesGrouped]);
+
+  // Helper pour transformer un arrivage pour ArrivageCard
+  const transformArrivage = (arrivage: any) => {
+    if (!arrivage) return null;
+    const species = arrivage.drop_species?.[0]?.species;
+    return {
+      id: arrivage.id,
+      species: species?.name || 'Poisson',
+      scientificName: species?.scientific_name || '',
+      port: arrivage.fisherman_sale_points?.label || arrivage.ports?.name || 'Point de vente',
+      eta: new Date(arrivage.eta_at),
+      saleStartTime: arrivage.sale_start_time ? new Date(arrivage.sale_start_time) : undefined,
+      pricePerPiece: 0,
+      quantity: 0,
+      isPremium: arrivage.is_premium,
+      fisherman: {
+        name: arrivage.fishermen?.boat_name || 'Pêcheur',
+        boat: arrivage.fishermen?.boat_name || '',
+        isAmbassador: arrivage.fishermen?.is_ambassador || false,
+        isPartnerAmbassador: arrivage.fishermen?.is_ambassador && arrivage.fishermen?.ambassador_slot === 1,
+      },
+    };
+  };
 
   // Fetch latest offer photos for carousel
   const { data: carouselPhotos } = useQuery({
@@ -259,8 +234,10 @@ const Landing = () => {
         speciesName: photo.offers?.species?.name || 'Poisson frais'
       })) || [];
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes for photos (rarely change)
+    staleTime: 10 * 60 * 1000,
   });
+
+  const hasArrivages = arrivageBuckets.sous24h || arrivageBuckets.sous72h || arrivageBuckets.proche5j;
 
   return (
     <div className="min-h-screen bg-gradient-sky">
@@ -314,93 +291,8 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="container px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          <Card className="text-center">
-            <CardContent className="pt-6 space-y-2">
-              <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                <Anchor className="h-6 w-6 text-primary" aria-hidden="true" />
-              </div>
-              <h3 className="text-3xl font-bold text-foreground">{fishermenCount}</h3>
-              <p className="text-sm text-muted-foreground">Marins-pêcheurs</p>
-            </CardContent>
-          </Card>
-
-          <Card className="text-center">
-            <CardContent className="pt-6 space-y-2">
-              <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                <MapPin className="h-6 w-6 text-primary" aria-hidden="true" />
-              </div>
-              <h3 className="text-3xl font-bold text-foreground">25</h3>
-              <p className="text-sm text-muted-foreground">Ports couverts</p>
-            </CardContent>
-          </Card>
-
-          <Card className="text-center">
-            <CardContent className="pt-6 space-y-2">
-              <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                <Users className="h-6 w-6 text-primary" aria-hidden="true" />
-              </div>
-              <h3 className="text-3xl font-bold text-foreground">{usersCount}</h3>
-              <p className="text-sm text-muted-foreground">Utilisateurs actifs</p>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* Premium Features */}
-      <section className="container px-4 py-16">
-        <div className="mx-auto max-w-4xl">
-          <div className="text-center space-y-4 mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-premium/10 border border-premium/20">
-              <Crown className="h-4 w-4 text-premium" aria-hidden="true" />
-              <span className="text-sm font-medium text-premium-foreground">Premium</span>
-            </div>
-            <h2 className="text-4xl font-bold text-foreground">
-              Accédez en priorité aux meilleurs arrivages
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              Soutenez les points de vente et recevez des alertes sur vos espèces favorites
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card>
-              <CardContent className="pt-6 space-y-3">
-                <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <MapPin className="h-5 w-5 text-primary" aria-hidden="true" />
-                </div>
-                <h3 className="text-xl font-bold text-foreground">Soutenez les points de vente</h3>
-                <p className="text-muted-foreground">
-                  Une partie de votre abonnement aide à financer les stands à quai de vos marins pêcheurs préférés.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6 space-y-3">
-                <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Bell className="h-5 w-5 text-primary" aria-hidden="true" />
-                </div>
-                <h3 className="text-xl font-bold text-foreground">Alertes poissons favoris</h3>
-                <p className="text-muted-foreground">
-                  Recevez des notifications dès qu'un point de vente propose vos espèces préférées.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="mt-8 text-center">
-            <Link to="/premium">
-              <Button size="lg" className="gap-2 bg-gradient-ocean hover:opacity-90 transition-opacity">
-                <Crown className="h-5 w-5" aria-hidden="true" />
-                À partir de 2,50€/mois
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* Premium Cards Section - Moved up */}
+      <PremiumCardsSection />
 
       {/* Photo Carousel */}
       {carouselPhotos && carouselPhotos.length > 0 && (
@@ -424,24 +316,69 @@ const Landing = () => {
         </section>
       )}
 
-      {/* Latest Arrivages Preview */}
+      {/* Arrivages à venir - 3 Cards triées par fenêtre temporelle */}
       <section className="container px-4 py-16 border-t border-border">
         <div className="mx-auto max-w-6xl">
           <div className="text-center space-y-4 mb-12">
             <h2 className="text-4xl font-bold text-foreground">
-              Arrivages du jour
+              Arrivages à venir
             </h2>
             <p className="text-lg text-muted-foreground">
-              Découvrez les derniers arrivages de poisson frais
+              Les prochaines ventes de poisson frais par fenêtre de temps
             </p>
           </div>
 
-          {latestArrivages && latestArrivages.length > 0 ? (
+          {arrivagesLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : hasArrivages ? (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                {latestArrivages.map(arrivage => (
-                  <ArrivageCard key={arrivage.id} {...arrivage} />
-                ))}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {/* Bucket: Sous 24h */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-orange-600 bg-orange-50 dark:bg-orange-950/30 px-3 py-2 rounded-lg">
+                    <Clock className="h-4 w-4" />
+                    <span>Sous 24h</span>
+                  </div>
+                  {arrivageBuckets.sous24h ? (
+                    <ArrivageCard {...transformArrivage(arrivageBuckets.sous24h)!} />
+                  ) : (
+                    <Card className="h-48 flex items-center justify-center bg-muted/30">
+                      <p className="text-muted-foreground text-sm">Aucun arrivage prévu</p>
+                    </Card>
+                  )}
+                </div>
+
+                {/* Bucket: Sous 72h */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-blue-600 bg-blue-50 dark:bg-blue-950/30 px-3 py-2 rounded-lg">
+                    <Clock className="h-4 w-4" />
+                    <span>Sous 72h</span>
+                  </div>
+                  {arrivageBuckets.sous72h ? (
+                    <ArrivageCard {...transformArrivage(arrivageBuckets.sous72h)!} />
+                  ) : (
+                    <Card className="h-48 flex items-center justify-center bg-muted/30">
+                      <p className="text-muted-foreground text-sm">Aucun arrivage prévu</p>
+                    </Card>
+                  )}
+                </div>
+
+                {/* Bucket: Proche 5 jours */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-green-600 bg-green-50 dark:bg-green-950/30 px-3 py-2 rounded-lg">
+                    <Clock className="h-4 w-4" />
+                    <span>Sous 5 jours</span>
+                  </div>
+                  {arrivageBuckets.proche5j ? (
+                    <ArrivageCard {...transformArrivage(arrivageBuckets.proche5j)!} />
+                  ) : (
+                    <Card className="h-48 flex items-center justify-center bg-muted/30">
+                      <p className="text-muted-foreground text-sm">Aucun arrivage prévu</p>
+                    </Card>
+                  )}
+                </div>
               </div>
 
               <div className="text-center">
@@ -537,7 +474,6 @@ const Landing = () => {
           </div>
         </div>
       </section>
-
 
       {/* Solidarity Section */}
       <section className="container px-4 py-16 border-t border-border">
