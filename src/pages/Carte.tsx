@@ -82,15 +82,12 @@ const Carte = () => {
     requestGeolocation();
   }, [requestGeolocation]);
 
-  // Sale points: ONLY fetch for authenticated users (no network call if anonymous)
-  // This prevents any data leak to anonymous users per TESTS_ANONYME_CHECKLIST.md
-  const { data: salePointsData } = useSalePoints({ 
-    userId: user?.id, 
-    enabled: !!user 
-  });
+  // Sale points: Publics pour tous les utilisateurs (anonymes et connectés)
+  // Les anonymes voient les points de vente sur la carte mais pas les détails
+  const { data: salePointsData } = useSalePoints({ enabled: true });
   
   // Filter and transform sale points for map (fishermen -> fisherman)
-  const validSalePoints = user && salePointsData
+  const validSalePoints = salePointsData
     ? salePointsData
         .filter(sp => sp.latitude != null && sp.longitude != null)
         .map(sp => ({

@@ -24,7 +24,6 @@ interface SalePoint {
 
 export interface UseSalePointsOptions {
   enabled?: boolean;
-  userId?: string;
 }
 
 export interface UseSalePointsResult {
@@ -37,44 +36,19 @@ export interface UseSalePointsResult {
 
 /**
  * Hook centralisé pour récupérer les points de vente
- * IMPORTANT: Requiert une authentification (verify_jwt=true)
- * - Si userId est absent ou enabled=false: aucun appel réseau, retourne []
- * - Si 401/403: retourne [] avec flag isUnauthorized=true
+ * Les points de vente sont PUBLICS et accessibles à tous (anonymes et connectés)
  * 
- * @param options.userId - L'ID utilisateur authentifié (obligatoire pour fetch)
  * @param options.enabled - Active/désactive le fetch (default: true)
  */
 export const useSalePoints = (options: UseSalePointsOptions = {}): UseSalePointsResult => {
-  const { enabled = true, userId } = options;
-  
-  // Only fetch if user is authenticated AND enabled
-  const shouldFetch = !!userId && enabled;
+  const { enabled = true } = options;
 
   const query = useQuery<SalePoint[], Error>({
-    queryKey: ['sale-points', userId || 'anonymous'],
+    queryKey: ['sale-points-public'],
     queryFn: async (): Promise<SalePoint[]> => {
-      // Double-check: don't fetch if no userId
-      if (!userId) {
-        console.log('[useSalePoints] No userId - returning empty array (no network call)');
-        return [];
-      }
-
       const { data, error } = await supabase.functions.invoke('get-public-sale-points');
       
-      // If 401/403 or auth error, return empty array without throw
       if (error) {
-        const errorMessage = error.message?.toLowerCase() || '';
-        if (
-          errorMessage.includes('401') ||
-          errorMessage.includes('403') ||
-          errorMessage.includes('unauthorized') ||
-          errorMessage.includes('jwt') ||
-          errorMessage.includes('auth')
-        ) {
-          console.log('[useSalePoints] Unauthorized - returning empty array');
-          // Return empty but let isError be true for isUnauthorized detection
-          throw new Error('UNAUTHORIZED');
-        }
         console.error('[useSalePoints] Error:', error);
         throw error;
       }
@@ -102,22 +76,19 @@ export const useSalePoints = (options: UseSalePointsOptions = {}): UseSalePoints
         };
       });
     },
-    enabled: shouldFetch, // Prevents any network call if user not authenticated
+    enabled,
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: false,
-    retry: false,
+    retry: 1,
   });
 
-  // Detect unauthorized error
-  const isUnauthorized = query.isError && query.error?.message === 'UNAUTHORIZED';
-
   return {
-    data: query.isError ? [] : query.data,
+    data: query.data,
     isLoading: query.isLoading,
-    isError: query.isError && !isUnauthorized,
-    isUnauthorized,
-    error: isUnauthorized ? null : query.error,
+    isError: query.isError,
+    isUnauthorized: false,
+    error: query.error,
   };
 };
 

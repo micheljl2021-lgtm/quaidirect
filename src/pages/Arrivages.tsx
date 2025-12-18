@@ -94,9 +94,8 @@ const Arrivages = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch sale points via centralized hook (cached 10 min)
-  // Ne fetch que si l'utilisateur est connecté
-  const { data: salePoints } = useSalePoints({ userId: user?.id, enabled: !!user });
+  // Fetch sale points via centralized hook (cached 10 min) - public pour tous
+  const { data: salePoints } = useSalePoints({ enabled: true });
 
   // Fetch drops with RLS enforced server-side (without sale points join)
   const { data: drops, isLoading, error } = useQuery({
