@@ -5,8 +5,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Mail, Phone, Users, Loader2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Input } from '@/components/ui/input';
+import { Mail, Phone, Users, Loader2, Search } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
 
 interface ContactSelectorProps {
   fishermanId: string;
@@ -17,6 +18,7 @@ interface ContactSelectorProps {
 export const ContactSelector = ({ fishermanId, selectedGroup, onSelectedContactsChange }: ContactSelectorProps) => {
   const [selectedContactIds, setSelectedContactIds] = useState<Set<string>>(new Set());
   const [filterGroup, setFilterGroup] = useState<string>(selectedGroup);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const { data: contacts, isLoading } = useQuery({
     queryKey: ['fisherman-contacts', fishermanId],
@@ -39,12 +41,32 @@ export const ContactSelector = ({ fishermanId, selectedGroup, onSelectedContacts
     ? Array.from(new Set(contacts.map(c => c.contact_group).filter(Boolean)))
     : [];
 
-  // Filter contacts based on selected group
-  const filteredContacts = contacts?.filter(contact => {
-    if (filterGroup === 'all') return true;
-    if (filterGroup === 'general') return !contact.contact_group;
-    return contact.contact_group === filterGroup;
-  }) || [];
+  // Filter contacts based on selected group and search query
+  const filteredContacts = useMemo(() => {
+    let result = contacts || [];
+    
+    // Filter by group
+    if (filterGroup !== 'all') {
+      if (filterGroup === 'general') {
+        result = result.filter(contact => !contact.contact_group);
+      } else {
+        result = result.filter(contact => contact.contact_group === filterGroup);
+      }
+    }
+    
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter(contact => {
+        const fullName = `${contact.first_name || ''} ${contact.last_name || ''}`.toLowerCase();
+        const email = (contact.email || '').toLowerCase();
+        const phone = (contact.phone || '').toLowerCase();
+        return fullName.includes(query) || email.includes(query) || phone.includes(query);
+      });
+    }
+    
+    return result;
+  }, [contacts, filterGroup, searchQuery]);
 
   // Update parent component when selection changes
   useEffect(() => {
@@ -113,6 +135,17 @@ export const ContactSelector = ({ fishermanId, selectedGroup, onSelectedContacts
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Rechercher par nom, email ou téléphone..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
         {/* Filter by group */}
         <div className="space-y-2">
           <Label>Filtrer par groupe</Label>
