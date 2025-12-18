@@ -116,28 +116,36 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (tokenError) throw new Error(`Erreur création token: ${tokenError.message}`);
 
-    // Construire l'URL du lien sécurisé
+    // Construire l'URL du lien vers la page d'onboarding
     const origin = req.headers.get("origin") || "https://quaidirect.fr";
-    const secureLink = `${origin}/secure/profile/edit?token=${secureToken}`;
+    const onboardingLink = `${origin}/pecheur/onboarding`;
 
     // Envoyer l'email via Resend
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
     
     const emailHtml = `
       <h1>Modification de votre profil QuaiDirect</h1>
-      <p>Bonjour,</p>
+      <p>Bonjour ${fisherman.boat_name || "Capitaine"},</p>
       <p>Vous avez demandé à modifier votre profil professionnel sur QuaiDirect.</p>
-      <p>Cliquez sur le lien ci-dessous pour accéder au formulaire de modification sécurisé :</p>
-      <p><a href="${secureLink}" style="display: inline-block; padding: 12px 24px; background-color: #0066cc; color: white; text-decoration: none; border-radius: 4px;">Modifier mon profil</a></p>
-      <p><strong>Important :</strong> Ce lien est valide pendant 24 heures et ne peut être utilisé qu'une seule fois.</p>
-      <p>Si vous n'avez pas fait cette demande, ignorez cet email.</p>
+      <p>Cliquez sur le lien ci-dessous pour accéder à votre formulaire de profil et effectuer vos modifications :</p>
+      <p><a href="${onboardingLink}" style="display: inline-block; padding: 12px 24px; background-color: #0066cc; color: white; text-decoration: none; border-radius: 4px;">Modifier mon profil</a></p>
+      <p>Sur cette page, vous pourrez modifier toutes vos informations :</p>
+      <ul>
+        <li>Informations de votre entreprise (SIRET, adresse...)</li>
+        <li>Liens vers vos réseaux sociaux</li>
+        <li>Zones et méthodes de pêche</li>
+        <li>Espèces pêchées</li>
+        <li>Photos de votre bateau</li>
+        <li>Points de vente</li>
+      </ul>
+      <p>Connectez-vous avec votre compte habituel pour accéder à la page.</p>
       <p>Cordialement,<br>L'équipe QuaiDirect</p>
     `;
 
     await resend.emails.send({
       from: "QuaiDirect <support@quaidirect.fr>",
       to: [fisherman.email],
-      subject: "Lien de modification de votre profil QuaiDirect",
+      subject: "Modifiez votre profil QuaiDirect",
       html: emailHtml,
     });
 
