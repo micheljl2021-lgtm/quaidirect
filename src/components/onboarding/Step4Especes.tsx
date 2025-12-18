@@ -1,4 +1,4 @@
-import { Fish, Plus, Search, ChevronDown, ChevronUp, Star } from "lucide-react";
+import { Fish, Plus, Search, ChevronDown, ChevronUp, Star, Filter } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { getBasinFromDepartement, type FishingBasin } from "@/lib/ports";
@@ -41,6 +42,43 @@ const BASIN_LABELS: Record<FishingBasin, string> = {
   MEDITERRANEE: "Méditerranée",
   ATLANTIQUE: "Atlantique",
   MANCHE: "Manche",
+};
+
+// Mapping between fishing methods (from Step3) and fishing_gear values in database
+const FISHING_METHOD_TO_GEAR: Record<string, string[]> = {
+  chalut: ['chalut'],
+  filet: ['filet', 'filet_maillant'],
+  filet_maillant: ['filet', 'filet_maillant'],
+  tremail: ['filet', 'tremail'],
+  casier: ['casier'],
+  nasse: ['casier', 'nasse'],
+  palangre: ['palangre'],
+  ligne: ['ligne', 'canne'],
+  hamecon: ['ligne', 'canne'],
+  traine: ['traine'],
+  senne: ['senne'],
+  drague: ['drague'],
+  peche_pied: ['peche_pied'],
+  plongee: ['plongee'],
+  autre: [], // Show all species
+};
+
+const FISHING_METHOD_LABELS: Record<string, string> = {
+  chalut: 'Chalut',
+  filet: 'Filet',
+  filet_maillant: 'Filet maillant',
+  tremail: 'Trémail',
+  casier: 'Casier',
+  nasse: 'Nasse',
+  palangre: 'Palangre',
+  ligne: 'Ligne/Canne',
+  hamecon: 'Hameçon',
+  traine: 'Traîne',
+  senne: 'Senne',
+  drague: 'Drague',
+  peche_pied: 'Pêche à pied',
+  plongee: 'Plongée',
+  autre: 'Autre',
 };
 
 export function Step4Especes({ formData, onChange }: Step4EspecesProps) {
@@ -81,6 +119,30 @@ export function Step4Especes({ formData, onChange }: Step4EspecesProps) {
 
   const fishingArea = getFishingAreaFromBasin(basin);
 
+  // Get all gear keywords from selected fishing methods
+  const selectedGearKeywords = useMemo(() => {
+    const methods = formData.fishingMethods || [];
+    if (methods.length === 0) return [];
+    
+    const keywords = new Set<string>();
+    methods.forEach(method => {
+      const gears = FISHING_METHOD_TO_GEAR[method] || [];
+      gears.forEach(g => keywords.add(g));
+    });
+    return Array.from(keywords);
+  }, [formData.fishingMethods]);
+
+  // Check if a species matches the selected fishing methods
+  const matchesFishingMethod = (speciesGear: string | null): boolean => {
+    if (selectedGearKeywords.length === 0) return true; // No filter if no methods selected
+    if (!speciesGear) return true; // Show species without gear info
+    
+    const gearList = speciesGear.toLowerCase().split(',').map(g => g.trim());
+    return selectedGearKeywords.some(keyword => 
+      gearList.some(g => g.includes(keyword) || keyword.includes(g))
+    );
+  };
+
   // Filter species by fishing area - show species for current area + 'all'
   const filteredByArea = useMemo(() => {
     if (!fishingArea) return species;
@@ -89,25 +151,30 @@ export function Step4Especes({ formData, onChange }: Step4EspecesProps) {
     );
   }, [species, fishingArea]);
 
+  // Filter by fishing method
+  const filteredByMethod = useMemo(() => {
+    return filteredByArea.filter(s => matchesFishingMethod(s.fishing_gear));
+  }, [filteredByArea, selectedGearKeywords]);
+
   // Get common species for the detected basin
   const commonSpeciesNames = basin ? COMMON_SPECIES_BY_BASIN[basin] : [];
   
   // Filter species that match the common names for this basin
   const commonSpecies = useMemo(() => {
-    if (!commonSpeciesNames.length) return filteredByArea.slice(0, 15); // fallback to first 15
-    return filteredByArea.filter(s => 
+    if (!commonSpeciesNames.length) return filteredByMethod.slice(0, 15);
+    return filteredByMethod.filter(s => 
       commonSpeciesNames.some(name => 
         s.name.toLowerCase().includes(name.toLowerCase()) ||
         name.toLowerCase().includes(s.name.toLowerCase())
       )
     );
-  }, [filteredByArea, commonSpeciesNames]);
+  }, [filteredByMethod, commonSpeciesNames]);
 
   // All other species (not in common list)
   const otherSpecies = useMemo(() => {
     const commonIds = new Set(commonSpecies.map(s => s.id));
-    return filteredByArea.filter(s => !commonIds.has(s.id));
-  }, [filteredByArea, commonSpecies]);
+    return filteredByMethod.filter(s => !commonIds.has(s.id));
+  }, [filteredByMethod, commonSpecies]);
 
   // Filter by search query
   const filteredCommon = useMemo(() => {
@@ -162,6 +229,11 @@ export function Step4Especes({ formData, onChange }: Step4EspecesProps) {
     }
   };
 
+  // Get labels for active filters
+  const activeMethodLabels = (formData.fishingMethods || [])
+    .map(m => FISHING_METHOD_LABELS[m] || m)
+    .filter(Boolean);
+
   const SpeciesItem = ({ s }: { s: typeof species[0] }) => (
     <div
       key={s.id}
@@ -195,14 +267,31 @@ export function Step4Especes({ formData, onChange }: Step4EspecesProps) {
         <p className="text-muted-foreground">Sélectionnez les poissons et crustacés que vous pêchez</p>
       </div>
 
-      {/* Basin indicator */}
-      {basin && (
+      {/* Filter indicators */}
+      {(basin || activeMethodLabels.length > 0) && (
         <Alert className="bg-primary/5 border-primary/20">
-          <div className="flex gap-2 items-center">
-            <Star className="h-4 w-4 text-primary" />
-            <AlertDescription>
-              Espèces filtrées pour la zone <strong>{BASIN_LABELS[basin]}</strong> — les espèces courantes sont affichées en priorité
-            </AlertDescription>
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2 items-center">
+              <Filter className="h-4 w-4 text-primary" />
+              <AlertDescription className="font-medium">
+                Espèces filtrées automatiquement
+              </AlertDescription>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {basin && (
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                  Zone : {BASIN_LABELS[basin]}
+                </Badge>
+              )}
+              {activeMethodLabels.map(label => (
+                <Badge key={label} variant="secondary" className="bg-green-100 text-green-800">
+                  {label}
+                </Badge>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {filteredByMethod.length} espèces correspondent à vos critères
+            </p>
           </div>
         </Alert>
       )}
@@ -233,7 +322,7 @@ export function Step4Especes({ formData, onChange }: Step4EspecesProps) {
         </div>
         {filteredCommon.length === 0 && (
           <p className="text-sm text-muted-foreground text-center py-4">
-            Aucune espèce courante trouvée
+            Aucune espèce courante trouvée pour vos critères
           </p>
         )}
       </div>
