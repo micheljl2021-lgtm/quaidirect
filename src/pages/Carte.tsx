@@ -13,7 +13,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSalePoints } from "@/hooks/useSalePoints";
 import { getDropLocationLabel } from "@/lib/dropLocationUtils";
-import { Search, Fish, Locate, Loader2, AlertTriangle } from "lucide-react";
+import { Search, Fish, Locate, Loader2, AlertTriangle, UserPlus } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useNavigate } from "react-router-dom";
 import { LIMITS } from "@/lib/constants";
 import { toast } from "sonner";
 
@@ -21,9 +30,13 @@ type GeoStatus = 'idle' | 'loading' | 'granted' | 'denied' | 'error';
 
 const Carte = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [geoStatus, setGeoStatus] = useState<GeoStatus>('idle');
+  
+  // Dialog for anonymous users
+  const [showSignupDialog, setShowSignupDialog] = useState(false);
   
   // Map selection state for panel
   const [selectionOpen, setSelectionOpen] = useState(false);
@@ -125,9 +138,9 @@ const Carte = () => {
     },
   });
 
-  // Fetch real arrivages from database (without joining sale points to avoid RLS)
+  // Fetch real arrivages from database - ONLY for authenticated users
   const { data: arrivages, isLoading: arrivagesLoading } = useQuery({
-    queryKey: ['arrivages-map'],
+    queryKey: ['arrivages-map', user?.id],
     queryFn: async () => {
       // Grace period: show arrivals up to X hours after their sale_start_time
       const graceMs = LIMITS.ARRIVAL_GRACE_HOURS * 60 * 60 * 1000;
@@ -177,6 +190,7 @@ const Carte = () => {
       if (error) throw error;
       return data;
     },
+    enabled: !!user, // Only fetch if user is authenticated
     refetchInterval: 30000,
   });
 
@@ -235,6 +249,11 @@ const Carte = () => {
 
   // Handlers for map marker clicks
   const handleDropClick = (dropId: string | null) => {
+    if (!user) {
+      // Anonymous users: show signup dialog
+      setShowSignupDialog(true);
+      return;
+    }
     if (dropId) {
       setSelectedDropId(dropId);
       setSelectedSalePointId(null);
@@ -244,13 +263,16 @@ const Carte = () => {
   };
 
   const handleSalePointClick = (salePointId: string | null) => {
-    if (salePointId && user) {
+    if (!user) {
+      // Anonymous users: show signup dialog
+      setShowSignupDialog(true);
+      return;
+    }
+    if (salePointId) {
       setSelectedSalePointId(salePointId);
       setSelectedDropId(null);
       setSelectedType('salePoint');
       setSelectionOpen(true);
-    } else if (!user && salePointId) {
-      toast.info("Connectez-vous pour voir les détails des points de vente");
     }
   };
 
@@ -306,8 +328,16 @@ const Carte = () => {
             Carte des points de vente
           </h1>
           <p className="text-lg text-muted-foreground">
-            {filteredArrivages.length} arrivages disponibles
+            {user 
+              ? `${filteredArrivages.length} arrivages disponibles`
+              : `${validSalePoints.length} points de vente à découvrir`
+            }
           </p>
+          {!user && (
+            <p className="text-sm text-primary mt-2">
+              Inscrivez-vous pour voir les arrivages et accéder aux détails
+            </p>
+          )}
         </div>
 
         {/* Geolocation Error Alert */}
@@ -370,72 +400,132 @@ const Carte = () => {
           </Button>
         </div>
 
-        {/* Search bar - below map */}
-        <div className="mb-8">
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-            <Input
-              placeholder="Rechercher une espèce ou un lieu..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-
-        {/* Sale Point Drawer removed - no longer exposing sale points publicly */}
-
-        {/* Arrivages grid */}
-        {arrivagesLoading ? (
-          <ArrivageCardSkeletonGrid count={6} />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredArrivages.map(arrivage => (
-              <ArrivageCard key={arrivage.id} {...arrivage} dropPhotos={arrivage.dropPhotos} />
-            ))}
+        {/* Search bar - only for authenticated users */}
+        {user && (
+          <div className="mb-8">
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+              <Input
+                placeholder="Rechercher une espèce ou un lieu..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
           </div>
         )}
 
-        {filteredArrivages.length === 0 && (
-          <div className="text-center py-16 space-y-4">
-            <Fish className="h-16 w-16 mx-auto text-muted-foreground/50" aria-hidden="true" />
-            <div>
-              <p className="text-lg font-medium text-foreground mb-2">
-                {arrivages && arrivages.length > 0 
-                  ? "Aucun arrivage ne correspond à votre recherche"
-                  : "Aucun arrivage disponible pour le moment"
-                }
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {arrivages && arrivages.length > 0
-                  ? "Essayez de modifier vos filtres ou votre recherche"
-                  : "Les pêcheurs publient leurs arrivages régulièrement. Revenez bientôt !"
-                }
-              </p>
-            </div>
-            {(!arrivages || arrivages.length === 0) && (
-              <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-                <Button onClick={() => window.location.href = '/auth'}>
-                  Créer un compte pour être alerté
-                </Button>
-                <Button variant="outline" onClick={() => window.location.href = '/premium'}>
-                  Découvrir Premium
-                </Button>
+        {/* Arrivages grid - ONLY for authenticated users */}
+        {user && (
+          <>
+            {arrivagesLoading ? (
+              <ArrivageCardSkeletonGrid count={6} />
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredArrivages.map(arrivage => (
+                  <ArrivageCard key={arrivage.id} {...arrivage} dropPhotos={arrivage.dropPhotos} />
+                ))}
               </div>
             )}
+
+            {filteredArrivages.length === 0 && (
+              <div className="text-center py-16 space-y-4">
+                <Fish className="h-16 w-16 mx-auto text-muted-foreground/50" aria-hidden="true" />
+                <div>
+                  <p className="text-lg font-medium text-foreground mb-2">
+                    {arrivages && arrivages.length > 0 
+                      ? "Aucun arrivage ne correspond à votre recherche"
+                      : "Aucun arrivage disponible pour le moment"
+                    }
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {arrivages && arrivages.length > 0
+                      ? "Essayez de modifier vos filtres ou votre recherche"
+                      : "Les pêcheurs publient leurs arrivages régulièrement. Revenez bientôt !"
+                    }
+                  </p>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* CTA for anonymous users */}
+        {!user && (
+          <div className="text-center py-12 space-y-6">
+            <div className="max-w-md mx-auto">
+              <UserPlus className="h-16 w-16 mx-auto text-primary mb-4" aria-hidden="true" />
+              <h2 className="text-2xl font-bold text-foreground mb-2">
+                Accédez aux arrivages
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                Créez un compte gratuit pour voir les arrivages de poisson frais, 
+                connaître les horaires de vente et être alerté des nouveautés.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button onClick={() => navigate('/auth')} size="lg">
+                  Créer un compte gratuit
+                </Button>
+                <Button variant="outline" size="lg" onClick={() => navigate('/auth')}>
+                  Se connecter
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </div>
       
-      {/* Selection Panel */}
-      <MapSelectionPanel
-        isOpen={selectionOpen}
-        onClose={handleClosePanel}
-        selectedType={selectedType}
-        selectedDrop={selectedDrop}
-        selectedSalePoint={selectedSalePoint}
-        relatedDrop={relatedDrop}
-      />
+      {/* Selection Panel - only for authenticated users */}
+      {user && (
+        <MapSelectionPanel
+          isOpen={selectionOpen}
+          onClose={handleClosePanel}
+          selectedType={selectedType}
+          selectedDrop={selectedDrop}
+          selectedSalePoint={selectedSalePoint}
+          relatedDrop={relatedDrop}
+        />
+      )}
+
+      {/* Signup Dialog for anonymous users */}
+      <Dialog open={showSignupDialog} onOpenChange={setShowSignupDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5 text-primary" />
+              Inscription requise
+            </DialogTitle>
+            <DialogDescription>
+              Pour voir les détails des points de vente et accéder aux arrivages, 
+              créez un compte gratuit ou connectez-vous.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li className="flex items-center gap-2">
+                <Fish className="h-4 w-4 text-primary" />
+                Voir les arrivages en temps réel
+              </li>
+              <li className="flex items-center gap-2">
+                <Fish className="h-4 w-4 text-primary" />
+                Connaître les horaires de vente
+              </li>
+              <li className="flex items-center gap-2">
+                <Fish className="h-4 w-4 text-primary" />
+                Recevoir des alertes personnalisées
+              </li>
+            </ul>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setShowSignupDialog(false)}>
+              Plus tard
+            </Button>
+            <Button onClick={() => navigate('/auth')}>
+              Créer un compte gratuit
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       <Footer />
     </div>

@@ -72,7 +72,7 @@ interface Drop {
 }
 
 const Arrivages = () => {
-  const { user, userRole } = useAuth();
+  const { user, userRole, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -84,6 +84,13 @@ const Arrivages = () => {
   const [filterPort, setFilterPort] = useState<string>('all');
   const [filterFisherman, setFilterFisherman] = useState<string>('all');
 
+  // Redirect anonymous users to auth page
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/auth', { replace: true });
+    }
+  }, [user, authLoading, navigate]);
+
   useEffect(() => {
     // Update current time every 60 seconds for countdown display
     // (1 second was excessive for data that changes slowly)
@@ -94,12 +101,14 @@ const Arrivages = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch sale points via centralized hook (cached 10 min) - public pour tous
-  const { data: salePoints } = useSalePoints({ enabled: true });
+  // Fetch sale points via centralized hook (cached 10 min) - only if user is authenticated
+  const { data: salePoints } = useSalePoints({ enabled: !!user });
 
   // Fetch drops with RLS enforced server-side (without sale points join)
+  // Only fetch if user is authenticated
   const { data: drops, isLoading, error } = useQuery({
     queryKey: ['drops', user?.id],
+    enabled: !!user, // Only fetch if user is authenticated
     queryFn: async () => {
       // Grace period: show arrivals up to X hours after their sale_start_time
       const graceMs = LIMITS.ARRIVAL_GRACE_HOURS * 60 * 60 * 1000;
@@ -331,6 +340,24 @@ const Arrivages = () => {
       return true;
     });
   }, [drops, filterZone, filterSpecies, filterPort, filterFisherman]);
+
+  // Show loading state while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container max-w-4xl mx-auto px-4 py-8">
+          <ArrivageCardSkeletonGrid count={6} />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // If not authenticated, this will redirect (handled in useEffect above)
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background">
