@@ -179,11 +179,18 @@ const DropDetail = () => {
             <div className="flex items-start justify-between">
               <div className="space-y-2">
                 <CardTitle className="text-2xl">Arrivage de {displayName}</CardTitle>
-              {fishermanData?.is_ambassador && (
-                  <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500">
-                    🏆 Ambassadeur
-                  </Badge>
-                )}
+                <div className="flex flex-wrap gap-2">
+                  {drop.status === 'completed' && (
+                    <Badge variant="secondary" className="bg-muted text-muted-foreground">
+                      ✓ Vente terminée
+                    </Badge>
+                  )}
+                  {fishermanData?.is_ambassador && (
+                    <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500">
+                      🏆 Ambassadeur
+                    </Badge>
+                  )}
+                </div>
               </div>
               {fishermanData && (
                 <Button
@@ -285,8 +292,8 @@ const DropDetail = () => {
                             </div>
                           )}
                         </div>
-                        <Button className="w-full" disabled={offer.available_units === 0}>
-                          {offer.available_units === 0 ? 'Épuisé' : 'Réserver'}
+                        <Button className="w-full" disabled={offer.available_units === 0 || drop.status === 'completed'}>
+                          {drop.status === 'completed' ? 'Vente terminée' : offer.available_units === 0 ? 'Épuisé' : 'Réserver'}
                         </Button>
                       </div>
                     </div>
