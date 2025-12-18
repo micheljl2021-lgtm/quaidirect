@@ -74,7 +74,7 @@ const FISHING_METHODS = [
   { id: "casier", label: "Casier" },
   { id: "palangre", label: "Palangre" },
   { id: "ligne", label: "Ligne / Canne" },
-  { id: "traîne", label: "Traîne" },
+  { id: "traine", label: "Traîne" },
   { id: "peche_pied", label: "Pêche à pied" },
   { id: "plongee", label: "Plongée" },
   { id: "autre", label: "Autre (préciser)" },
