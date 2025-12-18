@@ -165,22 +165,10 @@ const Landing = () => {
   const navigate = useNavigate();
   const { data: arrivagesGrouped, isLoading: arrivagesLoading } = useArrivagesWithHistory();
 
-  // Trier les arrivages actifs par buckets temporels
-  const arrivageBuckets = useMemo(() => {
-    if (!arrivagesGrouped?.active) return { sous24h: null, sous72h: null, proche5j: null };
-
-    const now = new Date();
-    
-    const withHours = arrivagesGrouped.active.map(a => ({
-      ...a,
-      hoursUntilSale: (new Date(a.sale_start_time).getTime() - now.getTime()) / (1000 * 60 * 60)
-    }));
-
-    return {
-      sous24h: withHours.find(a => a.hoursUntilSale >= 0 && a.hoursUntilSale <= 24),
-      sous72h: withHours.find(a => a.hoursUntilSale > 24 && a.hoursUntilSale <= 72),
-      proche5j: withHours.find(a => a.hoursUntilSale > 72 && a.hoursUntilSale <= 120),
-    };
+  // Récupérer les 3 prochains arrivages actifs
+  const nextArrivages = useMemo(() => {
+    if (!arrivagesGrouped?.active) return [];
+    return arrivagesGrouped.active.slice(0, 3);
   }, [arrivagesGrouped]);
 
   // Helper pour transformer un arrivage pour ArrivageCard
@@ -241,7 +229,7 @@ const Landing = () => {
     staleTime: 10 * 60 * 1000,
   });
 
-  const hasArrivages = arrivageBuckets.sous24h || arrivageBuckets.sous72h || arrivageBuckets.proche5j;
+  const hasArrivages = nextArrivages.length > 0;
 
   return (
     <div className="min-h-screen bg-gradient-sky">
@@ -297,7 +285,7 @@ const Landing = () => {
         </section>
       )}
 
-      {/* Arrivages à venir - 3 Cards triées par fenêtre temporelle */}
+      {/* Arrivages à venir - 3 prochains */}
       <section className="container px-4 py-16 border-t border-border">
         <div className="mx-auto max-w-6xl">
           <div className="text-center space-y-4 mb-12">
@@ -305,7 +293,7 @@ const Landing = () => {
               Arrivages à venir
             </h2>
             <p className="text-lg text-muted-foreground">
-              Les prochaines ventes de poisson frais par fenêtre de temps
+              Les prochaines ventes de poisson frais
             </p>
           </div>
 
@@ -316,15 +304,9 @@ const Landing = () => {
           ) : hasArrivages ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                {arrivageBuckets.sous24h && (
-                  <ArrivageCard {...transformArrivage(arrivageBuckets.sous24h)!} />
-                )}
-                {arrivageBuckets.sous72h && (
-                  <ArrivageCard {...transformArrivage(arrivageBuckets.sous72h)!} />
-                )}
-                {arrivageBuckets.proche5j && (
-                  <ArrivageCard {...transformArrivage(arrivageBuckets.proche5j)!} />
-                )}
+                {nextArrivages.map((arrivage) => (
+                  <ArrivageCard key={arrivage.id} {...transformArrivage(arrivage)!} />
+                ))}
               </div>
 
               <div className="text-center">
