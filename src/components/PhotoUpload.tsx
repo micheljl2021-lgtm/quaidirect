@@ -1,52 +1,33 @@
-import { useState } from 'react';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { usePhotoUpload } from '@/hooks/usePhotoUpload';
 
 interface PhotoUploadProps {
   label: string;
   value: string | null;
   onChange: (url: string | null) => void;
   bucket?: string;
+  folder?: string;
 }
 
-export const PhotoUpload = ({ label, value, onChange, bucket = 'receipts' }: PhotoUploadProps) => {
-  const [uploading, setUploading] = useState(false);
+export const PhotoUpload = ({ 
+  label, 
+  value, 
+  onChange, 
+  bucket = 'receipts',
+  folder = 'fishermen'
+}: PhotoUploadProps) => {
+  const { uploadPhoto, uploading } = usePhotoUpload({ 
+    bucket, 
+    folder,
+    onSuccess: (url) => onChange(url)
+  });
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      setUploading(true);
-
-      if (!event.target.files || event.target.files.length === 0) {
-        return;
-      }
-
-      const file = event.target.files[0];
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `fishermen/${fileName}`;
-
-      const { error: uploadError, data } = await supabase.storage
-        .from(bucket)
-        .upload(filePath, file);
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(filePath);
-
-      onChange(publicUrl);
-      toast.success('Photo téléchargée avec succès');
-    } catch (error) {
-      toast.error('Erreur lors du téléchargement de la photo');
-      console.error('Error uploading photo:', error);
-    } finally {
-      setUploading(false);
+    if (!event.target.files || event.target.files.length === 0) {
+      return;
     }
+    await uploadPhoto(event.target.files[0]);
   };
 
   const handleRemove = () => {

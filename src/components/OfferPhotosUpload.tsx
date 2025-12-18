@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useId } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Upload, X, Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { usePhotoUpload } from '@/hooks/usePhotoUpload';
+import { toast } from 'sonner';
 
 interface OfferPhotosUploadProps {
   photos: string[];
@@ -18,8 +18,11 @@ const OfferPhotosUpload = ({
   maxPhotos = 5,
   minPhotos = 2,
 }: OfferPhotosUploadProps) => {
-  const [uploading, setUploading] = useState(false);
-  const { toast } = useToast();
+  const inputId = useId();
+  const { uploadPhotos, uploading } = usePhotoUpload({
+    bucket: 'fishermen-photos',
+    folder: ''
+  });
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
@@ -28,51 +31,13 @@ const OfferPhotosUpload = ({
     const remainingSlots = maxPhotos - photos.length;
 
     if (files.length > remainingSlots) {
-      toast({
-        title: 'Limite atteinte',
-        description: `Vous ne pouvez ajouter que ${remainingSlots} photo(s) supplémentaire(s)`,
-        variant: 'destructive',
-      });
+      toast.error(`Vous ne pouvez ajouter que ${remainingSlots} photo(s) supplémentaire(s)`);
       return;
     }
 
-    setUploading(true);
-
-    try {
-      const uploadPromises = files.map(async (file) => {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-        const filePath = `${fileName}`;
-
-        const { error: uploadError, data } = await supabase.storage
-          .from('fishermen-photos')
-          .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('fishermen-photos')
-          .getPublicUrl(filePath);
-
-        return publicUrl;
-      });
-
-      const uploadedUrls = await Promise.all(uploadPromises);
+    const uploadedUrls = await uploadPhotos(files);
+    if (uploadedUrls.length > 0) {
       onChange([...photos, ...uploadedUrls]);
-
-      toast({
-        title: 'Photos ajoutées',
-        description: `${uploadedUrls.length} photo(s) ajoutée(s) avec succès`,
-      });
-    } catch (error: any) {
-      console.error('Error uploading photos:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de télécharger les photos',
-        variant: 'destructive',
-      });
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -117,7 +82,7 @@ const OfferPhotosUpload = ({
         <div>
           <input
             type="file"
-            id={`offer-photos-${Math.random()}`}
+            id={inputId}
             accept="image/*"
             multiple
             onChange={handleUpload}
@@ -127,7 +92,7 @@ const OfferPhotosUpload = ({
           <Button
             type="button"
             variant="outline"
-            onClick={() => document.getElementById(`offer-photos-${Math.random()}`)?.click()}
+            onClick={() => document.getElementById(inputId)?.click()}
             disabled={uploading}
             className="w-full"
           >
