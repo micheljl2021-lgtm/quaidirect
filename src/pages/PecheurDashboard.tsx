@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
@@ -20,11 +20,26 @@ import { getRedirectPathByRole } from '@/lib/authRedirect';
 const PecheurDashboard = () => {
   const { user, userRole, isVerifiedFisherman, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [drops, setDrops] = useState<any[]>([]);
   const [archivedDrops, setArchivedDrops] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [fishermanId, setFishermanId] = useState<string | null>(null);
   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
+  const messagingSectionRef = useRef<HTMLDivElement>(null);
+
+  // Get pre-selected drop ID from navigation state
+  const preSelectedDropId = (location.state as any)?.selectedDropId as string | undefined;
+  const scrollToMessaging = (location.state as any)?.scrollToMessaging as boolean | undefined;
+
+  // Scroll to messaging section if requested
+  useEffect(() => {
+    if (scrollToMessaging && messagingSectionRef.current && !loading) {
+      setTimeout(() => {
+        messagingSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }, [scrollToMessaging, loading]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -203,7 +218,11 @@ const PecheurDashboard = () => {
       <div className="container px-4 py-6 md:py-8">
         <DashboardHeader fishermanId={fishermanId} />
 
-        {fishermanId && <MessagingSection fishermanId={fishermanId} />}
+        {fishermanId && (
+          <div ref={messagingSectionRef}>
+            <MessagingSection fishermanId={fishermanId} preSelectedDropId={preSelectedDropId} />
+          </div>
+        )}
 
         {fishermanId && <SalePointsSection fishermanId={fishermanId} />}
 
