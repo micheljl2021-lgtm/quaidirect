@@ -73,8 +73,25 @@ const FisherProfile = () => {
     enabled: !!slug,
   });
 
-  // Check if current user is the owner
-  const isOwner = !!(user && fisherman && fisherman.user_id === user.id);
+  // Check if current user is the owner by querying the full fishermen table
+  const { data: ownershipCheck } = useQuery({
+    queryKey: ['fisherman-ownership', fisherman?.id, user?.id],
+    queryFn: async () => {
+      if (!fisherman?.id || !user?.id) return { isOwner: false };
+      
+      const { data, error } = await supabase
+        .from('fishermen')
+        .select('user_id')
+        .eq('id', fisherman.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      return { isOwner: !!data && !error };
+    },
+    enabled: !!fisherman?.id && !!user?.id,
+  });
+
+  const isOwner = ownershipCheck?.isOwner ?? false;
 
   // Fetch full fisherman data if user is the owner (to get contact info)
   const { data: fullFishermanData } = useQuery({
