@@ -2463,7 +2463,6 @@ export type Database = {
             | Database["public"]["Enums"]["fishing_method"][]
             | null
           fishing_zones: string[] | null
-          fishing_zones_geojson: Json | null
           generated_description: string | null
           id: string | null
           instagram_url: string | null
@@ -2483,7 +2482,6 @@ export type Database = {
           seo_title: string | null
           slug: string | null
           updated_at: string | null
-          user_id: string | null
           verified_at: string | null
           website_url: string | null
           work_philosophy: string | null
@@ -2509,7 +2507,6 @@ export type Database = {
             | Database["public"]["Enums"]["fishing_method"][]
             | null
           fishing_zones?: string[] | null
-          fishing_zones_geojson?: Json | null
           generated_description?: string | null
           id?: string | null
           instagram_url?: string | null
@@ -2529,7 +2526,6 @@ export type Database = {
           seo_title?: string | null
           slug?: string | null
           updated_at?: string | null
-          user_id?: string | null
           verified_at?: string | null
           website_url?: string | null
           work_philosophy?: string | null
@@ -2555,7 +2551,6 @@ export type Database = {
             | Database["public"]["Enums"]["fishing_method"][]
             | null
           fishing_zones?: string[] | null
-          fishing_zones_geojson?: Json | null
           generated_description?: string | null
           id?: string | null
           instagram_url?: string | null
@@ -2575,7 +2570,6 @@ export type Database = {
           seo_title?: string | null
           slug?: string | null
           updated_at?: string | null
-          user_id?: string | null
           verified_at?: string | null
           website_url?: string | null
           work_philosophy?: string | null
