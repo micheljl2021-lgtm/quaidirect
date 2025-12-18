@@ -189,16 +189,21 @@ const Landing = () => {
     const species = arrivage.drop_species?.[0]?.species;
     return {
       id: arrivage.id,
-      species: species?.name || 'Poisson',
+      species: species?.name || 'Poisson frais',
       scientificName: species?.scientific_name || '',
       port: arrivage.fisherman_sale_points?.label || arrivage.ports?.name || 'Point de vente',
+      city: arrivage.fisherman_sale_points?.address || arrivage.ports?.city || '',
       eta: new Date(arrivage.eta_at),
       saleStartTime: arrivage.sale_start_time ? new Date(arrivage.sale_start_time) : undefined,
       pricePerPiece: 0,
       quantity: 0,
       isPremium: arrivage.is_premium,
+      dropPhotos: arrivage.drop_photos?.map((p: any) => ({
+        photo_url: p.photo_url,
+        display_order: p.display_order
+      })) || [],
       fisherman: {
-        name: arrivage.fishermen?.boat_name || 'Pêcheur',
+        name: arrivage.fishermen?.company_name || arrivage.fishermen?.boat_name || 'Pêcheur',
         boat: arrivage.fishermen?.boat_name || '',
         isAmbassador: arrivage.fishermen?.is_ambassador || false,
         isPartnerAmbassador: arrivage.fishermen?.is_ambassador && arrivage.fishermen?.ambassador_slot === 1,
