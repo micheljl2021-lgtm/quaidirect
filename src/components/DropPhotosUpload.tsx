@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Camera, X, Upload } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { usePhotoUpload } from "@/hooks/usePhotoUpload";
 import { DefaultPhotoSelector } from "@/components/DefaultPhotoSelector";
 import { Separator } from "@/components/ui/separator";
 
@@ -18,68 +17,30 @@ export const DropPhotosUpload = ({
   initialPhotos = []
 }: DropPhotosUploadProps) => {
   const [photos, setPhotos] = useState<string[]>(initialPhotos);
-  const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const { toast } = useToast();
+  
+  const { uploadPhotos, uploading } = usePhotoUpload({
+    bucket: 'fishermen-photos',
+    folder: 'drop-photos'
+  });
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    handleFilesUpload(Array.from(files));
+    await handleFilesUpload(Array.from(files));
   };
 
   const handleFilesUpload = async (files: File[]) => {
     const remainingSlots = maxPhotos - photos.length;
-    if (remainingSlots <= 0) {
-      toast({
-        title: "Limite atteinte",
-        description: `Vous ne pouvez ajouter que ${maxPhotos} photos maximum`,
-        variant: "destructive",
-      });
-      return;
-    }
+    if (remainingSlots <= 0) return;
 
     const filesToUpload = files.slice(0, remainingSlots);
-    setUploading(true);
+    const uploadedUrls = await uploadPhotos(filesToUpload);
 
-    try {
-      const uploadedUrls: string[] = [];
-
-      for (const file of filesToUpload) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
-        const filePath = `drop-photos/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('fishermen-photos')
-          .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('fishermen-photos')
-          .getPublicUrl(filePath);
-
-        uploadedUrls.push(publicUrl);
-      }
-
+    if (uploadedUrls.length > 0) {
       const newPhotos = [...photos, ...uploadedUrls];
       setPhotos(newPhotos);
       onPhotosChange(newPhotos);
-
-      toast({
-        title: "Photos ajoutées",
-        description: `${uploadedUrls.length} photo(s) ajoutée(s) avec succès`,
-      });
-    } catch (error) {
-      console.error('Error uploading photos:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'uploader les photos",
-        variant: "destructive",
-      });
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -110,13 +71,11 @@ export const DropPhotosUpload = ({
   };
 
   const handleDefaultPhotoSelect = (photoUrl: string) => {
-    // Si la photo par défaut est déjà sélectionnée, la retirer
     if (photos.includes(photoUrl)) {
       const newPhotos = photos.filter(p => p !== photoUrl);
       setPhotos(newPhotos);
       onPhotosChange(newPhotos);
     } else {
-      // Ajouter la photo par défaut
       const newPhotos = [...photos, photoUrl];
       setPhotos(newPhotos);
       onPhotosChange(newPhotos);

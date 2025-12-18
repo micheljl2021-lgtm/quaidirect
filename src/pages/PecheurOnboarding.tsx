@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useFishermanPaymentStatus } from "@/hooks/useFishermanPaymentStatus";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Save, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Save, X, Loader2 } from "lucide-react";
 import { getBasinFromDepartement } from "@/lib/ports";
 import {
   AlertDialog,
@@ -127,6 +128,7 @@ const getInitialFormData = (): FormData => {
 const PecheurOnboarding = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isPaid, isLoading: paymentLoading } = useFishermanPaymentStatus();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [fishermenId, setFishermenId] = useState<string | null>(null);
@@ -139,6 +141,17 @@ const PecheurOnboarding = () => {
     return getBasinFromDepartement(dep);
   }, [formData.postalCode]);
 
+  // Redirect if not paid
+  useEffect(() => {
+    if (!paymentLoading && isPaid === false) {
+      toast.error(
+        "Votre paiement n'a pas été trouvé. Si vous venez de payer, attendez quelques secondes et rafraîchissez la page.",
+        { duration: 6000 }
+      );
+      navigate('/pecheur/payment');
+    }
+  }, [isPaid, paymentLoading, navigate]);
+
   // Save to sessionStorage whenever formData changes (debounced)
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -147,7 +160,7 @@ const PecheurOnboarding = () => {
       } catch (e) {
         console.warn('Could not save onboarding data to sessionStorage');
       }
-    }, 500); // Debounce 500ms
+    }, 500);
     
     return () => clearTimeout(timeoutId);
   }, [formData]);
@@ -163,7 +176,7 @@ const PecheurOnboarding = () => {
 
   // Load existing data on mount
   useEffect(() => {
-    if (!user) return;
+    if (!user || paymentLoading || isPaid === false) return;
     
     const loadExistingData = async () => {
       const { data: fisherman } = await supabase
@@ -172,55 +185,10 @@ const PecheurOnboarding = () => {
         .eq('user_id', user.id)
         .single();
 
-      // Check payment status (skip for whitelisted users)
-      const { data: whitelistData } = await supabase
-        .from('fisherman_whitelist')
-        .select('id')
-        .eq('email', user.email?.toLowerCase())
-        .maybeSingle();
-      
-      const isWhitelisted = !!whitelistData;
-      
-      // Check if user has paid via fishermen table OR payments table OR has fisherman role
-      if (!isWhitelisted && (!fisherman || fisherman.onboarding_payment_status !== 'paid')) {
-        // Check payments table for any active fisherman subscription
-        const { data: payment } = await supabase
-          .from('payments')
-          .select('status, plan')
-          .eq('user_id', user.id)
-          .ilike('plan', 'fisherman_%')
-          .in('status', ['active', 'trialing'])
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        
-        // Check if user has fisherman role
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'fisherman')
-          .maybeSingle();
-        
-        const hasActivePayment = !!payment;
-        const hasFishermanRole = !!roleData;
-        
-        // If has role or payment, allow access
-        if (!hasActivePayment && !hasFishermanRole) {
-          toast.error(
-            "Votre paiement n'a pas été trouvé. Si vous venez de payer, attendez quelques secondes et rafraîchissez la page.",
-            { duration: 6000 }
-          );
-          navigate('/pecheur/payment');
-          return;
-        }
-      }
-
       if (fisherman) {
         setFishermenId(fisherman.id);
         setCurrentStep(fisherman.onboarding_step || 1);
         
-        // Load saved data
         const savedData = fisherman.onboarding_data as Partial<FormData> || {};
         setFormData({
           siret: fisherman.siret || "",
@@ -264,7 +232,16 @@ const PecheurOnboarding = () => {
     };
 
     loadExistingData();
-  }, [user]);
+  }, [user, paymentLoading, isPaid]);
+
+  // Show loader while checking payment
+  if (paymentLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const handleFieldChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
