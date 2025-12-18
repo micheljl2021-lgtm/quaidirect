@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Mail, Send, MessageSquare, AlertTriangle } from 'lucide-react';
+import { Mail, Send, MessageSquare, AlertTriangle, Ship } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
@@ -17,11 +17,12 @@ import { fr } from 'date-fns/locale';
 
 interface MessagingSectionProps {
   fishermanId: string;
+  preSelectedDropId?: string;
 }
 
 type Channel = 'email' | 'sms' | 'both';
 
-const MessagingSection = ({ fishermanId }: MessagingSectionProps) => {
+const MessagingSection = ({ fishermanId, preSelectedDropId }: MessagingSectionProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [messageType, setMessageType] = useState<'invitation_initiale' | 'new_drop' | 'custom'>('invitation_initiale');
@@ -29,16 +30,18 @@ const MessagingSection = ({ fishermanId }: MessagingSectionProps) => {
   const [selectedGroup, setSelectedGroup] = useState('all');
   const [selectedContacts, setSelectedContacts] = useState<any[]>([]);
   const [channel, setChannel] = useState<Channel>('email');
+  const [selectedDropId, setSelectedDropId] = useState<string>(preSelectedDropId || '');
 
-  // Fetch latest drop for "new_drop" message type
-  const { data: latestDrop } = useQuery({
-    queryKey: ['latest-drop', fishermanId],
+  // Fetch all active drops for this fisherman
+  const { data: availableDrops } = useQuery({
+    queryKey: ['fisherman-drops', fishermanId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('drops')
         .select(`
           id,
           sale_start_time,
+          created_at,
           fisherman_sale_points (label, address),
           ports (name, city),
           drop_species (species:species_id (name))
@@ -46,14 +49,24 @@ const MessagingSection = ({ fishermanId }: MessagingSectionProps) => {
         .eq('fisherman_id', fishermanId)
         .in('status', ['scheduled', 'landed'])
         .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(10);
       
       if (error) throw error;
       return data;
     },
     enabled: !!fishermanId,
   });
+
+  // Auto-select preSelectedDropId and switch to new_drop type
+  useEffect(() => {
+    if (preSelectedDropId && availableDrops?.some(d => d.id === preSelectedDropId)) {
+      setSelectedDropId(preSelectedDropId);
+      setMessageType('new_drop');
+    }
+  }, [preSelectedDropId, availableDrops]);
+
+  // Get selected drop details
+  const selectedDrop = availableDrops?.find(d => d.id === selectedDropId);
 
   // Fetch SMS quota
   const { data: smsQuota, error: quotaError } = useQuery({
@@ -161,18 +174,18 @@ const MessagingSection = ({ fishermanId }: MessagingSectionProps) => {
 
     // Build drop_details for new_drop messages
     let dropDetails = undefined;
-    if (messageType === 'new_drop' && latestDrop) {
-      const location = latestDrop.fisherman_sale_points?.label 
-        || latestDrop.ports?.name 
+    if (messageType === 'new_drop' && selectedDrop) {
+      const location = selectedDrop.fisherman_sale_points?.label 
+        || selectedDrop.ports?.name 
         || 'Point de vente';
       
-      const speciesNames = latestDrop.drop_species
+      const speciesNames = selectedDrop.drop_species
         ?.map((ds: any) => ds.species?.name)
         .filter(Boolean)
         .join(', ') || '';
       
-      const time = latestDrop.sale_start_time 
-        ? format(new Date(latestDrop.sale_start_time), "EEEE d MMMM 'à' HH:mm", { locale: fr })
+      const time = selectedDrop.sale_start_time 
+        ? format(new Date(selectedDrop.sale_start_time), "EEEE d MMMM 'à' HH:mm", { locale: fr })
         : '';
       
       dropDetails = {
@@ -188,7 +201,7 @@ const MessagingSection = ({ fishermanId }: MessagingSectionProps) => {
       sent_to_group: selectedGroup,
       contact_ids: contactIds,
       channel,
-      drop_id: messageType === 'new_drop' && latestDrop ? latestDrop.id : undefined,
+      drop_id: messageType === 'new_drop' && selectedDrop ? selectedDrop.id : undefined,
       drop_details: dropDetails,
     });
   };
@@ -304,6 +317,47 @@ const MessagingSection = ({ fishermanId }: MessagingSectionProps) => {
             </div>
           </RadioGroup>
         </div>
+
+        {/* Drop selector for new_drop type */}
+        {messageType === 'new_drop' && (
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Ship className="h-4 w-4" />
+              Sélectionner l'arrivage à annoncer
+            </Label>
+            <Select value={selectedDropId} onValueChange={setSelectedDropId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choisir un arrivage..." />
+              </SelectTrigger>
+              <SelectContent>
+                {availableDrops?.map((drop) => {
+                  const location = drop.fisherman_sale_points?.label || drop.ports?.name || 'Point de vente';
+                  const dateStr = drop.sale_start_time 
+                    ? format(new Date(drop.sale_start_time), "EEE d MMM 'à' HH:mm", { locale: fr })
+                    : format(new Date(drop.created_at), "EEE d MMM", { locale: fr });
+                  return (
+                    <SelectItem key={drop.id} value={drop.id}>
+                      {location} - {dateStr}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            {!selectedDropId && availableDrops && availableDrops.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Sélectionnez l'arrivage que vous souhaitez annoncer à vos clients
+              </p>
+            )}
+            {availableDrops && availableDrops.length === 0 && (
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  Aucun arrivage actif. Créez d'abord un arrivage avant de l'annoncer.
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+        )}
 
         {messageType === 'custom' && (
           <div className="space-y-2">

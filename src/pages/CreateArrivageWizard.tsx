@@ -12,6 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Package, ArrowLeft } from "lucide-react";
 import { getUserFriendlyError } from "@/lib/errorMessages";
+import { SendMessageAfterDropDialog } from "@/components/dashboard/SendMessageAfterDropDialog";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 export interface ArrivageSpecies {
   id: string;
@@ -43,6 +46,9 @@ export default function CreateArrivageWizard() {
   const [showTemplates, setShowTemplates] = useState(true);
   const [templates, setTemplates] = useState<any[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(true);
+  const [showMessageDialog, setShowMessageDialog] = useState(false);
+  const [createdDropId, setCreatedDropId] = useState<string>("");
+  const [createdDropInfo, setCreatedDropInfo] = useState({ location: "", time: "" });
 
   const [arrivageData, setArrivageData] = useState<ArrivageData>({
     salePointId: "",
@@ -331,7 +337,20 @@ export default function CreateArrivageWizard() {
 
       console.log("🎉 [handlePublish] Publication réussie!");
       toast.success("Arrivage publié avec succès !");
-      navigate("/dashboard/pecheur");
+      
+      // Show message dialog instead of navigating directly
+      const timeSlotLabels: Record<string, string> = {
+        matin: "7h-9h",
+        fin_matinee: "9h-11h",
+        midi: "11h-13h",
+        apres_midi: "14h-17h",
+      };
+      setCreatedDropId(dropData.id);
+      setCreatedDropInfo({
+        location: arrivageData.salePointLabel,
+        time: `${format(arrivageData.date, "EEEE d MMMM", { locale: fr })} ${timeSlotLabels[arrivageData.timeSlot] || ""}`,
+      });
+      setShowMessageDialog(true);
     } catch (error: any) {
       console.error("💥 [handlePublish] Erreur fatale:", error);
       toast.error(getUserFriendlyError(error));
@@ -455,6 +474,14 @@ export default function CreateArrivageWizard() {
           )}
         </div>
       </div>
+
+      <SendMessageAfterDropDialog
+        open={showMessageDialog}
+        onOpenChange={setShowMessageDialog}
+        dropId={createdDropId}
+        dropLocation={createdDropInfo.location}
+        dropTime={createdDropInfo.time}
+      />
     </div>
   );
 }
