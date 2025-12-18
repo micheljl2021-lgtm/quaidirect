@@ -2640,6 +2640,13 @@ export type Database = {
         | "hamecon"
         | "nasse"
         | "autre"
+        | "senne"
+        | "drague"
+        | "filet_maillant"
+        | "tremail"
+        | "traine"
+        | "peche_pied"
+        | "plongee"
       reservation_status: "pending" | "confirmed" | "cancelled" | "completed"
       sale_status: "pending" | "completed" | "refunded"
       support_category:
@@ -2794,6 +2801,13 @@ export const Constants = {
         "hamecon",
         "nasse",
         "autre",
+        "senne",
+        "drague",
+        "filet_maillant",
+        "tremail",
+        "traine",
+        "peche_pied",
+        "plongee",
       ],
       reservation_status: ["pending", "confirmed", "cancelled", "completed"],
       sale_status: ["pending", "completed", "refunded"],

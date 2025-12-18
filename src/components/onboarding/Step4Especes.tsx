@@ -15,6 +15,8 @@ interface Step4EspecesProps {
   formData: {
     selectedSpecies: string[];
     postalCode?: string;
+    fishingMethods?: string[];
+    mainFishingZone?: string;
   };
   onChange: (field: string, value: any) => void;
 }
@@ -58,7 +60,7 @@ export function Step4Especes({ formData, onChange }: Step4EspecesProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('species')
-        .select('id, name, scientific_name, fishing_area')
+        .select('id, name, scientific_name, fishing_area, fishing_gear')
         .order('name');
       
       if (error) throw error;
@@ -66,25 +68,46 @@ export function Step4Especes({ formData, onChange }: Step4EspecesProps) {
     }
   });
 
+  // Get the fishing area key from basin
+  const getFishingAreaFromBasin = (b: FishingBasin | null): string | null => {
+    if (!b) return null;
+    const map: Record<FishingBasin, string> = {
+      MEDITERRANEE: 'mediterranee',
+      ATLANTIQUE: 'atlantique',
+      MANCHE: 'manche',
+    };
+    return map[b];
+  };
+
+  const fishingArea = getFishingAreaFromBasin(basin);
+
+  // Filter species by fishing area - show species for current area + 'all'
+  const filteredByArea = useMemo(() => {
+    if (!fishingArea) return species;
+    return species.filter(s => 
+      !s.fishing_area || s.fishing_area === 'all' || s.fishing_area === fishingArea
+    );
+  }, [species, fishingArea]);
+
   // Get common species for the detected basin
   const commonSpeciesNames = basin ? COMMON_SPECIES_BY_BASIN[basin] : [];
   
   // Filter species that match the common names for this basin
   const commonSpecies = useMemo(() => {
-    if (!commonSpeciesNames.length) return species.slice(0, 15); // fallback to first 15
-    return species.filter(s => 
+    if (!commonSpeciesNames.length) return filteredByArea.slice(0, 15); // fallback to first 15
+    return filteredByArea.filter(s => 
       commonSpeciesNames.some(name => 
         s.name.toLowerCase().includes(name.toLowerCase()) ||
         name.toLowerCase().includes(s.name.toLowerCase())
       )
     );
-  }, [species, commonSpeciesNames]);
+  }, [filteredByArea, commonSpeciesNames]);
 
   // All other species (not in common list)
   const otherSpecies = useMemo(() => {
     const commonIds = new Set(commonSpecies.map(s => s.id));
-    return species.filter(s => !commonIds.has(s.id));
-  }, [species, commonSpecies]);
+    return filteredByArea.filter(s => !commonIds.has(s.id));
+  }, [filteredByArea, commonSpecies]);
 
   // Filter by search query
   const filteredCommon = useMemo(() => {
@@ -178,7 +201,7 @@ export function Step4Especes({ formData, onChange }: Step4EspecesProps) {
           <div className="flex gap-2 items-center">
             <Star className="h-4 w-4 text-primary" />
             <AlertDescription>
-              Espèces courantes en <strong>{BASIN_LABELS[basin]}</strong> affichées en priorité
+              Espèces filtrées pour la zone <strong>{BASIN_LABELS[basin]}</strong> — les espèces courantes sont affichées en priorité
             </AlertDescription>
           </div>
         </Alert>
