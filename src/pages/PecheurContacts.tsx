@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Upload, Plus, Trash2, Users, Download, AlertCircle, CheckCircle2, ArrowLeft, Pencil, FileUp } from "lucide-react";
+import { Upload, Plus, Trash2, Users, Download, AlertCircle, CheckCircle2, ArrowLeft, Pencil, FileUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -31,12 +31,15 @@ import type { Database } from "@/integrations/supabase/types";
 // Type alias for Contact from Supabase schema
 type Contact = Database['public']['Tables']['fishermen_contacts']['Row'];
 
+const CONTACTS_PER_PAGE = 50;
+
 const PecheurContacts = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [csvContent, setCsvContent] = useState("");
   const [showManualForm, setShowManualForm] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
   const [manualContact, setManualContact] = useState({
     email: "",
     phone: "",
@@ -64,21 +67,40 @@ const PecheurContacts = () => {
     enabled: !!user?.id
   });
 
-  // Récupérer tous les contacts (jusqu'à 5000)
-  const { data: contacts, isLoading } = useQuery({
-    queryKey: ['fisherman-contacts', fisherman?.id],
+  // Compter le total des contacts
+  const { data: totalCount } = useQuery({
+    queryKey: ['fisherman-contacts-count', fisherman?.id],
     queryFn: async () => {
+      const { count, error } = await supabase
+        .from('fishermen_contacts')
+        .select('*', { count: 'exact', head: true })
+        .eq('fisherman_id', fisherman?.id);
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!fisherman?.id
+  });
+
+  // Récupérer les contacts paginés (50 par page)
+  const { data: contacts, isLoading } = useQuery({
+    queryKey: ['fisherman-contacts', fisherman?.id, currentPage],
+    queryFn: async () => {
+      const from = currentPage * CONTACTS_PER_PAGE;
+      const to = from + CONTACTS_PER_PAGE - 1;
+      
       const { data, error } = await supabase
         .from('fishermen_contacts')
         .select('*')
         .eq('fisherman_id', fisherman?.id)
         .order('created_at', { ascending: false })
-        .range(0, 4999);
+        .range(from, to);
       if (error) throw error;
       return data;
     },
     enabled: !!fisherman?.id
   });
+
+  const totalPages = Math.ceil((totalCount || 0) / CONTACTS_PER_PAGE);
 
   // Common validation function for contact forms
   const validateContactForm = (email: string | null, phone: string | null) => {
@@ -581,60 +603,94 @@ const PecheurContacts = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                Mes contacts ({contacts?.length || 0})
+                Mes contacts ({totalCount || 0})
               </CardTitle>
+              {totalCount && totalCount > CONTACTS_PER_PAGE && (
+                <CardDescription>
+                  Page {currentPage + 1} sur {totalPages} ({CONTACTS_PER_PAGE} contacts par page)
+                </CardDescription>
+              )}
             </CardHeader>
             <CardContent>
               {isLoading ? (
                 <p>Chargement...</p>
               ) : contacts && contacts.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nom</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Téléphone</TableHead>
-                        <TableHead>Groupe</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {contacts.map((contact) => (
-                        <TableRow key={contact.id}>
-                          <TableCell>
-                            {contact.first_name} {contact.last_name}
-                          </TableCell>
-                          <TableCell>{contact.email || '-'}</TableCell>
-                          <TableCell>{contact.phone || '-'}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{contact.contact_group}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setEditingContact(contact)}
-                                aria-label="Modifier le contact"
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => deleteContact.mutate(contact.id)}
-                                aria-label="Supprimer le contact"
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </div>
-                          </TableCell>
+                <>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nom</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Téléphone</TableHead>
+                          <TableHead>Groupe</TableHead>
+                          <TableHead>Actions</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                      </TableHeader>
+                      <TableBody>
+                        {contacts.map((contact) => (
+                          <TableRow key={contact.id}>
+                            <TableCell>
+                              {contact.first_name} {contact.last_name}
+                            </TableCell>
+                            <TableCell>{contact.email || '-'}</TableCell>
+                            <TableCell>{contact.phone || '-'}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{contact.contact_group}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setEditingContact(contact)}
+                                  aria-label="Modifier le contact"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => deleteContact.mutate(contact.id)}
+                                  aria-label="Supprimer le contact"
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  
+                  {/* Pagination controls */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                        disabled={currentPage === 0}
+                      >
+                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        Précédent
+                      </Button>
+                      <span className="text-sm text-muted-foreground">
+                        {currentPage * CONTACTS_PER_PAGE + 1} - {Math.min((currentPage + 1) * CONTACTS_PER_PAGE, totalCount || 0)} sur {totalCount}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                        disabled={currentPage >= totalPages - 1}
+                      >
+                        Suivant
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <p className="text-muted-foreground">Aucun contact pour le moment</p>
               )}
