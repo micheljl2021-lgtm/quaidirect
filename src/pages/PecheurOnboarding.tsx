@@ -66,11 +66,13 @@ interface FormData {
   salePoint1Description: string;
   salePoint1Lat: number | undefined;
   salePoint1Lng: number | undefined;
+  salePoint1Photo: string;
   salePoint2Label: string;
   salePoint2Address: string;
   salePoint2Description: string;
   salePoint2Lat: number | undefined;
   salePoint2Lng: number | undefined;
+  salePoint2Photo: string;
 }
 const STORAGE_KEY = 'quaidirect_onboarding_data';
 
@@ -117,11 +119,13 @@ const getInitialFormData = (): FormData => {
     salePoint1Description: "",
     salePoint1Lat: undefined,
     salePoint1Lng: undefined,
+    salePoint1Photo: "",
     salePoint2Label: "",
     salePoint2Address: "",
     salePoint2Description: "",
     salePoint2Lat: undefined,
     salePoint2Lng: undefined,
+    salePoint2Photo: "",
   };
 };
 
@@ -222,11 +226,13 @@ const PecheurOnboarding = () => {
           salePoint1Description: savedData.salePoint1Description || "",
           salePoint1Lat: savedData.salePoint1Lat,
           salePoint1Lng: savedData.salePoint1Lng,
+          salePoint1Photo: savedData.salePoint1Photo || "",
           salePoint2Label: savedData.salePoint2Label || "",
           salePoint2Address: savedData.salePoint2Address || "",
           salePoint2Description: savedData.salePoint2Description || "",
           salePoint2Lat: savedData.salePoint2Lat,
           salePoint2Lng: savedData.salePoint2Lng,
+          salePoint2Photo: savedData.salePoint2Photo || "",
         });
       }
     };
@@ -334,11 +340,13 @@ const PecheurOnboarding = () => {
           salePoint1Description: formData.salePoint1Description,
           salePoint1Lat: formData.salePoint1Lat,
           salePoint1Lng: formData.salePoint1Lng,
+          salePoint1Photo: formData.salePoint1Photo,
           salePoint2Label: formData.salePoint2Label,
           salePoint2Address: formData.salePoint2Address,
           salePoint2Description: formData.salePoint2Description,
           salePoint2Lat: formData.salePoint2Lat,
           salePoint2Lng: formData.salePoint2Lng,
+          salePoint2Photo: formData.salePoint2Photo,
         },
       };
 
@@ -434,6 +442,7 @@ const PecheurOnboarding = () => {
           description: formData.salePoint1Description || null,
           latitude: formData.salePoint1Lat || null,
           longitude: formData.salePoint1Lng || null,
+          photo_url: formData.salePoint1Photo || null,
           is_primary: true,
         });
       }
@@ -446,6 +455,7 @@ const PecheurOnboarding = () => {
           description: formData.salePoint2Description || null,
           latitude: formData.salePoint2Lat || null,
           longitude: formData.salePoint2Lng || null,
+          photo_url: formData.salePoint2Photo || null,
           is_primary: false,
         });
       }
