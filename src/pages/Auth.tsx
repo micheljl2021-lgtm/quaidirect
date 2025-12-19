@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -39,6 +40,7 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [step, setStep] = useState<'auth' | 'otp' | 'reset'>('auth');
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [loading, setLoading] = useState(false);
@@ -46,6 +48,17 @@ const Auth = () => {
   const { signIn, signInWithPassword, signInWithGoogle, verifyOtp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Capture referral code from URL on mount
+  useEffect(() => {
+    const refCode = searchParams.get('ref') || searchParams.get('referral') || searchParams.get('code');
+    if (refCode) {
+      setReferralCode(refCode.toUpperCase());
+      setAuthMode('signup'); // Switch to signup mode if referral code is present
+      console.log('[AUTH] Referral code captured from URL:', refCode);
+    }
+  }, [searchParams]);
 
   const handlePostAuthRedirect = async () => {
     const {
@@ -67,6 +80,9 @@ const Auth = () => {
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            referral_code: referralCode || null,
+          },
         },
       });
       
@@ -83,13 +99,60 @@ const Auth = () => {
 
           if (roleError) {
             console.error('[SIGNUP] Error assigning user role:', roleError);
-            // Continue anyway, le rôle peut être assigné par un trigger
           } else {
             console.log('[SIGNUP] User role assigned successfully');
           }
         } catch (roleError) {
           console.error('[SIGNUP] Exception assigning role:', roleError);
-          // Continue anyway
+        }
+
+        // Traiter le code de parrainage si présent
+        if (referralCode) {
+          console.log('[SIGNUP] Processing referral code:', referralCode);
+          try {
+            // Chercher le pêcheur avec ce code d'affiliation
+            const { data: fisherman, error: fishermanError } = await supabase
+              .from('fishermen')
+              .select('id, user_id')
+              .eq('affiliate_code', referralCode.toUpperCase())
+              .maybeSingle();
+
+            if (fishermanError) {
+              console.error('[SIGNUP] Error finding referrer:', fishermanError);
+            } else if (fisherman) {
+              console.log('[SIGNUP] Found referrer fisherman:', fisherman.id);
+              
+              // Créer l'entrée dans referrals
+              const { error: referralError } = await supabase
+                .from('referrals')
+                .insert({
+                  referrer_id: fisherman.id,
+                  referrer_type: 'fisherman',
+                  referred_id: data.user.id,
+                  referred_type: 'user',
+                  bonus_claimed: false,
+                });
+
+              if (referralError) {
+                console.error('[SIGNUP] Error creating referral:', referralError);
+              } else {
+                console.log('[SIGNUP] Referral created successfully');
+                toast({
+                  title: 'Parrainage enregistré !',
+                  description: 'Votre parrain recevra son bonus lors de votre premier achat.',
+                });
+              }
+            } else {
+              console.log('[SIGNUP] No fisherman found with code:', referralCode);
+              toast({
+                title: 'Code non reconnu',
+                description: 'Le code de parrainage n\'existe pas, mais votre compte a été créé.',
+                variant: 'destructive',
+              });
+            }
+          } catch (refError) {
+            console.error('[SIGNUP] Exception processing referral:', refError);
+          }
         }
 
         // Envoyer l'email de bienvenue (ne pas bloquer l'inscription si ça échoue)
@@ -106,7 +169,6 @@ const Auth = () => {
           }
         } catch (emailError) {
           console.error('[SIGNUP] Email sending exception:', emailError);
-          // Continue anyway
         }
 
         toast({
@@ -377,6 +439,23 @@ const Auth = () => {
                       minLength={6}
                     />
                   </div>
+                  <div className="relative">
+                    <Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                    <Input
+                      type="text"
+                      placeholder="Code parrainage (optionnel)"
+                      value={referralCode}
+                      onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                      className="pl-10 uppercase"
+                      maxLength={10}
+                    />
+                  </div>
+                  {referralCode && (
+                    <p className="text-xs text-green-600 flex items-center gap-1">
+                      <Gift className="h-3 w-3" />
+                      Code parrainage : {referralCode}
+                    </p>
+                  )}
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? 'Création...' : 'Créer un compte'}
