@@ -343,6 +343,9 @@ export type Database = {
       }
       drops: {
         Row: {
+          correction_message: string | null
+          correction_requested_at: string | null
+          correction_requested_by: string | null
           created_at: string
           drop_type: string | null
           eta_at: string
@@ -362,6 +365,9 @@ export type Database = {
           visible_at: string
         }
         Insert: {
+          correction_message?: string | null
+          correction_requested_at?: string | null
+          correction_requested_by?: string | null
           created_at?: string
           drop_type?: string | null
           eta_at: string
@@ -381,6 +387,9 @@ export type Database = {
           visible_at?: string
         }
         Update: {
+          correction_message?: string | null
+          correction_requested_at?: string | null
+          correction_requested_by?: string | null
           created_at?: string
           drop_type?: string | null
           eta_at?: string
@@ -2817,7 +2826,12 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user" | "premium" | "fisherman"
       client_subscription_level: "follower" | "premium" | "premium_plus"
-      drop_status: "scheduled" | "landed" | "cancelled" | "completed"
+      drop_status:
+        | "scheduled"
+        | "landed"
+        | "cancelled"
+        | "completed"
+        | "needs_correction"
       fishing_area: "mediterranee" | "atlantique" | "manche" | "all"
       fishing_method:
         | "palangre"
@@ -2978,7 +2992,13 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user", "premium", "fisherman"],
       client_subscription_level: ["follower", "premium", "premium_plus"],
-      drop_status: ["scheduled", "landed", "cancelled", "completed"],
+      drop_status: [
+        "scheduled",
+        "landed",
+        "cancelled",
+        "completed",
+        "needs_correction",
+      ],
       fishing_area: ["mediterranee", "atlantique", "manche", "all"],
       fishing_method: [
         "palangre",

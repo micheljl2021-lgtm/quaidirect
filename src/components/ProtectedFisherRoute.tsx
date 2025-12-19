@@ -4,7 +4,7 @@ import { useFishermanPaymentStatus } from '@/hooks/useFishermanPaymentStatus';
 import { Loader2 } from 'lucide-react';
 
 export const ProtectedFisherRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, userRole, loading: authLoading } = useAuth();
   const { isPaid, isLoading: paymentLoading } = useFishermanPaymentStatus();
 
   // Show loader while auth is loading OR while checking payment
@@ -17,6 +17,9 @@ export const ProtectedFisherRoute = ({ children }: { children: React.ReactNode }
   }
 
   if (!user) return <Navigate to="/auth" />;
+  
+  // Admins can access all pages without payment check
+  if (userRole === 'admin') return <>{children}</>;
   
   if (isPaid === false) return <Navigate to="/pecheur/payment" />;
   
