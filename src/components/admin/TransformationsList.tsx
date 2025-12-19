@@ -3,15 +3,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { 
   CHANGELOG, 
   TransformationPriority, 
   generateContentFromSelection 
 } from "@/config/changelog";
-import { FileText, Filter } from "lucide-react";
+import { FileText, Filter, Calendar } from "lucide-react";
 
 interface TransformationsListProps {
   onGenerateEmail: (content: string, title: string) => void;
+  sentUpdateContents?: string[]; // Contenus des mises à jour déjà envoyées
 }
 
 const priorityConfig: Record<TransformationPriority, { label: string; color: string; bgColor: string }> = {
@@ -27,10 +30,11 @@ interface SelectedItem {
   text: string;
 }
 
-export const TransformationsList = ({ onGenerateEmail }: TransformationsListProps) => {
+export const TransformationsList = ({ onGenerateEmail, sentUpdateContents = [] }: TransformationsListProps) => {
   const [selectedItems, setSelectedItems] = useState<Map<string, SelectedItem>>(new Map());
   const [filterPriority, setFilterPriority] = useState<TransformationPriority | 'all'>('all');
-
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
   // Flatten all transformations with unique keys
   const allTransformations = useMemo(() => {
     const items: {
@@ -62,11 +66,45 @@ export const TransformationsList = ({ onGenerateEmail }: TransformationsListProp
     return items;
   }, []);
 
-  // Filter transformations
+  // Vérifier si une transformation a déjà été envoyée
+  const isAlreadySent = (text: string): boolean => {
+    return sentUpdateContents.some(content => content.includes(text));
+  };
+
+  // Filter transformations (exclure les déjà envoyées + filtre priorité + filtre dates)
   const filteredTransformations = useMemo(() => {
-    if (filterPriority === 'all') return allTransformations;
-    return allTransformations.filter(t => t.priority === filterPriority);
-  }, [allTransformations, filterPriority]);
+    let filtered = allTransformations.filter(t => !isAlreadySent(t.text));
+    
+    if (filterPriority !== 'all') {
+      filtered = filtered.filter(t => t.priority === filterPriority);
+    }
+    
+    // Filtre par dates
+    if (dateFrom) {
+      const fromDate = new Date(dateFrom);
+      filtered = filtered.filter(t => new Date(t.date) >= fromDate);
+    }
+    if (dateTo) {
+      const toDate = new Date(dateTo);
+      toDate.setHours(23, 59, 59, 999); // Fin de journée
+      filtered = filtered.filter(t => new Date(t.date) <= toDate);
+    }
+    
+    return filtered;
+  }, [allTransformations, filterPriority, dateFrom, dateTo, sentUpdateContents]);
+
+  // Stats (inclure celles déjà envoyées pour le contexte)
+  const stats = useMemo(() => {
+    const notSent = allTransformations.filter(t => !isAlreadySent(t.text));
+    const alreadySent = allTransformations.filter(t => isAlreadySent(t.text));
+    return {
+      major: notSent.filter(t => t.priority === 'major').length,
+      useful: notSent.filter(t => t.priority === 'useful').length,
+      minor: notSent.filter(t => t.priority === 'minor').length,
+      total: notSent.length,
+      sent: alreadySent.length,
+    };
+  }, [allTransformations, sentUpdateContents]);
 
   // Group by version then category
   const groupedByVersion = useMemo(() => {
@@ -138,24 +176,24 @@ export const TransformationsList = ({ onGenerateEmail }: TransformationsListProp
     onGenerateEmail(content, title);
   };
 
-  const stats = useMemo(() => ({
-    major: allTransformations.filter(t => t.priority === 'major').length,
-    useful: allTransformations.filter(t => t.priority === 'useful').length,
-    minor: allTransformations.filter(t => t.priority === 'minor').length,
-    total: allTransformations.length,
-  }), [allTransformations]);
-
   return (
     <div className="flex flex-col h-full">
       {/* Header avec stats */}
       <div className="p-4 border-b space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-lg">📋 Cahier des Transformations</h3>
-          <Badge variant="outline">{stats.total} transformations</Badge>
+          <div className="flex gap-2">
+            <Badge variant="outline">{stats.total} à envoyer</Badge>
+            {stats.sent > 0 && (
+              <Badge variant="secondary" className="text-muted-foreground">
+                {stats.sent} déjà envoyées
+              </Badge>
+            )}
+          </div>
         </div>
         
         {/* Stats par priorité */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Badge className="bg-red-100 text-red-700 hover:bg-red-200 border border-red-300">
             🔴 {stats.major} Majeurs
           </Badge>
@@ -165,6 +203,43 @@ export const TransformationsList = ({ onGenerateEmail }: TransformationsListProp
           <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-200 border border-orange-300">
             🟠 {stats.minor} Mineurs
           </Badge>
+        </div>
+
+        {/* Filtre par dates */}
+        <div className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
+          <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          <div className="flex items-center gap-2 flex-1">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="dateFrom" className="text-sm whitespace-nowrap">Du:</Label>
+              <Input
+                id="dateFrom"
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="w-auto h-8"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="dateTo" className="text-sm whitespace-nowrap">Au:</Label>
+              <Input
+                id="dateTo"
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="w-auto h-8"
+              />
+            </div>
+            {(dateFrom || dateTo) && (
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                onClick={() => { setDateFrom(""); setDateTo(""); }}
+                className="h-8"
+              >
+                Effacer dates
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Filtres */}
