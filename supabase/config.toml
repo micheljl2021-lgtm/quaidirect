@@ -124,3 +124,6 @@ verify_jwt = true  # Admin only - syncs regulatory zones from data.gouv.fr
 
 [functions.get-regulatory-zones]
 verify_jwt = false  # Public endpoint - returns cached regulatory zones
+
+[functions.send-correction-request]
+verify_jwt = true  # Admin only - sends correction request to fisherman

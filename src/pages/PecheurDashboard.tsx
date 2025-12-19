@@ -12,10 +12,13 @@ import DashboardStatsSkeleton from '@/components/dashboard/DashboardStatsSkeleto
 import MessagingSection from '@/components/dashboard/MessagingSection';
 import ArrivalsList from '@/components/dashboard/ArrivalsList';
 import ArrivalsListSkeleton from '@/components/dashboard/ArrivalsListSkeleton';
+import { MessagerieSection } from '@/components/dashboard/MessagerieSection';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Anchor, Loader2, ShoppingCart, MessageSquare, AlertCircle } from "lucide-react";
+import { Anchor, Loader2, ShoppingCart, MessageSquare, AlertCircle, Mail } from "lucide-react";
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { getRedirectPathByRole } from '@/lib/authRedirect';
+import { useQuery } from '@tanstack/react-query';
 
 const PecheurDashboard = () => {
   const { user, userRole, isVerifiedFisherman, loading: authLoading } = useAuth();
@@ -31,6 +34,23 @@ const PecheurDashboard = () => {
   // Get pre-selected drop ID from navigation state
   const preSelectedDropId = (location.state as any)?.selectedDropId as string | undefined;
   const scrollToMessaging = (location.state as any)?.scrollToMessaging as boolean | undefined;
+
+  // Count unread messages
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ['unread-messages', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return 0;
+      const { count, error } = await supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('recipient_id', user.id)
+        .is('read_at', null);
+      if (error) return 0;
+      return count || 0;
+    },
+    enabled: !!user?.id,
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
 
   // Scroll to messaging section if requested
   useEffect(() => {
@@ -131,7 +151,7 @@ const PecheurDashboard = () => {
       if (fisherman?.id) {
         setFishermanId(fisherman.id);
         
-        // Fetch active drops
+        // Fetch active drops (including needs_correction)
         const { data: activeData, error: activeError } = await supabase
           .from('drops')
           .select(`
@@ -142,7 +162,7 @@ const PecheurDashboard = () => {
             drop_species(species:species(*))
           `)
           .eq('fisherman_id', fisherman.id)
-          .in('status', ['scheduled', 'landed'])
+          .in('status', ['scheduled', 'landed', 'needs_correction'])
           .order('created_at', { ascending: false }) as { data: any[] | null; error: any };
 
         if (!activeError) setDrops(activeData || []);
@@ -211,12 +231,26 @@ const PecheurDashboard = () => {
 
   const isDataLoading = loading && isVerifiedFisherman;
 
+  // Count drops needing correction
+  const dropsNeedingCorrection = drops.filter(d => d.status === 'needs_correction');
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       
       <div className="container px-4 py-6 md:py-8">
         <DashboardHeader fishermanId={fishermanId} />
+
+        {/* Alert for drops needing correction */}
+        {dropsNeedingCorrection.length > 0 && (
+          <Alert className="mb-6 bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800">
+            <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-500" />
+            <AlertDescription className="text-orange-800 dark:text-orange-300">
+              <strong>{dropsNeedingCorrection.length} arrivage{dropsNeedingCorrection.length > 1 ? 's' : ''} nécessite{dropsNeedingCorrection.length > 1 ? 'nt' : ''} une correction.</strong>
+              {' '}Ces arrivages sont dépubliés jusqu'à correction. Consultez votre messagerie pour plus de détails.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {fishermanId && (
           <div ref={messagingSectionRef}>
@@ -233,18 +267,27 @@ const PecheurDashboard = () => {
         )}
 
         <Tabs defaultValue="arrivages" className="space-y-4 md:space-y-6">
-          <TabsList className="grid w-full max-w-lg mx-auto grid-cols-3">
+          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4">
             <TabsTrigger value="arrivages" className="gap-2 text-sm">
               <Anchor className="h-4 w-4" aria-hidden="true" />
               <span className="hidden xs:inline">Mes </span>arrivages
             </TabsTrigger>
+            <TabsTrigger value="messagerie" className="gap-2 text-sm relative">
+              <Mail className="h-4 w-4" aria-hidden="true" />
+              <span className="hidden xs:inline">Messagerie</span>
+              {unreadCount > 0 && (
+                <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                  {unreadCount}
+                </Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="caisse" className="gap-2 text-sm">
               <ShoppingCart className="h-4 w-4" aria-hidden="true" />
-              <span className="hidden xs:inline">Caisse au </span>port
+              <span className="hidden xs:inline">Caisse</span>
             </TabsTrigger>
             <TabsTrigger value="sms" className="gap-2 text-sm">
               <MessageSquare className="h-4 w-4" aria-hidden="true" />
-              <span className="hidden xs:inline">Quota </span>SMS
+              <span className="hidden xs:inline">SMS</span>
             </TabsTrigger>
           </TabsList>
 
@@ -257,6 +300,16 @@ const PecheurDashboard = () => {
                 archivedDrops={archivedDrops} 
                 fishermanId={fishermanId}
                 onRefresh={fetchDrops}
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="messagerie">
+            {user && (
+              <MessagerieSection 
+                userId={user.id} 
+                userRole={userRole || undefined}
+                fishermanId={fishermanId || undefined}
               />
             )}
           </TabsContent>

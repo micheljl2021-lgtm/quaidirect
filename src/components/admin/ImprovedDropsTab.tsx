@@ -149,31 +149,52 @@ export function ImprovedDropsTab() {
       return;
     }
 
+    // Get current user for admin ID
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("Utilisateur non authentifié");
+      return;
+    }
+
+    // Update the drop status to needs_correction (this unpublishes it)
     const { error } = await supabase
       .from('drops')
       .update({ 
         status: 'needs_correction',
         correction_message: correctionMessage,
-        correction_requested_at: new Date().toISOString()
+        correction_requested_at: new Date().toISOString(),
+        correction_requested_by: user.id
       })
       .eq('id', selectedDrop.id);
 
     if (error) {
       toast.error("Erreur lors de la demande de correction");
-    } else {
-      // Create notification for fisherman
-      if (selectedDrop.fishermen?.user_id) {
-        await supabase.from('notifications').insert({
-          user_id: selectedDrop.fishermen.user_id,
-          type: 'correction_required',
-          title: 'Correction requise sur un arrivage',
-          message: correctionMessage,
-          data: { drop_id: selectedDrop.id }
-        });
-      }
-      toast.success("Demande de correction envoyée au pêcheur");
-      refetch();
+      return;
     }
+
+    // Call edge function to send email and create internal message
+    if (selectedDrop.fishermen?.user_id) {
+      try {
+        const { error: fnError } = await supabase.functions.invoke('send-correction-request', {
+          body: {
+            dropId: selectedDrop.id,
+            fishermanUserId: selectedDrop.fishermen.user_id,
+            correctionMessage: correctionMessage,
+            adminUserId: user.id
+          }
+        });
+
+        if (fnError) {
+          console.error("Error sending correction notification:", fnError);
+          // Don't show error - DB update was successful
+        }
+      } catch (e) {
+        console.error("Error calling send-correction-request:", e);
+      }
+    }
+    
+    toast.success("Demande de correction envoyée au pêcheur");
+    refetch();
     setCorrectionDialogOpen(false);
     setCorrectionMessage("");
     setSelectedDrop(null);
