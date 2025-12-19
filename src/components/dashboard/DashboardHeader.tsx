@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Anchor, Plus, Settings, Users, Bot, Pencil, HelpCircle } from 'lucide-react';
+import { Anchor, Plus, Settings, Users, Bot, Pencil, HelpCircle, Map } from 'lucide-react';
 
 interface DashboardHeaderProps {
   fishermanId: string | null;
@@ -70,6 +70,15 @@ const DashboardHeader = ({ fishermanId }: DashboardHeaderProps) => {
             >
               <Users className="h-5 w-5" aria-hidden="true" />
               Carnet de clients
+            </Button>
+            <Button 
+              size="lg" 
+              variant="outline"
+              className="gap-2"
+              onClick={() => navigate('/pecheur/zones-reglementaires')}
+            >
+              <Map className="h-5 w-5" aria-hidden="true" />
+              Mes zones
             </Button>
             <Button 
               size="lg" 
