@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Clock, Users, ChefHat, Search } from "lucide-react";
+import { Clock, Users, ChefHat, Search, Sparkles, Loader2, Fish, Flame } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -26,18 +26,71 @@ interface Recipe {
   }>;
 }
 
+interface EnrichedSpecies {
+  id: string;
+  name: string;
+  flavor: string | null;
+  bones_level: string | null;
+  cooking_tips: string | null;
+  cooking_plancha: boolean | null;
+  cooking_friture: boolean | null;
+  cooking_grill: boolean | null;
+  cooking_sushi_tartare: boolean | null;
+  cooking_vapeur: boolean | null;
+  cooking_four: boolean | null;
+  cooking_poele: boolean | null;
+  cooking_soupe: boolean | null;
+  cooking_bouillabaisse: boolean | null;
+}
+
+const COOKING_METHODS = [
+  { key: "cooking_four", label: "Four", icon: "🔥" },
+  { key: "cooking_plancha", label: "Plancha", icon: "🍳" },
+  { key: "cooking_poele", label: "Poêle", icon: "🍳" },
+  { key: "cooking_grill", label: "Grill", icon: "🔥" },
+  { key: "cooking_vapeur", label: "Vapeur", icon: "💨" },
+  { key: "cooking_friture", label: "Friture", icon: "🍟" },
+  { key: "cooking_soupe", label: "Soupe", icon: "🥣" },
+  { key: "cooking_bouillabaisse", label: "Bouillabaisse", icon: "🐟" },
+  { key: "cooking_sushi_tartare", label: "Cru", icon: "🍣" },
+];
+
 const Recettes = () => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [durationFilter, setDurationFilter] = useState("all");
   const [speciesFilter, setSpeciesFilter] = useState("all");
-  const [allSpecies, setAllSpecies] = useState<string[]>([]);
+  const [allSpeciesNames, setAllSpeciesNames] = useState<string[]>([]);
+  const [enrichedSpecies, setEnrichedSpecies] = useState<EnrichedSpecies[]>([]);
+  const [loadingSpeciesId, setLoadingSpeciesId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     loadRecipes();
+    loadEnrichedSpecies();
   }, []);
+
+  const loadEnrichedSpecies = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("species")
+        .select(`
+          id, name, flavor, bones_level, cooking_tips,
+          cooking_plancha, cooking_friture, cooking_grill, cooking_sushi_tartare,
+          cooking_vapeur, cooking_four, cooking_poele, cooking_soupe, cooking_bouillabaisse
+        `)
+        .not("flavor", "is", null)
+        .not("cooking_tips", "is", null)
+        .order("name")
+        .limit(20);
+
+      if (error) throw error;
+      setEnrichedSpecies(data || []);
+    } catch (error) {
+      console.error("Error loading enriched species:", error);
+    }
+  };
 
   const loadRecipes = async () => {
     try {
@@ -75,7 +128,7 @@ const Recettes = () => {
         const uniqueSpecies = Array.from(
           new Set(recipesWithSpecies.flatMap(r => r.species.map(s => s.name)))
         ).sort();
-        setAllSpecies(uniqueSpecies);
+        setAllSpeciesNames(uniqueSpecies);
       }
     } catch (error: any) {
       toast.error("Erreur lors du chargement des recettes");
@@ -83,6 +136,45 @@ const Recettes = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGenerateRecipe = async (species: EnrichedSpecies, cookingMethod?: string) => {
+    setLoadingSpeciesId(species.id);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-recipe', {
+        body: { 
+          species_id: species.id,
+          cooking_method: cookingMethod 
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data?.recipe) {
+        toast.success(`Recette "${data.recipe.title}" créée !`);
+        // Reload recipes and navigate to the new one
+        await loadRecipes();
+        navigate(`/recettes/${data.recipe.id}`);
+      }
+    } catch (error: any) {
+      console.error("Error generating recipe:", error);
+      if (error.message?.includes("429")) {
+        toast.error("Trop de demandes, réessayez dans quelques instants");
+      } else if (error.message?.includes("402")) {
+        toast.error("Crédits IA insuffisants");
+      } else {
+        toast.error("Erreur lors de la génération de la recette");
+      }
+    } finally {
+      setLoadingSpeciesId(null);
+    }
+  };
+
+  const getAvailableCookingMethods = (species: EnrichedSpecies) => {
+    return COOKING_METHODS.filter(method => 
+      species[method.key as keyof EnrichedSpecies] === true
+    );
   };
 
   const filteredRecipes = recipes.filter((recipe) => {
@@ -113,6 +205,18 @@ const Recettes = () => {
       default:
         return "bg-muted";
     }
+  };
+
+  const getFlavorBadge = (flavor: string | null) => {
+    if (!flavor) return null;
+    const flavorLower = flavor.toLowerCase();
+    if (flavorLower.includes("délicat") || flavorLower.includes("fin") || flavorLower.includes("doux")) {
+      return { label: "Délicat", className: "bg-sky-100 text-sky-700 border-sky-200" };
+    }
+    if (flavorLower.includes("fort") || flavorLower.includes("prononcé") || flavorLower.includes("iodé")) {
+      return { label: "Corsé", className: "bg-amber-100 text-amber-700 border-amber-200" };
+    }
+    return { label: "Équilibré", className: "bg-emerald-100 text-emerald-700 border-emerald-200" };
   };
 
   return (
@@ -156,13 +260,107 @@ const Recettes = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous les poissons</SelectItem>
-                {allSpecies.map(species => (
+                {allSpeciesNames.map(species => (
                   <SelectItem key={species} value={species}>
                     {species}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+          </div>
+        </div>
+
+        {/* Section "Idées par espèce" */}
+        {enrichedSpecies.length > 0 && (
+          <div className="mb-12">
+            <div className="flex items-center gap-2 mb-4">
+              <Fish className="h-6 w-6 text-primary" />
+              <h2 className="text-2xl font-bold text-foreground">Idées par espèce</h2>
+              <Badge variant="secondary" className="ml-2">
+                <Sparkles className="h-3 w-3 mr-1" />
+                IA
+              </Badge>
+            </div>
+            <p className="text-muted-foreground mb-6">
+              Générez une recette personnalisée à partir d'un poisson
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {enrichedSpecies.slice(0, 9).map((species) => {
+                const flavorBadge = getFlavorBadge(species.flavor);
+                const cookingMethods = getAvailableCookingMethods(species);
+                const isLoading = loadingSpeciesId === species.id;
+                
+                return (
+                  <Card key={species.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="pt-4 space-y-3">
+                      <div className="flex items-start justify-between">
+                        <h3 className="font-semibold text-lg">{species.name}</h3>
+                        {flavorBadge && (
+                          <Badge variant="outline" className={flavorBadge.className}>
+                            {flavorBadge.label}
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      {species.cooking_tips && (
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {species.cooking_tips}
+                        </p>
+                      )}
+                      
+                      {cookingMethods.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {cookingMethods.slice(0, 5).map(method => (
+                            <span
+                              key={method.key}
+                              className="text-xs bg-muted px-2 py-0.5 rounded-full"
+                              title={method.label}
+                            >
+                              {method.icon} {method.label}
+                            </span>
+                          ))}
+                          {cookingMethods.length > 5 && (
+                            <span className="text-xs text-muted-foreground">
+                              +{cookingMethods.length - 5}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      
+                      <Button
+                        size="sm"
+                        className="w-full gap-2"
+                        onClick={() => handleGenerateRecipe(species)}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            L'IA cuisine...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-4 w-4" />
+                            Générer une recette
+                          </>
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Section Recettes existantes */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <ChefHat className="h-6 w-6 text-primary" />
+            <h2 className="text-2xl font-bold text-foreground">
+              {recipes.length > 0 ? "Toutes les recettes" : "Recettes"}
+            </h2>
           </div>
         </div>
 
@@ -244,9 +442,17 @@ const Recettes = () => {
 
         {!loading && filteredRecipes.length === 0 && (
           <div className="text-center py-16">
-            <p className="text-lg text-muted-foreground">
-              Aucune recette ne correspond à votre recherche
+            <ChefHat className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
+            <p className="text-lg text-muted-foreground mb-4">
+              {recipes.length === 0 
+                ? "Pas encore de recettes" 
+                : "Aucune recette ne correspond à votre recherche"}
             </p>
+            {enrichedSpecies.length > 0 && recipes.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Générez votre première recette en cliquant sur une espèce ci-dessus !
+              </p>
+            )}
           </div>
         )}
       </div>
