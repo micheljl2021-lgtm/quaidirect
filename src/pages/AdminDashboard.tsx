@@ -18,6 +18,7 @@ import { ContactsTab } from "@/components/admin/ContactsTab";
 import { SupportRequestsTab } from "@/components/admin/SupportRequestsTab";
 import PublicInquiriesTab from "@/components/admin/PublicInquiriesTab";
 import { PlatformUpdatesTab } from "@/components/admin/PlatformUpdatesTab";
+import { AdminRoleSwitcher } from "@/components/admin/AdminRoleSwitcher";
 import { getRedirectPathByRole } from "@/lib/authRedirect";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,15 +69,18 @@ const AdminDashboard = () => {
       
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-gradient-to-r from-primary/20 to-secondary/20">
-              <Shield className="h-6 w-6 text-primary" aria-hidden="true" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-gradient-to-r from-primary/20 to-secondary/20">
+                <Shield className="h-6 w-6 text-primary" aria-hidden="true" />
+              </div>
+              <h1 className="text-4xl font-bold text-foreground">Dashboard Admin</h1>
+              <Badge className="gap-2">
+                <Shield className="h-3 w-3" aria-hidden="true" />
+                Administrateur
+              </Badge>
             </div>
-            <h1 className="text-4xl font-bold text-foreground">Dashboard Admin</h1>
-            <Badge className="gap-2">
-              <Shield className="h-3 w-3" aria-hidden="true" />
-              Administrateur
-            </Badge>
+            <AdminRoleSwitcher />
           </div>
           <p className="text-muted-foreground">
             Contrôle total de la plateforme QuaiDirect

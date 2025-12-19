@@ -17,7 +17,6 @@ export function PremiumSubscriptionsTab() {
           *,
           profiles!inner(email)
         `)
-        .in('plan', ['premium_monthly', 'premium_annual', 'premium_plus_monthly', 'premium_plus_annual', 'premium'])
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -89,7 +88,11 @@ export function PremiumSubscriptionsTab() {
                     <TableCell className="text-sm">{sub.user_email || '-'}</TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {sub.plan === 'premium_monthly' ? 'Mensuel (2,50€)' : 'Annuel (25€)'}
+                        {sub.plan === 'premium_monthly' ? 'Premium Mensuel' : 
+                         sub.plan === 'premium_annual' ? 'Premium Annuel' :
+                         sub.plan === 'fisherman_basic' ? 'Pêcheur Basic' :
+                         sub.plan === 'fisherman_pro' ? 'Pêcheur Pro' :
+                         sub.plan}
                       </Badge>
                     </TableCell>
                     <TableCell className="font-mono text-xs">{sub.stripe_customer_id?.slice(0, 12)}...</TableCell>
