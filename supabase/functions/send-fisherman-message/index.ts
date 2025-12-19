@@ -2,11 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -264,9 +260,11 @@ const getEmailTemplate = (type: string, fisherman: FishermanData, dropDetails?: 
 };
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight with domain restriction
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get('Origin');
 
   const supabaseClient = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
@@ -322,7 +320,7 @@ serve(async (req) => {
         JSON.stringify({ error: 'Limite de messages atteinte. Veuillez patienter 1 minute.' }),
         {
           headers: { 
-            ...corsHeaders, 
+            ...getCorsHeaders(origin), 
             'Content-Type': 'application/json',
             'X-RateLimit-Remaining': '0',
             'Retry-After': '60'
@@ -345,7 +343,7 @@ serve(async (req) => {
           details: parseResult.error.flatten().fieldErrors 
         }),
         {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' },
           status: 400,
         }
       );
@@ -503,7 +501,7 @@ serve(async (req) => {
         affiliate_code: fisherman.affiliate_code,
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' },
         status: 200,
       }
     );
@@ -512,7 +510,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: error.message }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(null), 'Content-Type': 'application/json' },
         status: 500,
       }
     );

@@ -9,26 +9,24 @@ export function PremiumSubscriptionsTab() {
   const { data: subscriptions, isLoading } = useQuery({
     queryKey: ['admin-premium-subscriptions'],
     queryFn: async () => {
+      // Fetch payments with profiles join to get user email securely
+      // This uses RLS policies - admin can view all profiles
       const { data, error } = await supabase
         .from('payments')
-        .select('*')
+        .select(`
+          *,
+          profiles!inner(email)
+        `)
         .in('plan', ['premium_monthly', 'premium_annual', 'premium_plus_monthly', 'premium_plus_annual', 'premium'])
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      // Récupérer les emails des utilisateurs
-      const enrichedData = await Promise.all(
-        data.map(async (payment) => {
-          const { data: userData } = await supabase.auth.admin.getUserById(payment.user_id);
-          return {
-            ...payment,
-            user_email: userData.user?.email || null
-          };
-        })
-      );
-
-      return enrichedData;
+      // Transform data to include user_email
+      return data.map((payment: any) => ({
+        ...payment,
+        user_email: payment.profiles?.email || null
+      }));
     },
   });
 
