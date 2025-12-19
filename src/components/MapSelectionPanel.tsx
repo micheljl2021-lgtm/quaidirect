@@ -76,7 +76,7 @@ const MapSelectionPanel = ({
             available_units,
             species (name)
           ),
-          fishermen (boat_name),
+          fishermen:public_fishermen!fisherman_id (boat_name),
           drop_photos (photo_url, display_order)
         `)
         .eq('sale_point_id', selectedSalePoint.id)

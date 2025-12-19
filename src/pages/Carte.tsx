@@ -172,10 +172,10 @@ const Carte = () => {
               scientific_name
             )
           ),
-          fishermen (
+          fishermen:public_fishermen!fisherman_id (
             boat_name,
             is_ambassador,
-            ambassador_slot
+            slug
           ),
           drop_photos (
             id,
@@ -206,7 +206,7 @@ const Carte = () => {
     // Récupérer le label du point de vente
     const salePoint = validSalePoints.find(sp => sp.id === arrivage.sale_point_id);
     const salePointLabel = salePoint?.label || null;
-    
+
     return {
       id: arrivage.id,
       salePointLabel, // Titre principal de la carte
@@ -224,7 +224,6 @@ const Carte = () => {
         name: arrivage.fishermen?.boat_name || 'Pêcheur',
         boat: arrivage.fishermen?.boat_name || '',
         isAmbassador: arrivage.fishermen?.is_ambassador || false,
-        isPartnerAmbassador: arrivage.fishermen?.is_ambassador && arrivage.fishermen?.ambassador_slot === 1,
       },
     };
   }) || [];
