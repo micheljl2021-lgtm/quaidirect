@@ -159,26 +159,30 @@ verify_jwt = true
 
 ## 6️⃣ AUDIT DES DÉPENDANCES
 
-### ⚠️ Vulnérabilités NPM
+### ⚠️ Vulnérabilités NPM (après correction)
 ```
-5 vulnérabilités (3 moderate, 2 high)
+3 vulnérabilités restantes (2 moderate, 1 high)
+État initial: 5 vulnérabilités → Après npm audit fix: 3 vulnérabilités
 ```
 
 | Package | Sévérité | Description | Action |
 |---------|----------|-------------|--------|
-| esbuild | Moderate | Requests serveur exposées | Fixable via `npm audit fix` |
-| vite | Moderate | Dépend de esbuild vulnérable | Fixable via `npm audit fix` |
-| glob | High | Injection commande CLI | Fixable via `npm audit fix` |
-| js-yaml | Moderate | Prototype pollution | Fixable via `npm audit fix` |
+| esbuild | Moderate | Requests serveur exposées | Nécessite vite@7 (breaking change) |
+| vite | Moderate | Dépend de esbuild vulnérable | Nécessite vite@7 (breaking change) |
+| ~~glob~~ | ~~High~~ | ~~Injection commande CLI~~ | ✅ **Corrigé** |
+| ~~js-yaml~~ | ~~Moderate~~ | ~~Prototype pollution~~ | ✅ **Corrigé** |
 | xlsx | High | Prototype pollution + ReDoS | ⚠️ **Pas de fix disponible** |
 
-### 🔧 RECOMMANDATION
+### 🔧 CORRECTIONS EFFECTUÉES
 ```bash
-npm audit fix
+npm audit fix --legacy-peer-deps
 ```
-Cela corrigera 4/5 vulnérabilités. Pour `xlsx`:
-- Considérer une alternative comme `exceljs` ou `sheetjs-style`
-- Ou attendre un patch de la librairie
+Résultat: 2 vulnérabilités corrigées (glob, js-yaml).
+
+### ⚠️ Vulnérabilités restantes
+Pour les 3 vulnérabilités restantes:
+- **esbuild/vite:** Nécessite mise à jour vers Vite 7 (breaking change majeur)
+- **xlsx:** Pas de correctif disponible. Considérer `exceljs` comme alternative
 
 ### ✅ Conflit Dépendances
 - `react-day-picker@8.10.1` requiert `date-fns@^2.28.0 || ^3.0.0`
@@ -273,7 +277,7 @@ src/
 | Legacy Code | 98% | 1 TODO mineur |
 | Liens | 100% | Tous les liens valides |
 | Sécurité | 95% | 2 fonctions ajoutées, RLS OK |
-| Dépendances | 80% | 1 vulnérabilité sans fix |
+| Dépendances | 80% | 3 vulnérabilités restantes (1 sans fix) |
 | Tests | 94% | 8 échecs sur mocks |
 | Architecture | 100% | Structure exemplaire |
 
