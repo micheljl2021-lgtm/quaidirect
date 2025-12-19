@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
 import {
   Dialog,
   DialogContent,
@@ -38,7 +37,6 @@ export function ContactFishermanDialog({
   boatName,
   children 
 }: ContactFishermanDialogProps) {
-  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -61,21 +59,8 @@ export function ContactFishermanDialog({
       }
       setErrors({});
 
-      // Insert message into database
-      const { error } = await supabase.from("messages").insert({
-        sender_id: user?.id || fishermanUserId, // Use fisherman as placeholder if no user
-        recipient_id: fishermanUserId,
-        sender_email: email,
-        sender_name: name,
-        subject: `Message de ${name} via QuaiDirect`,
-        body: message,
-        message_type: "public_inquiry",
-      });
-
-      if (error) throw error;
-
-      // Send email notification to fisherman
-      await supabase.functions.invoke("send-public-message-notification", {
+      // Call edge function which handles both DB insert (with service role) and email notification
+      const { error } = await supabase.functions.invoke("send-public-message-notification", {
         body: {
           fishermanUserId,
           fishermanId,
@@ -84,6 +69,8 @@ export function ContactFishermanDialog({
           message,
         },
       });
+
+      if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Message envoyé ! Le pêcheur vous répondra par email.");

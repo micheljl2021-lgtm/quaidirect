@@ -30,7 +30,42 @@ serve(async (req: Request) => {
     const payload: PublicMessagePayload = await req.json();
     const { fishermanUserId, fishermanId, senderName, senderEmail, message } = payload;
 
+    // Validate required fields
+    if (!fishermanUserId || !fishermanId || !senderName || !senderEmail || !message) {
+      return new Response(
+        JSON.stringify({ error: "Missing required fields" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(senderEmail)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid email format" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     console.log("Sending public message notification to fisherman:", fishermanId);
+
+    // Insert message into database using service role (bypasses RLS)
+    const { error: insertError } = await supabase.from("messages").insert({
+      sender_id: fishermanUserId, // Use fisherman as placeholder since visitor has no user_id
+      recipient_id: fishermanUserId,
+      sender_email: senderEmail,
+      sender_name: senderName,
+      subject: `Message de ${senderName} via QuaiDirect`,
+      body: message,
+      message_type: "public_inquiry",
+    });
+
+    if (insertError) {
+      console.error("Error inserting message:", insertError);
+      throw new Error("Could not save message");
+    }
+
+    console.log("Message saved to database");
 
     // Get fisherman email from auth.users
     const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(fishermanUserId);
