@@ -1262,7 +1262,9 @@ export type Database = {
           read_at: string | null
           recipient_id: string
           related_drop_id: string | null
+          sender_email: string | null
           sender_id: string
+          sender_name: string | null
           subject: string | null
           updated_at: string
         }
@@ -1274,7 +1276,9 @@ export type Database = {
           read_at?: string | null
           recipient_id: string
           related_drop_id?: string | null
+          sender_email?: string | null
           sender_id: string
+          sender_name?: string | null
           subject?: string | null
           updated_at?: string
         }
@@ -1286,7 +1290,9 @@ export type Database = {
           read_at?: string | null
           recipient_id?: string
           related_drop_id?: string | null
+          sender_email?: string | null
           sender_id?: string
+          sender_name?: string | null
           subject?: string | null
           updated_at?: string
         }

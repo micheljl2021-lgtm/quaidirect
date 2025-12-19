@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, MessageCircle } from 'lucide-react';
 import { 
   MapPin, 
   Fish, 
@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import PushNotificationToggle from '@/components/PushNotificationToggle';
+import { ContactFishermanDialog } from '@/components/ContactFishermanDialog';
 
 const FisherProfile = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -123,6 +124,21 @@ const FisherProfile = () => {
       return data;
     },
     enabled: !!fisherman?.id && canViewPrivateInfo,
+  });
+
+  // Fetch fisherman user_id for contact form (minimal data)
+  const { data: fishermanUserId } = useQuery({
+    queryKey: ['fisherman-user-id', fisherman?.id],
+    queryFn: async () => {
+      if (!fisherman?.id) return null;
+      const { data } = await supabase
+        .from('fishermen')
+        .select('user_id')
+        .eq('id', fisherman.id)
+        .single();
+      return data?.user_id;
+    },
+    enabled: !!fisherman?.id && !isOwner,
   });
 
   // Check if user is following
@@ -396,9 +412,25 @@ const FisherProfile = () => {
             )}
           </div>
 
-          <Button size="lg" onClick={() => navigate(`/arrivages?pecheur=${fisherman.id}`)}>
-            Voir les arrivages & commander
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            <Button size="lg" onClick={() => navigate(`/arrivages?pecheur=${fisherman.id}`)}>
+              Voir les arrivages & commander
+            </Button>
+            
+            {/* Contact button - visible to non-owners */}
+            {!isOwner && fishermanUserId && (
+              <ContactFishermanDialog
+                fishermanId={fisherman.id}
+                fishermanUserId={fishermanUserId}
+                boatName={fisherman.boat_name}
+              >
+                <Button size="lg" variant="outline" className="gap-2">
+                  <MessageCircle className="h-5 w-5" />
+                  Contacter ce pêcheur
+                </Button>
+              </ContactFishermanDialog>
+            )}
+          </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">

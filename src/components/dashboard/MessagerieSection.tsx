@@ -25,6 +25,8 @@ interface Message {
   related_drop_id: string | null;
   read_at: string | null;
   created_at: string;
+  sender_email?: string | null;
+  sender_name?: string | null;
 }
 
 interface MessagerieSectionProps {
@@ -105,9 +107,16 @@ export function MessagerieSection({ userId, userRole, fishermanId }: MessagerieS
     },
   });
 
-  // Send reply
+  // Send reply (with email notification for public inquiries)
   const sendReplyMutation = useMutation({
-    mutationFn: async ({ recipientId, subject, body }: { recipientId: string; subject: string; body: string }) => {
+    mutationFn: async ({ recipientId, subject, body, originalMessageId, isPublicInquiry }: { 
+      recipientId: string; 
+      subject: string; 
+      body: string;
+      originalMessageId?: string;
+      isPublicInquiry?: boolean;
+    }) => {
+      // Insert reply message
       const { error } = await supabase
         .from("messages")
         .insert({
@@ -119,6 +128,17 @@ export function MessagerieSection({ userId, userRole, fishermanId }: MessagerieS
         });
       
       if (error) throw error;
+
+      // If it's a public inquiry, send email notification
+      if (isPublicInquiry && originalMessageId) {
+        await supabase.functions.invoke("send-message-reply", {
+          body: {
+            originalMessageId,
+            replyBody: body,
+            replierUserId: userId,
+          },
+        });
+      }
     },
     onSuccess: () => {
       toast.success("Message envoyé");
@@ -350,6 +370,15 @@ export function MessagerieSection({ userId, userRole, fishermanId }: MessagerieS
                       <p className="text-xs text-muted-foreground">
                         Reçu le {format(new Date(selectedMessage.created_at), "dd MMMM yyyy à HH:mm", { locale: fr })}
                       </p>
+                      
+                      {/* Show sender info for public inquiries */}
+                      {selectedMessage.sender_email && (
+                        <div className="bg-blue-50 p-3 rounded-lg text-sm">
+                          <p className="font-medium">De : {selectedMessage.sender_name || "Visiteur"}</p>
+                          <p className="text-muted-foreground">Email : {selectedMessage.sender_email}</p>
+                        </div>
+                      )}
+                      
                       <div className="bg-muted/50 p-3 rounded-lg whitespace-pre-wrap text-sm">
                         {selectedMessage.body}
                       </div>
@@ -366,6 +395,11 @@ export function MessagerieSection({ userId, userRole, fishermanId }: MessagerieS
                       
                       <div className="border-t pt-4">
                         <label className="text-sm font-medium">Répondre</label>
+                        {selectedMessage.sender_email && (
+                          <p className="text-xs text-muted-foreground mb-2">
+                            La réponse sera envoyée par email à {selectedMessage.sender_email}
+                          </p>
+                        )}
                         <Textarea
                           value={replyContent}
                           onChange={(e) => setReplyContent(e.target.value)}
@@ -380,6 +414,8 @@ export function MessagerieSection({ userId, userRole, fishermanId }: MessagerieS
                             recipientId: selectedMessage.sender_id,
                             subject: `Re: ${selectedMessage.subject || "Sans objet"}`,
                             body: replyContent,
+                            originalMessageId: selectedMessage.id,
+                            isPublicInquiry: !!selectedMessage.sender_email,
                           })}
                           disabled={!replyContent || sendReplyMutation.isPending}
                         >
