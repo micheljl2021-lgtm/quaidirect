@@ -603,8 +603,9 @@ const Arrivages = () => {
             }
             
             // Fallback: use drop_species if no offers
+            const allSpecies = drop.drop_species?.map(ds => ds.species?.name).filter(Boolean) || [];
+            const speciesName = allSpecies.length > 0 ? allSpecies.join(', ') : 'Arrivage du jour';
             const speciesFromDropSpecies = drop.drop_species?.[0]?.species;
-            const speciesName = speciesFromDropSpecies?.name || 'Arrivage';
             const scientificName = speciesFromDropSpecies?.scientific_name || '';
             
             // Si pas d'offres valides, afficher quand même le drop avec drop_species
