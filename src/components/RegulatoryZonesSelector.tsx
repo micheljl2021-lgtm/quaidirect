@@ -182,7 +182,7 @@ export function RegulatoryZonesSelector({
       </div>
 
       {/* Zones list */}
-      <ScrollArea style={{ maxHeight }} className="border rounded-lg">
+      <ScrollArea className="h-[400px] border rounded-lg overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center p-8">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
