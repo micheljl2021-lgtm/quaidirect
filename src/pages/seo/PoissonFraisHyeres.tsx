@@ -25,7 +25,6 @@ const PoissonFraisHyeres = () => {
       "longitude": "6.1288"
     },
     "url": "https://quaidirect.fr/poisson-frais-hyeres",
-    "telephone": "+33000000000",
     "priceRange": "€€",
     "openingHours": "Mo-Su 08:00-10:00"
   };

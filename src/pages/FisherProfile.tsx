@@ -77,25 +77,39 @@ const FisherProfile = () => {
   const { data: ownershipCheck } = useQuery({
     queryKey: ['fisherman-ownership', fisherman?.id, user?.id],
     queryFn: async () => {
-      if (!fisherman?.id || !user?.id) return { isOwner: false };
+      if (!fisherman?.id || !user?.id) return { isOwner: false, isAdmin: false };
       
-      const { data, error } = await supabase
+      // Check if owner
+      const { data: ownerData, error: ownerError } = await supabase
         .from('fishermen')
         .select('user_id')
         .eq('id', fisherman.id)
         .eq('user_id', user.id)
         .maybeSingle();
       
-      return { isOwner: !!data && !error };
+      // Check if admin
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+      
+      return { 
+        isOwner: !!ownerData && !ownerError,
+        isAdmin: !!roleData
+      };
     },
     enabled: !!fisherman?.id && !!user?.id,
   });
 
   const isOwner = ownershipCheck?.isOwner ?? false;
+  const isAdmin = ownershipCheck?.isAdmin ?? false;
+  const canViewPrivateInfo = isOwner || isAdmin;
 
-  // Fetch full fisherman data if user is the owner (to get contact info)
+  // Fetch full fisherman data if user is the owner or admin (to get contact info)
   const { data: fullFishermanData } = useQuery({
-    queryKey: ['fisherman-full', fisherman?.id],
+    queryKey: ['fisherman-full', fisherman?.id, canViewPrivateInfo],
     queryFn: async () => {
       if (!fisherman?.id) return null;
       
@@ -108,7 +122,7 @@ const FisherProfile = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!fisherman?.id && isOwner,
+    enabled: !!fisherman?.id && canViewPrivateInfo,
   });
 
   // Check if user is following
@@ -273,8 +287,8 @@ const FisherProfile = () => {
                 "@type": "PostalAddress",
                 "addressLocality": fisherman.main_fishing_zone
               },
-              "url": `https://quaidirect.fr/boutique/${fisherman.slug}`,
-              "telephone": fullFishermanData?.phone || ""
+              "url": `https://quaidirect.fr/boutique/${fisherman.slug}`
+              // Note: phone/email removed for privacy - contact via platform only
             })}
           </script>
         </Helmet>
@@ -534,89 +548,106 @@ const FisherProfile = () => {
             </Card>
           )}
 
-          {/* Me contacter */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Phone className="h-5 w-5" />
-                Me contacter
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {/* Téléphone - Only shown to owner */}
-              {isOwner && fullFishermanData?.phone && (
-                <a
-                  href={`tel:${fullFishermanData.phone}`}
-                  className="flex items-center gap-3 p-3 hover:bg-accent rounded-lg transition"
-                >
-                  <Phone className="h-5 w-5 text-primary" />
-                  <span className="font-medium">{fullFishermanData.phone}</span>
-                </a>
-              )}
+          {/* Me contacter - Only show if owner/admin OR has social links */}
+          {(canViewPrivateInfo || fisherman.facebook_url || fisherman.instagram_url || fisherman.website_url) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  {canViewPrivateInfo ? <Phone className="h-5 w-5" /> : <Globe className="h-5 w-5" />}
+                  {isOwner ? 'Mes coordonnées' : (isAdmin ? 'Coordonnées du pêcheur' : 'Retrouvez-moi')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {/* Admin badge */}
+                {isAdmin && !isOwner && (
+                  <Badge variant="outline" className="mb-2">Vue admin</Badge>
+                )}
 
-              {/* Email - Only shown to owner */}
-              {isOwner && fullFishermanData?.email && (
-                <a
-                  href={`mailto:${fullFishermanData.email}`}
-                  className="flex items-center gap-3 p-3 hover:bg-accent rounded-lg transition"
-                >
-                  <Mail className="h-5 w-5 text-primary" />
-                  <span className="font-medium">{fullFishermanData.email}</span>
-                </a>
-              )}
+                {/* Téléphone - Shown to owner/admin */}
+                {canViewPrivateInfo && fullFishermanData?.phone && (
+                  <a
+                    href={`tel:${fullFishermanData.phone}`}
+                    className="flex items-center gap-3 p-3 hover:bg-accent rounded-lg transition"
+                  >
+                    <Phone className="h-5 w-5 text-primary" />
+                    <span className="font-medium">{fullFishermanData.phone}</span>
+                  </a>
+                )}
 
-              {/* Réseaux sociaux */}
-              {(fisherman.facebook_url || fisherman.instagram_url || fisherman.website_url) && (
-                <div className="flex items-center gap-3 pt-3 border-t">
-                  {fisherman.facebook_url && (
-                    <a
-                      href={fisherman.facebook_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 hover:bg-accent rounded-full transition"
-                    >
-                      <Facebook className="h-6 w-6" />
-                    </a>
-                  )}
-                  {fisherman.instagram_url && (
-                    <a
-                      href={fisherman.instagram_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 hover:bg-accent rounded-full transition"
-                    >
-                      <Instagram className="h-6 w-6" />
-                    </a>
-                  )}
-                  {fisherman.website_url && (
-                    <a
-                      href={fisherman.website_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 hover:bg-accent rounded-full transition"
-                    >
-                      <Globe className="h-6 w-6" />
-                    </a>
-                  )}
-                </div>
-              )}
+                {/* Email - Shown to owner/admin */}
+                {canViewPrivateInfo && fullFishermanData?.email && (
+                  <a
+                    href={`mailto:${fullFishermanData.email}`}
+                    className="flex items-center gap-3 p-3 hover:bg-accent rounded-lg transition"
+                  >
+                    <Mail className="h-5 w-5 text-primary" />
+                    <span className="font-medium">{fullFishermanData.email}</span>
+                  </a>
+                )}
 
-              {/* Itinéraire - Only shown to owner */}
-              {isOwner && fullFishermanData?.address && fullFishermanData?.city && (
-                <a
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-                    `${fullFishermanData.address}, ${fullFishermanData.postal_code || ''} ${fullFishermanData.city}`
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition"
-                >
-                  <MapPin className="h-5 w-5" />
-                  <span className="font-medium">Itinéraire vers le port</span>
-                </a>
-              )}
-            </CardContent>
-          </Card>
+                {/* Réseaux sociaux - Visible par tous */}
+                {(fisherman.facebook_url || fisherman.instagram_url || fisherman.website_url) && (
+                  <div className={`flex items-center gap-3 ${canViewPrivateInfo ? 'pt-3 border-t' : ''}`}>
+                    {fisherman.facebook_url && (
+                      <a
+                        href={fisherman.facebook_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 hover:bg-accent rounded-full transition"
+                        title="Facebook"
+                      >
+                        <Facebook className="h-6 w-6" />
+                      </a>
+                    )}
+                    {fisherman.instagram_url && (
+                      <a
+                        href={fisherman.instagram_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 hover:bg-accent rounded-full transition"
+                        title="Instagram"
+                      >
+                        <Instagram className="h-6 w-6" />
+                      </a>
+                    )}
+                    {fisherman.website_url && (
+                      <a
+                        href={fisherman.website_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 hover:bg-accent rounded-full transition"
+                        title="Site web"
+                      >
+                        <Globe className="h-6 w-6" />
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                {/* Itinéraire - Shown to owner/admin */}
+                {canViewPrivateInfo && fullFishermanData?.address && fullFishermanData?.city && (
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                      `${fullFishermanData.address}, ${fullFishermanData.postal_code || ''} ${fullFishermanData.city}`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition"
+                  >
+                    <MapPin className="h-5 w-5" />
+                    <span className="font-medium">Itinéraire vers le port</span>
+                  </a>
+                )}
+
+                {/* Message pour non-propriétaires/non-admins */}
+                {!canViewPrivateInfo && (
+                  <p className="text-sm text-muted-foreground pt-2">
+                    Pour contacter ce pêcheur, suivez-le et consultez ses arrivages.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 
