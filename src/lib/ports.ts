@@ -1,6 +1,8 @@
 export type FishingBasin = 'MEDITERRANEE' | 'MANCHE' | 'ATLANTIQUE';
 
-const medDeps = ['06', '11', '13', '30', '34', '66', '83', '2A', '2B'];
+// Départements Méditerranée (tous les codes postaux commençant par ces préfixes)
+// Inclut la Corse (codes postaux 20xxx mais départements 2A/2B)
+const medDeps = ['06', '11', '13', '20', '30', '34', '66', '83', '2A', '2B'];
 const mancheDeps = ['14', '22', '29', '35', '50', '56', '76'];
 const atlantiqueDeps = ['17', '29', '33', '40', '44', '56', '64'];
 
@@ -11,6 +13,11 @@ export const getBasinFromDepartement = (dep: string): FishingBasin => {
   if (mancheDeps.includes(clean)) return 'MANCHE';
   return 'ATLANTIQUE';
 };
+
+/**
+ * Get Mediterranean department codes for postal code filtering
+ */
+export const getMediterraneeDepartments = (): string[] => medDeps;
 
 /**
  * @deprecated Use PortsListModal with dynamic Supabase query instead.
