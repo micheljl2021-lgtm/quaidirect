@@ -1,4 +1,4 @@
-import { useState, memo } from "react";
+import { useState, memo, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Crown, MapPin, Clock, Euro, ShoppingCart, Star, ImageIcon } from "lucid
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { DEFAULT_PHOTO_URLS } from "@/components/DefaultPhotoSelector";
-
+import { getFallbackPhotoByDropId, isFallbackPhoto } from "@/lib/fallbackPhotos";
 interface ArrivageCardProps {
   id: string;
   species: string;
@@ -65,10 +65,12 @@ const ArrivageCard = ({
     : null;
   
   // Vérifier si c'est une photo d'illustration par défaut
-  const isDefaultPhoto = (url: string) => DEFAULT_PHOTO_URLS.includes(url);
+  const isDefaultPhoto = (url: string) => DEFAULT_PHOTO_URLS.includes(url) || isFallbackPhoto(url);
   const hasDefaultPhoto = displayPhotos?.some(p => isDefaultPhoto(p.photo_url)) || 
                           (imageUrl && isDefaultPhoto(imageUrl));
   
+  // Photo de fallback unique pour cet arrivage (basée sur l'ID)
+  const fallbackPhoto = useMemo(() => getFallbackPhotoByDropId(id), [id]);
   const hasValidPrice = pricePerPiece !== undefined && pricePerPiece > 0;
   
   // Calculate stock percentage for full variant
@@ -154,7 +156,7 @@ const ArrivageCard = ({
       ) : (
         <div className="relative aspect-video overflow-hidden bg-muted">
           <img 
-            src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&q=80" 
+            src={fallbackPhoto} 
             alt="Poisson frais"
             className="h-full w-full object-cover"
           />
