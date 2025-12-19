@@ -9,11 +9,14 @@ import MapSelectionPanel from "@/components/MapSelectionPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSalePoints } from "@/hooks/useSalePoints";
+import { useFishermanZone } from "@/hooks/useFishermanZone";
 import { getDropLocationLabel } from "@/lib/dropLocationUtils";
-import { Search, Fish, Locate, Loader2, AlertTriangle, UserPlus } from "lucide-react";
+import { Search, Fish, Locate, Loader2, AlertTriangle, UserPlus, MapPin, Globe } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -31,9 +34,13 @@ type GeoStatus = 'idle' | 'loading' | 'granted' | 'denied' | 'error';
 const Carte = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { fishermanZone, isFisherman } = useFishermanZone();
   const [searchQuery, setSearchQuery] = useState("");
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [geoStatus, setGeoStatus] = useState<GeoStatus>('idle');
+  
+  // Toggle "Ma zone / Partout" - par défaut sur "Ma zone" pour les pêcheurs
+  const [showMyZoneOnly, setShowMyZoneOnly] = useState(true);
   
   // Dialog for anonymous users
   const [showSignupDialog, setShowSignupDialog] = useState(false);
@@ -175,7 +182,8 @@ const Carte = () => {
           fishermen:public_fishermen!fisherman_id (
             boat_name,
             is_ambassador,
-            slug
+            slug,
+            main_fishing_zone
           ),
           drop_photos (
             id,
@@ -220,6 +228,7 @@ const Carte = () => {
       isPremium: arrivage.is_premium,
       dropPhotos: arrivage.drop_photos,
       salePointId: arrivage.sale_point_id,
+      mainFishingZone: arrivage.fishermen?.main_fishing_zone || null,
       fisherman: {
         name: arrivage.fishermen?.boat_name || 'Pêcheur',
         boat: arrivage.fishermen?.boat_name || '',
@@ -315,10 +324,28 @@ const Carte = () => {
     : null;
 
   const filteredArrivages = transformedArrivages.filter(arrivage => {
+    // Filtre "Ma zone" pour les pêcheurs (prioritaire)
+    if (isFisherman && showMyZoneOnly && fishermanZone) {
+      if (arrivage.mainFishingZone !== fishermanZone) {
+        return false;
+      }
+    }
+    
     const matchesSearch = !searchQuery || 
       arrivage.species.toLowerCase().includes(searchQuery.toLowerCase()) ||
       arrivage.port.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
+  });
+  
+  // Filter map drops by zone for fishermen
+  const filteredMapDrops = mapDrops.filter(drop => {
+    if (isFisherman && showMyZoneOnly && fishermanZone) {
+      const arrivage = arrivages?.find(a => a.id === drop.id);
+      if (arrivage?.fishermen?.main_fishing_zone !== fishermanZone) {
+        return false;
+      }
+    }
+    return true;
   });
 
   return (
@@ -343,6 +370,42 @@ const Carte = () => {
             </p>
           )}
         </div>
+
+        {/* Toggle Ma zone / Partout pour les pêcheurs */}
+        {user && isFisherman && fishermanZone && (
+          <Card className="border-primary/30 bg-primary/5 mb-6">
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {showMyZoneOnly ? (
+                    <MapPin className="h-5 w-5 text-primary" />
+                  ) : (
+                    <Globe className="h-5 w-5 text-muted-foreground" />
+                  )}
+                  <div>
+                    <p className="font-medium text-foreground">
+                      {showMyZoneOnly ? 'Ma zone' : 'Toutes les zones'}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {showMyZoneOnly 
+                        ? `Arrivages en ${fishermanZone}`
+                        : 'Voir tous les arrivages de France'
+                      }
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Partout</span>
+                  <Switch 
+                    checked={showMyZoneOnly}
+                    onCheckedChange={setShowMyZoneOnly}
+                  />
+                  <span className="text-sm text-muted-foreground">Ma zone</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Geolocation Error Alert */}
         {geoStatus === 'denied' && (
@@ -376,7 +439,7 @@ const Carte = () => {
             <GoogleMapComponent 
               ports={ports || []}
               salePoints={validSalePoints}
-              drops={mapDrops}
+              drops={filteredMapDrops}
               selectedPortId={null}
               selectedDropId={selectedDropId}
               selectedSalePointId={selectedSalePointId}
