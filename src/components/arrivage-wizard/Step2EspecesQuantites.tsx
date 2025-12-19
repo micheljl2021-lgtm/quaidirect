@@ -8,10 +8,11 @@ import { SpeciesChips } from "./SpeciesChips";
 import { SpeciesTable } from "./SpeciesTable";
 import { TemplatesRapides } from "./TemplatesRapides";
 import { SavePresetDialog } from "./SavePresetDialog";
+import { SpeciesCookingInfo, getCookingMethodsArray } from "./SpeciesCookingInfo";
 import { ArrivageSpecies } from "@/pages/CreateArrivageWizard";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Star, X, Camera, FileText } from "lucide-react";
+import { Search, Star, X, Camera, FileText, Sparkles, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { SaleType } from "./SaleTypeSelector";
 import { DropPhotosUpload } from "@/components/DropPhotosUpload";
@@ -24,12 +25,27 @@ interface Step2Props {
   saleType: SaleType;
   initialPhotos?: string[];
   initialNotes?: string;
+  salePointLabel?: string;
+  timeSlot?: string;
 }
 
 interface Species {
   id: string;
   name: string;
   indicative_price: number | null;
+  cooking_plancha?: boolean | null;
+  cooking_friture?: boolean | null;
+  cooking_grill?: boolean | null;
+  cooking_sushi_tartare?: boolean | null;
+  cooking_vapeur?: boolean | null;
+  cooking_four?: boolean | null;
+  cooking_poele?: boolean | null;
+  cooking_soupe?: boolean | null;
+  cooking_bouillabaisse?: boolean | null;
+  flavor?: string | null;
+  bones_level?: string | null;
+  budget?: string | null;
+  cooking_tips?: string | null;
 }
 
 export function Step2EspecesQuantites({ 
@@ -38,7 +54,9 @@ export function Step2EspecesQuantites({
   onBack, 
   saleType,
   initialPhotos = [],
-  initialNotes = ""
+  initialNotes = "",
+  salePointLabel = "",
+  timeSlot = "matin"
 }: Step2Props) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -48,6 +66,7 @@ export function Step2EspecesQuantites({
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSpecies, setFilteredSpecies] = useState<Species[]>([]);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   
   // Mode simple: photos et notes
   const [photos, setPhotos] = useState<string[]>(initialPhotos);
@@ -65,20 +84,34 @@ export function Step2EspecesQuantites({
 
       if (!fishermanData) return;
 
+      // Fetch all species with cooking info
       const { data: speciesData } = await supabase
         .from("species")
-        .select("id, name, indicative_price")
+        .select(`
+          id, name, indicative_price,
+          cooking_plancha, cooking_friture, cooking_grill, cooking_sushi_tartare,
+          cooking_vapeur, cooking_four, cooking_poele, cooking_soupe, cooking_bouillabaisse,
+          flavor, bones_level, budget, cooking_tips
+        `)
         .order("name");
 
       if (speciesData) {
-        setAllSpecies(speciesData);
-        setFilteredSpecies(speciesData);
+        setAllSpecies(speciesData as Species[]);
+        setFilteredSpecies(speciesData as Species[]);
       }
 
       // Fetch preferred species from fishermen_species table (priority over history)
       const { data: fishermenSpecies } = await supabase
         .from("fishermen_species")
-        .select("species_id, is_primary, species:species_id(id, name, indicative_price)")
+        .select(`
+          species_id, is_primary, 
+          species:species_id(
+            id, name, indicative_price,
+            cooking_plancha, cooking_friture, cooking_grill, cooking_sushi_tartare,
+            cooking_vapeur, cooking_four, cooking_poele, cooking_soupe, cooking_bouillabaisse,
+            flavor, bones_level, budget, cooking_tips
+          )
+        `)
         .eq("fisherman_id", fishermanData.id)
         .order("is_primary", { ascending: false });
 
@@ -86,15 +119,13 @@ export function Step2EspecesQuantites({
         const preferred = fishermenSpecies
           .filter((fs: any) => fs.species)
           .map((fs: any) => ({
-            id: fs.species.id,
-            name: fs.species.name,
-            indicative_price: fs.species.indicative_price,
+            ...fs.species,
             is_primary: fs.is_primary
           }));
         
         if (preferred.length > 0) {
           setSuggestedSpecies(preferred.slice(0, 8));
-          return; // Use preferred species instead of history
+          return;
         }
       }
 
@@ -111,7 +142,15 @@ export function Step2EspecesQuantites({
         
         const { data: historyData } = await supabase
           .from("offers")
-          .select("species_id, species(id, name, indicative_price)")
+          .select(`
+            species_id, 
+            species:species_id(
+              id, name, indicative_price,
+              cooking_plancha, cooking_friture, cooking_grill, cooking_sushi_tartare,
+              cooking_vapeur, cooking_four, cooking_poele, cooking_soupe, cooking_bouillabaisse,
+              flavor, bones_level, budget, cooking_tips
+            )
+          `)
           .in("drop_id", dropIds);
 
         if (historyData) {
@@ -135,11 +174,11 @@ export function Step2EspecesQuantites({
           if (suggested.length > 0) {
             setSuggestedSpecies(suggested);
           } else {
-            setSuggestedSpecies(speciesData?.slice(0, 6) || []);
+            setSuggestedSpecies((speciesData as Species[])?.slice(0, 6) || []);
           }
         }
       } else {
-        setSuggestedSpecies(speciesData?.slice(0, 6) || []);
+        setSuggestedSpecies((speciesData as Species[])?.slice(0, 6) || []);
       }
     };
 
@@ -194,9 +233,8 @@ export function Step2EspecesQuantites({
 
     if (!fishermanData) return;
 
-    // IMPORTANT: Include speciesId for proper UUID handling when loading presets
     const speciesData = selectedSpecies.map((s) => ({
-      speciesId: s.speciesId, // Critical: include UUID for future loading
+      speciesId: s.speciesId,
       speciesName: s.speciesName,
       quantity: s.quantity,
       unit: s.unit,
@@ -221,8 +259,60 @@ export function Step2EspecesQuantites({
     } else {
       toast({
         title: "Favori sauvegardé",
-        description: `"${name}" est maintenant disponible dans tes templates`,
+        description: `"${name}" est maintenant disponible dans tes favoris`,
       });
+    }
+  };
+
+  const handleGenerateDescription = async () => {
+    if (selectedSpecies.length === 0) {
+      toast({
+        title: "Aucune espèce",
+        description: "Sélectionne d'abord des espèces pour générer une description",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGeneratingDescription(true);
+    
+    try {
+      // Get cooking methods for each species
+      const speciesWithCooking = selectedSpecies.map(s => {
+        const speciesInfo = allSpecies.find(sp => sp.id === s.speciesId);
+        return {
+          speciesName: s.speciesName,
+          cookingMethods: speciesInfo ? getCookingMethodsArray(speciesInfo) : [],
+          flavor: speciesInfo?.flavor || null,
+        };
+      });
+
+      const { data, error } = await supabase.functions.invoke('generate-arrival-description', {
+        body: {
+          species: speciesWithCooking,
+          salePointLabel,
+          timeSlot,
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.description) {
+        setNotes(data.description);
+        toast({
+          title: "Description générée",
+          description: "Tu peux la modifier si besoin",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error generating description:", error);
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de générer la description",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingDescription(false);
     }
   };
 
@@ -243,6 +333,11 @@ export function Step2EspecesQuantites({
     }
   };
 
+  // Get species info for display
+  const getSpeciesInfo = (speciesId: string): Species | undefined => {
+    return allSpecies.find(s => s.id === speciesId);
+  };
+
   return (
     <div className="space-y-6 pb-24">
       <Card>
@@ -257,7 +352,20 @@ export function Step2EspecesQuantites({
               <Star className="h-4 w-4 text-amber-500" aria-hidden="true" />
               <label className="block text-sm font-medium">Mes espèces habituelles</label>
             </div>
-            <SpeciesChips species={suggestedSpecies} onSpeciesClick={handleSpeciesClick} />
+            <div className="flex flex-wrap gap-2">
+              {suggestedSpecies.map((species) => (
+                <button
+                  key={species.id}
+                  type="button"
+                  onClick={() => handleSpeciesClick(species)}
+                  disabled={selectedSpecies.some(s => s.speciesId === species.id)}
+                  className="group relative flex items-center gap-2 px-3 py-2 rounded-full bg-secondary hover:bg-secondary/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="font-medium text-sm">{species.name}</span>
+                  <SpeciesCookingInfo species={species} compact />
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>
@@ -279,9 +387,10 @@ export function Step2EspecesQuantites({
                     key={species.id}
                     type="button"
                     onClick={() => handleSpeciesClick(species)}
-                    className="w-full text-left px-4 py-2 hover:bg-accent transition-colors"
+                    className="w-full text-left px-4 py-2 hover:bg-accent transition-colors flex items-center justify-between"
                   >
-                    {species.name}
+                    <span>{species.name}</span>
+                    <SpeciesCookingInfo species={species} compact />
                   </button>
                 ))}
               </div>
@@ -311,19 +420,25 @@ export function Step2EspecesQuantites({
                 <SpeciesTable species={selectedSpecies} onUpdate={handleUpdateSpecies} />
               ) : (
                 <div className="flex flex-wrap gap-2">
-                  {selectedSpecies.map((species) => (
-                    <Badge
-                      key={species.id}
-                      variant="default"
-                      className="cursor-pointer py-2 px-3 text-sm"
-                      onClick={() => {
-                        setSelectedSpecies(selectedSpecies.filter((s) => s.id !== species.id));
-                      }}
-                    >
-                      {species.speciesName}
-                      <X className="h-3 w-3 ml-2" />
-                    </Badge>
-                  ))}
+                  {selectedSpecies.map((species) => {
+                    const speciesInfo = getSpeciesInfo(species.speciesId);
+                    return (
+                      <Badge
+                        key={species.id}
+                        variant="default"
+                        className="cursor-pointer py-2 px-3 text-sm group"
+                        onClick={() => {
+                          setSelectedSpecies(selectedSpecies.filter((s) => s.id !== species.id));
+                        }}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          {species.speciesName}
+                          {speciesInfo && <SpeciesCookingInfo species={speciesInfo} compact />}
+                          <X className="h-3 w-3 ml-1 group-hover:text-destructive" />
+                        </span>
+                      </Badge>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -366,11 +481,28 @@ export function Step2EspecesQuantites({
 
               {/* Description Section */}
               <div className="space-y-3 pt-4 border-t">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-primary" aria-hidden="true" />
-                  <label className="block text-sm font-medium">
-                    Description / Notes (optionnel)
-                  </label>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" aria-hidden="true" />
+                    <label className="block text-sm font-medium">
+                      Description / Notes (optionnel)
+                    </label>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleGenerateDescription}
+                    disabled={isGeneratingDescription || selectedSpecies.length === 0}
+                    className="gap-2"
+                  >
+                    {isGeneratingDescription ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4" />
+                    )}
+                    Générer
+                  </Button>
                 </div>
                 <Textarea
                   placeholder="Ex: Belle pêche de roche, mélange du jour (rougets, sars, daurades...), arrivage du matin..."

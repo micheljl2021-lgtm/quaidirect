@@ -109,3 +109,6 @@ verify_jwt = true  # Admin only - sends platform update emails to fishermen
 
 [functions.webhook-diagnostic]
 verify_jwt = false  # Public endpoint for webhook diagnostics
+
+[functions.generate-arrival-description]
+verify_jwt = true  # Requires authentication - generates description for arrivals
