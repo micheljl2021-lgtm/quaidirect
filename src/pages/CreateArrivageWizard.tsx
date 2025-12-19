@@ -7,6 +7,7 @@ import { WizardProgressBar } from "@/components/arrivage-wizard/WizardProgressBa
 import { Step1LieuHoraire } from "@/components/arrivage-wizard/Step1LieuHoraire";
 import { Step2EspecesQuantites } from "@/components/arrivage-wizard/Step2EspecesQuantites";
 import { Step3Recapitulatif } from "@/components/arrivage-wizard/Step3Recapitulatif";
+import { SaleTypeSelector, SaleType } from "@/components/arrivage-wizard/SaleTypeSelector";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -40,7 +41,8 @@ export interface ArrivageData extends Step1Data {
 export default function CreateArrivageWizard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0); // 0 = sale type selection
+  const [saleType, setSaleType] = useState<SaleType | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
   const [showTemplates, setShowTemplates] = useState(true);
@@ -111,6 +113,11 @@ export default function CreateArrivageWizard() {
 
     setShowTemplates(false);
     toast.success(`Modèle "${template.name}" chargé !`);
+  };
+
+  const handleSaleTypeSelect = (type: SaleType) => {
+    setSaleType(type);
+    setStep(1);
   };
 
   const handleStep1Complete = (data: Step1Data) => {
@@ -241,6 +248,7 @@ export default function CreateArrivageWizard() {
         is_premium: isPremium,
         status: "scheduled" as const,
         port_id: null,
+        drop_type: saleType === "simple" ? "simple" : "detailed",
       };
 
       console.log("📦 [handlePublish] Payload drop:", dropPayload);
@@ -285,32 +293,36 @@ export default function CreateArrivageWizard() {
         console.log("✅ [handlePublish] Espèces associées");
       }
 
-      // Insert offers
-      console.log("📡 [handlePublish] Insertion offres...");
-      const offersData = arrivageData.species.map((species) => ({
-        drop_id: dropData.id,
-        species_id: species.speciesId,
-        title: species.speciesName,
-        description: species.remark || null,
-        unit_price: species.price,
-        total_units: species.quantity,
-        available_units: species.quantity,
-        price_type: species.unit === "kg" ? "per_kg" : "per_piece",
-      }));
+      // Insert offers only in detailed mode
+      if (saleType === "detailed") {
+        console.log("📡 [handlePublish] Insertion offres (mode détaillé)...");
+        const offersData = arrivageData.species.map((species) => ({
+          drop_id: dropData.id,
+          species_id: species.speciesId,
+          title: species.speciesName,
+          description: species.remark || null,
+          unit_price: species.price,
+          total_units: species.quantity,
+          available_units: species.quantity,
+          price_type: species.unit === "kg" ? "per_kg" : "per_piece",
+        }));
 
-      console.log("📦 [handlePublish] Offers data:", offersData);
+        console.log("📦 [handlePublish] Offers data:", offersData);
 
-      const { error: offersError } = await supabase
-        .from("offers")
-        .insert(offersData);
+        const { error: offersError } = await supabase
+          .from("offers")
+          .insert(offersData);
 
-      if (offersError) {
-        console.error("❌ [handlePublish] Erreur insertion offers:", offersError);
-        toast.error(`Erreur lors de l'ajout des offres: ${offersError.message}`);
-        throw offersError;
+        if (offersError) {
+          console.error("❌ [handlePublish] Erreur insertion offers:", offersError);
+          toast.error(`Erreur lors de l'ajout des offres: ${offersError.message}`);
+          throw offersError;
+        }
+
+        console.log("✅ [handlePublish] Offres créées");
+      } else {
+        console.log("ℹ️ [handlePublish] Mode simple - pas d'offres créées");
       }
-
-      console.log("✅ [handlePublish] Offres créées");
 
       // Insert photos if any
       if (photos.length > 0) {
@@ -368,29 +380,34 @@ export default function CreateArrivageWizard() {
         {/* Back Button */}
         <Button 
           variant="ghost" 
-          onClick={() => navigate('/dashboard/pecheur')} 
+          onClick={() => step === 0 ? navigate('/dashboard/pecheur') : setStep(Math.max(0, step - 1))} 
           className="gap-2 mb-4"
-          aria-label="Retour au dashboard pêcheur"
+          aria-label="Retour"
         >
           <ArrowLeft className="h-4 w-4" />
-          Retour
+          {step === 0 ? "Retour au dashboard" : "Retour"}
         </Button>
 
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            Créer un arrivage en 2 minutes
+            {step === 0 ? "Nouvel arrivage" : "Créer un arrivage en 2 minutes"}
           </h1>
           <p className="text-muted-foreground">
-            Déclare ton débarquement, et on s'occupe de prévenir tes clients.
+            {step === 0 
+              ? "Choisis le type de vente qui correspond à ta pêche du jour."
+              : saleType === "simple" 
+                ? "Vente sur point de vente (mélange, roche, vrac...)"
+                : "Vente à la pièce / au kg avec détail par espèce"
+            }
           </p>
         </div>
 
-        {/* Progress Bar */}
-        <WizardProgressBar currentStep={step} totalSteps={3} />
+        {/* Progress Bar - only show when step > 0 */}
+        {step > 0 && <WizardProgressBar currentStep={step} totalSteps={3} />}
 
-        {/* Templates Section */}
-        {showTemplates && templates.length > 0 && step === 1 && (
+        {/* Templates Section - only in detailed mode */}
+        {showTemplates && templates.length > 0 && step === 1 && saleType === "detailed" && (
           <div className="mb-6">
             <Card>
               <CardHeader>
@@ -438,6 +455,10 @@ export default function CreateArrivageWizard() {
 
         {/* Steps */}
         <div className="mt-8">
+          {step === 0 && (
+            <SaleTypeSelector onSelect={handleSaleTypeSelect} />
+          )}
+
           {step === 1 && (
             <Step1LieuHoraire
               initialData={{
@@ -447,15 +468,16 @@ export default function CreateArrivageWizard() {
                 timeSlot: arrivageData.timeSlot,
               }}
               onComplete={handleStep1Complete}
-              onCancel={() => navigate("/dashboard/pecheur")}
+              onCancel={() => setStep(0)}
             />
           )}
 
-          {step === 2 && (
+          {step === 2 && saleType && (
             <Step2EspecesQuantites
               initialSpecies={arrivageData.species}
               onComplete={handleStep2Complete}
               onBack={() => setStep(1)}
+              saleType={saleType}
             />
           )}
 

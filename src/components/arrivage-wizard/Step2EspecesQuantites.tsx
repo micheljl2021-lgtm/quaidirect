@@ -3,19 +3,22 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { SpeciesChips } from "./SpeciesChips";
 import { SpeciesTable } from "./SpeciesTable";
 import { TemplatesRapides } from "./TemplatesRapides";
 import { SavePresetDialog } from "./SavePresetDialog";
 import { ArrivageSpecies } from "@/pages/CreateArrivageWizard";
 import { Input } from "@/components/ui/input";
-import { Search, Star } from "lucide-react";
+import { Search, Star, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { SaleType } from "./SaleTypeSelector";
 
 interface Step2Props {
   initialSpecies: ArrivageSpecies[];
   onComplete: (species: ArrivageSpecies[]) => void;
   onBack: () => void;
+  saleType: SaleType;
 }
 
 interface Species {
@@ -24,7 +27,7 @@ interface Species {
   indicative_price: number | null;
 }
 
-export function Step2EspecesQuantites({ initialSpecies, onComplete, onBack }: Step2Props) {
+export function Step2EspecesQuantites({ initialSpecies, onComplete, onBack, saleType }: Step2Props) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedSpecies, setSelectedSpecies] = useState<ArrivageSpecies[]>(initialSpecies);
@@ -263,17 +266,38 @@ export function Step2EspecesQuantites({ initialSpecies, onComplete, onBack }: St
                 <label className="block text-sm font-medium">
                   Espèces sélectionnées ({selectedSpecies.length})
                 </label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSaveDialogOpen(true)}
-                >
-                  <Star className="h-4 w-4 mr-2" aria-hidden="true" />
-                  Sauvegarder ce favori
-                </Button>
+                {saleType === "detailed" && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSaveDialogOpen(true)}
+                  >
+                    <Star className="h-4 w-4 mr-2" aria-hidden="true" />
+                    Sauvegarder ce favori
+                  </Button>
+                )}
               </div>
-              <SpeciesTable species={selectedSpecies} onUpdate={handleUpdateSpecies} />
+              
+              {saleType === "detailed" ? (
+                <SpeciesTable species={selectedSpecies} onUpdate={handleUpdateSpecies} />
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {selectedSpecies.map((species) => (
+                    <Badge
+                      key={species.id}
+                      variant="default"
+                      className="cursor-pointer py-2 px-3 text-sm"
+                      onClick={() => {
+                        setSelectedSpecies(selectedSpecies.filter((s) => s.id !== species.id));
+                      }}
+                    >
+                      {species.speciesName}
+                      <X className="h-3 w-3 ml-2" />
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
