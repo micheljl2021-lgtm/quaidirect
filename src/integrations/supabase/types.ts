@@ -2167,52 +2167,115 @@ export type Database = {
       }
       species: {
         Row: {
+          bones_level: string | null
+          budget: string | null
+          calories_per_100g: number | null
+          conservation_info: string | null
+          cooking_bouillabaisse: boolean | null
+          cooking_four: boolean | null
+          cooking_friture: boolean | null
+          cooking_grill: boolean | null
+          cooking_plancha: boolean | null
+          cooking_poele: boolean | null
+          cooking_soupe: boolean | null
+          cooking_sushi_tartare: boolean | null
+          cooking_tips: string | null
+          cooking_vapeur: boolean | null
           created_at: string
           description: string | null
+          fao_code: string | null
           fao_zone: string | null
           fishing_area: Database["public"]["Enums"]["fishing_area"] | null
           fishing_gear: string | null
+          flavor: string | null
+          fun_facts: string | null
           id: string
           indicative_price: number | null
+          local_names: string[] | null
           min_size_cm: number | null
           name: string
+          portion_weight_g: number | null
           presentation: string | null
           price_unit: string | null
+          product_type: string | null
           scientific_name: string | null
           season_end: number | null
           season_start: number | null
+          season_text: string | null
         }
         Insert: {
+          bones_level?: string | null
+          budget?: string | null
+          calories_per_100g?: number | null
+          conservation_info?: string | null
+          cooking_bouillabaisse?: boolean | null
+          cooking_four?: boolean | null
+          cooking_friture?: boolean | null
+          cooking_grill?: boolean | null
+          cooking_plancha?: boolean | null
+          cooking_poele?: boolean | null
+          cooking_soupe?: boolean | null
+          cooking_sushi_tartare?: boolean | null
+          cooking_tips?: string | null
+          cooking_vapeur?: boolean | null
           created_at?: string
           description?: string | null
+          fao_code?: string | null
           fao_zone?: string | null
           fishing_area?: Database["public"]["Enums"]["fishing_area"] | null
           fishing_gear?: string | null
+          flavor?: string | null
+          fun_facts?: string | null
           id?: string
           indicative_price?: number | null
+          local_names?: string[] | null
           min_size_cm?: number | null
           name: string
+          portion_weight_g?: number | null
           presentation?: string | null
           price_unit?: string | null
+          product_type?: string | null
           scientific_name?: string | null
           season_end?: number | null
           season_start?: number | null
+          season_text?: string | null
         }
         Update: {
+          bones_level?: string | null
+          budget?: string | null
+          calories_per_100g?: number | null
+          conservation_info?: string | null
+          cooking_bouillabaisse?: boolean | null
+          cooking_four?: boolean | null
+          cooking_friture?: boolean | null
+          cooking_grill?: boolean | null
+          cooking_plancha?: boolean | null
+          cooking_poele?: boolean | null
+          cooking_soupe?: boolean | null
+          cooking_sushi_tartare?: boolean | null
+          cooking_tips?: string | null
+          cooking_vapeur?: boolean | null
           created_at?: string
           description?: string | null
+          fao_code?: string | null
           fao_zone?: string | null
           fishing_area?: Database["public"]["Enums"]["fishing_area"] | null
           fishing_gear?: string | null
+          flavor?: string | null
+          fun_facts?: string | null
           id?: string
           indicative_price?: number | null
+          local_names?: string[] | null
           min_size_cm?: number | null
           name?: string
+          portion_weight_g?: number | null
           presentation?: string | null
           price_unit?: string | null
+          product_type?: string | null
           scientific_name?: string | null
           season_end?: number | null
           season_start?: number | null
+          season_text?: string | null
         }
         Relationships: []
       }
