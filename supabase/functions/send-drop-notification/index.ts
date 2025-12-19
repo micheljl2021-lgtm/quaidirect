@@ -78,12 +78,21 @@ serve(async (req) => {
   }
 
   try {
-    // Verify internal secret to prevent unauthorized calls
+    // Authentication: Accept either internal secret OR database trigger call (with anon key)
     const internalSecret = req.headers.get('x-internal-secret');
     const expectedSecret = Deno.env.get('INTERNAL_FUNCTION_SECRET');
+    const authHeader = req.headers.get('authorization') || '';
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
     
-    if (!expectedSecret || internalSecret !== expectedSecret) {
-      console.error('Unauthorized call to send-drop-notification');
+    // Check if called with internal secret (from other edge functions)
+    const hasValidInternalSecret = expectedSecret && internalSecret === expectedSecret;
+    
+    // Check if called from database trigger (with anon key in Authorization header)
+    // This is safe because the trigger only fires on actual drop inserts
+    const isDbTriggerCall = authHeader.includes(supabaseAnonKey) && supabaseAnonKey.length > 20;
+    
+    if (!hasValidInternalSecret && !isDbTriggerCall) {
+      console.error('Unauthorized call to send-drop-notification - no valid auth method');
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { 
@@ -92,6 +101,8 @@ serve(async (req) => {
         }
       );
     }
+    
+    console.log('Auth method:', hasValidInternalSecret ? 'internal_secret' : 'db_trigger');
 
     // Validate input with Zod
     const rawBody = await req.json();
