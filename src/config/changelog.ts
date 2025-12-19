@@ -25,6 +25,38 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "2.1.0",
+    date: "2025-12-19",
+    title: "Mise à jour - 18-19 Décembre 2025",
+    categories: [
+      {
+        name: "Photos d'arrivages",
+        icon: "📸",
+        items: [
+          { text: "Photos d'illustration variées automatiquement pour chaque arrivage sans photo", priority: "major" },
+          { text: "20 photos de pêche différentes sélectionnées selon l'ID de l'arrivage", priority: "useful" },
+        ],
+      },
+      {
+        name: "Dashboard Admin",
+        icon: "🛠️",
+        items: [
+          { text: "Les mises à jour déjà envoyées ne sont plus proposées dans le cahier des transformations", priority: "major" },
+          { text: "Filtre par dates pour sélectionner les transformations d'une période spécifique", priority: "major" },
+          { text: "Diagnostic webhook Stripe intégré pour vérifier les paiements", priority: "useful" },
+        ],
+      },
+      {
+        name: "Paiements & Webhooks",
+        icon: "💳",
+        items: [
+          { text: "Gestion améliorée des paiements 100% remisés (coupons)", priority: "useful" },
+          { text: "Référence de paiement correcte même sans payment_intent", priority: "minor" },
+        ],
+      },
+    ],
+  },
+  {
     version: "2.0.0",
     date: "2024-12-14",
     title: "Mise à jour majeure - Décembre 2024",

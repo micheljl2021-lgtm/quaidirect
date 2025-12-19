@@ -376,7 +376,10 @@ export const PlatformUpdatesTab = () => {
             <DialogTitle>Cahier des Transformations</DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-hidden">
-            <TransformationsList onGenerateEmail={handleGenerateFromSelection} />
+            <TransformationsList 
+              onGenerateEmail={handleGenerateFromSelection}
+              sentUpdateContents={updates?.filter(u => u.sent_at).map(u => u.content) || []}
+            />
           </div>
         </DialogContent>
       </Dialog>
