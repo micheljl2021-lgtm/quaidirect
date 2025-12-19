@@ -42,10 +42,23 @@ serve(async (req) => {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
-        logStep('Checkout session completed', { sessionId: session.id });
+        
+        // Debug logging for coupon/discount handling
+        logStep('Checkout session completed', { 
+          sessionId: session.id,
+          amount_total: session.amount_total,
+          payment_intent: session.payment_intent,
+          subscription: session.subscription,
+          metadata: session.metadata,
+          customer_email: session.customer_details?.email,
+          discount_applied: session.total_details?.amount_discount,
+        });
 
         const userId = session.metadata?.user_id;
         const paymentType = session.metadata?.payment_type;
+        
+        // Helper: get payment reference (fallback to session ID for 100% discount coupons)
+        const getPaymentReference = () => session.payment_intent?.toString() || `session_${session.id}`;
         
         if (!userId) {
           logStep('ERROR: Missing user_id in metadata');
@@ -73,7 +86,7 @@ serve(async (req) => {
               pack_type: packType,
               sms_quantity: smsQuantity,
               price_paid: session.amount_total ? session.amount_total / 100 : 0,
-              stripe_payment_intent_id: session.payment_intent as string,
+              stripe_payment_intent_id: getPaymentReference(),
             });
 
           if (packError) {
@@ -140,7 +153,7 @@ serve(async (req) => {
               fisherman_id: fishermanId,
               drop_id: dropId,
               total_price_cents: session.amount_total || 0,
-              stripe_payment_id: session.payment_intent as string,
+              stripe_payment_id: getPaymentReference(),
               status: 'paid',
             })
             .select('id')
@@ -199,7 +212,7 @@ serve(async (req) => {
               .from('fishermen')
               .update({
                 onboarding_payment_status: 'paid',
-                onboarding_payment_id: session.payment_intent as string,
+                onboarding_payment_id: getPaymentReference(),
                 onboarding_paid_at: new Date().toISOString(),
               })
               .eq('user_id', userId);
@@ -225,7 +238,7 @@ serve(async (req) => {
                 boat_registration: tempBoatReg,
                 siret: tempSiret,
                 onboarding_payment_status: 'paid',
-                onboarding_payment_id: session.payment_intent as string,
+                onboarding_payment_id: getPaymentReference(),
                 onboarding_paid_at: new Date().toISOString(),
                 email: session.customer_details?.email || null,
               })
@@ -249,7 +262,7 @@ serve(async (req) => {
                     boat_registration: retryBoatReg,
                     siret: retrySiret,
                     onboarding_payment_status: 'paid',
-                    onboarding_payment_id: session.payment_intent as string,
+                    onboarding_payment_id: getPaymentReference(),
                     onboarding_paid_at: new Date().toISOString(),
                     email: session.customer_details?.email || null,
                   })
