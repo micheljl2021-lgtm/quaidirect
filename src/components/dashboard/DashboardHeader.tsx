@@ -29,7 +29,7 @@ const DashboardHeader = ({ fishermanId }: DashboardHeaderProps) => {
           Tableau de bord
         </h1>
         <p className="text-lg text-muted-foreground">
-          Gérez vos arrivages et ventes
+          Publiez vos arrivages et prévenez vos clients
         </p>
       </div>
       <div className="flex gap-3 flex-wrap">
