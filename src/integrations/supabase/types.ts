@@ -2482,6 +2482,7 @@ export type Database = {
           seo_title: string | null
           slug: string | null
           updated_at: string | null
+          user_id: string | null
           verified_at: string | null
           website_url: string | null
           work_philosophy: string | null
@@ -2526,6 +2527,7 @@ export type Database = {
           seo_title?: string | null
           slug?: string | null
           updated_at?: string | null
+          user_id?: string | null
           verified_at?: string | null
           website_url?: string | null
           work_philosophy?: string | null
@@ -2570,6 +2572,7 @@ export type Database = {
           seo_title?: string | null
           slug?: string | null
           updated_at?: string | null
+          user_id?: string | null
           verified_at?: string | null
           website_url?: string | null
           work_philosophy?: string | null
