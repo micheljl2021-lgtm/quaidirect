@@ -1,13 +1,21 @@
-import { Anchor, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { Anchor, Loader2, Scale } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { RegulatoryZonesSelector } from "@/components/RegulatoryZonesSelector";
+
+interface SelectedRegulatoryZone {
+  zone_id: string;
+  is_primary: boolean;
+  subscribed_to_updates: boolean;
+}
 
 interface Step3ZonesMethodesProps {
   formData: {
@@ -16,6 +24,7 @@ interface Step3ZonesMethodesProps {
     fishingZones: string;
     fishingMethods: string[];
     fishingMethodOther?: string;
+    regulatoryZones?: SelectedRegulatoryZone[];
   };
   onChange: (field: string, value: any) => void;
 }
@@ -81,6 +90,8 @@ const FISHING_METHODS = [
 ];
 
 export function Step3ZonesMethodes({ formData, onChange }: Step3ZonesMethodesProps) {
+  const [activeTab, setActiveTab] = useState<string>("general");
+
   // Charger les zones depuis la base de données
   const { data: zones = [], isLoading: zonesLoading } = useQuery({
     queryKey: ['zones_peche_onboarding'],
@@ -92,6 +103,18 @@ export function Step3ZonesMethodes({ formData, onChange }: Step3ZonesMethodesPro
       
       if (error) throw error;
       return data || [];
+    },
+  });
+
+  // Check if regulatory zones are available
+  const { data: regulatoryZonesCount } = useQuery({
+    queryKey: ['regulatory_zones_count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('regulatory_fishing_zones')
+        .select('*', { count: 'exact', head: true });
+      if (error) throw error;
+      return count || 0;
     },
   });
 
@@ -118,6 +141,14 @@ export function Step3ZonesMethodes({ formData, onChange }: Step3ZonesMethodesPro
     onChange('fishingMethods', newMethods);
   };
 
+  const handleRegulatoryZonesChange = (zones: SelectedRegulatoryZone[]) => {
+    onChange('regulatoryZones', zones);
+  };
+
+  // Detect region from selected general zone
+  const selectedZone = zones.find(z => z.id === formData.zoneId);
+  const detectedRegion = selectedZone?.region;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -129,50 +160,95 @@ export function Step3ZonesMethodes({ formData, onChange }: Step3ZonesMethodesPro
         <p className="text-muted-foreground">Où et comment vous pêchez</p>
       </div>
 
-      {/* Main Fishing Zone - Dynamique depuis la base */}
-      <div className="space-y-2">
-        <Label htmlFor="mainFishingZone">Zone principale de pêche *</Label>
-        {zonesLoading ? (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Chargement des zones...
-          </div>
-        ) : (
-          <Select
-            value={formData.zoneId || ''}
-            onValueChange={handleZoneChange}
-          >
-            <SelectTrigger className="bg-background">
-              <SelectValue placeholder="Sélectionnez votre zone principale" />
-            </SelectTrigger>
-            <SelectContent className="bg-background border z-50">
-              {Object.entries(zonesByRegion).map(([region, regionZones]) => (
-                <SelectGroup key={region}>
-                  <SelectLabel className="font-semibold text-primary">{region}</SelectLabel>
-                  {regionZones.map((zone) => (
-                    <SelectItem key={zone.id} value={zone.id}>
-                      {zone.name}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="general">Zone générale</TabsTrigger>
+          <TabsTrigger value="regulatory" className="relative">
+            <Scale className="h-4 w-4 mr-1" />
+            Zones réglementaires
+            {regulatoryZonesCount && regulatoryZonesCount > 0 && (
+              <span className="ml-1 text-xs text-primary">(officiel)</span>
+            )}
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Detailed Zones */}
-      <div className="space-y-2">
-        <Label htmlFor="fishingZones">Zones détaillées (optionnel)</Label>
-        <Textarea
-          id="fishingZones"
-          value={formData.fishingZones}
-          onChange={(e) => onChange('fishingZones', e.target.value)}
-          placeholder="Ex: Au large de Porquerolles, côté sud de Giens..."
-          rows={3}
-        />
-        <p className="text-xs text-muted-foreground">Décrivez plus précisément vos zones de pêche</p>
-      </div>
+        <TabsContent value="general" className="space-y-6 mt-4">
+          {/* Main Fishing Zone - Dynamique depuis la base */}
+          <div className="space-y-2">
+            <Label htmlFor="mainFishingZone">Zone principale de pêche *</Label>
+            {zonesLoading ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Chargement des zones...
+              </div>
+            ) : (
+              <Select
+                value={formData.zoneId || ''}
+                onValueChange={handleZoneChange}
+              >
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Sélectionnez votre zone principale" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border z-50">
+                  {Object.entries(zonesByRegion).map(([region, regionZones]) => (
+                    <SelectGroup key={region}>
+                      <SelectLabel className="font-semibold text-primary">{region}</SelectLabel>
+                      {regionZones.map((zone) => (
+                        <SelectItem key={zone.id} value={zone.id}>
+                          {zone.name}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
+          {/* Detailed Zones */}
+          <div className="space-y-2">
+            <Label htmlFor="fishingZones">Zones détaillées (optionnel)</Label>
+            <Textarea
+              id="fishingZones"
+              value={formData.fishingZones}
+              onChange={(e) => onChange('fishingZones', e.target.value)}
+              placeholder="Ex: Au large de Porquerolles, côté sud de Giens..."
+              rows={3}
+            />
+            <p className="text-xs text-muted-foreground">Décrivez plus précisément vos zones de pêche</p>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="regulatory" className="space-y-4 mt-4">
+          {regulatoryZonesCount === 0 ? (
+            <Alert>
+              <Scale className="h-4 w-4" />
+              <AlertDescription>
+                Les zones réglementaires officielles ne sont pas encore disponibles. 
+                Elles seront synchronisées prochainement depuis data.gouv.fr.
+                En attendant, utilisez l'onglet "Zone générale".
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <>
+              <Alert className="bg-blue-50 border-blue-200">
+                <Scale className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-blue-800">
+                  <strong>Zones officielles data.gouv.fr</strong><br />
+                  Sélectionnez vos zones de pêche réglementaires. Vous serez notifié des changements d'arrêtés.
+                </AlertDescription>
+              </Alert>
+
+              <RegulatoryZonesSelector
+                region={detectedRegion}
+                selectedZones={formData.regulatoryZones || []}
+                onZonesChange={handleRegulatoryZonesChange}
+                maxHeight="300px"
+              />
+            </>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Fishing Methods */}
       <FishingMethodsSelector formData={formData} onChange={onChange} handleMethodToggle={handleMethodToggle} />

@@ -469,6 +469,55 @@ export type Database = {
         }
         Relationships: []
       }
+      fisherman_regulatory_zones: {
+        Row: {
+          created_at: string | null
+          fisherman_id: string
+          id: string
+          is_primary: boolean | null
+          subscribed_to_updates: boolean | null
+          zone_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          fisherman_id: string
+          id?: string
+          is_primary?: boolean | null
+          subscribed_to_updates?: boolean | null
+          zone_id: string
+        }
+        Update: {
+          created_at?: string | null
+          fisherman_id?: string
+          id?: string
+          is_primary?: boolean | null
+          subscribed_to_updates?: boolean | null
+          zone_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fisherman_regulatory_zones_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fisherman_regulatory_zones_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "public_fishermen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fisherman_regulatory_zones_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "regulatory_fishing_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fisherman_sale_points: {
         Row: {
           address: string
@@ -1828,6 +1877,92 @@ export type Database = {
           referrer_type?: string
         }
         Relationships: []
+      }
+      regulatory_fishing_zones: {
+        Row: {
+          created_at: string | null
+          departement: string | null
+          external_id: string | null
+          geometry_geojson: Json | null
+          geometry_wkt: string | null
+          id: string
+          last_updated_at: string | null
+          region: string | null
+          reglementations: string | null
+          source_url: string | null
+          thematique: string | null
+          updated_at: string | null
+          zone_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          departement?: string | null
+          external_id?: string | null
+          geometry_geojson?: Json | null
+          geometry_wkt?: string | null
+          id?: string
+          last_updated_at?: string | null
+          region?: string | null
+          reglementations?: string | null
+          source_url?: string | null
+          thematique?: string | null
+          updated_at?: string | null
+          zone_name: string
+        }
+        Update: {
+          created_at?: string | null
+          departement?: string | null
+          external_id?: string | null
+          geometry_geojson?: Json | null
+          geometry_wkt?: string | null
+          id?: string
+          last_updated_at?: string | null
+          region?: string | null
+          reglementations?: string | null
+          source_url?: string | null
+          thematique?: string | null
+          updated_at?: string | null
+          zone_name?: string
+        }
+        Relationships: []
+      }
+      regulatory_zone_changes: {
+        Row: {
+          change_type: string
+          detected_at: string | null
+          id: string
+          new_reglementations: string | null
+          notified_at: string | null
+          old_reglementations: string | null
+          zone_id: string
+        }
+        Insert: {
+          change_type: string
+          detected_at?: string | null
+          id?: string
+          new_reglementations?: string | null
+          notified_at?: string | null
+          old_reglementations?: string | null
+          zone_id: string
+        }
+        Update: {
+          change_type?: string
+          detected_at?: string | null
+          id?: string
+          new_reglementations?: string | null
+          notified_at?: string | null
+          old_reglementations?: string | null
+          zone_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "regulatory_zone_changes_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "regulatory_fishing_zones"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       request_type_definitions: {
         Row: {

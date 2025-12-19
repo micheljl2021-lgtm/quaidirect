@@ -118,3 +118,9 @@ verify_jwt = true  # Requires authentication - enriches species data via AI
 
 [functions.generate-recipe]
 verify_jwt = true  # Requires authentication - generates recipes via AI
+
+[functions.sync-regulatory-zones]
+verify_jwt = true  # Admin only - syncs regulatory zones from data.gouv.fr
+
+[functions.get-regulatory-zones]
+verify_jwt = false  # Public endpoint - returns cached regulatory zones
