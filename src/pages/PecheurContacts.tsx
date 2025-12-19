@@ -322,9 +322,9 @@ const PecheurContacts = () => {
 
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Mes Contacts Clients</h1>
+            <h1 className="text-3xl font-bold mb-2">Ma liste de clients</h1>
             <p className="text-muted-foreground">
-              Gérez votre base de contacts pour envoyer des messages groupés
+              Gérez votre liste de clients pour les prévenir tous en 1 clic
             </p>
             {contacts && contacts.length > 0 && (
               <p className="text-sm font-medium text-primary mt-1">
@@ -357,15 +357,15 @@ const PecheurContacts = () => {
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="file">
                     <FileUp className="h-4 w-4 mr-2" />
-                    Import fichier
+                    Importer un fichier
                   </TabsTrigger>
                   <TabsTrigger value="csv">
                     <Upload className="h-4 w-4 mr-2" />
-                    Coller CSV
+                    Coller depuis Excel
                   </TabsTrigger>
                   <TabsTrigger value="manual">
                     <Plus className="h-4 w-4 mr-2" />
-                    Manuel
+                    Ajouter à la main
                   </TabsTrigger>
                 </TabsList>
 
@@ -382,9 +382,9 @@ const PecheurContacts = () => {
                 <TabsContent value="csv" className="mt-4">
                   <div className="space-y-4">
                     <div className="text-sm text-muted-foreground">
-                      Format attendu: email, phone, first_name, last_name, contact_group
+                      Copiez vos contacts depuis Excel ou un tableur. Colonnes : email, téléphone, prénom, nom, groupe
                       <br />
-                      <span className="text-xs">Séparateur détecté automatiquement (virgule ou point-virgule)</span>
+                      <span className="text-xs">Le séparateur (virgule ou point-virgule) est détecté automatiquement</span>
                     </div>
                     <Textarea
                       placeholder="email,phone,first_name,last_name,contact_group&#10;client@example.com,0612345678,Jean,Dupont,reguliers"

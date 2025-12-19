@@ -224,28 +224,28 @@ const MessagingSection = ({ fishermanId, preSelectedDropId }: MessagingSectionPr
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Canal de communication */}
+        {/* Comment envoyer ? */}
         <div className="space-y-2">
-          <Label>Canal d'envoi</Label>
+          <Label>Comment envoyer ?</Label>
           <RadioGroup value={channel} onValueChange={(v: Channel) => setChannel(v)} className="flex flex-wrap gap-4">
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="email" id="channel-email" />
               <Label htmlFor="channel-email" className="font-normal cursor-pointer flex items-center gap-1">
                 <Mail className="h-4 w-4" aria-hidden="true" />
-                Email uniquement
+                Email (gratuit et illimité)
               </Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="sms" id="channel-sms" />
               <Label htmlFor="channel-sms" className="font-normal cursor-pointer flex items-center gap-1">
                 <MessageSquare className="h-4 w-4" aria-hidden="true" />
-                SMS uniquement
+                SMS (utilise votre quota)
               </Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="both" id="channel-both" />
               <Label htmlFor="channel-both" className="font-normal cursor-pointer">
-                Email + SMS
+                Les deux (Email + SMS)
               </Label>
             </div>
           </RadioGroup>

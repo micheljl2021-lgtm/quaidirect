@@ -25,7 +25,7 @@ export const FISHERMAN_PLANS = {
       smsPacks: true,
     },
     affiliateSmsCapMonthly: 200, // Plafond affiliation mensuel
-    positioning: 'Tu démarres, tu construis ton fichier',
+    positioning: 'Pour démarrer et construire votre clientèle',
   },
   PRO: {
     id: 'fisherman_pro',
@@ -46,7 +46,7 @@ export const FISHERMAN_PLANS = {
       smsPacksDiscount: true, // Meilleur prix sur les packs
     },
     affiliateSmsCapMonthly: null, // Illimité
-    positioning: 'Le vrai plan rentable si tu annonces souvent',
+    positioning: 'Le plan idéal pour ceux qui vendent régulièrement',
     recommended: true,
   },
   ELITE: {
@@ -70,7 +70,7 @@ export const FISHERMAN_PLANS = {
       smsPacks: false, // Surconsommation directe
     },
     affiliateSmsCapMonthly: null, // Illimité
-    positioning: 'Ports actifs / gros fichiers / ventes régulières',
+    positioning: 'Pour les gros volumes de vente',
   },
 } as const;
 
