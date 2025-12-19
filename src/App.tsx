@@ -60,6 +60,7 @@ const CreateArrivageWizard = lazy(() => import("./pages/CreateArrivageWizard"));
 const PecheurWallet = lazy(() => import("./pages/PecheurWallet"));
 const AdminPushTest = lazy(() => import("./pages/AdminPushTest"));
 const Download = lazy(() => import("./pages/Download"));
+const PecheurZonesReglementaires = lazy(() => import("./pages/PecheurZonesReglementaires"));
 
 // Wrapper for lazy-loaded routes
 const LazyRoute = ({ children }: { children: React.ReactNode }) => (
@@ -203,6 +204,11 @@ const App = () => (
             <Route path="/dashboard/pecheur/wallet" element={
               <ProtectedFisherRoute>
                 <LazyRoute><PecheurWallet /></LazyRoute>
+              </ProtectedFisherRoute>
+            } />
+            <Route path="/pecheur/zones-reglementaires" element={
+              <ProtectedFisherRoute>
+                <LazyRoute><PecheurZonesReglementaires /></LazyRoute>
               </ProtectedFisherRoute>
             } />
 
