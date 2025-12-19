@@ -203,8 +203,13 @@ const Carte = () => {
       salePoints: validSalePoints,
       port: arrivage.ports,
     });
+    // Récupérer le label du point de vente
+    const salePoint = validSalePoints.find(sp => sp.id === arrivage.sale_point_id);
+    const salePointLabel = salePoint?.label || null;
+    
     return {
       id: arrivage.id,
+      salePointLabel, // Titre principal de la carte
       species: arrivage.offers[0]?.species?.name || 'Poisson',
       scientificName: arrivage.offers[0]?.species?.scientific_name || '',
       port: locationLabel,
