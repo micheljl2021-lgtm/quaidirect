@@ -15,11 +15,11 @@ import { fr } from 'date-fns/locale';
 
 const DropDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const { data: drop, isLoading, error } = useQuery({
-    queryKey: ['drop', id],
+    queryKey: ['drop', id, user?.id ?? 'anon'],
     queryFn: async () => {
       if (!id) throw new Error('ID manquant');
 
@@ -87,23 +87,23 @@ const DropDetail = () => {
 
       if (error) throw error;
       if (!data) throw new Error('Arrivage introuvable');
-      
+
       return data;
     },
-    enabled: !!id,
+    enabled: !!id && !authLoading,
   });
 
   // Auto-redirect to homepage if drop not found - useEffect MUST be before any returns
   useEffect(() => {
-    if (!isLoading && (error || !drop)) {
+    if (!authLoading && !isLoading && (error || !drop)) {
       const timeout = setTimeout(() => {
         navigate('/', { replace: true });
       }, 2000);
       return () => clearTimeout(timeout);
     }
-  }, [isLoading, error, drop, navigate]);
+  }, [authLoading, isLoading, error, drop, navigate]);
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />

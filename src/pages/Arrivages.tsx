@@ -118,14 +118,15 @@ const Arrivages = () => {
         .from('drops')
         .select(`
           *,
-          fishermen (
+          fishermen:public_fishermen!fisherman_id (
             id,
             boat_name,
             company_name,
             display_name_preference,
             photo_url,
             main_fishing_zone,
-            is_ambassador
+            is_ambassador,
+            slug
           ),
           ports (
             id,
