@@ -12,11 +12,18 @@ import { SpeciesCookingInfo, getCookingMethodsArray } from "./SpeciesCookingInfo
 import { ArrivageSpecies } from "@/pages/CreateArrivageWizard";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Star, X, Camera, FileText, Sparkles, Loader2 } from "lucide-react";
+import { Search, Star, X, Camera, FileText, Sparkles, Loader2, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { SaleType } from "./SaleTypeSelector";
 import { DropPhotosUpload } from "@/components/DropPhotosUpload";
 import { DefaultPhotoSelector, DEFAULT_PHOTO_URLS } from "@/components/DefaultPhotoSelector";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Step2Props {
   initialSpecies: ArrivageSpecies[];
@@ -151,36 +158,7 @@ export function Step2EspecesQuantites({
         setFilteredSpecies(speciesData as Species[]);
       }
 
-      // Fetch preferred species from fishermen_species table (priority over history)
-      const { data: fishermenSpecies } = await supabase
-        .from("fishermen_species")
-        .select(`
-          species_id, is_primary, 
-          species:species_id(
-            id, name, indicative_price,
-            cooking_plancha, cooking_friture, cooking_grill, cooking_sushi_tartare,
-            cooking_vapeur, cooking_four, cooking_poele, cooking_soupe, cooking_bouillabaisse,
-            flavor, bones_level, budget, cooking_tips
-          )
-        `)
-        .eq("fisherman_id", fishermanData.id)
-        .order("is_primary", { ascending: false });
-
-      if (fishermenSpecies && fishermenSpecies.length > 0) {
-        const preferred = fishermenSpecies
-          .filter((fs: any) => fs.species)
-          .map((fs: any) => ({
-            ...fs.species,
-            is_primary: fs.is_primary
-          }));
-        
-        if (preferred.length > 0) {
-          setSuggestedSpecies(preferred.slice(0, 8));
-          return;
-        }
-      }
-
-      // Fallback: use history-based suggestions
+      // Only use history-based suggestions from previous arrivals
       const { data: dropsData } = await supabase
         .from("drops")
         .select("id")
@@ -191,6 +169,21 @@ export function Step2EspecesQuantites({
       if (dropsData && dropsData.length > 0) {
         const dropIds = dropsData.map(d => d.id);
         
+        // Check drop_species table first (for simple drops)
+        const { data: dropSpeciesData } = await supabase
+          .from("drop_species")
+          .select(`
+            species_id, 
+            species:species_id(
+              id, name, indicative_price,
+              cooking_plancha, cooking_friture, cooking_grill, cooking_sushi_tartare,
+              cooking_vapeur, cooking_four, cooking_poele, cooking_soupe, cooking_bouillabaisse,
+              flavor, bones_level, budget, cooking_tips
+            )
+          `)
+          .in("drop_id", dropIds);
+        
+        // Also check offers table (for detailed drops)
         const { data: historyData } = await supabase
           .from("offers")
           .select(`
@@ -204,9 +197,23 @@ export function Step2EspecesQuantites({
           `)
           .in("drop_id", dropIds);
 
+        const speciesCount: Record<string, { species: any; count: number }> = {};
+        
+        // Count from drop_species
+        if (dropSpeciesData) {
+          dropSpeciesData.forEach((ds: any) => {
+            if (ds.species) {
+              const id = ds.species.id;
+              if (!speciesCount[id]) {
+                speciesCount[id] = { species: ds.species, count: 0 };
+              }
+              speciesCount[id].count++;
+            }
+          });
+        }
+
+        // Count from offers
         if (historyData) {
-          const speciesCount: Record<string, { species: any; count: number }> = {};
-          
           historyData.forEach((offer: any) => {
             if (offer.species) {
               const id = offer.species.id;
@@ -216,20 +223,17 @@ export function Step2EspecesQuantites({
               speciesCount[id].count++;
             }
           });
-
-          const suggested = Object.values(speciesCount)
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 6)
-            .map(item => item.species);
-
-          if (suggested.length > 0) {
-            setSuggestedSpecies(suggested);
-          } else {
-            setSuggestedSpecies((speciesData as Species[])?.slice(0, 6) || []);
-          }
         }
+
+        const suggested = Object.values(speciesCount)
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 8)
+          .map(item => item.species);
+
+        setSuggestedSpecies(suggested);
       } else {
-        setSuggestedSpecies((speciesData as Species[])?.slice(0, 6) || []);
+        // No previous arrivals - empty suggestions
+        setSuggestedSpecies([]);
       }
     };
 
@@ -403,38 +407,70 @@ export function Step2EspecesQuantites({
         <CardContent className="space-y-6">
           <TemplatesRapides onTemplateSelect={handleTemplateSelect} />
 
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Star className="h-4 w-4 text-amber-500" aria-hidden="true" />
-              <label className="block text-sm font-medium">Mes espèces habituelles</label>
+          {/* Only show favorites if there are species from previous arrivals */}
+          {suggestedSpecies.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Star className="h-4 w-4 text-amber-500" aria-hidden="true" />
+                <label className="block text-sm font-medium">Mes espèces favorites (historique)</label>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {suggestedSpecies.map((species) => (
+                  <button
+                    key={species.id}
+                    type="button"
+                    onClick={() => handleSpeciesClick(species)}
+                    disabled={selectedSpecies.some(s => s.speciesId === species.id)}
+                    className="group relative flex items-center gap-2 px-3 py-2 rounded-full bg-secondary hover:bg-secondary/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span className="font-medium text-sm">{species.name}</span>
+                    {enrichingSpeciesIds.has(species.id) ? (
+                      <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                    ) : (
+                      <SpeciesCookingInfo species={species} compact />
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {suggestedSpecies.map((species) => (
-                <button
-                  key={species.id}
-                  type="button"
-                  onClick={() => handleSpeciesClick(species)}
-                  disabled={selectedSpecies.some(s => s.speciesId === species.id)}
-                  className="group relative flex items-center gap-2 px-3 py-2 rounded-full bg-secondary hover:bg-secondary/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <span className="font-medium text-sm">{species.name}</span>
-                  {enrichingSpeciesIds.has(species.id) ? (
-                    <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-                  ) : (
-                    <SpeciesCookingInfo species={species} compact />
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium mb-3">Ajouter une espèce</label>
+            
+            {/* Dropdown menu for species selection */}
+            <Select
+              value=""
+              onValueChange={(value) => {
+                const species = allSpecies.find(s => s.id === value);
+                if (species) {
+                  handleSpeciesClick(species);
+                }
+              }}
+            >
+              <SelectTrigger className="h-12 text-base mb-3">
+                <SelectValue placeholder="Sélectionner une espèce..." />
+              </SelectTrigger>
+              <SelectContent className="max-h-64">
+                {allSpecies
+                  .filter(s => !selectedSpecies.some(sel => sel.speciesId === s.id))
+                  .map((species) => (
+                    <SelectItem key={species.id} value={species.id}>
+                      <span className="flex items-center gap-2">
+                        {species.name}
+                        <SpeciesCookingInfo species={species} compact />
+                      </span>
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+            
+            {/* Search bar */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" aria-hidden="true" />
               <Input
                 type="text"
-                placeholder="Tape le nom de l'espèce..."
+                placeholder="Ou rechercher par nom..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 h-12 text-base"
