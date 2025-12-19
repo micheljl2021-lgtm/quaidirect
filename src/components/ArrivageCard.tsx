@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Crown, MapPin, Clock, Euro, ShoppingCart, Star, ImageIcon } from "lucide-react";
+import { Crown, MapPin, Clock, Euro, ShoppingCart, Star, ImageIcon, User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { DEFAULT_PHOTO_URLS } from "@/components/DefaultPhotoSelector";
@@ -25,6 +25,8 @@ interface ArrivageCardProps {
   imageUrl?: string;
   dropPhotos?: Array<{ photo_url: string; display_order: number }>;
   fisherman: {
+    id?: string;
+    slug?: string;
     name: string;
     boat: string;
     isAmbassador?: boolean;
@@ -286,9 +288,22 @@ const ArrivageCard = ({
         {/* Fisherman & Note */}
         <div className="pt-2 border-t border-border space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-xs text-muted-foreground">
-              {fisherman.name} • {fisherman.boat}
-            </p>
+            {(fisherman.slug || fisherman.id) ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/boutique/${fisherman.slug || fisherman.id}`);
+                }}
+                className="flex items-center gap-1.5 text-xs text-primary hover:underline focus:outline-none"
+              >
+                <User className="h-3 w-3" aria-hidden="true" />
+                {fisherman.name} • {fisherman.boat}
+              </button>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                {fisherman.name} • {fisherman.boat}
+              </p>
+            )}
           </div>
           <p className="text-[10px] text-muted-foreground/70 italic">
             * Prix indicatif, ajusté après pesée réglementaire au retrait

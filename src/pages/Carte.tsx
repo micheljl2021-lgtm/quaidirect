@@ -180,6 +180,7 @@ const Carte = () => {
             )
           ),
           fishermen:public_fishermen!fisherman_id (
+            id,
             boat_name,
             is_ambassador,
             slug,
@@ -230,6 +231,8 @@ const Carte = () => {
       salePointId: arrivage.sale_point_id,
       mainFishingZone: arrivage.fishermen?.main_fishing_zone || null,
       fisherman: {
+        id: arrivage.fishermen?.id,
+        slug: arrivage.fishermen?.slug,
         name: arrivage.fishermen?.boat_name || 'Pêcheur',
         boat: arrivage.fishermen?.boat_name || '',
         isAmbassador: arrivage.fishermen?.is_ambassador || false,

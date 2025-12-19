@@ -42,6 +42,7 @@ interface Drop {
     photo_url: string | null;
     main_fishing_zone: string | null;
     is_ambassador?: boolean;
+    slug?: string;
   } | null;
   drop_photos?: Array<{
     id: string;
@@ -656,6 +657,8 @@ const Arrivages = () => {
                       isPremium={drop.is_premium}
                       dropPhotos={drop.drop_photos}
                       fisherman={{
+                        id: drop.fishermen?.id,
+                        slug: drop.fishermen?.slug,
                         name: displayName,
                         boat: drop.fishermen?.boat_name || 'Bateau',
                         isAmbassador: drop.fishermen?.is_ambassador
@@ -688,6 +691,8 @@ const Arrivages = () => {
                   isPremium={drop.is_premium}
                   dropPhotos={drop.drop_photos}
                   fisherman={{
+                    id: drop.fishermen?.id,
+                    slug: drop.fishermen?.slug,
                     name: displayName,
                     boat: drop.fishermen?.boat_name || 'Bateau',
                     isAmbassador: drop.fishermen?.is_ambassador
