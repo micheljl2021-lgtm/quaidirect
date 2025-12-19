@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { Plus, Trash2, MapPin, Loader2, CheckCircle, Map } from 'lucide-react';
+import { Plus, Trash2, MapPin, Loader2, CheckCircle, Map, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
 import { MapPickerDialog } from './MapPickerDialog';
 import { googleMapsLoaderConfig } from '@/lib/google-maps';
+import { PhotoUpload } from '@/components/PhotoUpload';
 
 interface Step6PointsVenteProps {
   formData: {
@@ -16,11 +17,13 @@ interface Step6PointsVenteProps {
     salePoint1Description?: string;
     salePoint1Lat?: number;
     salePoint1Lng?: number;
+    salePoint1Photo?: string;
     salePoint2Label?: string;
     salePoint2Address?: string;
     salePoint2Description?: string;
     salePoint2Lat?: number;
     salePoint2Lng?: number;
+    salePoint2Photo?: string;
   };
   onChange: (field: string, value: any) => void;
 }
@@ -225,6 +228,20 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
               rows={2}
             />
           </div>
+
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Camera className="h-4 w-4" />
+              Photo du point de vente
+            </Label>
+            <PhotoUpload
+              label="Photo du point de vente 1"
+              value={formData.salePoint1Photo || null}
+              onChange={(url) => onChange('salePoint1Photo', url)}
+              bucket="photos"
+              folder="sale-points"
+            />
+          </div>
         </CardContent>
       </Card>
 
@@ -247,6 +264,7 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
                   onChange('salePoint2Description', '');
                   onChange('salePoint2Lat', undefined);
                   onChange('salePoint2Lng', undefined);
+                  onChange('salePoint2Photo', '');
                 }}
               >
                 <Trash2 className="h-4 w-4" aria-hidden="true" />
@@ -286,6 +304,20 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
                 value={formData.salePoint2Description || ''}
                 onChange={(e) => onChange('salePoint2Description', e.target.value)}
                 rows={2}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Camera className="h-4 w-4" />
+                Photo du point de vente
+              </Label>
+              <PhotoUpload
+                label="Photo du point de vente 2"
+                value={formData.salePoint2Photo || null}
+                onChange={(url) => onChange('salePoint2Photo', url)}
+                bucket="photos"
+                folder="sale-points"
               />
             </div>
           </CardContent>
