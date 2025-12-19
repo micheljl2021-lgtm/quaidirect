@@ -157,11 +157,17 @@ const SalePointDrawer = ({ open, onOpenChange, salePoint }: SalePointDrawerProps
           </TabsContent>
 
           <TabsContent value="salepoint" className="space-y-4 mt-4">
-            {/* Photo du point de vente */}
+            {/* Photo du pêcheur comme profil - prioritaire sur la photo du point de vente */}
             <div className="aspect-video rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-              {salePoint.photo_url || salePoint.fishermen?.photo_url ? (
+              {salePoint.fishermen?.photo_url ? (
                 <img
-                  src={salePoint.photo_url || salePoint.fishermen?.photo_url || ''}
+                  src={salePoint.fishermen.photo_url}
+                  alt={salePoint.fishermen?.boat_name || salePoint.label}
+                  className="w-full h-full object-cover"
+                />
+              ) : salePoint.photo_url ? (
+                <img
+                  src={salePoint.photo_url}
                   alt={salePoint.label}
                   className="w-full h-full object-cover"
                 />
