@@ -72,6 +72,14 @@ const DropDetail = () => {
               photo_url,
               display_order
             )
+          ),
+          drop_species (
+            id,
+            species (
+              id,
+              name,
+              scientific_name
+            )
           )
         `)
         .eq('id', id)
@@ -302,6 +310,30 @@ const DropDetail = () => {
               );
             })}
           </div>
+        )}
+
+        {/* Espèces (mode simple - sans offres) */}
+        {(!drop.offers || drop.offers.length === 0) && (drop as any).drop_species && (drop as any).drop_species.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl flex items-center gap-2">
+                <Fish className="h-5 w-5" aria-hidden="true" />
+                Espèces disponibles
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {(drop as any).drop_species.map((ds: any) => (
+                  <Badge key={ds.id} variant="secondary" className="px-3 py-1.5 text-sm">
+                    {ds.species?.name}
+                  </Badge>
+                ))}
+              </div>
+              <p className="text-sm text-muted-foreground mt-4 italic">
+                Prix et disponibilité à confirmer sur place
+              </p>
+            </CardContent>
+          </Card>
         )}
       </div>
       <Footer />

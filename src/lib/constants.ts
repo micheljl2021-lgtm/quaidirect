@@ -57,7 +57,7 @@ export const LIMITS = {
   MAX_AMBASSADOR_SLOTS: 10,
   TRIAL_DAYS: 0,
   SECURE_TOKEN_EXPIRY_HOURS: 24,
-  ARRIVAL_GRACE_HOURS: 6, // Arrivages visibles 6h après leur sale_start_time
+  ARRIVAL_GRACE_HOURS: 2, // Arrivages visibles 2h après leur sale_start_time
 } as const;
 
 // URLs et contacts externes
