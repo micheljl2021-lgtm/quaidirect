@@ -2449,7 +2449,6 @@ export type Database = {
           ambassador_slot: number | null
           bio: string | null
           boat_name: string | null
-          boat_registration: string | null
           client_message: string | null
           company_name: string | null
           created_at: string | null
@@ -2482,7 +2481,6 @@ export type Database = {
           seo_title: string | null
           slug: string | null
           updated_at: string | null
-          user_id: string | null
           verified_at: string | null
           website_url: string | null
           work_philosophy: string | null
@@ -2494,7 +2492,6 @@ export type Database = {
           ambassador_slot?: number | null
           bio?: string | null
           boat_name?: string | null
-          boat_registration?: string | null
           client_message?: string | null
           company_name?: string | null
           created_at?: string | null
@@ -2527,7 +2524,6 @@ export type Database = {
           seo_title?: string | null
           slug?: string | null
           updated_at?: string | null
-          user_id?: string | null
           verified_at?: string | null
           website_url?: string | null
           work_philosophy?: string | null
@@ -2539,7 +2535,6 @@ export type Database = {
           ambassador_slot?: number | null
           bio?: string | null
           boat_name?: string | null
-          boat_registration?: string | null
           client_message?: string | null
           company_name?: string | null
           created_at?: string | null
@@ -2572,7 +2567,6 @@ export type Database = {
           seo_title?: string | null
           slug?: string | null
           updated_at?: string | null
-          user_id?: string | null
           verified_at?: string | null
           website_url?: string | null
           work_philosophy?: string | null
