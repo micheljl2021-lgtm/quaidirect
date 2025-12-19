@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Anchor, Plus, MessageSquare, Settings, Users, Crown, Bot, Pencil, HelpCircle } from 'lucide-react';
+import { Anchor, Plus, Settings, Users, Bot, Pencil, HelpCircle } from 'lucide-react';
 
 interface DashboardHeaderProps {
   fishermanId: string | null;
@@ -94,18 +94,10 @@ const DashboardHeader = ({ fishermanId }: DashboardHeaderProps) => {
         <Button 
           size="lg" 
           className="gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-          onClick={() => navigate('/pecheur/annonce-simple')}
-        >
-          <MessageSquare className="h-5 w-5" aria-hidden="true" />
-          Arrivage
-        </Button>
-        <Button 
-          size="lg" 
-          className="gap-2"
-          onClick={() => navigate('/pecheur/nouvel-arrivage-v2')}
+          onClick={() => navigate('/pecheur/nouvel-arrivage')}
         >
           <Plus className="h-5 w-5" aria-hidden="true" />
-          Arrivage premium
+          Nouvel arrivage
         </Button>
       </div>
     </div>

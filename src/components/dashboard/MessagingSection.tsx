@@ -33,7 +33,7 @@ const MessagingSection = ({ fishermanId, preSelectedDropId }: MessagingSectionPr
   const [selectedDropId, setSelectedDropId] = useState<string>(preSelectedDropId || '');
 
   // Fetch all active drops for this fisherman
-  const { data: availableDrops } = useQuery({
+  const { data: availableDrops, refetch: refetchDrops } = useQuery({
     queryKey: ['fisherman-drops', fishermanId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -55,6 +55,8 @@ const MessagingSection = ({ fishermanId, preSelectedDropId }: MessagingSectionPr
       return data;
     },
     enabled: !!fishermanId,
+    refetchOnMount: 'always',
+    staleTime: 0,
   });
 
   // Auto-select preSelectedDropId and switch to new_drop type

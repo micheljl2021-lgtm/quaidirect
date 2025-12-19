@@ -559,10 +559,10 @@ const GoogleMapComponent = ({
             }}
           >
             <div className="p-2">
-              {sp.photo_url && (
+              {(sp.fisherman?.photo_url || sp.photo_url) && (
                 <img
-                  src={sp.photo_url}
-                  alt={sp.label}
+                  src={sp.fisherman?.photo_url || sp.photo_url}
+                  alt={sp.fisherman?.boat_name || sp.label}
                   className="w-full h-24 object-cover rounded mb-2"
                 />
               )}

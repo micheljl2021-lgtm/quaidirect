@@ -154,8 +154,8 @@ const ArrivageCard = ({
       ) : (
         <div className="relative aspect-video overflow-hidden bg-muted">
           <img 
-            src="https://images.unsplash.com/photo-1534604973900-c43ab4c2e0ab?w=400&q=80" 
-            alt="Pêche du jour"
+            src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&q=80" 
+            alt="Poisson frais"
             className="h-full w-full object-cover"
           />
           <div className="absolute top-3 left-3 bg-black/60 text-white text-[10px] px-2 py-1 rounded flex items-center gap-1">
