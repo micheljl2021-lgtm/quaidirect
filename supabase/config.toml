@@ -112,3 +112,9 @@ verify_jwt = false  # Public endpoint for webhook diagnostics
 
 [functions.generate-arrival-description]
 verify_jwt = true  # Requires authentication - generates description for arrivals
+
+[functions.enrich-species]
+verify_jwt = true  # Requires authentication - enriches species data via AI
+
+[functions.generate-recipe]
+verify_jwt = true  # Requires authentication - generates recipes via AI

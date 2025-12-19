@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,14 @@ interface Species {
   cooking_tips?: string | null;
 }
 
+// Helper to check if species needs enrichment
+const needsEnrichment = (species: Species): boolean => {
+  return !species.flavor || 
+         !species.bones_level || 
+         !species.cooking_tips ||
+         species.cooking_plancha === null;
+};
+
 export function Step2EspecesQuantites({ 
   initialSpecies, 
   onComplete, 
@@ -67,10 +75,53 @@ export function Step2EspecesQuantites({
   const [filteredSpecies, setFilteredSpecies] = useState<Species[]>([]);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
+  const [enrichingSpeciesIds, setEnrichingSpeciesIds] = useState<Set<string>>(new Set());
   
   // Mode simple: photos et notes
   const [photos, setPhotos] = useState<string[]>(initialPhotos);
   const [notes, setNotes] = useState(initialNotes);
+
+  // Function to enrich species in background
+  const enrichSpeciesInBackground = useCallback(async (speciesId: string, speciesName: string) => {
+    // Skip if already enriching
+    if (enrichingSpeciesIds.has(speciesId)) return;
+
+    setEnrichingSpeciesIds(prev => new Set(prev).add(speciesId));
+    
+    try {
+      console.log(`Enriching species: ${speciesName}`);
+      const { data, error } = await supabase.functions.invoke('enrich-species', {
+        body: { species_id: speciesId }
+      });
+
+      if (error) {
+        console.error("Enrichment error:", error);
+        return;
+      }
+
+      if (data?.success && data?.enriched && data?.species) {
+        // Update allSpecies with enriched data
+        setAllSpecies(prev => prev.map(s => 
+          s.id === speciesId ? { ...s, ...data.species } : s
+        ));
+        
+        // Update suggestedSpecies with enriched data
+        setSuggestedSpecies(prev => prev.map(s => 
+          s.id === speciesId ? { ...s, ...data.species } : s
+        ));
+
+        console.log(`Successfully enriched: ${speciesName}`);
+      }
+    } catch (err) {
+      console.error("Failed to enrich species:", err);
+    } finally {
+      setEnrichingSpeciesIds(prev => {
+        const next = new Set(prev);
+        next.delete(speciesId);
+        return next;
+      });
+    }
+  }, [enrichingSpeciesIds]);
 
   useEffect(() => {
     const fetchSpecies = async () => {
@@ -212,6 +263,11 @@ export function Step2EspecesQuantites({
 
     setSelectedSpecies([...selectedSpecies, newSpecies]);
     setSearchQuery("");
+
+    // Trigger enrichment in background if needed
+    if (needsEnrichment(species)) {
+      enrichSpeciesInBackground(species.id, species.name);
+    }
   };
 
   const handleTemplateSelect = (template: ArrivageSpecies[]) => {
@@ -362,7 +418,11 @@ export function Step2EspecesQuantites({
                   className="group relative flex items-center gap-2 px-3 py-2 rounded-full bg-secondary hover:bg-secondary/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="font-medium text-sm">{species.name}</span>
-                  <SpeciesCookingInfo species={species} compact />
+                  {enrichingSpeciesIds.has(species.id) ? (
+                    <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                  ) : (
+                    <SpeciesCookingInfo species={species} compact />
+                  )}
                 </button>
               ))}
             </div>
@@ -422,6 +482,7 @@ export function Step2EspecesQuantites({
                 <div className="flex flex-wrap gap-2">
                   {selectedSpecies.map((species) => {
                     const speciesInfo = getSpeciesInfo(species.speciesId);
+                    const isEnriching = enrichingSpeciesIds.has(species.speciesId);
                     return (
                       <Badge
                         key={species.id}
@@ -433,7 +494,11 @@ export function Step2EspecesQuantites({
                       >
                         <span className="flex items-center gap-1.5">
                           {species.speciesName}
-                          {speciesInfo && <SpeciesCookingInfo species={speciesInfo} compact />}
+                          {isEnriching ? (
+                            <Loader2 className="h-3 w-3 animate-spin text-primary-foreground/70" />
+                          ) : (
+                            speciesInfo && <SpeciesCookingInfo species={speciesInfo} compact />
+                          )}
                           <X className="h-3 w-3 ml-1 group-hover:text-destructive" />
                         </span>
                       </Badge>
