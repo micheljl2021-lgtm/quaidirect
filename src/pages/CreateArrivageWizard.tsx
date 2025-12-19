@@ -491,6 +491,8 @@ export default function CreateArrivageWizard() {
               saleType={saleType}
               initialPhotos={photos}
               initialNotes={arrivageData.notes}
+              salePointLabel={arrivageData.salePointLabel}
+              timeSlot={arrivageData.timeSlot}
             />
           )}
 
