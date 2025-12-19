@@ -109,3 +109,9 @@ verify_jwt = true  # Admin only - sends platform update emails to fishermen
 
 [functions.webhook-diagnostic]
 verify_jwt = false  # Public endpoint for webhook diagnostics
+
+[functions.geocode-address]
+verify_jwt = true  # Requires authentication - geocodes addresses via Google Maps API
+
+[functions.google-geocode-port]
+verify_jwt = true  # Requires authentication - geocodes port locations
