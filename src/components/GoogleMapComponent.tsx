@@ -241,6 +241,66 @@ const GoogleMapComponent = ({
     }
   }, [map, selectedPortId, selectedSalePointId, selectedDropId, ports, salePoints, drops]);
 
+  // Helper function to create circular image marker icon using canvas
+  const createCircularImageIcon = async (
+    imageUrl: string, 
+    size: number, 
+    borderColor: string
+  ): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Canvas context not available'));
+        return;
+      }
+
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      img.onload = () => {
+        const radius = size / 2 - 3;
+        const centerX = size / 2;
+        const centerY = size / 2;
+
+        // Draw border circle
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius + 2, 0, Math.PI * 2);
+        ctx.fillStyle = borderColor;
+        ctx.fill();
+        
+        // White border
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius + 1, 0, Math.PI * 2);
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Clip to circle and draw image
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius - 1, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+
+        // Draw image centered and scaled to fill
+        const scale = Math.max(size / img.width, size / img.height);
+        const x = (size - img.width * scale) / 2;
+        const y = (size - img.height * scale) / 2;
+        ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+
+        resolve(canvas.toDataURL('image/png'));
+      };
+
+      img.onerror = () => {
+        reject(new Error('Failed to load image'));
+      };
+
+      img.src = imageUrl;
+    });
+  };
+
   // Create markers and clusterer
   useEffect(() => {
     if (!map || !isLoaded) return;
@@ -254,116 +314,162 @@ const GoogleMapComponent = ({
 
     const allMarkers: google.maps.Marker[] = [];
 
-    // Sale point markers (orange) - Points de vente des pêcheurs
-    const salePointMarkers = salePoints.map((salePoint) => {
-      const marker = new google.maps.Marker({
-        position: { lat: salePoint.latitude, lng: salePoint.longitude },
-        map: map,
-        title: salePoint.label,
-        icon: {
-          url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-            <svg width="40" height="40" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="20" cy="20" r="16" fill="${selectedSalePointId === salePoint.id ? '#ff6b35' : '#f97316'}" opacity="0.9" stroke="#FFFFFF" stroke-width="3"/>
-              <text x="20" y="26" font-size="16" fill="#FFFFFF" text-anchor="middle" font-family="Arial">⚓</text>
-            </svg>
-          `)}`,
-          scaledSize: new google.maps.Size(40, 40),
-          anchor: new google.maps.Point(20, 20),
-        },
-      });
-
-      marker.addListener('click', () => {
-        if (onSalePointClick) {
-          onSalePointClick(salePoint.id);
-        }
-        setActiveInfoWindow(salePoint.id);
-        setActiveType('salePoint');
-        setHoverInfoWindow(null); // Close hover on click
-      });
-
-      // Hover listeners for preview
-      marker.addListener('mouseover', () => {
-        setHoverInfoWindow(salePoint.id);
-      });
-      marker.addListener('mouseout', () => {
-        setHoverInfoWindow(null);
-      });
-
-      return marker;
-    });
-
-    // Drop markers (green with fish icon) - PLUS GRANDS ET PRIORITAIRES
-    const isSelected = (dropId: string) => selectedDropId === dropId;
-    const dropMarkers = drops.map((drop) => {
-      const selected = isSelected(drop.id);
-      // Marqueurs d'arrivages plus grands (48px vs 40px pour sale points)
-      const markerSize = selected ? 56 : 48;
-      const circleRadius = selected ? 24 : 20;
-      const fontSize = selected ? 22 : 18;
+    // Sale point markers - Points de vente des pêcheurs (avec photo du bateau si disponible)
+    const createSalePointMarkers = async () => {
+      const markers: google.maps.Marker[] = [];
       
-      const marker = new google.maps.Marker({
-        position: { lat: drop.latitude, lng: drop.longitude },
-        map: map,
-        title: `🐟 ${drop.species} - ${drop.fishermanName}`,
-        icon: {
-          url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-            <svg width="${markerSize}" height="${markerSize}" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                  <feMerge>
-                    <feMergeNode in="coloredBlur"/>
-                    <feMergeNode in="SourceGraphic"/>
-                  </feMerge>
-                </filter>
-              </defs>
-              ${selected ? `<circle cx="${markerSize/2}" cy="${markerSize/2}" r="${circleRadius + 4}" fill="none" stroke="#22c55e" stroke-width="2" opacity="0.5"/>` : ''}
-              <circle cx="${markerSize/2}" cy="${markerSize/2}" r="${circleRadius}" fill="${selected ? '#059669' : '#22c55e'}" stroke="#FFFFFF" stroke-width="3" filter="url(#glow)"/>
-              <text x="${markerSize/2}" y="${markerSize/2 + 6}" font-size="${fontSize}" fill="#FFFFFF" text-anchor="middle" font-family="Arial">🐟</text>
-            </svg>
-          `)}`,
-          scaledSize: new google.maps.Size(markerSize, markerSize),
-          anchor: new google.maps.Point(markerSize / 2, markerSize / 2),
-        },
-        // zIndex élevé pour que les drops apparaissent AU-DESSUS des sale points
-        zIndex: selected ? 2000 : 1500,
-      });
-
-      marker.addListener('click', () => {
-        if (onDropClick) {
-          onDropClick(drop.id);
-        }
-        setActiveInfoWindow(drop.id);
-        setActiveType('drop');
-      });
-
-      return marker;
-    });
-
-    allMarkers.push(...salePointMarkers, ...dropMarkers);
-    markersRef.current = allMarkers;
-
-    clustererRef.current = new MarkerClusterer({
-      map,
-      markers: allMarkers,
-      renderer: {
-        render: ({ count, position }) => {
-          return new google.maps.Marker({
-            position,
-            icon: {
+      for (const salePoint of salePoints) {
+        const photoUrl = salePoint.fisherman?.photo_url;
+        const isSelected = selectedSalePointId === salePoint.id;
+        const borderColor = isSelected ? '#ff6b35' : '#f97316';
+        const markerSize = 44;
+        
+        let icon: google.maps.Icon;
+        
+        if (photoUrl) {
+          try {
+            const iconUrl = await createCircularImageIcon(photoUrl, markerSize, borderColor);
+            icon = {
+              url: iconUrl,
+              scaledSize: new google.maps.Size(markerSize, markerSize),
+              anchor: new google.maps.Point(markerSize / 2, markerSize / 2),
+            };
+          } catch {
+            // Fallback to anchor icon
+            icon = {
               url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-                <svg width="50" height="50" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="25" cy="25" r="20" fill="#f97316" opacity="0.9" stroke="#FFFFFF" stroke-width="3"/>
-                  <text x="25" y="30" font-size="14" font-weight="bold" fill="#FFFFFF" text-anchor="middle" font-family="Arial">${count}</text>
+                <svg width="40" height="40" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="20" cy="20" r="16" fill="${borderColor}" opacity="0.9" stroke="#FFFFFF" stroke-width="3"/>
+                  <text x="20" y="26" font-size="16" fill="#FFFFFF" text-anchor="middle" font-family="Arial">⚓</text>
                 </svg>
               `)}`,
-              scaledSize: new google.maps.Size(50, 50),
-            },
-            zIndex: Number(google.maps.Marker.MAX_ZINDEX) + count,
-          });
+              scaledSize: new google.maps.Size(40, 40),
+              anchor: new google.maps.Point(20, 20),
+            };
+          }
+        } else {
+          // Default anchor icon
+          icon = {
+            url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+              <svg width="40" height="40" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="20" cy="20" r="16" fill="${borderColor}" opacity="0.9" stroke="#FFFFFF" stroke-width="3"/>
+                <text x="20" y="26" font-size="16" fill="#FFFFFF" text-anchor="middle" font-family="Arial">⚓</text>
+              </svg>
+            `)}`,
+            scaledSize: new google.maps.Size(40, 40),
+            anchor: new google.maps.Point(20, 20),
+          };
+        }
+
+        const marker = new google.maps.Marker({
+          position: { lat: salePoint.latitude, lng: salePoint.longitude },
+          map: map,
+          title: salePoint.label,
+          icon: icon,
+        });
+
+        marker.addListener('click', () => {
+          if (onSalePointClick) {
+            onSalePointClick(salePoint.id);
+          }
+          setActiveInfoWindow(salePoint.id);
+          setActiveType('salePoint');
+          setHoverInfoWindow(null);
+        });
+
+        marker.addListener('mouseover', () => {
+          setHoverInfoWindow(salePoint.id);
+        });
+        marker.addListener('mouseout', () => {
+          setHoverInfoWindow(null);
+        });
+
+        markers.push(marker);
+      }
+      
+      return markers;
+    };
+
+    // Create all markers asynchronously
+    const initializeMarkers = async () => {
+      const salePointMarkers = await createSalePointMarkers();
+
+      // Drop markers (green with fish icon) - PLUS GRANDS ET PRIORITAIRES
+      const isSelectedDrop = (dropId: string) => selectedDropId === dropId;
+      const dropMarkers = drops.map((drop) => {
+        const selected = isSelectedDrop(drop.id);
+        // Marqueurs d'arrivages plus grands (48px vs 40px pour sale points)
+        const markerSize = selected ? 56 : 48;
+        const circleRadius = selected ? 24 : 20;
+        const fontSize = selected ? 22 : 18;
+        
+        const marker = new google.maps.Marker({
+          position: { lat: drop.latitude, lng: drop.longitude },
+          map: map,
+          title: `🐟 ${drop.species} - ${drop.fishermanName}`,
+          icon: {
+            url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+              <svg width="${markerSize}" height="${markerSize}" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                    <feMerge>
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
+                ${selected ? `<circle cx="${markerSize/2}" cy="${markerSize/2}" r="${circleRadius + 4}" fill="none" stroke="#22c55e" stroke-width="2" opacity="0.5"/>` : ''}
+                <circle cx="${markerSize/2}" cy="${markerSize/2}" r="${circleRadius}" fill="${selected ? '#059669' : '#22c55e'}" stroke="#FFFFFF" stroke-width="3" filter="url(#glow)"/>
+                <text x="${markerSize/2}" y="${markerSize/2 + 6}" font-size="${fontSize}" fill="#FFFFFF" text-anchor="middle" font-family="Arial">🐟</text>
+              </svg>
+            `)}`,
+            scaledSize: new google.maps.Size(markerSize, markerSize),
+            anchor: new google.maps.Point(markerSize / 2, markerSize / 2),
+          },
+          // zIndex élevé pour que les drops apparaissent AU-DESSUS des sale points
+          zIndex: selected ? 2000 : 1500,
+        });
+
+        marker.addListener('click', () => {
+          if (onDropClick) {
+            onDropClick(drop.id);
+          }
+          setActiveInfoWindow(drop.id);
+          setActiveType('drop');
+        });
+
+        return marker;
+      });
+
+      const allCreatedMarkers = [...salePointMarkers, ...dropMarkers];
+      allMarkers.push(...allCreatedMarkers);
+      markersRef.current = allMarkers;
+
+      clustererRef.current = new MarkerClusterer({
+        map,
+        markers: allMarkers,
+        renderer: {
+          render: ({ count, position }) => {
+            return new google.maps.Marker({
+              position,
+              icon: {
+                url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+                  <svg width="50" height="50" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="25" cy="25" r="20" fill="#f97316" opacity="0.9" stroke="#FFFFFF" stroke-width="3"/>
+                    <text x="25" y="30" font-size="14" font-weight="bold" fill="#FFFFFF" text-anchor="middle" font-family="Arial">${count}</text>
+                  </svg>
+                `)}`,
+                scaledSize: new google.maps.Size(50, 50),
+              },
+              zIndex: Number(google.maps.Marker.MAX_ZINDEX) + count,
+            });
+          },
         },
-      },
-    });
+      });
+    };
+
+    initializeMarkers();
 
     return () => {
       allMarkers.forEach(marker => marker.setMap(null));

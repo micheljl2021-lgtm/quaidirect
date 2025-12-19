@@ -12,8 +12,8 @@ export const BASKET_PRICES = {
   GOURMET: 7500,
 } as const;
 
-// Commission plateforme (8%)
-export const PLATFORM_COMMISSION = 0.08;
+// Commission plateforme (5%)
+export const PLATFORM_COMMISSION = 0.05;
 
 // Plans d'abonnement pêcheur (prix en centimes) - Importé depuis pricing.ts
 export const SUBSCRIPTION_PLANS = {

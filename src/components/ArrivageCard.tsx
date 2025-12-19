@@ -10,7 +10,8 @@ import { DEFAULT_PHOTO_URLS } from "@/components/DefaultPhotoSelector";
 import { getFallbackPhotoByDropId, isFallbackPhoto } from "@/lib/fallbackPhotos";
 interface ArrivageCardProps {
   id: string;
-  species: string;
+  salePointLabel?: string; // Titre principal = nom du point de vente
+  species: string; // Maintenant affiché comme sous-titre
   scientificName: string;
   port: string;
   city?: string;
@@ -36,6 +37,7 @@ interface ArrivageCardProps {
 
 const ArrivageCard = ({ 
   id,
+  salePointLabel,
   species, 
   scientificName,
   port,
@@ -176,13 +178,17 @@ const ArrivageCard = ({
       )}
 
       <CardContent className={variant === 'full' ? "p-5 space-y-4" : "p-4 space-y-3"}>
-        {/* Species */}
+        {/* Titre = Point de vente ou fallback */}
         <div>
           <h3 className={`font-bold text-foreground ${variant === 'full' ? 'text-xl' : 'text-lg'}`}>
-            {species}
+            {salePointLabel || `Arrivage de ${fisherman.boat}`}
           </h3>
+          {/* Espèces comme sous-titre */}
+          {species && species !== 'Arrivage du jour' && (
+            <p className="text-sm text-muted-foreground mt-1">{species}</p>
+          )}
           {scientificName && (
-            <p className="text-xs text-muted-foreground italic">{scientificName}</p>
+            <p className="text-xs text-muted-foreground/70 italic">{scientificName}</p>
           )}
         </div>
 
