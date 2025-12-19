@@ -10,12 +10,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Fish, Filter } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Fish, Filter, MapPin, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useSalePoints } from '@/hooks/useSalePoints';
 import { useQuery } from '@tanstack/react-query';
 import { LIMITS } from '@/lib/constants';
+import { useFishermanZone } from '@/hooks/useFishermanZone';
 
 interface Drop {
   id: string;
@@ -77,6 +79,10 @@ const Arrivages = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [currentTime, setCurrentTime] = useState(new Date());
+  const { fishermanZone, isFisherman } = useFishermanZone();
+  
+  // Toggle "Ma zone / Partout" - par défaut sur "Ma zone" pour les pêcheurs
+  const [showMyZoneOnly, setShowMyZoneOnly] = useState(true);
   
   // États pour les filtres
   const [filterZone, setFilterZone] = useState<string>('all');
@@ -317,9 +323,18 @@ const Arrivages = () => {
   const filteredDrops = useMemo(() => {
     if (!drops) return [];
     return drops.filter(drop => {
-      // Filtre zone
-      if (filterZone !== 'all' && drop.fishermen?.main_fishing_zone !== filterZone) {
-        return false;
+      // Filtre "Ma zone" pour les pêcheurs (prioritaire)
+      if (isFisherman && showMyZoneOnly && fishermanZone) {
+        if (drop.fishermen?.main_fishing_zone !== fishermanZone) {
+          return false;
+        }
+      }
+      
+      // Filtre zone manuel (seulement si "Partout" est activé ou si pas pêcheur)
+      if (!showMyZoneOnly || !isFisherman) {
+        if (filterZone !== 'all' && drop.fishermen?.main_fishing_zone !== filterZone) {
+          return false;
+        }
       }
       
       // Filtre espèce - check both offers and drop_species
@@ -345,7 +360,7 @@ const Arrivages = () => {
       
       return true;
     });
-  }, [drops, filterZone, filterSpecies, filterPort, filterFisherman]);
+  }, [drops, filterZone, filterSpecies, filterPort, filterFisherman, isFisherman, showMyZoneOnly, fishermanZone]);
 
   // Show loading state while checking auth
   if (authLoading) {
@@ -382,6 +397,42 @@ const Arrivages = () => {
           </p>
         </div>
 
+        {/* Toggle Ma zone / Partout pour les pêcheurs */}
+        {isFisherman && fishermanZone && (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {showMyZoneOnly ? (
+                    <MapPin className="h-5 w-5 text-primary" />
+                  ) : (
+                    <Globe className="h-5 w-5 text-muted-foreground" />
+                  )}
+                  <div>
+                    <p className="font-medium text-foreground">
+                      {showMyZoneOnly ? 'Ma zone' : 'Toutes les zones'}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {showMyZoneOnly 
+                        ? `Arrivages en ${fishermanZone}`
+                        : 'Voir tous les arrivages de France'
+                      }
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Partout</span>
+                  <Switch 
+                    checked={showMyZoneOnly}
+                    onCheckedChange={setShowMyZoneOnly}
+                  />
+                  <span className="text-sm text-muted-foreground">Ma zone</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Filtres */}
         <Card className="border-border bg-card">
           <CardHeader>
@@ -395,11 +446,15 @@ const Arrivages = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Filtre Zone */}
+              {/* Filtre Zone - désactivé si "Ma zone" est actif */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">Zone de pêche</label>
-                <Select value={filterZone} onValueChange={setFilterZone}>
-                  <SelectTrigger className="z-50">
+                <Select 
+                  value={isFisherman && showMyZoneOnly ? 'all' : filterZone} 
+                  onValueChange={setFilterZone}
+                  disabled={isFisherman && showMyZoneOnly}
+                >
+                  <SelectTrigger className={`z-50 ${isFisherman && showMyZoneOnly ? 'opacity-50' : ''}`}>
                     <SelectValue placeholder="Toutes les zones" />
                   </SelectTrigger>
                   <SelectContent className="z-50">
