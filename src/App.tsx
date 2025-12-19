@@ -25,7 +25,7 @@ const Compte = lazy(() => import("./pages/Compte"));
 const PecheurOnboarding = lazy(() => import("./pages/PecheurOnboarding"));
 const PecheurPayment = lazy(() => import("./pages/PecheurPayment"));
 const PecheurDashboard = lazy(() => import("./pages/PecheurDashboard"));
-const SimpleAnnonce = lazy(() => import("./pages/SimpleAnnonce"));
+// SimpleAnnonce removed - using CreateArrivageWizard for all arrivals
 const EditArrivage = lazy(() => import("./pages/EditArrivage"));
 const DuplicateArrivage = lazy(() => import("./pages/DuplicateArrivage"));
 const FisherProfile = lazy(() => import("./pages/FisherProfile"));
@@ -161,11 +161,8 @@ const App = () => (
                 <LazyRoute><CreateArrivageWizard /></LazyRoute>
               </ProtectedFisherRoute>
             } />
-            <Route path="/pecheur/annonce-simple" element={
-              <ProtectedFisherRoute>
-                <LazyRoute><SimpleAnnonce /></LazyRoute>
-              </ProtectedFisherRoute>
-            } />
+            {/* Legacy route - redirect to wizard */}
+            <Route path="/pecheur/annonce-simple" element={<Navigate to="/pecheur/nouvel-arrivage" replace />} />
             {/* Legacy route redirect */}
             <Route path="/pecheur/nouvel-arrivage-v2" element={<Navigate to="/pecheur/nouvel-arrivage" replace />} />
             <Route path="/pecheur/modifier-arrivage/:dropId" element={
