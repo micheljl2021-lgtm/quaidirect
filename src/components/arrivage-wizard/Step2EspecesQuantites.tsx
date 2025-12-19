@@ -10,15 +10,20 @@ import { TemplatesRapides } from "./TemplatesRapides";
 import { SavePresetDialog } from "./SavePresetDialog";
 import { ArrivageSpecies } from "@/pages/CreateArrivageWizard";
 import { Input } from "@/components/ui/input";
-import { Search, Star, X } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Search, Star, X, Camera, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { SaleType } from "./SaleTypeSelector";
+import { DropPhotosUpload } from "@/components/DropPhotosUpload";
+import { DefaultPhotoSelector, DEFAULT_PHOTO_URLS } from "@/components/DefaultPhotoSelector";
 
 interface Step2Props {
   initialSpecies: ArrivageSpecies[];
-  onComplete: (species: ArrivageSpecies[]) => void;
+  onComplete: (species: ArrivageSpecies[], photos?: string[], notes?: string) => void;
   onBack: () => void;
   saleType: SaleType;
+  initialPhotos?: string[];
+  initialNotes?: string;
 }
 
 interface Species {
@@ -27,7 +32,14 @@ interface Species {
   indicative_price: number | null;
 }
 
-export function Step2EspecesQuantites({ initialSpecies, onComplete, onBack, saleType }: Step2Props) {
+export function Step2EspecesQuantites({ 
+  initialSpecies, 
+  onComplete, 
+  onBack, 
+  saleType,
+  initialPhotos = [],
+  initialNotes = ""
+}: Step2Props) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedSpecies, setSelectedSpecies] = useState<ArrivageSpecies[]>(initialSpecies);
@@ -36,6 +48,10 @@ export function Step2EspecesQuantites({ initialSpecies, onComplete, onBack, sale
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSpecies, setFilteredSpecies] = useState<Species[]>([]);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  
+  // Mode simple: photos et notes
+  const [photos, setPhotos] = useState<string[]>(initialPhotos);
+  const [notes, setNotes] = useState(initialNotes);
 
   useEffect(() => {
     const fetchSpecies = async () => {
@@ -212,7 +228,19 @@ export function Step2EspecesQuantites({ initialSpecies, onComplete, onBack, sale
 
   const handleContinue = () => {
     if (selectedSpecies.length === 0) return;
-    onComplete(selectedSpecies);
+    if (saleType === "simple") {
+      onComplete(selectedSpecies, photos, notes);
+    } else {
+      onComplete(selectedSpecies);
+    }
+  };
+
+  const handlePhotoSelect = (url: string) => {
+    if (photos.includes(url)) {
+      setPhotos(photos.filter(p => p !== url));
+    } else if (photos.length < 5) {
+      setPhotos([...photos, url]);
+    }
   };
 
   return (
@@ -305,6 +333,56 @@ export function Step2EspecesQuantites({ initialSpecies, onComplete, onBack, sale
             <div className="text-center py-8 text-muted-foreground">
               Clique sur une espèce suggérée ou recherche-la pour commencer
             </div>
+          )}
+
+          {/* Mode simple: Photos et Description */}
+          {saleType === "simple" && selectedSpecies.length > 0 && (
+            <>
+              {/* Photos Section */}
+              <div className="space-y-3 pt-4 border-t">
+                <div className="flex items-center gap-2">
+                  <Camera className="h-5 w-5 text-primary" aria-hidden="true" />
+                  <label className="block text-sm font-medium">
+                    Photos de la pêche ({photos.length}/5)
+                  </label>
+                </div>
+                <DropPhotosUpload
+                  maxPhotos={5}
+                  onPhotosChange={setPhotos}
+                  initialPhotos={photos}
+                />
+                <DefaultPhotoSelector
+                  onSelect={handlePhotoSelect}
+                  selectedUrl={photos.find(p => DEFAULT_PHOTO_URLS.includes(p))}
+                />
+                {photos.length > 0 && (
+                  <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                    <p className="text-xs text-green-800 dark:text-green-200">
+                      ✅ {photos.length} photo(s) ajoutée(s) • Des photos augmentent vos ventes de 40%
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Description Section */}
+              <div className="space-y-3 pt-4 border-t">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" aria-hidden="true" />
+                  <label className="block text-sm font-medium">
+                    Description / Notes (optionnel)
+                  </label>
+                </div>
+                <Textarea
+                  placeholder="Ex: Belle pêche de roche, mélange du jour (rougets, sars, daurades...), arrivage du matin..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="min-h-[100px]"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Ces notes seront visibles par les clients sur l'arrivage
+                </p>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

@@ -21,6 +21,7 @@ interface Step3Props {
   onPhotosChange: (photos: string[]) => void;
   isPremium: boolean;
   onPremiumChange: (isPremium: boolean) => void;
+  saleType?: "simple" | "detailed";
 }
 
 const TIME_SLOT_LABELS: Record<string, string> = {
@@ -40,8 +41,10 @@ export function Step3Recapitulatif({
   onPhotosChange,
   isPremium,
   onPremiumChange,
+  saleType = "detailed",
 }: Step3Props) {
   const [showPhotos, setShowPhotos] = useState(false);
+  const isSimpleMode = saleType === "simple";
 
   return (
     <div className="space-y-6 pb-24">
@@ -97,30 +100,53 @@ export function Step3Recapitulatif({
                 Modifier
               </Button>
             </div>
-            <div className="space-y-2">
-              {arrivageData.species.map((species) => (
-                <div
-                  key={species.id}
-                  className="bg-muted/50 rounded-lg p-4 space-y-1"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">{species.speciesName}</span>
-                    <span className="font-semibold text-primary">
-                      {species.price}€/{species.unit}
-                    </span>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Quantité : {species.quantity} {species.unit}
-                  </div>
-                  {species.remark && (
-                    <div className="text-sm text-muted-foreground italic">
-                      {species.remark}
+            {isSimpleMode ? (
+              <div className="flex flex-wrap gap-2 bg-muted/50 rounded-lg p-4">
+                {arrivageData.species.map((species) => (
+                  <span
+                    key={species.id}
+                    className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium"
+                  >
+                    {species.speciesName}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {arrivageData.species.map((species) => (
+                  <div
+                    key={species.id}
+                    className="bg-muted/50 rounded-lg p-4 space-y-1"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{species.speciesName}</span>
+                      <span className="font-semibold text-primary">
+                        {species.price}€/{species.unit}
+                      </span>
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                    <div className="text-sm text-muted-foreground">
+                      Quantité : {species.quantity} {species.unit}
+                    </div>
+                    {species.remark && (
+                      <div className="text-sm text-muted-foreground italic">
+                        {species.remark}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
+
+          {/* Notes / Description (mode simple) */}
+          {isSimpleMode && arrivageData.notes && (
+            <div className="space-y-3">
+              <h3 className="font-semibold">Description</h3>
+              <div className="bg-muted/50 rounded-lg p-4">
+                <p className="text-sm">{arrivageData.notes}</p>
+              </div>
+            </div>
+          )}
 
           {/* Photos Section */}
           <div className="space-y-3">

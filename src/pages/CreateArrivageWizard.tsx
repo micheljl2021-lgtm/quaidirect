@@ -36,6 +36,7 @@ export interface Step1Data {
 
 export interface ArrivageData extends Step1Data {
   species: ArrivageSpecies[];
+  notes?: string;
 }
 
 export default function CreateArrivageWizard() {
@@ -58,6 +59,7 @@ export default function CreateArrivageWizard() {
     date: new Date(),
     timeSlot: "matin",
     species: [],
+    notes: "",
   });
   const [isPremium, setIsPremium] = useState(false);
 
@@ -125,8 +127,16 @@ export default function CreateArrivageWizard() {
     setStep(2);
   };
 
-  const handleStep2Complete = (species: ArrivageSpecies[]) => {
-    setArrivageData((prev) => ({ ...prev, species }));
+  const handleStep2Complete = (species: ArrivageSpecies[], stepPhotos?: string[], stepNotes?: string) => {
+    // En mode simple, les photos et notes viennent de Step2
+    if (saleType === "simple" && stepPhotos) {
+      setPhotos(stepPhotos);
+    }
+    setArrivageData((prev) => ({ 
+      ...prev, 
+      species,
+      notes: stepNotes || prev.notes
+    }));
     setStep(3);
   };
 
@@ -249,6 +259,7 @@ export default function CreateArrivageWizard() {
         status: "scheduled" as const,
         port_id: null,
         drop_type: saleType === "simple" ? "simple" : "detailed",
+        notes: arrivageData.notes || null,
       };
 
       console.log("📦 [handlePublish] Payload drop:", dropPayload);
@@ -478,10 +489,12 @@ export default function CreateArrivageWizard() {
               onComplete={handleStep2Complete}
               onBack={() => setStep(1)}
               saleType={saleType}
+              initialPhotos={photos}
+              initialNotes={arrivageData.notes}
             />
           )}
 
-          {step === 3 && (
+          {step === 3 && saleType && (
             <Step3Recapitulatif
               arrivageData={arrivageData}
               onPublish={handlePublish}
@@ -492,6 +505,7 @@ export default function CreateArrivageWizard() {
               onPhotosChange={setPhotos}
               isPremium={isPremium}
               onPremiumChange={setIsPremium}
+              saleType={saleType}
             />
           )}
         </div>
