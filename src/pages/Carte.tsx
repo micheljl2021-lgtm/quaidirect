@@ -171,10 +171,19 @@ const Carte = () => {
             latitude,
             longitude
           ),
+          drop_species (
+            id,
+            species (
+              id,
+              name,
+              scientific_name
+            )
+          ),
           offers (
             unit_price,
             available_units,
             species (
+              id,
               name,
               scientific_name
             )
@@ -216,11 +225,19 @@ const Carte = () => {
     const salePoint = validSalePoints.find(sp => sp.id === arrivage.sale_point_id);
     const salePointLabel = salePoint?.label || null;
 
+    // Récupérer les espèces depuis drop_species ET offers
+    const speciesFromDropSpecies = arrivage.drop_species?.map(ds => ds.species?.name).filter(Boolean) || [];
+    const speciesFromOffers = arrivage.offers?.map(o => o.species?.name).filter(Boolean) || [];
+    // Combiner et dédupliquer les espèces
+    const allSpecies = [...new Set([...speciesFromDropSpecies, ...speciesFromOffers])];
+    const speciesName = allSpecies.length > 0 ? allSpecies.join(', ') : 'Poisson frais';
+
     return {
       id: arrivage.id,
       salePointLabel, // Titre principal de la carte
-      species: arrivage.offers[0]?.species?.name || 'Poisson',
-      scientificName: arrivage.offers[0]?.species?.scientific_name || '',
+      species: speciesName,
+      scientificName: arrivage.drop_species?.[0]?.species?.scientific_name || 
+                      arrivage.offers?.[0]?.species?.scientific_name || '',
       port: locationLabel,
       eta: new Date(arrivage.eta_at),
       saleStartTime: arrivage.sale_start_time ? new Date(arrivage.sale_start_time) : undefined,
@@ -247,11 +264,18 @@ const Carte = () => {
     return lat && lng && arrivage.offers && arrivage.offers.length > 0;
   }).map(arrivage => {
     const firstPhoto = arrivage.drop_photos?.sort((a, b) => a.display_order - b.display_order)?.[0]?.photo_url;
+    
+    // Récupérer toutes les espèces (drop_species + offers)
+    const speciesFromDropSpecies = arrivage.drop_species?.map(ds => ds.species?.name).filter(Boolean) || [];
+    const speciesFromOffers = arrivage.offers?.map(o => o.species?.name).filter(Boolean) || [];
+    const allSpecies = [...new Set([...speciesFromDropSpecies, ...speciesFromOffers])];
+    const speciesName = allSpecies.length > 0 ? allSpecies.join(', ') : 'Poisson frais';
+    
     return {
       id: arrivage.id,
       latitude: arrivage.latitude || arrivage.ports?.latitude || 0,
       longitude: arrivage.longitude || arrivage.ports?.longitude || 0,
-      species: arrivage.offers[0]?.species?.name || 'Poisson',
+      species: speciesName,
       price: arrivage.offers[0]?.unit_price || 0,
       saleTime: arrivage.sale_start_time
         ? new Date(arrivage.sale_start_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
