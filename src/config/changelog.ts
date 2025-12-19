@@ -30,6 +30,17 @@ export const CHANGELOG: ChangelogEntry[] = [
     title: "Mise à jour - 18-19 Décembre 2025",
     categories: [
       {
+        name: "Dashboard Pêcheur",
+        icon: "🎣",
+        items: [
+          { text: "Envoi de messages aux contacts directement après création d'un arrivage", priority: "major" },
+          { text: "Gestion des espèces favorites simplifiée", priority: "useful" },
+          { text: "Points de vente modifiables depuis le profil", priority: "useful" },
+          { text: "Prévisualisation du profil public avant publication", priority: "useful" },
+          { text: "Templates d'arrivages sauvegardables pour créer plus vite", priority: "major" },
+        ],
+      },
+      {
         name: "Photos d'arrivages",
         icon: "📸",
         items: [
