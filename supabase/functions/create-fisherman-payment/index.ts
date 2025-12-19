@@ -136,6 +136,7 @@ serve(async (req) => {
         },
       ],
       mode: 'subscription',
+      allow_promotion_codes: true,
       success_url: `${origin}/pecheur/payment-success?plan=${planType}`,
       cancel_url: `${origin}/pecheur/payment?canceled=true`,
       metadata: {

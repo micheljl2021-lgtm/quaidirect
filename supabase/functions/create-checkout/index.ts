@@ -157,6 +157,7 @@ serve(async (req) => {
         },
       ],
       mode: 'subscription',
+      allow_promotion_codes: true,
       success_url: `${origin}/premium/success?session_id={CHECKOUT_SESSION_ID}&guest=${isGuest}`,
       cancel_url: `${origin}/premium?canceled=true`,
       metadata: {
