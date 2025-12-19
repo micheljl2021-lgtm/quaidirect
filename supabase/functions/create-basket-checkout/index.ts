@@ -70,7 +70,7 @@ serve(async (req) => {
     if (!price.unit_amount) throw new Error('Price has no unit_amount');
     
     const basketPrice = price.unit_amount; // in cents
-    const commission = Math.round(basketPrice * 0.08); // 8% commission
+    const commission = Math.round(basketPrice * 0.05); // 5% commission
     const totalPrice = basketPrice + commission;
     
     logStep('Commission calculated', { basketPrice, commission, totalPrice });
@@ -98,7 +98,7 @@ serve(async (req) => {
             unit_amount: totalPrice,
             product_data: {
               name: 'Panier de poisson frais',
-              description: `Panier incluant frais de service plateforme (8%)`,
+              description: `Panier incluant frais de service plateforme (5%)`,
             },
           },
           quantity: 1,

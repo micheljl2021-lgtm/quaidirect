@@ -132,6 +132,11 @@ const Arrivages = () => {
             name,
             city
           ),
+          fisherman_sale_points (
+            id,
+            label,
+            address
+          ),
           drop_photos (
             id,
             photo_url,
@@ -564,9 +569,11 @@ const Arrivages = () => {
             
             // Joindre côté client les sale points (chargés via Edge Function)
             const salePoint = salePoints?.find((sp: any) => sp.id === drop.sale_point_id);
+            // Utiliser le label du point de vente depuis la jointure Supabase
+            const salePointLabel = drop.fisherman_sale_points?.label || salePoint?.label || null;
             const portName = drop.ports?.name 
               ? `${drop.ports.name}, ${drop.ports.city}` 
-              : (salePoint?.address || salePoint?.label || 'Point de vente');
+              : (salePoint?.address || salePointLabel || 'Point de vente');
             
             const displayName = drop.fishermen?.display_name_preference === 'company_name'
               ? (drop.fishermen?.company_name || drop.fishermen?.boat_name || 'Pêcheur')
@@ -582,6 +589,7 @@ const Arrivages = () => {
                   <div key={`${drop.id}-${offer.id}`} className="cursor-pointer" onClick={() => handleReserve(offer.id)}>
                     <ArrivageCard
                       id={drop.id}
+                      salePointLabel={salePointLabel}
                       species={offer.species.name}
                       scientificName={offer.species.scientific_name || ''}
                       port={portName}
@@ -613,6 +621,7 @@ const Arrivages = () => {
               <div key={drop.id}>
                 <ArrivageCard
                   id={drop.id}
+                  salePointLabel={salePointLabel}
                   species={speciesName}
                   scientificName={scientificName}
                   port={portName}
