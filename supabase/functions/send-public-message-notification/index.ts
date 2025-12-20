@@ -1,53 +1,125 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { getCorsHeaders, handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+// Input validation schema
+const PublicMessageSchema = z.object({
+  fishermanUserId: z.string().uuid("Invalid fisherman user ID"),
+  fishermanId: z.string().uuid("Invalid fisherman ID"),
+  senderName: z.string()
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name must be less than 100 characters")
+    .transform(val => val.trim()),
+  senderEmail: z.string()
+    .email("Invalid email format")
+    .max(255, "Email must be less than 255 characters")
+    .transform(val => val.trim().toLowerCase()),
+  message: z.string()
+    .min(10, "Message must be at least 10 characters")
+    .max(2000, "Message must be less than 2000 characters")
+    .transform(val => val.trim()),
+});
+
+// Rate limiting configuration
+const RATE_LIMIT = 5; // max requests per email
+const RATE_WINDOW_MINUTES = 10; // per 10 minutes
+
+// Helper to escape HTML for XSS prevention
+const escapeHtml = (text: string): string => {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 };
 
-interface PublicMessagePayload {
-  fishermanUserId: string;
-  fishermanId: string;
-  senderName: string;
-  senderEmail: string;
-  message: string;
-}
+const checkRateLimit = async (
+  supabase: any,
+  identifier: string,
+  endpoint: string
+): Promise<{ allowed: boolean; remaining: number }> => {
+  const windowStart = new Date(Date.now() - RATE_WINDOW_MINUTES * 60 * 1000).toISOString();
+  
+  const { data: existing, error: fetchError } = await supabase
+    .from('rate_limits')
+    .select('id, request_count')
+    .eq('identifier', identifier)
+    .eq('endpoint', endpoint)
+    .gte('window_start', windowStart)
+    .single();
 
-serve(async (req: Request) => {
-  // Handle CORS preflight
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  if (fetchError && fetchError.code !== 'PGRST116') {
+    console.error('Rate limit check error:', fetchError);
+    return { allowed: true, remaining: RATE_LIMIT };
   }
 
+  if (existing) {
+    if (existing.request_count >= RATE_LIMIT) {
+      return { allowed: false, remaining: 0 };
+    }
+    await supabase
+      .from('rate_limits')
+      .update({ request_count: existing.request_count + 1 })
+      .eq('id', existing.id);
+    return { allowed: true, remaining: RATE_LIMIT - existing.request_count - 1 };
+  }
+
+  await supabase.from('rate_limits').insert({
+    identifier,
+    endpoint,
+    request_count: 1,
+    window_start: new Date().toISOString(),
+  });
+  return { allowed: true, remaining: RATE_LIMIT - 1 };
+};
+
+serve(async (req: Request) => {
+  // Handle CORS preflight with origin validation
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get('Origin');
+
   try {
-    const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const payload: PublicMessagePayload = await req.json();
-    const { fishermanUserId, fishermanId, senderName, senderEmail, message } = payload;
+    // Validate input with Zod
+    const rawBody = await req.json();
+    const validationResult = PublicMessageSchema.safeParse(rawBody);
+    
+    if (!validationResult.success) {
+      const errorMessages = validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+      console.error("[PUBLIC-MESSAGE] Validation error:", errorMessages);
+      return errorResponse(`Validation error: ${errorMessages}`, 400, origin);
+    }
 
-    // Validate required fields
-    if (!fishermanUserId || !fishermanId || !senderName || !senderEmail || !message) {
+    const { fishermanUserId, fishermanId, senderName, senderEmail, message } = validationResult.data;
+
+    // Rate limiting by sender email to prevent spam
+    const { allowed, remaining } = await checkRateLimit(supabase, senderEmail, 'send-public-message-notification');
+    if (!allowed) {
+      console.log(`[PUBLIC-MESSAGE] Rate limit exceeded for ${senderEmail}`);
       return new Response(
-        JSON.stringify({ error: "Missing required fields" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        JSON.stringify({ error: 'Trop de messages envoyés. Veuillez patienter 10 minutes.' }),
+        {
+          status: 429,
+          headers: { 
+            ...getCorsHeaders(origin), 
+            'Content-Type': 'application/json',
+            'X-RateLimit-Remaining': '0',
+            'Retry-After': '600'
+          },
+        }
       );
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(senderEmail)) {
-      return new Response(
-        JSON.stringify({ error: "Invalid email format" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    console.log("Sending public message notification to fisherman:", fishermanId);
+    console.log("[PUBLIC-MESSAGE] Sending notification to fisherman:", fishermanId);
 
     // Insert message into database using service role (bypasses RLS)
     const { error: insertError } = await supabase.from("messages").insert({
@@ -61,17 +133,15 @@ serve(async (req: Request) => {
     });
 
     if (insertError) {
-      console.error("Error inserting message:", insertError);
+      console.error("[PUBLIC-MESSAGE] Error inserting message:", insertError);
       throw new Error("Could not save message");
     }
-
-    console.log("Message saved to database");
 
     // Get fisherman email from auth.users
     const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(fishermanUserId);
     
     if (authError || !authUser?.user?.email) {
-      console.error("Error getting fisherman email:", authError);
+      console.error("[PUBLIC-MESSAGE] Error getting fisherman email:", authError);
       throw new Error("Could not get fisherman email");
     }
 
@@ -85,13 +155,15 @@ serve(async (req: Request) => {
       .single();
 
     const boatName = fisherman?.boat_name || "Votre bateau";
+    const siteUrl = Deno.env.get("SITE_URL") || "https://quaidirect.fr";
 
     // Send email to fisherman
+    const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
     const { error: emailError } = await resend.emails.send({
       from: "QuaiDirect <notifications@quaidirect.fr>",
       reply_to: senderEmail,
       to: [fishermanEmail],
-      subject: `Nouveau message de ${senderName} sur QuaiDirect`,
+      subject: `Nouveau message de ${escapeHtml(senderName)} sur QuaiDirect`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -116,23 +188,23 @@ serve(async (req: Request) => {
             </div>
             <div class="content">
               <div class="sender-info">
-                <strong>De :</strong> ${senderName}<br>
-                <strong>Email :</strong> <a href="mailto:${senderEmail}">${senderEmail}</a>
+                <strong>De :</strong> ${escapeHtml(senderName)}<br>
+                <strong>Email :</strong> <a href="mailto:${escapeHtml(senderEmail)}">${escapeHtml(senderEmail)}</a>
               </div>
               
               <h3>Message :</h3>
               <div class="message-box">
-                ${message.replace(/\n/g, "<br>")}
+                ${escapeHtml(message).replace(/\n/g, "<br>")}
               </div>
               
               <p>Pour répondre à ce message, vous pouvez :</p>
               <ul>
-                <li>Répondre directement à cet email (l'email de ${senderName} est en copie)</li>
+                <li>Répondre directement à cet email (l'email de ${escapeHtml(senderName)} est en copie)</li>
                 <li>Ou utiliser votre messagerie QuaiDirect</li>
               </ul>
               
               <p style="text-align: center; margin-top: 30px;">
-                <a href="${Deno.env.get("SITE_URL") || "https://quaidirect.fr"}/pecheur/dashboard" class="cta-button">
+                <a href="${siteUrl}/pecheur/dashboard" class="cta-button">
                   Voir ma messagerie
                 </a>
               </p>
@@ -149,21 +221,15 @@ serve(async (req: Request) => {
     });
 
     if (emailError) {
-      console.error("Error sending email:", emailError);
+      console.error("[PUBLIC-MESSAGE] Error sending email:", emailError);
       throw emailError;
     }
 
-    console.log("Email sent successfully to:", fishermanEmail);
+    console.log("[PUBLIC-MESSAGE] Email sent successfully");
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
+    return jsonResponse({ success: true }, 200, origin);
   } catch (error: any) {
-    console.error("Error in send-public-message-notification:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
+    console.error("[PUBLIC-MESSAGE] Error:", error);
+    return errorResponse(error.message || "Internal server error", 500, origin);
   }
 });
