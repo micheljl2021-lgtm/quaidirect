@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Mail, Anchor, Lock, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getRedirectPathByRole } from '@/lib/authRedirect';
+import { getRedirectPathByRole, getClientDashboardPath } from '@/lib/authRedirect';
 
 // Helper functions for role management
 const getPrimaryRole = (userRoles: string[] = []) => {
@@ -35,6 +35,23 @@ const fetchPrimaryRole = async (userId: string) => {
   return getPrimaryRole(userRoles);
 };
 
+// Check if user has premium subscription in payments table
+const checkPremiumSubscription = async (userId: string): Promise<boolean> => {
+  const { data, error } = await supabase
+    .from('payments')
+    .select('subscription_level, status')
+    .eq('user_id', userId)
+    .in('status', ['active', 'trialing'])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) return false;
+
+  const level = data.subscription_level as string | null;
+  return level === 'premium' || level === 'premium_plus';
+};
+
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -54,7 +71,16 @@ const Auth = () => {
     if (!user) return;
 
     const primaryRole = await fetchPrimaryRole(user.id);
-    navigate(getRedirectPathByRole(primaryRole));
+    
+    // For admin and fisherman, use role-based redirect
+    if (primaryRole === 'admin' || primaryRole === 'fisherman') {
+      navigate(getRedirectPathByRole(primaryRole));
+      return;
+    }
+
+    // For regular users, check subscription level in payments table
+    const hasPremiumSubscription = await checkPremiumSubscription(user.id);
+    navigate(getClientDashboardPath(hasPremiumSubscription));
   };
 
 
@@ -114,8 +140,8 @@ const Auth = () => {
           description: 'Connexion automatique en cours...',
         });
 
-        const primaryRole = await fetchPrimaryRole(data.user.id);
-        navigate(getRedirectPathByRole(primaryRole));
+        // New users always go to user dashboard (no premium subscription yet)
+        navigate('/dashboard/user');
       }
     } catch (error: any) {
       toast({

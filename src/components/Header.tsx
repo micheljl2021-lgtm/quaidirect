@@ -1,6 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useClientSubscriptionLevel } from "@/hooks/useClientSubscriptionLevel";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Crown, User, Menu, X, Shield } from "lucide-react";
@@ -30,8 +31,12 @@ const mobileNavLinkClass = ({ isActive }: { isActive: boolean }) =>
 
 const Header = () => {
   const { user, userRole, signOut } = useAuth();
+  const { isPremium, isPremiumPlus } = useClientSubscriptionLevel();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Un utilisateur avec abonnement premium/premium+ dans payments
+  const hasClientPremiumSubscription = isPremium || isPremiumPlus;
 
   const handleSignOut = async () => {
     await signOut();
@@ -71,12 +76,14 @@ const Header = () => {
           <NavLink to="/premium" className={navLinkClass}>
             Premium
           </NavLink>
-          {userRole === 'user' && (
+          {/* Afficher dashboard user si rôle user ET pas d'abonnement premium */}
+          {userRole === 'user' && !hasClientPremiumSubscription && (
             <NavLink to="/dashboard/user" className={navLinkClass}>
               Mon dashboard
             </NavLink>
           )}
-          {userRole === 'premium' && (
+          {/* Afficher dashboard premium si abonnement premium/premium+ dans payments */}
+          {hasClientPremiumSubscription && userRole !== 'fisherman' && userRole !== 'admin' && (
             <NavLink to="/dashboard/premium" className={({ isActive }) => `${navLinkClass({ isActive })} flex items-center gap-1`}>
               <Crown className="h-4 w-4" aria-hidden="true" />
               Dashboard Premium
@@ -197,7 +204,8 @@ const Header = () => {
               >
                 Premium
               </NavLink>
-              {userRole === 'user' && (
+              {/* Afficher dashboard user si rôle user ET pas d'abonnement premium */}
+              {userRole === 'user' && !hasClientPremiumSubscription && (
                 <NavLink 
                   to="/dashboard/user" 
                   className={mobileNavLinkClass}
@@ -206,7 +214,8 @@ const Header = () => {
                   Mon dashboard
                 </NavLink>
               )}
-              {userRole === 'premium' && (
+              {/* Afficher dashboard premium si abonnement premium/premium+ dans payments */}
+              {hasClientPremiumSubscription && userRole !== 'fisherman' && userRole !== 'admin' && (
                 <NavLink 
                   to="/dashboard/premium" 
                   className={({ isActive }) => `${mobileNavLinkClass({ isActive })} flex items-center gap-2`}
