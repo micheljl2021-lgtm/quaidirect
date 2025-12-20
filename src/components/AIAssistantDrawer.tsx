@@ -1,8 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Bot, User, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Drawer,
   DrawerContent,
@@ -69,8 +68,41 @@ export const AIAssistantDrawer = ({ open, onOpenChange, userType }: AIAssistantD
   const [isLoading, setIsLoading] = useState(false);
   const [userContext, setUserContext] = useState<UserContext | null>(null);
   const [contextLoading, setContextLoading] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Handle keyboard visibility with VisualViewport API
+  useEffect(() => {
+    if (!open) return;
+    
+    const handleViewportResize = () => {
+      if (window.visualViewport) {
+        const offsetHeight = window.innerHeight - window.visualViewport.height;
+        setKeyboardHeight(offsetHeight > 50 ? offsetHeight : 0);
+      }
+    };
+
+    window.visualViewport?.addEventListener('resize', handleViewportResize);
+    window.visualViewport?.addEventListener('scroll', handleViewportResize);
+    
+    return () => {
+      window.visualViewport?.removeEventListener('resize', handleViewportResize);
+      window.visualViewport?.removeEventListener('scroll', handleViewportResize);
+    };
+  }, [open]);
+
+  // Scroll to bottom when messages change or keyboard opens
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      scrollToBottom();
+    }
+  }, [messages, keyboardHeight, scrollToBottom]);
 
   // Fetch user context when drawer opens
   useEffect(() => {
@@ -200,11 +232,7 @@ export const AIAssistantDrawer = ({ open, onOpenChange, userType }: AIAssistantD
     }
   };
 
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
+  // Auto-scroll handled by scrollToBottom callback above
 
   const sendMessage = async (messageText: string) => {
     if (!messageText.trim() || isLoading) return;
@@ -350,8 +378,14 @@ export const AIAssistantDrawer = ({ open, onOpenChange, userType }: AIAssistantD
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[85vh] sm:max-h-[80vh]">
-        <DrawerHeader className="border-b pb-3">
+      <DrawerContent 
+        className="flex flex-col"
+        style={{ 
+          maxHeight: `calc(85dvh - ${keyboardHeight}px)`,
+          paddingBottom: keyboardHeight > 0 ? 0 : undefined,
+        }}
+      >
+        <DrawerHeader className="border-b pb-3 flex-shrink-0">
           <DrawerTitle className="flex items-center gap-2 text-base sm:text-lg">
             <Sparkles className="h-5 w-5 text-primary" />
             {userType === 'fisherman' ? 'IA du Marin' : 'Assistant QuaiDirect'}
@@ -359,9 +393,12 @@ export const AIAssistantDrawer = ({ open, onOpenChange, userType }: AIAssistantD
           {!contextLoading && getContextSummary()}
         </DrawerHeader>
 
-        <div className="flex flex-col h-[calc(85vh-120px)] sm:h-[calc(80vh-140px)]">
+        <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
           {/* Messages area */}
-          <ScrollArea className="flex-1 px-4" ref={scrollRef}>
+          <div 
+            ref={scrollRef}
+            className="flex-1 overflow-y-auto px-4 keyboard-stable"
+          >
             <div className="space-y-4 py-4">
               {contextLoading ? (
                 <div className="text-center py-8">
@@ -431,21 +468,23 @@ export const AIAssistantDrawer = ({ open, onOpenChange, userType }: AIAssistantD
                   </div>
                 ))
               )}
+              <div ref={messagesEndRef} />
             </div>
-          </ScrollArea>
+          </div>
 
           {/* Input area */}
           <form
             onSubmit={handleSubmit}
-            className="border-t p-3 sm:p-4 flex gap-2 items-end bg-background"
+            className="border-t p-3 sm:p-4 flex gap-2 items-end bg-background flex-shrink-0 safe-bottom"
           >
             <Textarea
               ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
+              onFocus={scrollToBottom}
               placeholder="Écris ta question..."
-              className="min-h-[44px] max-h-[120px] resize-none text-sm"
+              className="min-h-[44px] max-h-[100px] resize-none text-sm"
               rows={1}
               disabled={isLoading || contextLoading}
             />

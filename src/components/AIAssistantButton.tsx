@@ -21,7 +21,10 @@ export const AIAssistantButton = () => {
     <>
       <Button
         size="icon"
-        className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 rounded-full shadow-lg z-40 bg-gradient-ocean hover:opacity-90 h-12 w-12 sm:h-12 sm:w-12"
+        className="fixed right-4 sm:right-6 rounded-full shadow-lg z-50 bg-gradient-ocean hover:opacity-90 h-12 w-12"
+        style={{ 
+          bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
+        }}
         onClick={() => setOpen(true)}
         aria-label="Ouvrir l'assistant IA"
       >
