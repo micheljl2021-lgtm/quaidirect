@@ -26,7 +26,9 @@ export const useArrivagesWithHistory = (fishermanId?: string) => {
             boat_name,
             company_name,
             photo_url,
-            slug
+            slug,
+            is_ambassador,
+            ambassador_slot
           ),
           fisherman_sale_points:sale_point_id (
             id,
@@ -43,7 +45,8 @@ export const useArrivagesWithHistory = (fishermanId?: string) => {
           drop_species (
             species:species_id (
               id,
-              name
+              name,
+              scientific_name
             )
           ),
           drop_photos (

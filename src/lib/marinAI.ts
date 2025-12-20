@@ -101,7 +101,7 @@ Exemples de tâches :
 
 /**
  * Fonction d'appel IA centralisée
- * À terme, peut être branchée sur OpenAI API ou autre
+ * Utilise l'Edge Function marine-ai-assistant
  */
 export async function callMarinAI(request: MarinAIRequest): Promise<string> {
   const {
@@ -112,37 +112,97 @@ export async function callMarinAI(request: MarinAIRequest): Promise<string> {
     conversationHistory = [],
   } = request;
 
-  // Construire le system prompt avec contexte
-  let systemPrompt = SYSTEM_PROMPTS[category];
+  // Construire le message utilisateur avec contexte
+  let enrichedMessage = userMessage;
 
   if (fishermanProfile) {
-    systemPrompt += `\n\nContexte du pêcheur :`;
-    if (fishermanProfile.name) {
-      systemPrompt += `\n- Nom : ${fishermanProfile.name}`;
-    }
-    if (fishermanProfile.boatName) {
-      systemPrompt += `\n- Bateau : ${fishermanProfile.boatName}`;
-    }
-    if (fishermanProfile.ports && fishermanProfile.ports.length > 0) {
-      systemPrompt += `\n- Ports : ${fishermanProfile.ports.join(', ')}`;
-    }
-    if (fishermanProfile.salePoints && fishermanProfile.salePoints.length > 0) {
-      systemPrompt += `\n- Points de vente : ${fishermanProfile.salePoints.join(', ')}`;
+    const profileContext = [];
+    if (fishermanProfile.name) profileContext.push(`Nom: ${fishermanProfile.name}`);
+    if (fishermanProfile.boatName) profileContext.push(`Bateau: ${fishermanProfile.boatName}`);
+    if (fishermanProfile.ports?.length) profileContext.push(`Ports: ${fishermanProfile.ports.join(', ')}`);
+    if (fishermanProfile.salePoints?.length) profileContext.push(`Points de vente: ${fishermanProfile.salePoints.join(', ')}`);
+    
+    if (profileContext.length > 0) {
+      enrichedMessage = `[Contexte: ${profileContext.join(' | ')}]\n\n${userMessage}`;
     }
   }
 
   if (context) {
-    systemPrompt += `\n\nContexte additionnel : ${context}`;
+    enrichedMessage = `[Info: ${context}]\n\n${enrichedMessage}`;
   }
 
-  // Pour l'instant, utiliser l'API Lovable AI
-  // Plus tard, peut être remplacé par :
-  // - OpenAI API avec clé configurable
-  // - Autre LLM provider
+  // Import supabase dynamiquement pour éviter les dépendances circulaires
+  const { supabase } = await import('@/integrations/supabase/client');
   
-  // TODO: Implémenter l'appel API externe ici
-  // Pour l'instant, retourner un placeholder
-  return `[Réponse IA pour catégorie: ${category}]\n\nMessage utilisateur: ${userMessage}\n\n${systemPrompt}`;
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (!session) {
+    throw new Error('Non authentifié - veuillez vous connecter');
+  }
+
+  const messages = [
+    ...conversationHistory,
+    { role: 'user' as const, content: enrichedMessage }
+  ];
+
+  const response = await fetch(
+    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/marine-ai-assistant`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ 
+        messages,
+        category,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Erreur IA: ${response.status} - ${errorText}`);
+  }
+
+  // Lire le stream SSE et extraire le contenu complet
+  const reader = response.body?.getReader();
+  const decoder = new TextDecoder();
+  let fullContent = '';
+
+  if (!reader) throw new Error('Pas de réponse');
+
+  let buffer = '';
+  
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    for (let line of lines) {
+      line = line.trim();
+      if (!line || line.startsWith(':')) continue;
+      if (!line.startsWith('data: ')) continue;
+
+      const jsonStr = line.slice(6).trim();
+      if (jsonStr === '[DONE]') continue;
+
+      try {
+        const parsed = JSON.parse(jsonStr);
+        const content = parsed.choices?.[0]?.delta?.content;
+        if (content) {
+          fullContent += content;
+        }
+      } catch {
+        // Ignore parse errors
+      }
+    }
+  }
+
+  return fullContent || 'Pas de réponse de l\'IA';
 }
 
 /**
