@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import CaisseModule from '@/components/CaisseModule';
 import { SalePointsSection } from '@/components/SalePointsSection';
+import { FisherReferralLink } from '@/components/FisherReferralLink';
 import { SmsQuotaManager } from '@/components/SmsQuotaManager';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardStats from '@/components/dashboard/DashboardStats';
@@ -226,6 +227,7 @@ const PecheurDashboard = () => {
 
         {fishermanId && <SalePointsSection fishermanId={fishermanId} />}
 
+        {fishermanId && <FisherReferralLink fishermanId={fishermanId} />}
         {isDataLoading ? (
           <DashboardStatsSkeleton />
         ) : (

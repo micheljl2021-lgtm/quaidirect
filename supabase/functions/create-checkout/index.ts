@@ -90,9 +90,26 @@ serve(async (req) => {
       logStep('Guest checkout mode - no authentication required');
     }
 
-    const { priceId, plan } = await req.json();
+    const { priceId, plan, referrerCode } = await req.json();
     if (!priceId || !plan) throw new Error('Missing priceId or plan');
-    logStep('Request data validated', { priceId, plan, isGuest });
+    logStep('Request data validated', { priceId, plan, isGuest, referrerCode: referrerCode || 'none' });
+
+    // Rechercher le fisherman_id si un code de parrainage est fourni
+    let referrerFishermanId: string | null = null;
+    if (referrerCode) {
+      const { data: referrerFisherman } = await supabaseClient
+        .from('fishermen')
+        .select('id')
+        .eq('affiliate_code', referrerCode.toUpperCase())
+        .maybeSingle();
+      
+      if (referrerFisherman?.id) {
+        referrerFishermanId = referrerFisherman.id;
+        logStep('Referrer fisherman found', { referrerFishermanId, referrerCode });
+      } else {
+        logStep('Referrer code not found in database', { referrerCode });
+      }
+    }
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2025-08-27.basil',
@@ -164,12 +181,16 @@ serve(async (req) => {
         user_id: user?.id || 'guest',
         plan: plan,
         is_guest: isGuest ? 'true' : 'false',
+        referrer_code: referrerCode || '',
+        referrer_fisherman_id: referrerFishermanId || '',
       },
       subscription_data: {
         metadata: {
           user_id: user?.id || 'guest',
           plan: plan,
           is_guest: isGuest ? 'true' : 'false',
+          referrer_code: referrerCode || '',
+          referrer_fisherman_id: referrerFishermanId || '',
         },
       },
     };
