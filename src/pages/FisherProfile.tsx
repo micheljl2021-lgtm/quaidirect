@@ -41,9 +41,11 @@ const FisherProfile = () => {
   // Detect if slug is UUID (ID) or actual slug
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug || '');
 
-  const { data: fisherman, isLoading } = useQuery({
+  const { data: fisherman, isLoading, error: fishermanError } = useQuery({
     queryKey: ['fisherman', slug],
     queryFn: async () => {
+      console.log('[FisherProfile] Fetching fisherman with slug/id:', slug, 'isUUID:', isUUID);
+      
       // Use public_fishermen view which is accessible to everyone (already includes SEO fields)
       const publicQuery = supabase
         .from('public_fishermen')
@@ -54,11 +56,20 @@ const FisherProfile = () => {
         ? await publicQuery.eq('id', slug).maybeSingle()
         : await publicQuery.eq('slug', slug).maybeSingle();
 
-      if (publicError) throw publicError;
-      if (!publicData) return null;
+      if (publicError) {
+        console.error('[FisherProfile] Error fetching from public_fishermen:', publicError);
+        throw publicError;
+      }
+      
+      if (!publicData) {
+        console.log('[FisherProfile] No data found in public_fishermen for:', slug);
+        return null;
+      }
+      
+      console.log('[FisherProfile] Found fisherman:', publicData.id, publicData.boat_name);
       
       // Fetch associated species separately (species table is publicly accessible)
-      const { data: speciesData } = await supabase
+      const { data: speciesData, error: speciesError } = await supabase
         .from('fishermen_species')
         .select(`
           species:species(*),
@@ -66,12 +77,17 @@ const FisherProfile = () => {
         `)
         .eq('fisherman_id', publicData.id);
       
+      if (speciesError) {
+        console.warn('[FisherProfile] Error fetching species:', speciesError);
+      }
+      
       return {
         ...publicData,
         fishermen_species: speciesData || []
       };
     },
     enabled: !!slug,
+    retry: 1,
   });
 
   // Check if current user is the owner by querying the full fishermen table
@@ -251,13 +267,27 @@ const FisherProfile = () => {
 
   if (!fisherman) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <p className="text-muted-foreground">Pêcheur introuvable</p>
-            <p className="text-sm text-muted-foreground mt-2">Redirection vers l'accueil...</p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <Card className="max-w-md">
+            <CardContent className="pt-6 text-center space-y-4">
+              <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto" />
+              <div>
+                <p className="text-lg font-medium">Pêcheur introuvable</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Ce profil n'existe pas ou n'est pas encore publié.
+                </p>
+                {fishermanError && (
+                  <p className="text-xs text-destructive mt-2">
+                    Erreur technique : {(fishermanError as Error).message}
+                  </p>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">Redirection vers l'accueil...</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }

@@ -55,12 +55,12 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
   });
 
   const { data: allFishermen } = useQuery({
-    queryKey: ['all-verified-fishermen'],
+    queryKey: ['all-public-fishermen'],
     queryFn: async () => {
+      // Use public_fishermen view which is accessible to everyone
       const { data, error } = await supabase
-        .from('fishermen')
+        .from('public_fishermen')
         .select('id, boat_name, company_name, photo_url')
-        .not('verified_at', 'is', null)
         .order('boat_name');
       if (error) throw error;
       return data;
