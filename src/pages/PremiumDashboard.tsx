@@ -96,15 +96,15 @@ const PremiumDashboard = () => {
       return;
     }
     
+    // Admin redirect
     if (userRole === 'admin') {
       navigate('/dashboard/admin');
       return;
     }
 
-    if (userRole !== 'premium' && userRole !== 'fisherman') {
-      navigate(getRedirectPathByRole(userRole));
-      return;
-    }
+    // Check subscription level instead of userRole for premium access
+    // This allows users with active payments to access premium dashboard
+    // even if their user_roles doesn't include 'premium'
 
     const timer = setInterval(() => {
       setCurrentTime(new Date());

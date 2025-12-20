@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useClientSubscriptionLevel } from '@/hooks/useClientSubscriptionLevel';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +22,8 @@ interface Fisherman {
 
 const PremiumSettings = () => {
   const navigate = useNavigate();
-  const { user, userRole } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const { isPremium, isPremiumPlus, isLoading: subscriptionLoading } = useClientSubscriptionLevel();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
@@ -39,13 +41,14 @@ const PremiumSettings = () => {
   const [notifNewDrop, setNotifNewDrop] = useState(true);
   const [notifMarketing, setNotifMarketing] = useState(false);
 
-  // Vérification du rôle premium
+  // Vérification du niveau d'abonnement premium (basé sur payments, pas user_roles)
   useEffect(() => {
-    if (userRole && userRole !== 'premium') {
+    if (subscriptionLoading || authLoading) return;
+    if (!isPremium && !isPremiumPlus) {
       toast.error('Accès réservé aux membres Premium');
       navigate('/premium');
     }
-  }, [userRole, navigate]);
+  }, [isPremium, isPremiumPlus, subscriptionLoading, authLoading, navigate]);
 
   useEffect(() => {
     loadData();
@@ -183,7 +186,7 @@ const PremiumSettings = () => {
     }
   };
 
-  if (loading || !userRole) {
+  if (loading || subscriptionLoading || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -191,7 +194,7 @@ const PremiumSettings = () => {
     );
   }
 
-  if (userRole !== 'premium') {
+  if (!isPremium && !isPremiumPlus) {
     return null;
   }
 
