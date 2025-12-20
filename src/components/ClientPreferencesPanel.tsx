@@ -135,10 +135,14 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
       }
 
       if (favoriteFishermen.length > 0) {
+        console.log('[DEBUG] Saving favorite fishermen:', favoriteFishermen.slice(0, MAX_FISHERMEN));
         insertPromises.push(
           supabase.from('fishermen_followers').insert(
             favoriteFishermen.slice(0, MAX_FISHERMEN).map(fisherman_id => ({ user_id: user.id, fisherman_id }))
-          )
+          ).then(res => {
+            console.log('[DEBUG] Insert result:', res);
+            return res;
+          })
         );
       }
 
@@ -297,7 +301,11 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
                 {allFishermen?.filter(f => !favoriteFishermen.includes(f.id)).map(fisherman => (
                   <button
                     key={fisherman.id}
-                    onClick={() => toggleSelection(fisherman.id, favoriteFishermen, setFavoriteFishermen, MAX_FISHERMEN)}
+                    onClick={() => {
+                      console.log('[DEBUG] Click on fisherman:', fisherman.id, fisherman.boat_name);
+                      console.log('[DEBUG] Current favoriteFishermen:', favoriteFishermen);
+                      toggleSelection(fisherman.id, favoriteFishermen, setFavoriteFishermen, MAX_FISHERMEN);
+                    }}
                     className="text-left text-sm p-2 rounded hover:bg-muted/50 transition-colors truncate min-w-0"
                   >
                     {fisherman.company_name || fisherman.boat_name}
@@ -527,16 +535,29 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
                 </div>
               </div>
             ) : (
-              <LockedFeatureOverlay
-                title="Email - Espèces favorites"
-                description="Recevez des emails quand vos espèces préférées sont disponibles"
-                requiredLevel="Premium+"
-              >
-                <div className="space-y-3 p-4">
-                  <Label>Espèces favorites (0/10)</Label>
-                  <div className="h-40 border rounded-lg" />
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 p-4 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+                  <Crown className="h-5 w-5 text-amber-500 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                      Fonctionnalité Premium+
+                    </p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      Passez à Premium+ pour recevoir des alertes sur vos espèces favorites
+                    </p>
+                  </div>
                 </div>
-              </LockedFeatureOverlay>
+                <LockedFeatureOverlay
+                  title="Email - Espèces favorites"
+                  description="Recevez des emails quand vos espèces préférées sont disponibles"
+                  requiredLevel="Premium+"
+                >
+                  <div className="space-y-3 p-4">
+                    <Label>Espèces favorites (0/10)</Label>
+                    <div className="h-40 border rounded-lg" />
+                  </div>
+                </LockedFeatureOverlay>
+              </div>
             )}
           </TabsContent>
         </Tabs>
