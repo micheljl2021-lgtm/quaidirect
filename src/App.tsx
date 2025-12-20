@@ -8,6 +8,7 @@ import { ProtectedFisherRoute } from "@/components/ProtectedFisherRoute";
 import { MaintenanceGuard } from "@/components/MaintenanceGuard";
 import PageLoader from "@/components/PageLoader";
 import { AIAssistantButton } from "@/components/AIAssistantButton";
+import ScrollToTop from "@/components/ScrollToTop";
 
 // Critical pages - loaded immediately
 import Landing from "./pages/Landing";
@@ -86,6 +87,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <MaintenanceGuard>
+          <ScrollToTop />
           <Routes>
             {/* Main landing page */}
             <Route path="/" element={<Landing />} />

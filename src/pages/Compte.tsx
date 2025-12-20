@@ -217,10 +217,10 @@ const Compte = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <Header />
       
-      <div className="container px-4 py-8 max-w-3xl">
+      <div className="container px-4 py-8 max-w-3xl overflow-x-hidden">
         <Button
           variant="ghost"
           onClick={() => navigate(-1)}
