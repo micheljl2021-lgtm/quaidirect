@@ -13,6 +13,19 @@ export default {
       },
     },
     extend: {
+      height: {
+        'screen-dvh': '100dvh',
+        'screen-svh': '100svh',
+        'screen-lvh': '100lvh',
+      },
+      maxHeight: {
+        'screen-dvh': '100dvh',
+        '85-dvh': '85dvh',
+        '80-dvh': '80dvh',
+      },
+      minHeight: {
+        'screen-dvh': '100dvh',
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

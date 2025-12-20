@@ -227,8 +227,8 @@ export default function MarineAIRefactored() {
               )}
 
               {/* Chat Messages */}
-              <Card className="min-h-[400px] max-h-[600px] flex flex-col">
-                <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
+              <Card className="flex flex-col min-h-[300px] max-h-[50vh] sm:max-h-[60vh]">
+                <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 keyboard-stable">
                   {currentMessages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center py-12">
                       {currentCategoryInfo && <currentCategoryInfo.icon className={`h-16 w-16 mb-4 ${currentCategoryInfo.color}`} />}

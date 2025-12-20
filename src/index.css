@@ -134,6 +134,24 @@ All colors MUST be HSL.
   }
 }
 
+/* Dynamic viewport height with fallback for older browsers */
+.h-screen-safe {
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* Keyboard-aware bottom padding */
+.keyboard-aware {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), var(--keyboard-height, 0px));
+}
+
+/* Prevent content jump when keyboard opens */
+.keyboard-stable {
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Ensure dropdowns and select menus are opaque */
 [data-radix-popper-content-wrapper] {
   z-index: 50 !important;
