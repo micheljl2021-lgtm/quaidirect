@@ -214,15 +214,16 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="base" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
-            <TabsTrigger value="base">Base</TabsTrigger>
-            <TabsTrigger value="badge" disabled={!isPremium && !isPremiumPlus}>
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
+            <TabsTrigger value="base" className="text-xs sm:text-sm py-2">Base</TabsTrigger>
+            <TabsTrigger value="badge" disabled={!isPremium && !isPremiumPlus} className="text-xs sm:text-sm py-2">
               Badge
             </TabsTrigger>
-            <TabsTrigger value="salepoints" disabled={!isPremium && !isPremiumPlus}>
-              Points de vente
+            <TabsTrigger value="salepoints" disabled={!isPremium && !isPremiumPlus} className="text-xs sm:text-sm py-2">
+              <span className="hidden sm:inline">Points de vente</span>
+              <span className="sm:hidden">Pts vente</span>
             </TabsTrigger>
-            <TabsTrigger value="species" disabled={!isPremiumPlus}>
+            <TabsTrigger value="species" disabled={!isPremiumPlus} className="text-xs sm:text-sm py-2">
               Espèces
             </TabsTrigger>
           </TabsList>

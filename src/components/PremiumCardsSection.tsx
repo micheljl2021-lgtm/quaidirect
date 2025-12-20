@@ -55,18 +55,18 @@ const PLANS = [
 ];
 
 export const PremiumCardsSection = () => (
-  <section className="container px-4 py-16 bg-gradient-to-b from-primary/5 to-transparent rounded-xl">
+  <section className="container px-4 py-10 md:py-16 bg-gradient-to-b from-primary/5 to-transparent rounded-xl">
     <div className="mx-auto max-w-5xl">
-      <div className="text-center mb-12">
-        <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+      <div className="text-center mb-8 md:mb-12">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3 md:mb-4">
           Soutenez les marins pêcheurs artisans
         </h2>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+        <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
           Inscrivez-vous et recevez une alerte dès qu'ils débarquent leur pêche
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
         {PLANS.map((plan) => {
           const IconComponent = plan.icon;
           return (
@@ -74,14 +74,14 @@ export const PremiumCardsSection = () => (
               key={plan.name}
               className={
                 plan.badge === 'Recommandé' 
-                  ? 'border-primary border-2 shadow-lg relative' 
+                  ? 'border-primary border-2 shadow-lg relative mt-4 sm:mt-3' 
                   : plan.badge === 'SMS inclus'
-                  ? 'border-2 border-amber-500/50 shadow-lg relative bg-gradient-to-b from-amber-50/50 to-transparent dark:from-amber-950/20'
+                  ? 'border-2 border-amber-500/50 shadow-lg relative mt-4 sm:mt-3 bg-gradient-to-b from-amber-50/50 to-transparent dark:from-amber-950/20'
                   : 'border-border'
               }
             >
               {plan.badge && (
-                <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-semibold ${
+                <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
                   plan.badge === 'SMS inclus' 
                     ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white' 
                     : 'bg-primary text-primary-foreground'

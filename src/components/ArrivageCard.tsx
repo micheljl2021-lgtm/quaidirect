@@ -117,17 +117,17 @@ const ArrivageCard = ({
           </div>
           {/* Miniatures des autres photos */}
           {displayPhotos.length > 1 && (
-            <div className="flex gap-1 p-2 bg-background/95 backdrop-blur-sm">
+            <div className="flex gap-1 p-2 bg-background/95 backdrop-blur-sm overflow-x-auto">
               {displayPhotos.slice(1, 4).map((photo, i) => (
                 <img
                   key={i}
                   src={photo.photo_url}
                   alt={`Photo ${i + 2}`}
-                  className="w-16 h-16 object-cover rounded flex-shrink-0 border border-border"
+                  className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded flex-shrink-0 border border-border"
                 />
               ))}
               {displayPhotos.length > 4 && (
-                <div className="w-16 h-16 rounded border border-border bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded border border-border bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground flex-shrink-0">
                   +{displayPhotos.length - 4}
                 </div>
               )}
