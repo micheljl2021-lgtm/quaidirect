@@ -16,6 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import fishingPortImage from "@/assets/landing/fishing-port.jpg";
 import { useArrivagesWithHistory } from "@/hooks/useArrivagesWithHistory";
+import { OrganizationSchema, WebsiteSchema, FAQSchema } from "@/components/seo/StructuredData";
 
 // Contact Section Component
 function ContactSection() {
@@ -240,8 +241,20 @@ const Landing = () => {
 
   const hasArrivages = nextArrivages.length > 0;
 
+  // FAQ data for structured data
+  const landingFAQs = [
+    { question: "Comment fonctionne QuaiDirect ?", answer: "QuaiDirect permet aux marins-pêcheurs artisanaux de publier leurs arrivages et aux clients d'acheter du poisson frais directement à quai. Vous consultez les arrivages disponibles, choisissez votre pêcheur et récupérez votre commande au point de vente indiqué." },
+    { question: "Le poisson est-il vraiment frais ?", answer: "Oui, 100% ! Le poisson est pêché le jour même ou la veille par nos marins-pêcheurs partenaires. Vous achetez directement au pêcheur, sans intermédiaire, pour une fraîcheur maximale." },
+    { question: "Quels sont les avantages d'acheter en direct ?", answer: "Prix justes pour le pêcheur et le client, traçabilité totale (vous savez qui a pêché votre poisson, où et quand), fraîcheur garantie, et soutien à la pêche artisanale locale." }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-sky">
+      {/* Structured Data for SEO */}
+      <OrganizationSchema />
+      <WebsiteSchema />
+      <FAQSchema faqs={landingFAQs} />
+      
       <Header />
       
       {/* Hero Section with Background */}

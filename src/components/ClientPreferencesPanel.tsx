@@ -135,14 +135,10 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
       }
 
       if (favoriteFishermen.length > 0) {
-        console.log('[DEBUG] Saving favorite fishermen:', favoriteFishermen.slice(0, MAX_FISHERMEN));
         insertPromises.push(
           supabase.from('fishermen_followers').insert(
             favoriteFishermen.slice(0, MAX_FISHERMEN).map(fisherman_id => ({ user_id: user.id, fisherman_id }))
-          ).then(res => {
-            console.log('[DEBUG] Insert result:', res);
-            return res;
-          })
+          )
         );
       }
 
@@ -217,8 +213,8 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
         title: 'Couleur du badge enregistrée',
         description: 'Votre préférence a été sauvegardée',
       });
-    } catch (error: any) {
-      console.error('Error saving badge color:', error);
+    } catch {
+      // Silent fail for badge color
     }
   }, [user, isPremium, isPremiumPlus, toast]);
 
@@ -302,8 +298,6 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
                   <button
                     key={fisherman.id}
                     onClick={() => {
-                      console.log('[DEBUG] Click on fisherman:', fisherman.id, fisherman.boat_name);
-                      console.log('[DEBUG] Current favoriteFishermen:', favoriteFishermen);
                       toggleSelection(fisherman.id, favoriteFishermen, setFavoriteFishermen, MAX_FISHERMEN);
                     }}
                     className="text-left text-sm p-2 rounded hover:bg-muted/50 transition-colors truncate min-w-0"
