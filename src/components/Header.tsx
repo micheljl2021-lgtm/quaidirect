@@ -2,9 +2,10 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useClientSubscriptionLevel } from "@/hooks/useClientSubscriptionLevel";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Crown, User, Menu, X, Shield, Download } from "lucide-react";
+import { Crown, User, Menu, X, Shield, Download, Smartphone } from "lucide-react";
 import logoQuaidirect from "@/assets/logo-quaidirect-full.png";
 import {
   DropdownMenu,
@@ -14,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `text-sm font-medium transition-colors ${
@@ -32,7 +34,9 @@ const mobileNavLinkClass = ({ isActive }: { isActive: boolean }) =>
 const Header = () => {
   const { user, userRole, signOut } = useAuth();
   const { isPremium, isPremiumPlus } = useClientSubscriptionLevel();
+  const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Un utilisateur avec abonnement premium/premium+ dans payments
@@ -41,6 +45,31 @@ const Header = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
+  };
+
+  const handleInstallClick = async () => {
+    // Détecter iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    
+    if (isInstallable) {
+      // Android et autres navigateurs compatibles - déclencher l'invite native
+      await promptInstall();
+    } else if (isIOS) {
+      // iOS - afficher les instructions
+      toast({
+        title: "📱 Installer sur iPhone/iPad",
+        description: "Appuyez sur le bouton Partager (⬆️) puis 'Sur l'écran d'accueil'",
+        duration: 8000,
+      });
+    } else if (isInstalled) {
+      toast({
+        title: "✅ Application déjà installée",
+        description: "QuaiDirect est déjà sur votre écran d'accueil !",
+      });
+    } else {
+      // Fallback - rediriger vers la page de téléchargement
+      navigate('/telecharger');
+    }
   };
 
   return (
@@ -104,12 +133,17 @@ const Header = () => {
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-3">
-          <Link to="/telecharger">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <Download className="h-4 w-4" />
-              <span>Télécharger</span>
+          {!isInstalled && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="gap-2"
+              onClick={handleInstallClick}
+            >
+              <Smartphone className="h-4 w-4" />
+              <span>Installer l'app</span>
             </Button>
-          </Link>
+          )}
           
           {!user && (
             <Link to="/premium">
@@ -252,14 +286,18 @@ const Header = () => {
                 </NavLink>
               )}
               
-              <NavLink 
-                to="/telecharger" 
-                className={({ isActive }) => `${mobileNavLinkClass({ isActive })} flex items-center gap-2`}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <Download className="h-4 w-4" />
-                Télécharger l'app
-              </NavLink>
+              {!isInstalled && (
+                <button 
+                  className="text-base font-medium transition-colors py-2 text-foreground hover:text-primary flex items-center gap-2"
+                  onClick={() => {
+                    handleInstallClick();
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  <Smartphone className="h-4 w-4" />
+                  Installer l'app
+                </button>
+              )}
               
               <div className="border-t my-2" />
               
