@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +9,7 @@ import { MaintenanceGuard } from "@/components/MaintenanceGuard";
 import PageLoader from "@/components/PageLoader";
 import { AIAssistantButton } from "@/components/AIAssistantButton";
 import ScrollToTop from "@/components/ScrollToTop";
+import { captureReferralCode } from "@/lib/referralTracking";
 
 // Critical pages - loaded immediately
 import Landing from "./pages/Landing";
@@ -80,6 +81,17 @@ const RedirectDropLegacy = () => {
   return <Navigate to={`/drop/${id}`} replace />;
 };
 
+// Component to capture referral code on any page
+const ReferralCapture = () => {
+  const location = useLocation();
+  
+  useEffect(() => {
+    captureReferralCode();
+  }, [location.search]);
+  
+  return null;
+};
+
 const App = () => (
   <AuthProvider>
     <TooltipProvider>
@@ -88,6 +100,7 @@ const App = () => (
       <BrowserRouter>
         <MaintenanceGuard>
           <ScrollToTop />
+          <ReferralCapture />
           <Routes>
             {/* Main landing page */}
             <Route path="/" element={<Landing />} />

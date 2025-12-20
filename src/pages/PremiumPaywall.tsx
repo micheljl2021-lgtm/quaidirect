@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import Header from "@/components/Header";
+import { getReferralCode } from "@/lib/referralTracking";
 
 // Définition des niveaux clients - Mise à jour avec les vraies fonctionnalités
 const CLIENT_LEVELS = {
@@ -70,9 +71,12 @@ export default function PremiumPaywall() {
     setLoading(plan);
 
     try {
+      // Récupérer le code de parrainage stocké
+      const referrerCode = getReferralCode();
+      
       // Allow both authenticated and guest checkouts
       const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { priceId, plan },
+        body: { priceId, plan, referrerCode },
       });
 
       if (error) throw error;

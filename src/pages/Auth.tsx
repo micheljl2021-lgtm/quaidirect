@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,6 +11,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { Mail, Anchor, Lock, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getRedirectPathByRole, getClientDashboardPath } from '@/lib/authRedirect';
+import { getReferralCode, setReferrerFishermanId, clearReferralData } from '@/lib/referralTracking';
 
 // Helper functions for role management
 const getPrimaryRole = (userRoles: string[] = []) => {
@@ -84,6 +85,49 @@ const Auth = () => {
   };
 
 
+  // Auto-follow fisherman if referral code exists
+  const handleAutoFollow = async (userId: string) => {
+    const referralCode = getReferralCode();
+    if (!referralCode) return;
+
+    try {
+      console.log('[AUTH] Checking referral code:', referralCode);
+      
+      // Trouver le pêcheur par son code d'affiliation
+      const { data: fisherman, error: fishermanError } = await supabase
+        .from('fishermen')
+        .select('id, boat_name')
+        .eq('affiliate_code', referralCode)
+        .maybeSingle();
+
+      if (fishermanError || !fisherman) {
+        console.log('[AUTH] Referral code not found:', referralCode);
+        return;
+      }
+
+      console.log('[AUTH] Found fisherman:', fisherman.boat_name);
+      setReferrerFishermanId(fisherman.id);
+
+      // Ajouter le pêcheur aux favoris
+      const { error: followError } = await supabase
+        .from('fishermen_followers')
+        .insert({ user_id: userId, fisherman_id: fisherman.id });
+
+      if (followError) {
+        // Peut échouer si déjà suivi, pas grave
+        console.log('[AUTH] Follow insert error (may be duplicate):', followError.code);
+      } else {
+        console.log('[AUTH] User now follows fisherman:', fisherman.boat_name);
+        toast({
+          title: `Vous suivez ${fisherman.boat_name}`,
+          description: 'Vous recevrez ses notifications d\'arrivage',
+        });
+      }
+    } catch (error) {
+      console.error('[AUTH] Auto-follow error:', error);
+    }
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -109,14 +153,15 @@ const Auth = () => {
 
           if (roleError) {
             console.error('[SIGNUP] Error assigning user role:', roleError);
-            // Continue anyway, le rôle peut être assigné par un trigger
           } else {
             console.log('[SIGNUP] User role assigned successfully');
           }
         } catch (roleError) {
           console.error('[SIGNUP] Exception assigning role:', roleError);
-          // Continue anyway
         }
+
+        // Auto-follow si code de parrainage présent
+        await handleAutoFollow(data.user.id);
 
         // Envoyer l'email de bienvenue (ne pas bloquer l'inscription si ça échoue)
         try {
@@ -132,7 +177,6 @@ const Auth = () => {
           }
         } catch (emailError) {
           console.error('[SIGNUP] Email sending exception:', emailError);
-          // Continue anyway
         }
 
         toast({

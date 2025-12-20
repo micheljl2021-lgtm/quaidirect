@@ -624,82 +624,74 @@ serve(async (req) => {
           logStep('Premium role added successfully');
           
           // Handle affiliate credits for Premium/Premium+
-          const referrerCode = session.metadata?.ref || session.metadata?.referrer_code;
-          if (referrerCode) {
-            logStep('Processing affiliate credits', { referrerCode, plan });
+          const referrerCode = session.metadata?.referrer_code;
+          const referrerFishermanIdFromMeta = session.metadata?.referrer_fisherman_id;
+          
+          // Try to get fisherman ID directly from metadata, or look up by code
+          let referrerFishermanId: string | null = null;
+          
+          if (referrerFishermanIdFromMeta && referrerFishermanIdFromMeta !== '') {
+            referrerFishermanId = referrerFishermanIdFromMeta;
+            logStep('Using referrer fisherman ID from metadata', { referrerFishermanId });
+          } else if (referrerCode && referrerCode !== '') {
+            logStep('Looking up referrer by code', { referrerCode });
+            const { data: fisherman } = await supabaseClient
+              .from('fishermen')
+              .select('id')
+              .eq('affiliate_code', referrerCode.toUpperCase())
+              .maybeSingle();
             
+            if (fisherman?.id) {
+              referrerFishermanId = fisherman.id;
+              logStep('Found referrer fisherman by code', { referrerFishermanId, referrerCode });
+            }
+          }
+          
+          if (referrerFishermanId) {
+            logStep('Processing affiliate credits', { referrerFishermanId, plan });
             try {
-              const { data: fisherman } = await supabaseClient
-                .from('fishermen')
-                .select('id')
-                .eq('affiliate_code', referrerCode)
-                .maybeSingle();
+              // Determine credit amount based on plan
+              const creditCentsMap: Record<string, number> = {
+                premium: 800,           // 8€
+                premium_annual: 800,
+                premium_plus: 1800,     // 18€
+                premium_plus_annual: 1800,
+              };
+              const creditCents = creditCentsMap[plan] || 0;
+              const smsCredits = Math.floor(creditCents / 7); // 0.07€ per SMS
               
-              if (fisherman) {
-                // Determine credit amount based on plan
-                const creditCentsMap: Record<string, number> = {
-                  premium: 800,           // 8€
-                  premium_annual: 800,
-                  premium_plus: 1800,     // 18€
-                  premium_plus_annual: 1800,
-                };
-                const creditCents = creditCentsMap[plan] || 0;
-                const smsCredits = Math.floor(creditCents / 7); // 0.07€ per SMS
+              if (smsCredits > 0) {
+                logStep('Crediting fisherman wallet', { fishermanId: referrerFishermanId, smsCredits, creditCents });
                 
-                if (smsCredits > 0) {
-                  logStep('Crediting fisherman wallet', { fishermanId: fisherman.id, smsCredits, creditCents });
-                  
-                  // Increment wallet balance
-                  const { error: walletError } = await supabaseClient.rpc('increment_wallet_balance', {
-                    p_fisherman_id: fisherman.id,
-                    p_sms_delta: smsCredits,
-                  });
-                  
-                  if (walletError) {
-                    logStep('ERROR incrementing wallet balance', { error: walletError });
-                  } else {
-                    logStep('Wallet balance incremented successfully');
-                    
-                    // Record in wallet history
-                    const operationType = plan.includes('premium_plus') ? 'affiliate_premium_plus' : 'affiliate_premium';
-                    const { error: historyError } = await supabaseClient
-                      .from('fishermen_sms_wallet_history')
-                      .insert({
-                        fisherman_id: fisherman.id,
-                        operation_type: operationType,
-                        sms_delta: smsCredits,
-                        eur_cents_delta: creditCents,
-                        source_user_id: userId,
-                        notes: `Affiliation ${plan} - ${smsCredits} SMS crédités`,
-                      });
-                    
-                    if (historyError) {
-                      logStep('ERROR recording affiliate history', { error: historyError });
-                    } else {
-                      logStep('Affiliate credits recorded in history');
-                    }
-                    
-                    // Mark the payment with the referrer
-                    const { error: paymentUpdateError } = await supabaseClient
-                      .from('payments')
-                      .update({ referrer_fisherman_id: fisherman.id })
-                      .eq('stripe_subscription_id', subscription.id);
-                    
-                    if (paymentUpdateError) {
-                      logStep('ERROR updating payment with referrer', { error: paymentUpdateError });
-                    } else {
-                      logStep('Payment marked with referrer fisherman');
-                    }
-                  }
+                // Increment wallet balance using existing RPC
+                const { error: walletError } = await supabaseClient.rpc('increment_wallet_balance', {
+                  p_fisherman_id: referrerFishermanId,
+                  p_amount: smsCredits,
+                });
+                
+                if (walletError) {
+                  logStep('ERROR incrementing wallet balance', { error: walletError });
+                } else {
+                  logStep('Wallet balance incremented successfully');
                 }
-              } else {
-                logStep('WARNING: Referrer code not found', { referrerCode });
+                
+                // Mark the payment with the referrer
+                const { error: paymentUpdateError } = await supabaseClient
+                  .from('payments')
+                  .update({ referrer_fisherman_id: referrerFishermanId })
+                  .eq('stripe_subscription_id', subscription.id);
+                
+                if (paymentUpdateError) {
+                  logStep('ERROR updating payment with referrer', { error: paymentUpdateError });
+                } else {
+                  logStep('Payment marked with referrer fisherman');
+                }
               }
             } catch (affiliateError) {
               logStep('EXCEPTION processing affiliate credits', { error: affiliateError });
             }
           }
-          
+
           // Send welcome email to new premium user
           try {
             const { data: { user: premiumUser } } = await supabaseClient.auth.admin.getUserById(userId);
