@@ -1,11 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.80.0';
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders, jsonResponse, errorResponse } from "../_shared/cors.ts";
 
 // Input validation schema
 const RequestSchema = z.object({
@@ -29,8 +25,6 @@ async function generateVAPIDHeaders(
   publicKey: string,
   privateKey: string
 ): Promise<Record<string, string>> {
-  const url = new URL(endpoint);
-  
   return {
     'Authorization': `vapid t=${publicKey}, k=${privateKey}`,
     'Crypto-Key': `p256ecdsa=${publicKey}`,
@@ -73,6 +67,9 @@ async function sendEmail(
 }
 
 serve(async (req) => {
+  const origin = req.headers.get('Origin');
+  const corsHeaders = getCorsHeaders(origin);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -93,13 +90,7 @@ serve(async (req) => {
     
     if (!hasValidInternalSecret && !isDbTriggerCall) {
       console.error('Unauthorized call to send-drop-notification - no valid auth method');
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { 
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      return errorResponse('Unauthorized', 401, origin);
     }
     
     console.log('Auth method:', hasValidInternalSecret ? 'internal_secret' : 'db_trigger');
@@ -111,10 +102,7 @@ serve(async (req) => {
     if (!validationResult.success) {
       const errorMessages = validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
       console.error('Validation failed:', errorMessages);
-      return new Response(
-        JSON.stringify({ error: `Validation error: ${errorMessages}` }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return errorResponse(`Validation error: ${errorMessages}`, 400, origin);
     }
     
     const { dropId } = validationResult.data;
@@ -469,32 +457,21 @@ serve(async (req) => {
     }
     console.log(`Email notifications sent: ${emailSentCount}`);
 
-    return new Response(
-      JSON.stringify({
-        message: 'Notifications sent',
-        push: {
-          targeted: pushUserIds.length,
-          sent: pushSentCount,
-        },
-        email: {
-          salePointUsers: salePointEmailUsers.length,
-          speciesUsers: speciesEmailUsers.length,
-          sent: emailSentCount,
-        },
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return jsonResponse({
+      message: 'Notifications sent',
+      push: {
+        targeted: pushUserIds.length,
+        sent: pushSentCount,
+      },
+      email: {
+        salePointUsers: salePointEmailUsers.length,
+        speciesUsers: speciesEmailUsers.length,
+        sent: emailSentCount,
+      },
+    }, 200, origin);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error in send-drop-notification:', errorMessage);
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return errorResponse(errorMessage, 500, origin);
   }
 });

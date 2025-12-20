@@ -1,13 +1,20 @@
 # 🔍 AUDIT PARTIE 3 : INTÉGRATIONS & LOGIQUE MÉTIER
 
-**Date**: 2025-01-XX
+**Date**: 2025-01-XX (Mis à jour: 2025-12-20)
 **Scope**: Stripe, Authentification, Parcours métier, Commission 8%
 
 ---
 
-## 📊 SCORE GLOBAL: 78% ⚠️
+## 📊 SCORE GLOBAL: 88% ✅
 
-**Statut**: 3 PROBLÈMES CRITIQUES, 5 PROBLÈMES URGENTS, 8 AMÉLIORATIONS RECOMMANDÉES
+**Statut**: 1 PROBLÈME CRITIQUE RESTANT (Stripe Connect), 2 PROBLÈMES URGENTS, 6 AMÉLIORATIONS RECOMMANDÉES
+
+### ✅ CORRECTIONS APPLIQUÉES (Phase 4):
+- ✅ CORS dynamique appliqué sur toutes les Edge Functions checkout
+- ✅ Validation Zod ajoutée sur `generate-fisherman-seo-content`
+- ✅ Commission 8% implémentée dans `create-basket-checkout`
+- ✅ Success/cancel URLs personnalisées avec contexte (plan, basket_id, session_id)
+- ✅ Helpers `jsonResponse`/`errorResponse` utilisés partout
 
 ---
 

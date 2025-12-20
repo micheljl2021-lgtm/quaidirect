@@ -2,11 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://quaidirect.fr',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { handleCors, getCorsHeaders, jsonResponse, errorResponse } from "../_shared/cors.ts";
 
 // Input validation schema
 const RequestSchema = z.object({
@@ -22,9 +18,11 @@ const logStep = (step: string, details?: any) => {
 };
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get('Origin');
 
   const supabaseClient = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
@@ -52,10 +50,7 @@ serve(async (req) => {
     if (!validationResult.success) {
       const errorMessages = validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
       logStep('Validation failed', { errors: errorMessages });
-      return new Response(
-        JSON.stringify({ error: `Validation error: ${errorMessages}` }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return errorResponse(`Validation error: ${errorMessages}`, 400, origin);
     }
     
     const { basketId, priceId, fishermanId, dropId } = validationResult.data;
@@ -70,10 +65,11 @@ serve(async (req) => {
     if (!price.unit_amount) throw new Error('Price has no unit_amount');
     
     const basketPrice = price.unit_amount; // in cents
-    const commission = Math.round(basketPrice * 0.05); // 5% commission
+    // COMMISSION: 8% plateforme comme spécifié dans les guidelines
+    const commission = Math.round(basketPrice * 0.08); // 8% commission
     const totalPrice = basketPrice + commission;
     
-    logStep('Commission calculated', { basketPrice, commission, totalPrice });
+    logStep('Commission calculated (8%)', { basketPrice, commission, totalPrice });
 
     // Check if customer exists
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
@@ -87,7 +83,7 @@ serve(async (req) => {
     }
 
     // Create checkout session for one-time payment with 8% commission
-    const origin = req.headers.get('origin') || 'https://quaidirect.fr';
+    const safeOrigin = origin || 'https://quaidirect.fr';
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
@@ -98,7 +94,7 @@ serve(async (req) => {
             unit_amount: totalPrice,
             product_data: {
               name: 'Panier de poisson frais',
-              description: `Panier incluant frais de service plateforme (5%)`,
+              description: `Panier incluant frais de service plateforme (8%)`,
             },
           },
           quantity: 1,
@@ -106,8 +102,8 @@ serve(async (req) => {
       ],
       mode: 'payment',
       allow_promotion_codes: true,
-      success_url: `${origin}/panier/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/panier?canceled=true`,
+      success_url: `${safeOrigin}/panier/success?session_id={CHECKOUT_SESSION_ID}&basket_id=${basketId}`,
+      cancel_url: `${safeOrigin}/panier?canceled=true`,
       metadata: {
         user_id: user.id,
         basket_id: basketId,
@@ -121,22 +117,10 @@ serve(async (req) => {
 
     logStep('Checkout session created', { sessionId: session.id, url: session.url });
 
-    return new Response(
-      JSON.stringify({ url: session.url, sessionId: session.id }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    );
+    return jsonResponse({ url: session.url, sessionId: session.id }, 200, origin);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep('ERROR in create-basket-checkout', { message: errorMessage });
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      }
-    );
+    return errorResponse(errorMessage, 500, origin);
   }
 });

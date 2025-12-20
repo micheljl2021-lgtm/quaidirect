@@ -2,11 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://quaidirect.fr',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { handleCors, getCorsHeaders, jsonResponse, errorResponse } from "../_shared/cors.ts";
 
 // Input validation schema
 const RequestSchema = z.object({
@@ -24,9 +20,11 @@ const logStep = (step: string, details?: any) => {
 };
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get('Origin');
 
   const supabaseClient = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
@@ -54,7 +52,7 @@ serve(async (req) => {
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId = customers.data.length > 0 ? customers.data[0].id : undefined;
     
-    const origin = req.headers.get('origin') || 'https://quaidirect.fr';
+    const safeOrigin = origin || 'https://quaidirect.fr';
 
     if (customerId) {
       logStep('Existing customer found', { customerId });
@@ -90,20 +88,14 @@ serve(async (req) => {
         // Create portal session for user to manage existing subscription
         const portalSession = await stripe.billingPortal.sessions.create({
           customer: customerId,
-          return_url: `${origin}/dashboard/pecheur`,
+          return_url: `${safeOrigin}/dashboard/pecheur`,
         });
 
-        return new Response(
-          JSON.stringify({ 
-            error: 'Vous avez déjà un abonnement pêcheur actif. Gérez-le via le portail client.',
-            hasExistingSubscription: true,
-            portalUrl: portalSession.url 
-          }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400,
-          }
-        );
+        return jsonResponse({ 
+          error: 'Vous avez déjà un abonnement pêcheur actif. Gérez-le via le portail client.',
+          hasExistingSubscription: true,
+          portalUrl: portalSession.url 
+        }, 400, origin);
       }
       logStep('No existing fisherman subscription, proceeding with checkout');
     } else {
@@ -117,10 +109,7 @@ serve(async (req) => {
     if (!validationResult.success) {
       const errorMessages = validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
       logStep('Validation failed', { errors: errorMessages });
-      return new Response(
-        JSON.stringify({ error: `Validation error: ${errorMessages}` }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return errorResponse(`Validation error: ${errorMessages}`, 400, origin);
     }
     
     const { priceId, planType } = validationResult.data;
@@ -137,8 +126,8 @@ serve(async (req) => {
       ],
       mode: 'subscription',
       allow_promotion_codes: true,
-      success_url: `${origin}/pecheur/payment-success?plan=${planType}`,
-      cancel_url: `${origin}/pecheur/payment?canceled=true`,
+      success_url: `${safeOrigin}/pecheur/payment-success?plan=${planType}`,
+      cancel_url: `${safeOrigin}/pecheur/payment?canceled=true`,
       metadata: {
         user_id: user.id,
         payment_type: 'fisherman_onboarding',
@@ -156,22 +145,10 @@ serve(async (req) => {
 
     logStep('Checkout session created', { sessionId: session.id, url: session.url });
 
-    return new Response(
-      JSON.stringify({ url: session.url, sessionId: session.id }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    );
+    return jsonResponse({ url: session.url, sessionId: session.id }, 200, origin);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Payment creation failed';
     logStep('ERROR', { message: errorMessage });
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      }
-    );
+    return errorResponse(errorMessage, 500, origin);
   }
 });

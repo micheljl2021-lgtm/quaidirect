@@ -1,25 +1,32 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { handleCors, getCorsHeaders, jsonResponse, errorResponse } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://quaidirect.fr',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// Input validation schema
+const RequestSchema = z.object({
+  fishermanId: z.string().uuid('fishermanId must be a valid UUID'),
+});
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+  
+  const origin = req.headers.get('Origin');
 
   try {
-    const { fishermanId } = await req.json();
-
-    if (!fishermanId) {
-      return new Response(
-        JSON.stringify({ error: 'fishermanId requis' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Validate input with Zod
+    const rawBody = await req.json();
+    const validationResult = RequestSchema.safeParse(rawBody);
+    
+    if (!validationResult.success) {
+      const errorMessages = validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+      console.error('Validation failed:', errorMessages);
+      return errorResponse(`Validation error: ${errorMessages}`, 400, origin);
     }
+    
+    const { fishermanId } = validationResult.data;
 
     // Vérifier que l'utilisateur est admin
     const supabaseClient = createClient(
@@ -27,15 +34,16 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const authHeader = req.headers.get('Authorization')!;
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return errorResponse('Non authentifié', 401, origin);
+    }
+    
     const token = authHeader.replace('Bearer ', '');
     const { data: { user } } = await supabaseClient.auth.getUser(token);
 
     if (!user) {
-      return new Response(
-        JSON.stringify({ error: 'Non authentifié' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return errorResponse('Non authentifié', 401, origin);
     }
 
     const { data: userRole } = await supabaseClient
@@ -46,10 +54,7 @@ serve(async (req) => {
       .maybeSingle();
 
     if (!userRole) {
-      return new Response(
-        JSON.stringify({ error: 'Accès refusé: admin requis' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return errorResponse('Accès refusé: admin requis', 403, origin);
     }
 
     // Récupérer les données du pêcheur
@@ -60,10 +65,7 @@ serve(async (req) => {
       .single();
 
     if (fishermanError || !fisherman) {
-      return new Response(
-        JSON.stringify({ error: 'Pêcheur introuvable' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return errorResponse('Pêcheur introuvable', 404, origin);
     }
 
     // Déterminer le type de pêche
@@ -186,20 +188,18 @@ IMPORTANT: Réponds UNIQUEMENT avec le JSON, sans texte avant ou après.`;
       user_id: user.id,
     });
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'Contenu SEO généré et sauvegardé avec succès',
-        data: seoContent,
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({
+      success: true,
+      message: 'Contenu SEO généré et sauvegardé avec succès',
+      data: seoContent,
+    }, 200, origin);
 
   } catch (error) {
     console.error('Error:', error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Erreur inconnue' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    return errorResponse(
+      error instanceof Error ? error.message : 'Erreur inconnue',
+      500,
+      origin
     );
   }
 });
