@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { AFFILIATE_CREDITS_RULES, FISHERMAN_PLANS, PREMIUM_PLANS, SMS_PACKS } from '../src/config/pricing';
+import { AFFILIATE_CREDITS_RULES, FISHERMAN_PLANS, FISHERMAN_TRIAL_DAYS, PREMIUM_PLANS, SMS_PACKS } from '../src/config/pricing';
 
 describe('Pricing Configuration', () => {
+  it('should have 7-day trial for fisherman plans', () => {
+    expect(FISHERMAN_TRIAL_DAYS).toBe(7);
+  });
+
   describe('Fisherman Plans', () => {
     it('should have correct STANDARD plan pricing', () => {
       expect(FISHERMAN_PLANS.STANDARD.priceCents).toBe(15000);

@@ -145,6 +145,7 @@ serve(async (req) => {
         plan_type: planType,
       },
       subscription_data: {
+        trial_period_days: 7,
         metadata: {
           user_id: user.id,
           payment_type: 'fisherman_onboarding',

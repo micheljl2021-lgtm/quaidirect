@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Mail, MessageSquare, ArrowLeft, Crown, Check, Gift, Zap, Users, TrendingUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Header from '@/components/Header';
-import { FISHERMAN_PLANS, SMS_PACKS, AFFILIATE_CREDITS_RULES } from '@/config/pricing';
+import { FISHERMAN_PLANS, FISHERMAN_TRIAL_DAYS, SMS_PACKS, AFFILIATE_CREDITS_RULES } from '@/config/pricing';
 
 const PecheurPayment = () => {
   const { user } = useAuth();
@@ -69,7 +69,10 @@ const PecheurPayment = () => {
       <Header />
       
       <div className="container max-w-6xl mx-auto px-4 py-12">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
+          <Badge variant="secondary" className="mb-4 text-lg px-4 py-1 bg-green-100 text-green-800 border-green-300">
+            🎁 {FISHERMAN_TRIAL_DAYS} jours gratuits sur tous les plans
+          </Badge>
           <h1 className="text-4xl font-bold mb-4">Vendez votre pêche en direct, sans intermédiaire</h1>
           <p className="text-xl text-muted-foreground">
             Rejoignez les marins pêcheurs qui ont choisi l'autonomie et la rentabilité
@@ -160,7 +163,7 @@ const PecheurPayment = () => {
                     variant="outline"
                     className="w-full"
                   >
-                    {loading === 'standard' ? 'Chargement...' : 'Commencer'}
+                    {loading === 'standard' ? 'Chargement...' : `Essayer ${FISHERMAN_TRIAL_DAYS} jours gratuit`}
                   </Button>
                 </CardContent>
               </Card>
@@ -229,7 +232,7 @@ const PecheurPayment = () => {
                     size="lg"
                     className="w-full"
                   >
-                    {loading === 'pro' ? 'Chargement...' : 'Commencer'}
+                    {loading === 'pro' ? 'Chargement...' : `Essayer ${FISHERMAN_TRIAL_DAYS} jours gratuit`}
                   </Button>
                 </CardContent>
               </Card>
@@ -295,7 +298,7 @@ const PecheurPayment = () => {
                     className="w-full"
                     variant="default"
                   >
-                    {loading === 'elite' ? 'Chargement...' : 'Commencer'}
+                    {loading === 'elite' ? 'Chargement...' : `Essayer ${FISHERMAN_TRIAL_DAYS} jours gratuit`}
                   </Button>
                 </CardContent>
               </Card>
