@@ -40,59 +40,28 @@ const PecheurPaymentSuccess = () => {
   const checkPaymentStatus = async () => {
     if (!user) return false;
     
-    // Vérifier si le rôle fisherman a été assigné
-    const { data: roleData } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'fisherman')
-      .maybeSingle();
+    try {
+      // Call dedicated verification function that checks Stripe directly
+      const { data, error } = await supabase.functions.invoke('verify-fisherman-payment');
+      
+      if (error) {
+        console.error('Verification error:', error);
+        return false;
+      }
 
-    if (roleData) {
-      // Get actual plan from payments table
-      const { data: paymentData } = await supabase
-        .from('payments')
-        .select('plan, status')
-        .eq('user_id', user.id)
-        .ilike('plan', 'fisherman_%')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (paymentData) {
-        // Extract plan key from payment (e.g., "fisherman_standard" -> "standard")
-        const planKey = paymentData.plan.replace('fisherman_', '');
+      if (data?.verified) {
+        const planKey = (data.plan || 'fisherman_standard').replace('fisherman_', '');
         const info = getPlanInfo(planKey);
         setConfirmedPlan({ label: info.label, amount: info.amount });
-      } else {
-        // Fallback to URL param
-        const info = getPlanInfo(planParam);
-        setConfirmedPlan({ label: info.label, amount: info.amount });
+        setPaymentStatus('confirmed');
+        return true;
       }
-      
-      setPaymentStatus('confirmed');
-      return true;
-    }
 
-    // Fallback: vérifier aussi la table payments
-    const { data: paymentData } = await supabase
-      .from('payments')
-      .select('status, plan')
-      .eq('user_id', user.id)
-      .ilike('plan', 'fisherman_%')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (paymentData?.status === 'active' || paymentData?.status === 'trialing') {
-      const planKey = paymentData.plan.replace('fisherman_', '');
-      const info = getPlanInfo(planKey);
-      setConfirmedPlan({ label: info.label, amount: info.amount });
-      setPaymentStatus('confirmed');
-      return true;
+      return false;
+    } catch (err) {
+      console.error('Payment check failed:', err);
+      return false;
     }
-    
-    return false;
   };
 
   const handleRetry = () => {
