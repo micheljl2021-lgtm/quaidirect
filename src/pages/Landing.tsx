@@ -174,11 +174,18 @@ const Landing = () => {
   // Helper pour transformer un arrivage pour ArrivageCard
   const transformArrivage = (arrivage: any) => {
     if (!arrivage) return null;
-    const species = arrivage.drop_species?.[0]?.species;
+    
+    // Récupérer TOUTES les espèces de drop_species
+    const allSpecies = arrivage.drop_species
+      ?.map((ds: any) => ds.species?.name)
+      .filter(Boolean) || [];
+    const speciesText = allSpecies.length > 0 ? allSpecies.join(', ') : 'Poisson frais';
+    const firstScientificName = arrivage.drop_species?.[0]?.species?.scientific_name || '';
+    
     return {
       id: arrivage.id,
-      species: species?.name || 'Poisson frais',
-      scientificName: species?.scientific_name || '',
+      species: speciesText,
+      scientificName: firstScientificName,
       port: arrivage.fisherman_sale_points?.label || arrivage.ports?.name || 'Point de vente',
       city: arrivage.fisherman_sale_points?.address || arrivage.ports?.city || '',
       eta: new Date(arrivage.eta_at),
@@ -191,6 +198,8 @@ const Landing = () => {
         display_order: p.display_order
       })) || [],
       fisherman: {
+        id: arrivage.fishermen?.id,
+        slug: arrivage.fishermen?.slug,
         name: arrivage.fishermen?.company_name || arrivage.fishermen?.boat_name || 'Pêcheur',
         boat: arrivage.fishermen?.boat_name || '',
         isAmbassador: arrivage.fishermen?.is_ambassador || false,

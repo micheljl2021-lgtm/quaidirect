@@ -44,10 +44,10 @@ const PecheurWallet = () => {
 
     const fetchWalletData = async () => {
       try {
-        // Get fisherman ID
+        // Get fisherman data including affiliate_code
         const { data: fisherman } = await supabase
           .from('fishermen')
-          .select('id')
+          .select('id, affiliate_code')
           .eq('user_id', user.id)
           .maybeSingle();
 
@@ -60,11 +60,37 @@ const PecheurWallet = () => {
           return;
         }
 
-        // For now, set a placeholder affiliate code based on fisherman id
-        setAffiliateCode(fisherman.id.slice(0, 8));
+        // Use real affiliate_code from database or generate one
+        setAffiliateCode(fisherman.affiliate_code || fisherman.id.slice(0, 8));
 
-        // Set default wallet data (tables don't exist yet)
-        setWallet({ balance_sms: 0, balance_eur_cents: 0 });
+        // Fetch SMS pool balance (from premium client contributions)
+        const { data: smsPool } = await supabase
+          .from('sms_pool')
+          .select('balance_cents, total_credited_cents, total_used_cents')
+          .eq('fisherman_id', fisherman.id)
+          .maybeSingle();
+
+        // Fetch current month SMS usage
+        const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+        const { data: smsUsage } = await supabase
+          .from('fishermen_sms_usage')
+          .select('paid_sms_balance, free_sms_used, monthly_allocation, bonus_sms_at_signup')
+          .eq('fisherman_id', fisherman.id)
+          .eq('month_year', currentMonth)
+          .maybeSingle();
+
+        // Calculate total SMS balance
+        const paidSmsBalance = smsUsage?.paid_sms_balance || 0;
+        const poolBalanceCents = smsPool?.balance_cents || 0;
+        // Convert pool cents to SMS (assuming ~5 cents per SMS)
+        const poolSmsEquivalent = Math.floor(poolBalanceCents / 5);
+        
+        setWallet({ 
+          balance_sms: paidSmsBalance + poolSmsEquivalent,
+          balance_eur_cents: poolBalanceCents
+        });
+        
+        // For now, history is empty (would need to query fishermen_sms_wallet_history)
         setHistory([]);
       } catch (error) {
         console.error('Error fetching wallet data:', error);
