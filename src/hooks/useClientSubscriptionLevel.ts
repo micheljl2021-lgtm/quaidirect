@@ -30,34 +30,39 @@ export const useClientSubscriptionLevel = (): ClientSubscriptionInfo => {
       }
 
       try {
-        // Récupérer le dernier paiement actif de l'utilisateur
+        // Récupérer le dernier paiement actif de l'utilisateur (exclure les plans pêcheur)
         const { data, error } = await supabase
           .from('payments')
           .select('subscription_level, status, plan')
           .eq('user_id', user.id)
           .in('status', ['active', 'trialing'])
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          .order('created_at', { ascending: false });
 
         if (error) {
           console.error('Error fetching subscription level:', error);
           setLevel('follower');
-        } else if (data?.subscription_level) {
-          // Utiliser subscription_level si défini
-          const subLevel = data.subscription_level as ClientSubscriptionLevel;
-          if (['follower', 'premium', 'premium_plus'].includes(subLevel)) {
-            setLevel(subLevel);
-          } else {
-            setLevel('follower');
-          }
-        } else if (data?.plan) {
-          // Fallback: déduire du plan si subscription_level non défini
-          const plan = data.plan.toLowerCase();
-          if (plan.includes('premium_plus') || plan.includes('premium+')) {
-            setLevel('premium_plus');
-          } else if (plan.includes('premium')) {
-            setLevel('premium');
+        } else if (data && data.length > 0) {
+          // Filtrer les plans pêcheur côté client pour trouver les abonnements client
+          const clientPayment = data.find(p => !p.plan?.toLowerCase().includes('fisherman'));
+          
+          if (clientPayment?.subscription_level) {
+            // Utiliser subscription_level si défini
+            const subLevel = clientPayment.subscription_level as ClientSubscriptionLevel;
+            if (['follower', 'premium', 'premium_plus'].includes(subLevel)) {
+              setLevel(subLevel);
+            } else {
+              setLevel('follower');
+            }
+          } else if (clientPayment?.plan) {
+            // Fallback: déduire du plan si subscription_level non défini
+            const plan = clientPayment.plan.toLowerCase();
+            if (plan.includes('premium_plus') || plan.includes('premium+') || plan === 'premium_plus_monthly' || plan === 'premium_plus_yearly') {
+              setLevel('premium_plus');
+            } else if (plan.includes('premium') && !plan.includes('fisherman')) {
+              setLevel('premium');
+            } else {
+              setLevel('follower');
+            }
           } else {
             setLevel('follower');
           }

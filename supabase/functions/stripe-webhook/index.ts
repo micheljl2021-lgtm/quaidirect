@@ -570,6 +570,20 @@ serve(async (req) => {
 
         logStep('Parsed premium subscription dates', { premiumCurrentPeriodStart, premiumCurrentPeriodEnd, premiumTrialEnd });
 
+        // Determine subscription_level from plan
+        const getSubscriptionLevel = (planName: string): string => {
+          const p = planName.toLowerCase();
+          if (p.includes('premium_plus') || p.includes('premium+') || p === 'premium_plus_monthly' || p === 'premium_plus_yearly') {
+            return 'premium_plus';
+          } else if (p.includes('premium') && !p.includes('fisherman')) {
+            return 'premium';
+          }
+          return 'follower';
+        };
+
+        const subscriptionLevel = getSubscriptionLevel(plan);
+        logStep('Determined subscription level', { plan, subscriptionLevel });
+
         // Insert or update payment record
         const { error: upsertError } = await supabaseClient
           .from('payments')
@@ -582,6 +596,7 @@ serve(async (req) => {
             current_period_start: premiumCurrentPeriodStart,
             current_period_end: premiumCurrentPeriodEnd,
             trial_end: premiumTrialEnd,
+            subscription_level: subscriptionLevel,
           }, {
             onConflict: 'stripe_subscription_id'
           });
@@ -589,7 +604,7 @@ serve(async (req) => {
         if (upsertError) {
           logStep('ERROR upserting payment', { error: upsertError });
         } else {
-          logStep('Payment record created/updated successfully');
+          logStep('Payment record created/updated successfully', { subscriptionLevel });
         }
 
         // Add premium role to user
