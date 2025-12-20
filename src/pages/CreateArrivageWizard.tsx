@@ -186,7 +186,7 @@ export default function CreateArrivageWizard() {
       console.log("📡 [handlePublish] Récupération profil pêcheur...");
       const { data: fishermanData, error: fishermanError } = await supabase
         .from("fishermen")
-        .select("id, verified_at")
+        .select("id, boat_name, siret")
         .eq("user_id", user.id)
         .single();
 
@@ -199,10 +199,16 @@ export default function CreateArrivageWizard() {
         return;
       }
 
-      if (!fishermanData.verified_at) {
-        console.error("❌ [handlePublish] Pêcheur non vérifié");
-        toast.error("Ton compte pêcheur est en attente de validation par l'administrateur. Tu recevras un email une fois validé.");
-        setIsPublishing(false);
+      // Check if onboarding is complete (no admin verification needed)
+      const isOnboardingComplete = fishermanData.boat_name && 
+        fishermanData.boat_name !== 'À compléter' &&
+        fishermanData.siret && 
+        fishermanData.siret !== 'À compléter';
+
+      if (!isOnboardingComplete) {
+        console.error("❌ [handlePublish] Onboarding incomplet");
+        toast.error("Ton profil pêcheur n'est pas encore complet. Termine l'onboarding pour pouvoir publier un arrivage.");
+        navigate("/pecheur/onboarding");
         return;
       }
 

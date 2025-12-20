@@ -109,7 +109,7 @@ const Compte = () => {
       return (
         <Badge variant="outline" className="gap-1 bg-primary/10 text-primary border-primary">
           <Anchor className="h-3 w-3" />
-          Pêcheur {isVerifiedFisherman ? '✓' : '(en attente)'}
+          Pêcheur ✓
         </Badge>
       );
     }

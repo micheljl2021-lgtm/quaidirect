@@ -419,6 +419,7 @@ const PecheurOnboarding = () => {
           generated_description: formData.generatedDescription,
           onboarding_step: 6,
           onboarding_data: {},
+          verified_at: new Date().toISOString(), // Auto-verify on onboarding completion
         }], { onConflict: 'user_id' })
         .select()
         .single();
