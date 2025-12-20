@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Crown, Zap, ArrowLeft, Users, TrendingUp, Smartphone, Globe, Clock, Coins, Bot, Send } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { FISHERMAN_PLANS, AFFILIATE_CREDITS_RULES } from "@/config/pricing";
+import { FISHERMAN_PLANS, FISHERMAN_TRIAL_DAYS, AFFILIATE_CREDITS_RULES } from "@/config/pricing";
 
 const DevenirPecheur = () => {
   const plans = [
@@ -71,6 +71,9 @@ const DevenirPecheur = () => {
         </Button>
 
         <div className="text-center mb-12">
+          <Badge variant="secondary" className="mb-4 text-lg px-4 py-1 bg-green-100 text-green-800 border-green-300">
+            🎁 {FISHERMAN_TRIAL_DAYS} jours gratuits sur tous les plans
+          </Badge>
           <h1 className="text-4xl font-bold mb-4">Vendez votre pêche plus facilement</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             QuaiDirect vous fait gagner du temps et des clients. Voici ce que ça change concrètement.
@@ -223,7 +226,7 @@ const DevenirPecheur = () => {
                     size="lg"
                     variant={plan.key === 'pro' ? 'default' : 'outline'}
                   >
-                    Commencer
+                    Essayer {FISHERMAN_TRIAL_DAYS} jours gratuit
                   </Button>
                 </Link>
               </CardContent>

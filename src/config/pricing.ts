@@ -6,6 +6,8 @@
 // ============================================
 // PLANS PÊCHEURS (3 niveaux)
 // ============================================
+export const FISHERMAN_TRIAL_DAYS = 7;
+
 export const FISHERMAN_PLANS = {
   STANDARD: {
     id: 'fisherman_standard',
