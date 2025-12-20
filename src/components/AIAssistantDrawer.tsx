@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/drawer';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -21,6 +22,26 @@ interface AIAssistantDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userType: 'fisherman' | 'premium' | 'admin';
+}
+
+interface UserContext {
+  type: 'fisherman' | 'premium' | 'admin';
+  // Fisherman data
+  boatName?: string;
+  companyName?: string;
+  fishingMethods?: string[];
+  fishingZones?: string[];
+  mainFishingZone?: string;
+  yearsExperience?: string;
+  preferredSpecies?: string[];
+  salePoints?: { label: string; address: string }[];
+  city?: string;
+  // Premium/User data
+  userName?: string;
+  followedPorts?: string[];
+  followedSpecies?: string[];
+  followedFishermen?: string[];
+  userCity?: string;
 }
 
 const QUICK_PROMPTS = {
@@ -42,11 +63,142 @@ const QUICK_PROMPTS = {
 };
 
 export const AIAssistantDrawer = ({ open, onOpenChange, userType }: AIAssistantDrawerProps) => {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [userContext, setUserContext] = useState<UserContext | null>(null);
+  const [contextLoading, setContextLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Fetch user context when drawer opens
+  useEffect(() => {
+    if (open && user && !userContext) {
+      fetchUserContext();
+    }
+  }, [open, user]);
+
+  const fetchUserContext = async () => {
+    if (!user) return;
+    setContextLoading(true);
+
+    try {
+      const context: UserContext = { type: userType };
+
+      if (userType === 'fisherman') {
+        // Fetch fisherman data
+        const { data: fisherman } = await supabase
+          .from('fishermen')
+          .select(`
+            boat_name,
+            company_name,
+            fishing_methods,
+            fishing_zones,
+            main_fishing_zone,
+            years_experience,
+            city
+          `)
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (fisherman) {
+          context.boatName = fisherman.boat_name;
+          context.companyName = fisherman.company_name || undefined;
+          context.fishingMethods = fisherman.fishing_methods || [];
+          context.fishingZones = fisherman.fishing_zones || [];
+          context.mainFishingZone = fisherman.main_fishing_zone || undefined;
+          context.yearsExperience = fisherman.years_experience || undefined;
+          context.city = fisherman.city || undefined;
+
+          // Fetch preferred species
+          const { data: fishermanRecord } = await supabase
+            .from('fishermen')
+            .select('id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          if (fishermanRecord) {
+            const { data: speciesData } = await supabase
+              .from('fishermen_species')
+              .select('species:species_id(name)')
+              .eq('fisherman_id', fishermanRecord.id);
+
+            if (speciesData) {
+              context.preferredSpecies = speciesData
+                .map((s: any) => s.species?.name)
+                .filter(Boolean);
+            }
+
+            // Fetch sale points
+            const { data: salePoints } = await supabase
+              .from('fisherman_sale_points')
+              .select('label, address')
+              .eq('fisherman_id', fishermanRecord.id);
+
+            if (salePoints) {
+              context.salePoints = salePoints;
+            }
+          }
+        }
+      } else {
+        // Fetch profile data
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, city')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (profile) {
+          context.userName = profile.full_name || undefined;
+          context.userCity = profile.city || undefined;
+        }
+
+        // Fetch followed ports
+        const { data: followedPorts } = await supabase
+          .from('follow_ports')
+          .select('ports:port_id(name, city)')
+          .eq('user_id', user.id);
+
+        if (followedPorts) {
+          context.followedPorts = followedPorts
+            .map((p: any) => `${p.ports?.name} (${p.ports?.city})`)
+            .filter(Boolean);
+        }
+
+        // Fetch followed species
+        const { data: followedSpecies } = await supabase
+          .from('follow_species')
+          .select('species:species_id(name)')
+          .eq('user_id', user.id);
+
+        if (followedSpecies) {
+          context.followedSpecies = followedSpecies
+            .map((s: any) => s.species?.name)
+            .filter(Boolean);
+        }
+
+        // Fetch followed fishermen
+        const { data: followedFishermen } = await supabase
+          .from('fishermen_followers')
+          .select('fishermen:fisherman_id(boat_name)')
+          .eq('user_id', user.id);
+
+        if (followedFishermen) {
+          context.followedFishermen = followedFishermen
+            .map((f: any) => f.fishermen?.boat_name)
+            .filter(Boolean);
+        }
+      }
+
+      setUserContext(context);
+    } catch (error) {
+      console.error('Error fetching user context:', error);
+      setUserContext({ type: userType });
+    } finally {
+      setContextLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -85,6 +237,7 @@ export const AIAssistantDrawer = ({ open, onOpenChange, userType }: AIAssistantD
               role: m.role,
               content: m.content,
             })),
+            userContext: userContext,
           }),
         }
       );
@@ -160,6 +313,41 @@ export const AIAssistantDrawer = ({ open, onOpenChange, userType }: AIAssistantD
 
   const quickPrompts = QUICK_PROMPTS[userType] || QUICK_PROMPTS.premium;
 
+  const getContextSummary = () => {
+    if (!userContext) return null;
+    
+    if (userContext.type === 'fisherman' && userContext.boatName) {
+      return (
+        <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2 mb-2">
+          <span className="font-medium">{userContext.boatName}</span>
+          {userContext.mainFishingZone && <span> • {userContext.mainFishingZone}</span>}
+          {userContext.preferredSpecies && userContext.preferredSpecies.length > 0 && (
+            <span> • {userContext.preferredSpecies.slice(0, 3).join(', ')}</span>
+          )}
+        </div>
+      );
+    }
+    
+    if (userContext.type === 'premium' || userContext.type === 'admin') {
+      const info: string[] = [];
+      if (userContext.userName) info.push(userContext.userName);
+      if (userContext.userCity) info.push(userContext.userCity);
+      if (userContext.followedSpecies && userContext.followedSpecies.length > 0) {
+        info.push(`🐟 ${userContext.followedSpecies.slice(0, 2).join(', ')}`);
+      }
+      
+      if (info.length > 0) {
+        return (
+          <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2 mb-2">
+            {info.join(' • ')}
+          </div>
+        );
+      }
+    }
+    
+    return null;
+  };
+
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[85vh] sm:max-h-[80vh]">
@@ -168,19 +356,25 @@ export const AIAssistantDrawer = ({ open, onOpenChange, userType }: AIAssistantD
             <Sparkles className="h-5 w-5 text-primary" />
             {userType === 'fisherman' ? 'IA du Marin' : 'Assistant QuaiDirect'}
           </DrawerTitle>
+          {!contextLoading && getContextSummary()}
         </DrawerHeader>
 
         <div className="flex flex-col h-[calc(85vh-120px)] sm:h-[calc(80vh-140px)]">
           {/* Messages area */}
           <ScrollArea className="flex-1 px-4" ref={scrollRef}>
             <div className="space-y-4 py-4">
-              {messages.length === 0 ? (
+              {contextLoading ? (
+                <div className="text-center py-8">
+                  <Loader2 className="h-8 w-8 mx-auto animate-spin text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground mt-2">Chargement de ton profil...</p>
+                </div>
+              ) : messages.length === 0 ? (
                 <div className="text-center space-y-4 py-8">
                   <Bot className="h-12 w-12 mx-auto text-muted-foreground/50" />
                   <p className="text-sm text-muted-foreground">
                     {userType === 'fisherman'
-                      ? 'Pose-moi tes questions sur la météo, la pêche, tes arrivages...'
-                      : 'Comment puis-je vous aider ?'}
+                      ? `Salut ${userContext?.boatName || 'Capitaine'} ! Pose-moi tes questions sur la météo, la pêche, tes arrivages...`
+                      : `Bonjour${userContext?.userName ? ` ${userContext.userName}` : ''} ! Comment puis-je vous aider ?`}
                   </p>
                   
                   {/* Quick prompts */}
@@ -224,7 +418,7 @@ export const AIAssistantDrawer = ({ open, onOpenChange, userType }: AIAssistantD
                     </div>
                     <div
                       className={cn(
-                        'rounded-lg px-3 py-2 max-w-[80%] text-sm',
+                        'rounded-lg px-3 py-2 max-w-[80%] text-sm whitespace-pre-wrap',
                         msg.role === 'user'
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-muted'
@@ -253,12 +447,12 @@ export const AIAssistantDrawer = ({ open, onOpenChange, userType }: AIAssistantD
               placeholder="Écris ta question..."
               className="min-h-[44px] max-h-[120px] resize-none text-sm"
               rows={1}
-              disabled={isLoading}
+              disabled={isLoading || contextLoading}
             />
             <Button
               type="submit"
               size="icon"
-              disabled={!input.trim() || isLoading}
+              disabled={!input.trim() || isLoading || contextLoading}
               className="flex-shrink-0 h-11 w-11"
             >
               {isLoading ? (
