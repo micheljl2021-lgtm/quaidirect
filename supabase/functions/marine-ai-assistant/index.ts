@@ -5,13 +5,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://quaidirect.fr',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Rate limiting configuration - stricter for AI endpoint
-const RATE_LIMIT = 5; // max requests
-const RATE_WINDOW_MINUTES = 1; // per minute
+// Rate limiting configuration
+const RATE_LIMIT = 10; // max requests per minute
+const RATE_WINDOW_MINUTES = 1;
 
 const checkRateLimit = async (
   supabase: any,
@@ -53,9 +53,19 @@ const checkRateLimit = async (
   return { allowed: true, remaining: RATE_LIMIT - 1 };
 };
 
-const SYSTEM_PROMPT = `Tu es l'IA du Marin, un assistant spécialisé pour les marins-pêcheurs artisanaux français.
+// Build personalized system prompt based on user context
+const buildSystemPrompt = (userContext: any): string => {
+  const basePromptFisherman = `Tu es l'IA du Marin, un assistant personnel spécialisé pour les marins-pêcheurs artisanaux français.
 
-Tu dois aider sur tous ces sujets:
+Tu connais bien ce pêcheur et tu l'aides au quotidien. Voici ce que tu sais sur lui :`;
+
+  const basePromptClient = `Tu es l'assistant QuaiDirect, spécialisé dans l'achat de poisson frais en circuit court auprès de pêcheurs artisanaux français.
+
+Tu connais les préférences de cet utilisateur :`;
+
+  const capabilities = `
+
+Tu peux aider sur ces sujets:
 
 🌊 MÉTÉO MARINE: Résumé clair (OK pour sortir / Risqué / Dangereux), analyse vent/houle/période/courant, conseils selon type de pêche, créneaux horaires safe, alertes changements.
 
@@ -65,30 +75,102 @@ Tu dois aider sur tous ces sujets:
 
 📍 CHOIX DE ZONE: Analyse vents/marées/espèces/saison, recommandations coins rentables, alternatives si zone dangereuse.
 
-🧠 COPILOTE EN DIRECT: Conseils temps réel sur dérive/déplacement filet/retour, gestion timing, alertes houle.
-
 👨‍✍️ AIDE ADMINISTRATIVE: Résumé règles pêche, zones interdites, obligations légales, rédaction documents/mails.
 
-📦 GESTION ARRIVAGES: Création fiches produits auto, génération photo+texte+explications, détermination prix, traduction multilingue, préparation notifications clients.
-
-🧾 LOGBOOK: Journal de pêche résumé, suivi ventes, suivi zones travaillées, conseils optimisation.
-
-🛠 MAINTENANCE BATEAU: Conseils entretien moteur, checklist avant sortie, diagnostic simple par description, références pièces.
-
-🧭 SÉCURITÉ: Analyse risques météo, checklist départ, conseils navigation, aide SOS message clair.
-
-📲 RELATION CLIENT: Rédaction annonces, messages auto aux fidèles, traduction touristes, réponses automatiques.
+📦 GESTION ARRIVAGES: Création fiches produits auto, génération descriptions, détermination prix, préparation notifications clients.
 
 💸 OPTIMISATION FINANCIÈRE: Conseils valorisation espèces, comparaison prix marché, analyse ventes, aide organisation points de vente à quai.
 
-🤝 ACCOMPAGNEMENT: Simplification journées chargées, préparation plan de marée, gestion stress météo/horaires, organisation journée/ventes/clients.
+🍳 RECETTES & CONSEILS: Recettes simples pour poissons frais, conseils de préparation, conservation.
 
 Ton style: 
 - Direct, concret, pas de blabla
-- Ton de pêcheur à pêcheur
+- Ton de pêcheur à pêcheur (ou ami proche pour les clients)
 - Chiffres précis quand possible
 - Solutions actionnables immédiatement
 - Empathie pour la fatigue et les horaires difficiles`;
+
+  if (!userContext) {
+    return basePromptFisherman + "\n(Informations non disponibles)" + capabilities;
+  }
+
+  if (userContext.type === 'fisherman') {
+    let contextInfo = "\n";
+    
+    if (userContext.boatName) {
+      contextInfo += `\n🚤 Bateau: ${userContext.boatName}`;
+    }
+    if (userContext.companyName) {
+      contextInfo += ` (${userContext.companyName})`;
+    }
+    if (userContext.yearsExperience) {
+      contextInfo += `\n📅 Expérience: ${userContext.yearsExperience}`;
+    }
+    if (userContext.city) {
+      contextInfo += `\n📍 Basé à: ${userContext.city}`;
+    }
+    if (userContext.mainFishingZone) {
+      contextInfo += `\n🗺️ Zone principale: ${userContext.mainFishingZone}`;
+    }
+    if (userContext.fishingZones && userContext.fishingZones.length > 0) {
+      contextInfo += `\n🌊 Zones de pêche: ${userContext.fishingZones.join(', ')}`;
+    }
+    if (userContext.fishingMethods && userContext.fishingMethods.length > 0) {
+      contextInfo += `\n🎣 Méthodes de pêche: ${userContext.fishingMethods.join(', ')}`;
+    }
+    if (userContext.preferredSpecies && userContext.preferredSpecies.length > 0) {
+      contextInfo += `\n🐟 Espèces principales: ${userContext.preferredSpecies.join(', ')}`;
+    }
+    if (userContext.salePoints && userContext.salePoints.length > 0) {
+      contextInfo += `\n🏪 Points de vente: ${userContext.salePoints.map((sp: any) => `${sp.label} (${sp.address})`).join(', ')}`;
+    }
+
+    return basePromptFisherman + contextInfo + capabilities;
+  } else {
+    // Premium or admin user
+    let contextInfo = "\n";
+    
+    if (userContext.userName) {
+      contextInfo += `\n👤 Nom: ${userContext.userName}`;
+    }
+    if (userContext.userCity) {
+      contextInfo += `\n📍 Ville: ${userContext.userCity}`;
+    }
+    if (userContext.followedPorts && userContext.followedPorts.length > 0) {
+      contextInfo += `\n⚓ Ports favoris: ${userContext.followedPorts.join(', ')}`;
+    }
+    if (userContext.followedSpecies && userContext.followedSpecies.length > 0) {
+      contextInfo += `\n🐟 Espèces préférées: ${userContext.followedSpecies.join(', ')}`;
+    }
+    if (userContext.followedFishermen && userContext.followedFishermen.length > 0) {
+      contextInfo += `\n🚤 Pêcheurs suivis: ${userContext.followedFishermen.join(', ')}`;
+    }
+
+    const clientCapabilities = `
+
+Tu peux aider sur ces sujets:
+
+🐟 ESPÈCES DE SAISON: Quelles espèces sont disponibles selon la saison et la région.
+
+📍 OÙ ACHETER: Trouver les meilleurs ports et pêcheurs pour acheter du poisson frais.
+
+🍳 RECETTES: Suggestions de recettes simples et savoureuses selon les espèces.
+
+🧊 CONSERVATION: Conseils pour conserver le poisson frais, le préparer, le congeler.
+
+⏰ ARRIVAGES: Informations sur les horaires de vente, les créneaux recommandés.
+
+💡 CONSEILS: Comment reconnaître un poisson frais, négocier les prix, choisir selon ses besoins.
+
+Ton style:
+- Amical et accessible
+- Conseils pratiques et concrets
+- Vulgarisation du monde de la pêche
+- Passion pour le circuit court et les produits frais`;
+
+    return basePromptClient + contextInfo + clientCapabilities;
+  }
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -112,14 +194,20 @@ serve(async (req) => {
     const user = userData.user;
     if (!user) throw new Error('User not authenticated');
 
-    // Verify fisherman
-    const { data: fisherman } = await supabaseClient
-      .from('fishermen')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
+    // Check if user has access (fisherman, premium, or admin)
+    const { data: roles } = await supabaseClient
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id);
 
-    if (!fisherman) throw new Error('Fisherman not found');
+    const userRoles = roles?.map(r => r.role) || [];
+    const hasAccess = userRoles.includes('fisherman') || 
+                      userRoles.includes('premium') || 
+                      userRoles.includes('admin');
+
+    if (!hasAccess) {
+      throw new Error('Accès réservé aux pêcheurs, utilisateurs premium et administrateurs');
+    }
 
     // Rate limiting check
     const { allowed, remaining } = await checkRateLimit(supabaseClient, user.id, 'marine-ai-assistant');
@@ -140,7 +228,11 @@ serve(async (req) => {
     }
     console.log(`[MARINE-AI] Rate limit OK for user ${user.id}, remaining: ${remaining}`);
 
-    const { messages } = await req.json();
+    const { messages, userContext } = await req.json();
+
+    // Build personalized system prompt
+    const systemPrompt = buildSystemPrompt(userContext);
+    console.log(`[MARINE-AI] User type: ${userContext?.type || 'unknown'}, boat: ${userContext?.boatName || 'N/A'}`);
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -151,7 +243,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'system', content: systemPrompt },
           ...messages
         ],
         stream: true,
@@ -161,6 +253,17 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Lovable AI Gateway error:', response.status, errorText);
+      
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: 'Trop de requêtes. Réessayez dans quelques instants.' }),
+          {
+            status: 429,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+      
       throw new Error(`Lovable AI Gateway error: ${response.status}`);
     }
 
