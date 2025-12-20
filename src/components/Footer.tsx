@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Fish, Mail } from 'lucide-react';
+import { Fish, Mail, Bug } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -59,6 +59,12 @@ const Footer = () => {
               <li>
                 <Link to="/mentions-legales" className="text-muted-foreground hover:text-primary transition-colors">
                   Mentions Légales
+                </Link>
+              </li>
+              <li>
+                <Link to="/compte#feedback" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+                  <Bug className="h-3 w-3" />
+                  Signaler un bug
                 </Link>
               </li>
             </ul>
