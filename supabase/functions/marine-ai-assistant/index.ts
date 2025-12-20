@@ -1,13 +1,9 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 
 const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
 
 // Build personalized system prompt based on user context
 const buildSystemPrompt = (userContext: any): string => {
@@ -123,9 +119,11 @@ Ton style:
 };
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get('Origin');
+  const corsHeaders = getCorsHeaders(origin);
 
   const supabaseClient = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
