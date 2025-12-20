@@ -88,20 +88,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setUserRole(primaryRole);
 
-      // Check if verified fisherman
+      // Check if fisherman has completed onboarding (no admin verification required)
       if (roles.includes('fisherman')) {
         const { data: fishermanData, error: fishermanError } = await supabase
           .from('fishermen')
-          .select('verified_at')
+          .select('boat_name, siret')
           .eq('user_id', userId)
-          .maybeSingle() as { data: { verified_at: string | null } | null; error: any };
+          .maybeSingle() as { data: { boat_name: string | null; siret: string | null } | null; error: any };
         
         if (fishermanError) {
           console.error('Error fetching fisherman:', fishermanError);
           return;
         }
 
-        setIsVerifiedFisherman(fishermanData ? !!fishermanData.verified_at : false);
+        // Fisherman is "verified" if onboarding is complete (no admin verification needed)
+        const isOnboardingComplete = fishermanData && 
+          fishermanData.boat_name && 
+          fishermanData.boat_name !== 'À compléter' &&
+          fishermanData.siret && 
+          fishermanData.siret !== 'À compléter';
+        
+        setIsVerifiedFisherman(!!isOnboardingComplete);
       } else {
         setIsVerifiedFisherman(false);
       }
