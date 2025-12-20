@@ -46,7 +46,8 @@ QuaiDirect est structuré en **8 modules principaux** couvrant l'ensemble du par
 
 ### Composants Clés
 
-- **UnifiedArrivalCard.tsx** : Carte arrivage standardisée (photo, espèces, prix, lieu, stock, CTA)
+- **ArrivageCard.tsx** : Carte arrivage unifiée (photo, espèces, prix, lieu, stock, CTA) - variants `compact` et `full`
+- **EmptyState.tsx** : Composant empty state réutilisable avec variantes pré-configurées
 - **GoogleMapComponent.tsx** : Carte Google Maps avec marqueurs personnalisés
 - **PhotoCarousel.tsx** : Carrousel photos arrivages
 

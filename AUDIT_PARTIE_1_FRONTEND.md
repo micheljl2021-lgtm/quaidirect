@@ -88,15 +88,16 @@ enabled: !!id  // ✅ Accessible à tous
 
 ### 4. 🔧 COMPOSANTS DUPLIQUÉS
 
-**ArrivageCard.tsx vs UnifiedArrivalCard.tsx:**
-- Deux composants très similaires (affichage arrivages)
-- `ArrivageCard` : Utilisé sur Landing (165 lignes)
-- `UnifiedArrivalCard` : Utilisé partout ailleurs (214 lignes)
+**ArrivageCard.tsx ✅ UNIFIÉ:**
+- Composant unique avec variants (`compact` / `full`)
+- Utilisé sur Landing, Arrivages, Carte
+- Props pour variations (avec/sans bouton réservation)
+- ~330 lignes avec toutes les fonctionnalités
 
-**Refactoring recommandé:**
-1. Unifier en un seul composant `ArrivageCard.tsx`
-2. Utiliser props pour variations (compact/full, with/without reservation button)
-3. Réduire duplication de code (~100 lignes)
+**EmptyState.tsx ✅ AJOUTÉ:**
+- Composant réutilisable pour les états vides
+- Variantes pré-configurées : `EmptyArrivages`, `EmptyFavorites`, `EmptyCart`, etc.
+
 
 ---
 

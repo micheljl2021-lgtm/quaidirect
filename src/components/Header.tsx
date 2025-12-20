@@ -74,7 +74,7 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-24 items-center justify-between px-4">
+      <div className="container flex h-16 md:h-20 items-center justify-between px-4">
         {/* Logo */}
         <Link 
           to="/" 
@@ -84,7 +84,7 @@ const Header = () => {
           <img 
             src={logoQuaidirect} 
             alt="QuaiDirect" 
-            className="h-20 md:h-24 lg:h-28 w-auto object-contain"
+            className="h-12 md:h-16 lg:h-20 w-auto object-contain"
           />
         </Link>
 
@@ -208,7 +208,7 @@ const Header = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="absolute inset-x-0 top-24 z-[100] bg-background md:hidden border-t border-border shadow-lg max-h-[calc(100vh-6rem)] overflow-y-auto">
+          <div className="absolute inset-x-0 top-16 z-[100] bg-background md:hidden border-t border-border shadow-lg max-h-[calc(100vh-4rem)] overflow-y-auto">
             <nav className="flex flex-col gap-3 p-6">
               <NavLink 
                 to="/carte" 
