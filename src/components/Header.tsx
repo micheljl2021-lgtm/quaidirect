@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useClientSubscriptionLevel } from "@/hooks/useClientSubscriptionLevel";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Crown, User, Menu, X, Shield } from "lucide-react";
+import { Crown, User, Menu, X, Shield, Download } from "lucide-react";
 import logoQuaidirect from "@/assets/logo-quaidirect-full.png";
 import {
   DropdownMenu,
@@ -104,6 +104,13 @@ const Header = () => {
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-3">
+          <Link to="/telecharger">
+            <Button variant="ghost" size="sm" className="gap-2">
+              <Download className="h-4 w-4" />
+              <span>Télécharger</span>
+            </Button>
+          </Link>
+          
           {!user && (
             <Link to="/premium">
               <Button variant="default" size="sm" className="gap-2 bg-gradient-ocean hover:opacity-90 transition-opacity">
@@ -244,6 +251,15 @@ const Header = () => {
                   Dashboard Admin
                 </NavLink>
               )}
+              
+              <NavLink 
+                to="/telecharger" 
+                className={({ isActive }) => `${mobileNavLinkClass({ isActive })} flex items-center gap-2`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Download className="h-4 w-4" />
+                Télécharger l'app
+              </NavLink>
               
               <div className="border-t my-2" />
               
