@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useClientSubscriptionLevel } from "@/hooks/useClientSubscriptionLevel";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
-import { Crown, User, Bell, Settings, Anchor, Shield, ArrowLeft, Loader2, ExternalLink } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Crown, User, Bell, Settings, Anchor, Shield, ArrowLeft, Loader2, ExternalLink, Bug, Send } from "lucide-react";
 import { toast } from "sonner";
 
 interface NotificationPrefs {
@@ -21,10 +24,17 @@ const Compte = () => {
   const { user, userRole, isVerifiedFisherman } = useAuth();
   const { level: subscriptionLevel, isPremium, isLoading: subLoading } = useClientSubscriptionLevel();
   const navigate = useNavigate();
+  const location = useLocation();
   const [fishermanData, setFishermanData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [notificationPrefs, setNotificationPrefs] = useState<NotificationPrefs>({ push_enabled: true, email_enabled: false });
   const [savingNotifs, setSavingNotifs] = useState(false);
+  
+  // Feedback form state
+  const [feedbackType, setFeedbackType] = useState<'bug' | 'idea'>('bug');
+  const [feedbackDescription, setFeedbackDescription] = useState('');
+  const [feedbackEmail, setFeedbackEmail] = useState('');
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -58,6 +68,9 @@ const Compte = () => {
             email_enabled: notifPrefs.email_enabled ?? false
           });
         }
+        
+        // Set feedback email from user
+        setFeedbackEmail(user.email || '');
       } catch (error) {
         console.error('Error fetching user data:', error);
       } finally {
@@ -67,6 +80,16 @@ const Compte = () => {
 
     fetchUserData();
   }, [user, userRole, navigate]);
+
+  // Scroll to feedback section if hash is #feedback
+  useEffect(() => {
+    if (location.hash === '#feedback' && !loading) {
+      const feedbackSection = document.getElementById('feedback-section');
+      if (feedbackSection) {
+        feedbackSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, [location.hash, loading]);
 
   const handleNotificationToggle = async (key: 'push_enabled' | 'email_enabled', value: boolean) => {
     if (!user) return;
@@ -93,6 +116,43 @@ const Compte = () => {
       setNotificationPrefs(notificationPrefs);
     } finally {
       setSavingNotifs(false);
+    }
+  };
+
+  const handleFeedbackSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!feedbackDescription.trim() || feedbackDescription.length < 20) {
+      toast.error('Description trop courte (min 20 caractères)');
+      return;
+    }
+
+    if (!feedbackEmail.trim()) {
+      toast.error('Email obligatoire');
+      return;
+    }
+
+    setSubmittingFeedback(true);
+
+    try {
+      const { error } = await supabase.from('feedback').insert({
+        type: feedbackType,
+        page: window.location.pathname,
+        description: feedbackDescription.trim(),
+        email: feedbackEmail.trim(),
+        user_id: user?.id || null,
+      });
+
+      if (error) throw error;
+
+      toast.success('Merci ! Nous avons reçu votre retour 🙏');
+      setFeedbackDescription('');
+      setFeedbackType('bug');
+    } catch (err) {
+      console.error('Feedback error:', err);
+      toast.error("Erreur lors de l'envoi");
+    } finally {
+      setSubmittingFeedback(false);
     }
   };
 
@@ -380,6 +440,69 @@ const Compte = () => {
               </CardContent>
             </Card>
           )}
+
+          {/* Signaler un problème / Feedback */}
+          <Card id="feedback-section">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Bug className="h-5 w-5 text-muted-foreground" />
+                <CardTitle>Signaler un bug ou une idée</CardTitle>
+              </div>
+              <CardDescription>
+                Aidez-nous à améliorer QuaiDirect
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleFeedbackSubmit} className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Type</label>
+                  <Select value={feedbackType} onValueChange={(v) => setFeedbackType(v as 'bug' | 'idea')}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="bug">🐞 Bug</SelectItem>
+                      <SelectItem value="idea">💡 Idée</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Description *</label>
+                  <Textarea
+                    placeholder="Décrivez le problème ou votre idée..."
+                    value={feedbackDescription}
+                    onChange={(e) => setFeedbackDescription(e.target.value)}
+                    rows={4}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Min 20 caractères ({feedbackDescription.length}/20)
+                  </p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Email *</label>
+                  <Input
+                    type="email"
+                    placeholder="votre@email.com"
+                    value={feedbackEmail}
+                    onChange={(e) => setFeedbackEmail(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <Button type="submit" disabled={submittingFeedback} className="gap-2">
+                  {submittingFeedback ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                  {submittingFeedback ? 'Envoi...' : 'Envoyer'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
 
           {/* Zone dangereuse */}
           <Card className="border-destructive/50">
