@@ -53,6 +53,33 @@ export type Database = {
           },
         ]
       }
+      ai_usage: {
+        Row: {
+          created_at: string | null
+          id: string
+          request_count: number
+          updated_at: string | null
+          usage_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          request_count?: number
+          updated_at?: string | null
+          usage_date?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          request_count?: number
+          updated_at?: string | null
+          usage_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       audits: {
         Row: {
           action: string
@@ -2860,9 +2887,17 @@ export type Database = {
         Returns: undefined
       }
       archive_expired_drops: { Args: never; Returns: undefined }
+      check_and_increment_ai_usage: {
+        Args: { p_user_id: string; p_user_role: string }
+        Returns: Json
+      }
       cleanup_rate_limits: { Args: never; Returns: undefined }
       count_users: { Args: never; Returns: number }
       count_verified_fishermen: { Args: never; Returns: number }
+      get_ai_usage: {
+        Args: { p_user_id: string; p_user_role: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

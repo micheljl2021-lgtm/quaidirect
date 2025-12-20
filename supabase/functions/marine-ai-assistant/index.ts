@@ -9,50 +9,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Rate limiting configuration
-const RATE_LIMIT = 10; // max requests per minute
-const RATE_WINDOW_MINUTES = 1;
-
-const checkRateLimit = async (
-  supabase: any,
-  identifier: string,
-  endpoint: string
-): Promise<{ allowed: boolean; remaining: number }> => {
-  const windowStart = new Date(Date.now() - RATE_WINDOW_MINUTES * 60 * 1000).toISOString();
-  
-  const { data: existing, error: fetchError } = await supabase
-    .from('rate_limits')
-    .select('id, request_count')
-    .eq('identifier', identifier)
-    .eq('endpoint', endpoint)
-    .gte('window_start', windowStart)
-    .single();
-
-  if (fetchError && fetchError.code !== 'PGRST116') {
-    console.error('Rate limit check error:', fetchError);
-    return { allowed: true, remaining: RATE_LIMIT };
-  }
-
-  if (existing) {
-    if (existing.request_count >= RATE_LIMIT) {
-      return { allowed: false, remaining: 0 };
-    }
-    await supabase
-      .from('rate_limits')
-      .update({ request_count: existing.request_count + 1 })
-      .eq('id', existing.id);
-    return { allowed: true, remaining: RATE_LIMIT - existing.request_count - 1 };
-  }
-
-  await supabase.from('rate_limits').insert({
-    identifier,
-    endpoint,
-    request_count: 1,
-    window_start: new Date().toISOString(),
-  });
-  return { allowed: true, remaining: RATE_LIMIT - 1 };
-};
-
 // Build personalized system prompt based on user context
 const buildSystemPrompt = (userContext: any): string => {
   const basePromptFisherman = `Tu es l'IA du Marin, un assistant personnel spécialisé pour les marins-pêcheurs artisanaux français.
@@ -63,7 +19,7 @@ Tu connais bien ce pêcheur et tu l'aides au quotidien. Voici ce que tu sais sur
 
 Tu connais les préférences de cet utilisateur :`;
 
-  const capabilities = `
+  const fishermanCapabilities = `
 
 Tu peux aider sur ces sujets:
 
@@ -85,68 +41,12 @@ Tu peux aider sur ces sujets:
 
 Ton style: 
 - Direct, concret, pas de blabla
-- Ton de pêcheur à pêcheur (ou ami proche pour les clients)
+- Ton de pêcheur à pêcheur
 - Chiffres précis quand possible
 - Solutions actionnables immédiatement
 - Empathie pour la fatigue et les horaires difficiles`;
 
-  if (!userContext) {
-    return basePromptFisherman + "\n(Informations non disponibles)" + capabilities;
-  }
-
-  if (userContext.type === 'fisherman') {
-    let contextInfo = "\n";
-    
-    if (userContext.boatName) {
-      contextInfo += `\n🚤 Bateau: ${userContext.boatName}`;
-    }
-    if (userContext.companyName) {
-      contextInfo += ` (${userContext.companyName})`;
-    }
-    if (userContext.yearsExperience) {
-      contextInfo += `\n📅 Expérience: ${userContext.yearsExperience}`;
-    }
-    if (userContext.city) {
-      contextInfo += `\n📍 Basé à: ${userContext.city}`;
-    }
-    if (userContext.mainFishingZone) {
-      contextInfo += `\n🗺️ Zone principale: ${userContext.mainFishingZone}`;
-    }
-    if (userContext.fishingZones && userContext.fishingZones.length > 0) {
-      contextInfo += `\n🌊 Zones de pêche: ${userContext.fishingZones.join(', ')}`;
-    }
-    if (userContext.fishingMethods && userContext.fishingMethods.length > 0) {
-      contextInfo += `\n🎣 Méthodes de pêche: ${userContext.fishingMethods.join(', ')}`;
-    }
-    if (userContext.preferredSpecies && userContext.preferredSpecies.length > 0) {
-      contextInfo += `\n🐟 Espèces principales: ${userContext.preferredSpecies.join(', ')}`;
-    }
-    if (userContext.salePoints && userContext.salePoints.length > 0) {
-      contextInfo += `\n🏪 Points de vente: ${userContext.salePoints.map((sp: any) => `${sp.label} (${sp.address})`).join(', ')}`;
-    }
-
-    return basePromptFisherman + contextInfo + capabilities;
-  } else {
-    // Premium or admin user
-    let contextInfo = "\n";
-    
-    if (userContext.userName) {
-      contextInfo += `\n👤 Nom: ${userContext.userName}`;
-    }
-    if (userContext.userCity) {
-      contextInfo += `\n📍 Ville: ${userContext.userCity}`;
-    }
-    if (userContext.followedPorts && userContext.followedPorts.length > 0) {
-      contextInfo += `\n⚓ Ports favoris: ${userContext.followedPorts.join(', ')}`;
-    }
-    if (userContext.followedSpecies && userContext.followedSpecies.length > 0) {
-      contextInfo += `\n🐟 Espèces préférées: ${userContext.followedSpecies.join(', ')}`;
-    }
-    if (userContext.followedFishermen && userContext.followedFishermen.length > 0) {
-      contextInfo += `\n🚤 Pêcheurs suivis: ${userContext.followedFishermen.join(', ')}`;
-    }
-
-    const clientCapabilities = `
+  const clientCapabilities = `
 
 Tu peux aider sur ces sujets:
 
@@ -167,6 +67,56 @@ Ton style:
 - Conseils pratiques et concrets
 - Vulgarisation du monde de la pêche
 - Passion pour le circuit court et les produits frais`;
+
+  if (!userContext) {
+    return basePromptFisherman + "\n(Informations non disponibles)" + fishermanCapabilities;
+  }
+
+  // Determine user type from context
+  const isFisherman = userContext.boatName || userContext.fishingMethods || userContext.type === 'fisherman';
+
+  if (isFisherman) {
+    let contextInfo = "\n";
+    
+    if (userContext.boatName) {
+      contextInfo += `\n🚤 Bateau: ${userContext.boatName}`;
+    }
+    if (userContext.fishingZones && userContext.fishingZones.length > 0) {
+      contextInfo += `\n🌊 Zones de pêche: ${userContext.fishingZones.join(', ')}`;
+    }
+    if (userContext.fishingMethods && userContext.fishingMethods.length > 0) {
+      contextInfo += `\n🎣 Méthodes: ${userContext.fishingMethods.join(', ')}`;
+    }
+    if (userContext.mainSpecies && userContext.mainSpecies.length > 0) {
+      contextInfo += `\n🐟 Espèces principales: ${userContext.mainSpecies.join(', ')}`;
+    }
+    if (userContext.salePoints && userContext.salePoints.length > 0) {
+      contextInfo += `\n🏪 Points de vente: ${userContext.salePoints.map((sp: any) => `${sp.label}`).join(', ')}`;
+    }
+    if (userContext.contactCount) {
+      contextInfo += `\n👥 ${userContext.contactCount} contacts clients`;
+    }
+    if (userContext.recentDropsCount) {
+      contextInfo += `\n📦 ${userContext.recentDropsCount} arrivages ce mois-ci`;
+    }
+
+    return basePromptFisherman + contextInfo + fishermanCapabilities;
+  } else {
+    // Premium user
+    let contextInfo = "\n";
+    
+    if (userContext.followedPorts && userContext.followedPorts.length > 0) {
+      contextInfo += `\n⚓ Ports favoris: ${userContext.followedPorts.join(', ')}`;
+    }
+    if (userContext.followedSpecies && userContext.followedSpecies.length > 0) {
+      contextInfo += `\n🐟 Espèces préférées: ${userContext.followedSpecies.join(', ')}`;
+    }
+    if (userContext.followedFishermen && userContext.followedFishermen.length > 0) {
+      contextInfo += `\n🚤 Pêcheurs suivis: ${userContext.followedFishermen.join(', ')}`;
+    }
+    if (userContext.recentOrders) {
+      contextInfo += `\n🛒 ${userContext.recentOrders} commandes passées`;
+    }
 
     return basePromptClient + contextInfo + clientCapabilities;
   }
@@ -201,38 +151,59 @@ serve(async (req) => {
       .eq('user_id', user.id);
 
     const userRoles = roles?.map(r => r.role) || [];
-    const hasAccess = userRoles.includes('fisherman') || 
-                      userRoles.includes('premium') || 
-                      userRoles.includes('admin');
+    const isFisherman = userRoles.includes('fisherman');
+    const isPremium = userRoles.includes('premium');
+    const isAdmin = userRoles.includes('admin');
+    
+    const hasAccess = isFisherman || isPremium || isAdmin;
 
     if (!hasAccess) {
       throw new Error('Accès réservé aux pêcheurs, utilisateurs premium et administrateurs');
     }
 
-    // Rate limiting check
-    const { allowed, remaining } = await checkRateLimit(supabaseClient, user.id, 'marine-ai-assistant');
-    if (!allowed) {
-      console.log(`[MARINE-AI] Rate limit exceeded for user ${user.id}`);
+    // Determine user role for quota
+    let userRole = 'user';
+    if (isAdmin) userRole = 'admin';
+    else if (isFisherman) userRole = 'fisherman';
+    else if (isPremium) userRole = 'premium';
+
+    // Check and increment AI usage quota
+    const { data: quotaResult, error: quotaError } = await supabaseClient.rpc(
+      'check_and_increment_ai_usage',
+      { p_user_id: user.id, p_user_role: userRole }
+    );
+
+    if (quotaError) {
+      console.error('[MARINE-AI] Quota check error:', quotaError);
+      // Continue anyway - don't block on quota errors
+    } else if (quotaResult && !quotaResult.allowed) {
+      console.log(`[MARINE-AI] Quota exceeded for user ${user.id}, role: ${userRole}`);
+      
+      const message = quotaResult.reason === 'quota_exceeded'
+        ? `Vous avez atteint votre limite de ${quotaResult.limit} questions IA pour aujourd'hui. Consultez les FAQ ou revenez demain !`
+        : 'Accès IA non disponible pour votre compte.';
+      
       return new Response(
-        JSON.stringify({ error: 'Limite de requêtes atteinte. Veuillez patienter 1 minute.' }),
+        JSON.stringify({ 
+          quotaExceeded: true, 
+          message,
+          remaining: 0,
+          limit: quotaResult.limit 
+        }),
         {
-          headers: { 
-            ...corsHeaders, 
-            'Content-Type': 'application/json',
-            'X-RateLimit-Remaining': '0',
-            'Retry-After': '60'
-          },
-          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200, // Return 200 so client can handle gracefully
         }
       );
     }
-    console.log(`[MARINE-AI] Rate limit OK for user ${user.id}, remaining: ${remaining}`);
+
+    console.log(`[MARINE-AI] Quota OK for user ${user.id}, role: ${userRole}, remaining: ${quotaResult?.remaining ?? 'N/A'}`);
 
     const { messages, userContext } = await req.json();
 
     // Build personalized system prompt
     const systemPrompt = buildSystemPrompt(userContext);
-    console.log(`[MARINE-AI] User type: ${userContext?.type || 'unknown'}, boat: ${userContext?.boatName || 'N/A'}`);
+    console.log(`[MARINE-AI] User role: ${userRole}, context: ${userContext?.boatName || userContext?.followedPorts?.length + ' ports' || 'none'}`);
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -264,6 +235,16 @@ serve(async (req) => {
         );
       }
       
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: 'Service temporairement indisponible. Réessayez plus tard.' }),
+          {
+            status: 402,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+      
       throw new Error(`Lovable AI Gateway error: ${response.status}`);
     }
 
@@ -271,7 +252,7 @@ serve(async (req) => {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
-        'X-RateLimit-Remaining': String(remaining),
+        'X-AI-Remaining': String(quotaResult?.remaining ?? -1),
       },
     });
   } catch (error: any) {
