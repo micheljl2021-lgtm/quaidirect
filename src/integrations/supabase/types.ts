@@ -2891,6 +2891,7 @@ export type Database = {
         Args: { p_user_id: string; p_user_role: string }
         Returns: Json
       }
+      cleanup_expired_reservations: { Args: never; Returns: undefined }
       cleanup_rate_limits: { Args: never; Returns: undefined }
       count_users: { Args: never; Returns: number }
       count_verified_fishermen: { Args: never; Returns: number }
@@ -2898,6 +2899,7 @@ export type Database = {
         Args: { p_user_id: string; p_user_role: string }
         Returns: Json
       }
+      get_fisherman_stats: { Args: { p_fisherman_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
