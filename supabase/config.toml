@@ -133,3 +133,6 @@ verify_jwt = false  # Public endpoint - allows visitors to contact fishermen
 
 [functions.send-message-reply]
 verify_jwt = true  # Requires authentication - sends reply emails to visitors
+
+[functions.verify-fisherman-payment]
+verify_jwt = true  # Requires authentication - verifies payment status from Stripe
