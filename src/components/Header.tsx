@@ -208,7 +208,7 @@ const Header = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="absolute inset-x-0 top-20 z-[100] bg-background md:hidden border-t border-border shadow-lg">
+          <div className="absolute inset-x-0 top-24 z-[100] bg-background md:hidden border-t border-border shadow-lg max-h-[calc(100vh-6rem)] overflow-y-auto">
             <nav className="flex flex-col gap-3 p-6">
               <NavLink 
                 to="/carte" 

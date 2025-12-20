@@ -253,15 +253,15 @@ const Landing = () => {
           backgroundPosition: 'center'
         }}
       >
-        <div className="mx-auto max-w-4xl text-center space-y-8">
-          <div className="space-y-4">
-            <h1 className="text-5xl md:text-6xl font-bold text-white leading-tight">
+        <div className="mx-auto max-w-4xl text-center space-y-6 sm:space-y-8 px-2">
+          <div className="space-y-3 sm:space-y-4">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">
               Du bateau à votre assiette,
               <span className="block text-white">
                 direct du quai
               </span>
             </h1>
-            <p className="text-xl text-white/90 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-white/90 max-w-2xl mx-auto">
               Achetez du poisson frais directement auprès des marins-pêcheurs. 
               Tracé, prix justes, qualité garantie.
             </p>

@@ -462,7 +462,7 @@ const Carte = () => {
 
         {/* Google Map with Localization Button */}
         <div className="mb-6 relative">
-          <div className="aspect-video md:aspect-[21/9] rounded-lg overflow-hidden border border-border shadow-lg">
+          <div className="aspect-[4/3] sm:aspect-video md:aspect-[21/9] min-h-[280px] sm:min-h-[320px] rounded-lg overflow-hidden border border-border shadow-lg">
             <GoogleMapComponent 
               ports={ports || []}
               salePoints={validSalePoints}

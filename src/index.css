@@ -97,6 +97,18 @@ All colors MUST be HSL.
   }
 }
 
+/* Extra-small breakpoint utility */
+@layer utilities {
+  .xs\:inline {
+    display: none;
+  }
+  @media (min-width: 400px) {
+    .xs\:inline {
+      display: inline;
+    }
+  }
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -113,4 +125,22 @@ All colors MUST be HSL.
   p {
     @apply text-base leading-relaxed;
   }
+}
+
+/* Mobile-first safe area spacing for fixed elements */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Ensure dropdowns and select menus are opaque */
+[data-radix-popper-content-wrapper] {
+  z-index: 50 !important;
+}
+
+[role="listbox"],
+[data-radix-select-viewport],
+[data-radix-dropdown-menu-content] {
+  background-color: hsl(var(--background)) !important;
 }

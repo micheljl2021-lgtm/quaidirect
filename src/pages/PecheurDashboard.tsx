@@ -233,27 +233,27 @@ const PecheurDashboard = () => {
         )}
 
         <Tabs defaultValue="arrivages" className="space-y-4 md:space-y-6">
-          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4">
-            <TabsTrigger value="arrivages" className="gap-2 text-sm">
+          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 h-auto p-1">
+            <TabsTrigger value="arrivages" className="flex flex-col sm:flex-row gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm">
               <Anchor className="h-4 w-4" aria-hidden="true" />
-              <span className="hidden xs:inline">Mes </span>arrivages
+              <span className="truncate">Arrivages</span>
             </TabsTrigger>
-            <TabsTrigger value="messagerie" className="gap-2 text-sm relative">
+            <TabsTrigger value="messagerie" className="flex flex-col sm:flex-row gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm relative">
               <Mail className="h-4 w-4" aria-hidden="true" />
-              <span className="hidden xs:inline">Messagerie</span>
+              <span className="truncate">Messages</span>
               {unreadCount > 0 && (
-                <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                  {unreadCount}
+                <Badge variant="destructive" className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 h-4 w-4 sm:h-5 sm:w-5 p-0 flex items-center justify-center text-[10px] sm:text-xs">
+                  {unreadCount > 9 ? '9+' : unreadCount}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="caisse" className="gap-2 text-sm">
+            <TabsTrigger value="caisse" className="flex flex-col sm:flex-row gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm">
               <ShoppingCart className="h-4 w-4" aria-hidden="true" />
-              <span className="hidden xs:inline">Caisse</span>
+              <span className="truncate">Caisse</span>
             </TabsTrigger>
-            <TabsTrigger value="sms" className="gap-2 text-sm">
+            <TabsTrigger value="sms" className="flex flex-col sm:flex-row gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm">
               <MessageSquare className="h-4 w-4" aria-hidden="true" />
-              <span className="hidden xs:inline">SMS</span>
+              <span className="truncate">SMS</span>
             </TabsTrigger>
           </TabsList>
 
