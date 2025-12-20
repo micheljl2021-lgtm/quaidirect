@@ -44,8 +44,6 @@ const FisherProfile = () => {
   const { data: fisherman, isLoading, error: fishermanError } = useQuery({
     queryKey: ['fisherman', slug],
     queryFn: async () => {
-      console.log('[FisherProfile] Fetching fisherman with slug/id:', slug, 'isUUID:', isUUID);
-      
       // Use public_fishermen view which is accessible to everyone (already includes SEO fields)
       const publicQuery = supabase
         .from('public_fishermen')
@@ -57,29 +55,21 @@ const FisherProfile = () => {
         : await publicQuery.eq('slug', slug).maybeSingle();
 
       if (publicError) {
-        console.error('[FisherProfile] Error fetching from public_fishermen:', publicError);
         throw publicError;
       }
       
       if (!publicData) {
-        console.log('[FisherProfile] No data found in public_fishermen for:', slug);
         return null;
       }
       
-      console.log('[FisherProfile] Found fisherman:', publicData.id, publicData.boat_name);
-      
       // Fetch associated species separately (species table is publicly accessible)
-      const { data: speciesData, error: speciesError } = await supabase
+      const { data: speciesData } = await supabase
         .from('fishermen_species')
         .select(`
           species:species(*),
           is_primary
         `)
         .eq('fisherman_id', publicData.id);
-      
-      if (speciesError) {
-        console.warn('[FisherProfile] Error fetching species:', speciesError);
-      }
       
       return {
         ...publicData,
