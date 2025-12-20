@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useClientSubscriptionLevel } from '@/hooks/useClientSubscriptionLevel';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Heart, MapPin, Bell, Fish, Crown, Palette, Mail, Loader2, X } from 'lucide-react';
+import { Heart, MapPin, Bell, Fish, Crown, Palette, Mail, Loader2, X, AlertCircle } from 'lucide-react';
 import PushNotificationToggle from '@/components/PushNotificationToggle';
 import ColorPickerBadge from '@/components/ColorPickerBadge';
 import LockedFeatureOverlay from '@/components/LockedFeatureOverlay';
@@ -201,8 +201,46 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
     );
   }
 
+  // Auto-save badge color with debounce
+  const saveBadgeColorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const saveBadgeColor = useCallback(async (color: string) => {
+    if (!user || (!isPremium && !isPremiumPlus)) return;
+    
+    try {
+      await supabase.from('profiles').update({ premium_badge_color: color }).eq('id', user.id);
+      toast({
+        title: 'Couleur du badge enregistrée',
+        description: 'Votre préférence a été sauvegardée',
+      });
+    } catch (error: any) {
+      console.error('Error saving badge color:', error);
+    }
+  }, [user, isPremium, isPremiumPlus, toast]);
+
+  const handleBadgeColorChange = (color: string) => {
+    setBadgeColor(color);
+    
+    // Debounce auto-save
+    if (saveBadgeColorTimeoutRef.current) {
+      clearTimeout(saveBadgeColorTimeoutRef.current);
+    }
+    saveBadgeColorTimeoutRef.current = setTimeout(() => {
+      saveBadgeColor(color);
+    }, 500);
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveBadgeColorTimeoutRef.current) {
+        clearTimeout(saveBadgeColorTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Heart className="h-5 w-5 text-primary" />
@@ -212,7 +250,7 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
           Configurez vos favoris pour recevoir des alertes ciblées
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-x-hidden">
         <Tabs defaultValue="base" className="space-y-4">
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
             <TabsTrigger value="base" className="text-xs sm:text-sm py-2">Base</TabsTrigger>
@@ -260,11 +298,17 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
                   <button
                     key={fisherman.id}
                     onClick={() => toggleSelection(fisherman.id, favoriteFishermen, setFavoriteFishermen, MAX_FISHERMEN)}
-                    className="text-left text-sm p-2 rounded hover:bg-muted/50 transition-colors"
+                    className="text-left text-sm p-2 rounded hover:bg-muted/50 transition-colors truncate min-w-0"
                   >
                     {fisherman.company_name || fisherman.boat_name}
                   </button>
                 ))}
+                {(!allFishermen || allFishermen.length === 0) && (
+                  <div className="col-span-full flex items-center justify-center gap-2 py-4 text-muted-foreground text-sm">
+                    <AlertCircle className="h-4 w-4" />
+                    Aucun pêcheur disponible
+                  </div>
+                )}
               </div>
             </div>
 
@@ -335,8 +379,11 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
                 </p>
                 <ColorPickerBadge
                   selectedColor={badgeColor}
-                  onColorChange={setBadgeColor}
+                  onColorChange={handleBadgeColorChange}
                 />
+                <p className="text-xs text-muted-foreground mt-2">
+                  La couleur est enregistrée automatiquement
+                </p>
                 <div className="flex items-center gap-2 mt-4">
                   <span className="text-sm text-muted-foreground">Aperçu :</span>
                   <div className={`px-3 py-1 rounded-full text-white text-sm font-medium ${
@@ -396,18 +443,25 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
                   </div>
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2 border rounded-lg">
-                  {allSalePoints?.filter(sp => !favoriteSalePoints.includes(sp.id)).map(sp => (
-                    <button
-                      key={sp.id}
-                      onClick={() => toggleSelection(sp.id, favoriteSalePoints, setFavoriteSalePoints, MAX_SALE_POINTS)}
-                      className="text-left text-sm p-2 rounded hover:bg-muted/50 transition-colors"
-                    >
-                      <span className="font-medium">{sp.label}</span>
-                      <span className="text-xs text-muted-foreground block">
-                        {(sp as any).fishermen?.boat_name}
-                      </span>
-                    </button>
-                  ))}
+                  {allSalePoints && allSalePoints.filter(sp => !favoriteSalePoints.includes(sp.id)).length > 0 ? (
+                    allSalePoints.filter(sp => !favoriteSalePoints.includes(sp.id)).map(sp => (
+                      <button
+                        key={sp.id}
+                        onClick={() => toggleSelection(sp.id, favoriteSalePoints, setFavoriteSalePoints, MAX_SALE_POINTS)}
+                        className="text-left text-sm p-2 rounded hover:bg-muted/50 transition-colors min-w-0"
+                      >
+                        <span className="font-medium truncate block">{sp.label}</span>
+                        <span className="text-xs text-muted-foreground truncate block">
+                          {(sp as any).fishermen?.boat_name}
+                        </span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="col-span-full flex items-center justify-center gap-2 py-4 text-muted-foreground text-sm">
+                      <AlertCircle className="h-4 w-4" />
+                      Aucun point de vente disponible pour le moment
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
@@ -454,15 +508,22 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
                   </div>
                 )}
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto p-2 border rounded-lg">
-                  {allSpecies?.filter(s => !favoriteSpecies.includes(s.id)).map(species => (
-                    <button
-                      key={species.id}
-                      onClick={() => toggleSelection(species.id, favoriteSpecies, setFavoriteSpecies, MAX_SPECIES)}
-                      className="text-left text-sm p-2 rounded hover:bg-muted/50 transition-colors"
-                    >
-                      {species.name}
-                    </button>
-                  ))}
+                  {allSpecies && allSpecies.filter(s => !favoriteSpecies.includes(s.id)).length > 0 ? (
+                    allSpecies.filter(s => !favoriteSpecies.includes(s.id)).map(species => (
+                      <button
+                        key={species.id}
+                        onClick={() => toggleSelection(species.id, favoriteSpecies, setFavoriteSpecies, MAX_SPECIES)}
+                        className="text-left text-sm p-2 rounded hover:bg-muted/50 transition-colors truncate min-w-0"
+                      >
+                        {species.name}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="col-span-full flex items-center justify-center gap-2 py-4 text-muted-foreground text-sm">
+                      <AlertCircle className="h-4 w-4" />
+                      Aucune espèce disponible
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
