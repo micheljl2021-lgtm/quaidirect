@@ -8,6 +8,7 @@ import { Step1LieuHoraire } from "@/components/arrivage-wizard/Step1LieuHoraire"
 import { Step2EspecesQuantites } from "@/components/arrivage-wizard/Step2EspecesQuantites";
 import { Step3Recapitulatif } from "@/components/arrivage-wizard/Step3Recapitulatif";
 import { SaleTypeSelector, SaleType } from "@/components/arrivage-wizard/SaleTypeSelector";
+import { SpeciesPhotoPickerModal } from "@/components/SpeciesPhotoPickerModal";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -52,6 +53,8 @@ export default function CreateArrivageWizard() {
   const [showMessageDialog, setShowMessageDialog] = useState(false);
   const [createdDropId, setCreatedDropId] = useState<string>("");
   const [createdDropInfo, setCreatedDropInfo] = useState({ location: "", time: "" });
+  const [showPhotoPicker, setShowPhotoPicker] = useState(false);
+  const [firstSpeciesName, setFirstSpeciesName] = useState<string>("");
 
   const [arrivageData, setArrivageData] = useState<ArrivageData>({
     salePointId: "",
@@ -379,7 +382,14 @@ export default function CreateArrivageWizard() {
         location: arrivageData.salePointLabel,
         time: `${format(arrivageData.date, "EEEE d MMMM", { locale: fr })} ${timeSlotLabels[arrivageData.timeSlot] || ""}`,
       });
-      setShowMessageDialog(true);
+      
+      // If no photos were uploaded, show photo picker
+      if (photos.length === 0 && arrivageData.species.length > 0) {
+        setFirstSpeciesName(arrivageData.species[0].speciesName);
+        setShowPhotoPicker(true);
+      } else {
+        setShowMessageDialog(true);
+      }
     } catch (error: any) {
       console.error("💥 [handlePublish] Erreur fatale:", error);
       toast.error(getUserFriendlyError(error));
@@ -526,6 +536,25 @@ export default function CreateArrivageWizard() {
         dropLocation={createdDropInfo.location}
         dropTime={createdDropInfo.time}
       />
+
+      {/* Photo Picker Modal */}
+      {showPhotoPicker && createdDropId && firstSpeciesName && (
+        <SpeciesPhotoPickerModal
+          open={showPhotoPicker}
+          onOpenChange={(open) => {
+            if (!open) {
+              setShowPhotoPicker(false);
+              setShowMessageDialog(true);
+            }
+          }}
+          dropId={createdDropId}
+          speciesName={firstSpeciesName}
+          onComplete={() => {
+            setShowPhotoPicker(false);
+            setShowMessageDialog(true);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -39,6 +39,12 @@ export interface QuickDropData {
   speciesIds: string[];
 }
 
+export interface QuickDropResult {
+  success: boolean;
+  dropId: string | null;
+  speciesName: string | null;
+}
+
 export function useQuickDrop() {
   const { user } = useAuth();
   const [fishermanId, setFishermanId] = useState<string | null>(null);
@@ -118,38 +124,25 @@ export function useQuickDrop() {
     fetchData();
   }, [user]);
 
-  // Helper function to fetch species photo from Pixabay
-  const fetchSpeciesPhoto = async (speciesId: string): Promise<string | null> => {
+  // Helper function to get species name by ID
+  const getSpeciesName = async (speciesId: string): Promise<string | null> => {
     try {
-      // Get species name first
       const { data: species } = await supabase
         .from('species')
         .select('name')
         .eq('id', speciesId)
         .single();
 
-      if (!species?.name) return null;
-
-      // Call the Edge Function to fetch from Pixabay
-      const { data, error } = await supabase.functions.invoke('fetch-species-photo', {
-        body: { speciesName: species.name },
-      });
-
-      if (error) {
-        console.error('Error fetching species photo:', error);
-        return null;
-      }
-
-      return data?.imageUrl || null;
+      return species?.name || null;
     } catch (error) {
-      console.error('Error in fetchSpeciesPhoto:', error);
+      console.error('Error fetching species name:', error);
       return null;
     }
   };
 
-  const publishQuickDrop = async (data: QuickDropData): Promise<string | null> => {
+  const publishQuickDrop = async (data: QuickDropData): Promise<QuickDropResult> => {
     if (!fishermanId || !data.salePointId || data.speciesIds.length === 0) {
-      return null;
+      return { success: false, dropId: null, speciesName: null };
     }
 
     setIsPublishing(true);
@@ -204,26 +197,17 @@ export function useQuickDrop() {
 
       if (speciesError) throw speciesError;
 
-      // Try to fetch a photo for the first species and add it as drop photo
-      if (data.speciesIds.length > 0) {
-        const photoUrl = await fetchSpeciesPhoto(data.speciesIds[0]);
-        
-        if (photoUrl) {
-          await supabase
-            .from('drop_photos')
-            .insert({
-              drop_id: newDrop.id,
-              photo_url: photoUrl,
-              display_order: 0,
-            });
-          console.log('Added Pixabay photo to drop:', photoUrl);
-        }
-      }
+      // Get the first species name for the photo picker
+      const firstSpeciesName = await getSpeciesName(data.speciesIds[0]);
 
-      return newDrop.id;
+      return { 
+        success: true, 
+        dropId: newDrop.id, 
+        speciesName: firstSpeciesName 
+      };
     } catch (error) {
       console.error('Error publishing quick drop:', error);
-      return null;
+      return { success: false, dropId: null, speciesName: null };
     } finally {
       setIsPublishing(false);
     }
@@ -232,14 +216,14 @@ export function useQuickDrop() {
   const publishFromTemplate = async (
     templateId: string, 
     overrides: { date: Date; timeSlot: string; customTime?: string; salePointId: string }
-  ): Promise<string | null> => {
-    if (!fishermanId) return null;
+  ): Promise<QuickDropResult> => {
+    if (!fishermanId) return { success: false, dropId: null, speciesName: null };
 
     setIsPublishing(true);
 
     try {
       const template = templates.find(t => t.id === templateId);
-      if (!template) return null;
+      if (!template) return { success: false, dropId: null, speciesName: null };
 
       // Calculate ETA
       const eta = new Date(overrides.date);
@@ -290,19 +274,10 @@ export function useQuickDrop() {
         firstSpeciesId = template.payload.species[0]?.speciesId || null;
       }
 
-      // Try to fetch a photo for the first species
+      // Get the first species name for the photo picker
+      let firstSpeciesName: string | null = null;
       if (firstSpeciesId) {
-        const photoUrl = await fetchSpeciesPhoto(firstSpeciesId);
-        
-        if (photoUrl) {
-          await supabase
-            .from('drop_photos')
-            .insert({
-              drop_id: newDrop.id,
-              photo_url: photoUrl,
-              display_order: 0,
-            });
-        }
+        firstSpeciesName = await getSpeciesName(firstSpeciesId);
       }
 
       // Increment template usage count
@@ -311,10 +286,14 @@ export function useQuickDrop() {
         .update({ usage_count: (template.usage_count || 0) + 1 })
         .eq('id', templateId);
 
-      return newDrop.id;
+      return { 
+        success: true, 
+        dropId: newDrop.id, 
+        speciesName: firstSpeciesName 
+      };
     } catch (error) {
       console.error('Error publishing from template:', error);
-      return null;
+      return { success: false, dropId: null, speciesName: null };
     } finally {
       setIsPublishing(false);
     }
