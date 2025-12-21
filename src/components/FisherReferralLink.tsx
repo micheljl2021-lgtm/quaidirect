@@ -66,8 +66,11 @@ export const FisherReferralLink = ({ fishermanId }: FisherReferralLinkProps) => 
     return code;
   };
 
+  // Domaine de production pour les liens de parrainage
+  const PRODUCTION_DOMAIN = 'https://quaidirect.fr';
+  
   const referralUrl = affiliateCode
-    ? `${window.location.origin}/premium?ref=${affiliateCode}`
+    ? `${PRODUCTION_DOMAIN}/premium?ref=${affiliateCode}`
     : '';
 
   const copyToClipboard = async () => {
@@ -157,14 +160,6 @@ export const FisherReferralLink = ({ fishermanId }: FisherReferralLinkProps) => 
               <Share2 className="h-4 w-4" />
             </Button>
           )}
-        </div>
-
-        {/* Code d'affiliation */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>Code :</span>
-          <Badge variant="secondary" className="font-mono">
-            {affiliateCode}
-          </Badge>
         </div>
 
         {/* Statistiques */}
