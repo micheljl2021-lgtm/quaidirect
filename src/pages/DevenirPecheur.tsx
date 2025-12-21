@@ -355,7 +355,7 @@ const DevenirPecheur = () => {
 
           <Card>
             <CardContent className="pt-6">
-              <h3 className="font-semibold text-lg mb-2">🛒 Commission : 8% sur les paniers</h3>
+              <h3 className="font-semibold text-lg mb-2">🛒 Commission : 6% sur les paniers</h3>
               <p className="text-sm text-muted-foreground">
                 Uniquement sur les paniers vendus via la plateforme. 
                 Vente en direct sur le quai = 0% de commission.

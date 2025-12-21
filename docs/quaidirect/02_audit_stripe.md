@@ -10,7 +10,7 @@
 QuaiDirect utilise **Stripe** comme processeur de paiement unique pour :
 1. **Abonnements Pêcheurs** : Basic (99€/an) et Pro (199€/an)
 2. **Abonnements Clients Premium** : 25€/an ou 2,50€/mois
-3. **Paniers Clients** : Paiements one-time (25€ / 45€ / 75€) avec commission 8%
+3. **Paniers Clients** : Paiements one-time (25€ / 45€ / 75€) avec commission 6%
 4. **Packs SMS** : Paiements one-time optionnels (49€ / 149€ / 299€)
 
 ---
@@ -41,7 +41,7 @@ QuaiDirect utilise **Stripe** comme processeur de paiement unique pour :
 | Panier Famille | `price_1SYEZ9H0VhS1yyE0OFQzbTZG` | 45€ | One-time | ~3kg, 4-5 espèces |
 | Panier Gourmet | `price_1SYEZJH0VhS1yyE04442C45I` | 75€ | One-time | ~4kg, espèces premium |
 
-**Note** : Commission plateforme de **8%** ajoutée au montant du panier côté client. Exemple : Panier 40€ → Client paie 43,20€ (40€ + 3,20€ commission) → Pêcheur reçoit 40€.
+**Note** : Commission plateforme de **6%** ajoutée au montant du panier côté client. Exemple : Panier 40€ → Client paie 42,40€ (40€ + 2,40€ commission) → Pêcheur reçoit 40€.
 
 ---
 
@@ -135,12 +135,12 @@ QuaiDirect utilise **Stripe** comme processeur de paiement unique pour :
 }
 ```
 
-**Fonction** : Crée une session Stripe Checkout pour achat panier avec **commission 8%**.
+**Fonction** : Crée une session Stripe Checkout pour achat panier avec **commission 6%**.
 
 **Flux** :
 1. Récupère `user_id` authentifié
 2. Récupère prix panier depuis Stripe API
-3. **Calcule commission 8%** : `commission = basketPrice * 0.08`
+3. **Calcule commission 6%** : `commission = basketPrice * 0.06`
 4. **Calcule prix total** : `totalPrice = basketPrice + commission`
 5. Crée Checkout Session avec `price_data` incluant commission
 6. Stocke en metadata : `basket_price_cents`, `commission_cents`, `total_price_cents`, `fisherman_id`, `drop_id`
@@ -152,10 +152,10 @@ QuaiDirect utilise **Stripe** comme processeur de paiement unique pour :
 **Exemple Calcul Commission** :
 ```
 Panier Famille = 45€ (4500 centimes)
-Commission 8% = 3,60€ (360 centimes)
-Prix Total Client = 48,60€ (4860 centimes)
+Commission 6% = 2,70€ (270 centimes)
+Prix Total Client = 47,70€ (4770 centimes)
 → Pêcheur reçoit 45€
-→ Plateforme retient 3,60€
+→ Plateforme retient 2,70€
 ```
 
 ---
@@ -296,7 +296,7 @@ Frontend (/premium/paywall)
   → Lien vers /premium/reglages (configuration ports favoris, espèces)
 ```
 
-### Flux Achat Panier (avec Commission 8%)
+### Flux Achat Panier (avec Commission 6%)
 
 ```
 Frontend (/panier)
@@ -310,8 +310,8 @@ Frontend (/panier)
   }
   → Edge Function calcule :
       basketPrice = 45€ (4500 centimes)
-      commission = 45€ × 0.08 = 3,60€ (360 centimes)
-      totalPrice = 48,60€ (4860 centimes)
+      commission = 45€ × 0.06 = 2,70€ (270 centimes)
+      totalPrice = 47,70€ (4770 centimes)
   → Crée Checkout Session avec totalPrice
   → Stripe Checkout Modal (client voit 48,60€)
   → Paiement Client
@@ -357,7 +357,7 @@ Frontend (/panier)
 - **Edge Functions** : 6 endpoints Stripe
 - **Webhooks Gérés** : 3 types d'événements
 - **Tables Impactées** : 5 tables (payments, basket_orders, fishermen, fishermen_sms_packs, user_roles)
-- **Commission Plateforme** : 8% sur paniers uniquement (pas sur abonnements)
+- **Commission Plateforme** : 6% sur paniers uniquement (pas sur abonnements)
 
 ---
 
@@ -370,7 +370,7 @@ Frontend (/panier)
 | Abonnement Pêcheur (moy. 70% Basic 30% Pro) | 129€ | 12% |
 | Packs SMS optionnels | 100€ | 9% |
 | Clients Premium suivant pêcheur (15% × 25€) | 550€ | 50% |
-| Commission paniers (8% × 4000€ ventes) | 320€ | 29% |
+| Commission paniers (6% × 4000€ ventes) | 240€ | 24% |
 | **TOTAL** | **1,099€** | **100%** |
 
 ### Projection Croissance 5 Ans

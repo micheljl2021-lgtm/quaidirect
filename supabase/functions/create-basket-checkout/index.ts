@@ -65,11 +65,11 @@ serve(async (req) => {
     if (!price.unit_amount) throw new Error('Price has no unit_amount');
     
     const basketPrice = price.unit_amount; // in cents
-    // COMMISSION: 8% plateforme comme spécifié dans les guidelines
-    const commission = Math.round(basketPrice * 0.08); // 8% commission
+    // COMMISSION: 6% plateforme
+    const commission = Math.round(basketPrice * 0.06); // 6% commission
     const totalPrice = basketPrice + commission;
     
-    logStep('Commission calculated (8%)', { basketPrice, commission, totalPrice });
+    logStep('Commission calculated (6%)', { basketPrice, commission, totalPrice });
 
     // Check if customer exists
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
@@ -93,8 +93,8 @@ serve(async (req) => {
             currency: 'eur',
             unit_amount: totalPrice,
             product_data: {
-              name: 'Panier de poisson frais',
-              description: `Panier incluant frais de service plateforme (8%)`,
+            name: 'Panier de poisson frais',
+              description: `Panier incluant frais de service plateforme (6%)`,
             },
           },
           quantity: 1,

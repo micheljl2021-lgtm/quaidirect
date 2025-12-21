@@ -196,9 +196,9 @@ public/                  # Assets statiques, SW, manifest
 
 | Panier | Prix | Commission | Net Pêcheur |
 |--------|------|------------|-------------|
-| Découverte | 25€ | 8% (2€) | 23€ |
-| Famille | 45€ | 8% (3.60€) | 41.40€ |
-| Gourmet | 75€ | 8% (6€) | 69€ |
+| Découverte | 25€ | 6% (1.50€) | 23.50€ |
+| Famille | 45€ | 6% (2.70€) | 42.30€ |
+| Gourmet | 75€ | 6% (4.50€) | 70.50€ |
 
 ## Monitoring & Performance
 
