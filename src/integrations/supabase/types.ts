@@ -255,6 +255,42 @@ export type Database = {
           },
         ]
       }
+      client_supported_fishermen: {
+        Row: {
+          created_at: string
+          fisherman_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fisherman_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fisherman_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_supported_fishermen_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "fishermen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_supported_fishermen_fisherman_id_fkey"
+            columns: ["fisherman_id"]
+            isOneToOne: false
+            referencedRelation: "public_fishermen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drop_photos: {
         Row: {
           created_at: string

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useClientSubscriptionLevel } from '@/hooks/useClientSubscriptionLevel';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,14 +8,42 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Heart, MapPin, Bell, Fish, Crown, Palette, Mail, Loader2, X, AlertCircle } from 'lucide-react';
+import { Heart, MapPin, Bell, Fish, Crown, Mail, Loader2, X, AlertCircle, MessageSquare, HandHeart, Store } from 'lucide-react';
 import PushNotificationToggle from '@/components/PushNotificationToggle';
-import ColorPickerBadge from '@/components/ColorPickerBadge';
 import LockedFeatureOverlay from '@/components/LockedFeatureOverlay';
 
 interface ClientPreferencesPanelProps {
   compact?: boolean;
 }
+
+// Alert type icons component
+const AlertTypeIndicator = ({ level }: { level: 'follower' | 'premium' | 'premium_plus' }) => {
+  if (level === 'follower') {
+    return (
+      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+        <Bell className="h-3 w-3" />
+        <span>Push</span>
+      </div>
+    );
+  }
+  if (level === 'premium') {
+    return (
+      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+        <Bell className="h-3 w-3" />
+        <Mail className="h-3 w-3" />
+        <span>Push / Email</span>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+      <Bell className="h-3 w-3" />
+      <Mail className="h-3 w-3" />
+      <MessageSquare className="h-3 w-3" />
+      <span>Push / Email / SMS</span>
+    </div>
+  );
+};
 
 export default function ClientPreferencesPanel({ compact = false }: ClientPreferencesPanelProps) {
   const { user } = useAuth();
@@ -26,14 +54,17 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
   const [favoriteSpecies, setFavoriteSpecies] = useState<string[]>([]);
   const [favoriteFishermen, setFavoriteFishermen] = useState<string[]>([]);
   const [favoriteSalePoints, setFavoriteSalePoints] = useState<string[]>([]);
-  const [badgeColor, setBadgeColor] = useState('or');
+  const [supportedFisherman, setSupportedFisherman] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   // Limits based on subscription level
+  // Standard: 2 pêcheurs, 1 port, 0 pdv, 0 espèces
+  // Premium: +2 pdv, 3 espèces
+  // Premium+: +5 pdv, 10 espèces
   const MAX_FISHERMEN = 2;
   const MAX_PORTS = 1;
-  const MAX_SALE_POINTS = isPremiumPlus ? 5 : 2;
-  const MAX_SPECIES = 10;
+  const MAX_SALE_POINTS = isPremiumPlus ? 5 : isPremium ? 2 : 0;
+  const MAX_SPECIES = isPremiumPlus ? 10 : isPremium ? 3 : 0;
 
   // Fetch all data
   const { data: allPorts } = useQuery({
@@ -57,7 +88,6 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
   const { data: allFishermen } = useQuery({
     queryKey: ['all-public-fishermen'],
     queryFn: async () => {
-      // Use public_fishermen view which is accessible to everyone
       const { data, error } = await supabase
         .from('public_fishermen')
         .select('id, boat_name, company_name, photo_url')
@@ -85,19 +115,19 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
     if (!user) return;
 
     const loadPreferences = async () => {
-      const [portsRes, speciesRes, fishermenRes, salePointsRes, profileRes] = await Promise.all([
+      const [portsRes, speciesRes, fishermenRes, salePointsRes, supportedRes] = await Promise.all([
         supabase.from('follow_ports').select('port_id').eq('user_id', user.id),
         supabase.from('follow_species').select('species_id').eq('user_id', user.id),
         supabase.from('fishermen_followers').select('fisherman_id').eq('user_id', user.id),
         supabase.from('client_follow_sale_points').select('sale_point_id').eq('user_id', user.id),
-        supabase.from('profiles').select('premium_badge_color').eq('id', user.id).single(),
+        supabase.from('client_supported_fishermen').select('fisherman_id').eq('user_id', user.id).maybeSingle(),
       ]);
 
       if (portsRes.data) setFavoritePorts(portsRes.data.map(p => p.port_id));
       if (speciesRes.data) setFavoriteSpecies(speciesRes.data.map(s => s.species_id));
       if (fishermenRes.data) setFavoriteFishermen(fishermenRes.data.map(f => f.fisherman_id));
       if (salePointsRes.data) setFavoriteSalePoints(salePointsRes.data.map(sp => sp.sale_point_id));
-      if (profileRes.data?.premium_badge_color) setBadgeColor(profileRes.data.premium_badge_color);
+      if (supportedRes.data?.fisherman_id) setSupportedFisherman(supportedRes.data.fisherman_id);
     };
 
     loadPreferences();
@@ -114,6 +144,7 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
         supabase.from('follow_species').delete().eq('user_id', user.id),
         supabase.from('fishermen_followers').delete().eq('user_id', user.id),
         supabase.from('client_follow_sale_points').delete().eq('user_id', user.id),
+        supabase.from('client_supported_fishermen').delete().eq('user_id', user.id),
       ]);
 
       const insertPromises = [];
@@ -126,7 +157,8 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
         );
       }
 
-      if (favoriteSpecies.length > 0 && isPremiumPlus) {
+      // Espèces: Premium et Premium+ seulement
+      if (favoriteSpecies.length > 0 && (isPremium || isPremiumPlus)) {
         insertPromises.push(
           supabase.from('follow_species').insert(
             favoriteSpecies.slice(0, MAX_SPECIES).map(species_id => ({ user_id: user.id, species_id }))
@@ -142,6 +174,7 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
         );
       }
 
+      // Points de vente: Premium et Premium+ seulement
       if (favoriteSalePoints.length > 0 && (isPremium || isPremiumPlus)) {
         insertPromises.push(
           supabase.from('client_follow_sale_points').insert(
@@ -150,10 +183,13 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
         );
       }
 
-      // Update badge color
-      if (isPremium || isPremiumPlus) {
+      // Pêcheur soutenu: Premium et Premium+ seulement
+      if (supportedFisherman && (isPremium || isPremiumPlus)) {
         insertPromises.push(
-          supabase.from('profiles').update({ premium_badge_color: badgeColor }).eq('id', user.id)
+          supabase.from('client_supported_fishermen').insert({
+            user_id: user.id,
+            fisherman_id: supportedFisherman,
+          })
         );
       }
 
@@ -201,44 +237,6 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
     );
   }
 
-  // Auto-save badge color with debounce
-  const saveBadgeColorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  const saveBadgeColor = useCallback(async (color: string) => {
-    if (!user || (!isPremium && !isPremiumPlus)) return;
-    
-    try {
-      await supabase.from('profiles').update({ premium_badge_color: color }).eq('id', user.id);
-      toast({
-        title: 'Couleur du badge enregistrée',
-        description: 'Votre préférence a été sauvegardée',
-      });
-    } catch {
-      // Silent fail for badge color
-    }
-  }, [user, isPremium, isPremiumPlus, toast]);
-
-  const handleBadgeColorChange = (color: string) => {
-    setBadgeColor(color);
-    
-    // Debounce auto-save
-    if (saveBadgeColorTimeoutRef.current) {
-      clearTimeout(saveBadgeColorTimeoutRef.current);
-    }
-    saveBadgeColorTimeoutRef.current = setTimeout(() => {
-      saveBadgeColor(color);
-    }, 500);
-  };
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (saveBadgeColorTimeoutRef.current) {
-        clearTimeout(saveBadgeColorTimeoutRef.current);
-      }
-    };
-  }, []);
-
   return (
     <Card className="overflow-hidden">
       <CardHeader>
@@ -254,15 +252,15 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
         <Tabs defaultValue="base" className="space-y-4">
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
             <TabsTrigger value="base" className="text-xs sm:text-sm py-2">Base</TabsTrigger>
-            <TabsTrigger value="badge" disabled={!isPremium && !isPremiumPlus} className="text-xs sm:text-sm py-2">
-              Badge
-            </TabsTrigger>
             <TabsTrigger value="salepoints" disabled={!isPremium && !isPremiumPlus} className="text-xs sm:text-sm py-2">
               <span className="hidden sm:inline">Points de vente</span>
               <span className="sm:hidden">Pts vente</span>
             </TabsTrigger>
-            <TabsTrigger value="species" disabled={!isPremiumPlus} className="text-xs sm:text-sm py-2">
+            <TabsTrigger value="species" disabled={!isPremium && !isPremiumPlus} className="text-xs sm:text-sm py-2">
               Espèces
+            </TabsTrigger>
+            <TabsTrigger value="support" disabled={!isPremium && !isPremiumPlus} className="text-xs sm:text-sm py-2">
+              Soutien
             </TabsTrigger>
           </TabsList>
 
@@ -270,10 +268,13 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
           <TabsContent value="base" className="space-y-6">
             {/* Pêcheurs favoris */}
             <div className="space-y-3">
-              <Label className="flex items-center gap-2">
-                <Heart className="h-4 w-4 text-red-500" />
-                Pêcheurs favoris ({favoriteFishermen.length}/{MAX_FISHERMEN})
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label className="flex items-center gap-2">
+                  <Heart className="h-4 w-4 text-red-500" />
+                  Pêcheurs favoris ({favoriteFishermen.length}/{MAX_FISHERMEN})
+                </Label>
+                <AlertTypeIndicator level="follower" />
+              </div>
               <p className="text-xs text-muted-foreground">
                 Les arrivages de vos pêcheurs favoris apparaîtront en priorité
               </p>
@@ -316,10 +317,13 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
 
             {/* Port préféré */}
             <div className="space-y-3">
-              <Label className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-primary" />
-                Port préféré ({favoritePorts.length}/{MAX_PORTS})
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-primary" />
+                  Port préféré ({favoritePorts.length}/{MAX_PORTS})
+                </Label>
+                <AlertTypeIndicator level="follower" />
+              </div>
               <p className="text-xs text-muted-foreground">
                 Recevez des alertes pour les arrivages dans un rayon de 10km
               </p>
@@ -368,63 +372,21 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
             </div>
           </TabsContent>
 
-          {/* Tab Badge - Premium only */}
-          <TabsContent value="badge" className="space-y-6">
-            {isPremium || isPremiumPlus ? (
-              <div className="space-y-3">
-                <Label className="flex items-center gap-2">
-                  <Palette className="h-4 w-4 text-primary" />
-                  Couleur de votre badge Premium
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  Personnalisez l'apparence de votre badge visible sur la plateforme
-                </p>
-                <ColorPickerBadge
-                  selectedColor={badgeColor}
-                  onColorChange={handleBadgeColorChange}
-                />
-                <p className="text-xs text-muted-foreground mt-2">
-                  La couleur est enregistrée automatiquement
-                </p>
-                <div className="flex items-center gap-2 mt-4">
-                  <span className="text-sm text-muted-foreground">Aperçu :</span>
-                  <div className={`px-3 py-1 rounded-full text-white text-sm font-medium ${
-                    badgeColor === 'or' ? 'bg-yellow-500' :
-                    badgeColor === 'argent' ? 'bg-gray-400' :
-                    badgeColor === 'bronze' ? 'bg-amber-700' :
-                    badgeColor === 'rose' ? 'bg-pink-500' :
-                    badgeColor === 'bleu' ? 'bg-blue-500' :
-                    'bg-green-500'
-                  }`}>
-                    <Crown className="h-3 w-3 inline mr-1" />
-                    Premium
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <LockedFeatureOverlay
-                title="Badge Premium"
-                description="Personnalisez votre badge avec Premium"
-                requiredLevel="Premium"
-              >
-                <div className="space-y-3 p-4">
-                  <Label>Couleur de votre badge Premium</Label>
-                  <ColorPickerBadge selectedColor="or" onColorChange={() => {}} disabled />
-                </div>
-              </LockedFeatureOverlay>
-            )}
-          </TabsContent>
-
           {/* Tab Points de vente - Premium only */}
           <TabsContent value="salepoints" className="space-y-6">
             {isPremium || isPremiumPlus ? (
               <div className="space-y-3">
-                <Label className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-primary" />
-                  Points de vente suivis ({favoriteSalePoints.length}/{MAX_SALE_POINTS})
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2">
+                    <Store className="h-4 w-4 text-primary" />
+                    Points de vente suivis ({favoriteSalePoints.length}/{MAX_SALE_POINTS})
+                  </Label>
+                  <AlertTypeIndicator level={isPremiumPlus ? 'premium_plus' : 'premium'} />
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  Recevez un email quand un arrivage est publié sur ces points
+                  {isPremiumPlus 
+                    ? 'Recevez Push / Email / SMS quand un arrivage est publié sur ces points'
+                    : 'Recevez Push / Email quand un arrivage est publié sur ces points'}
                 </p>
                 {favoriteSalePoints.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-2">
@@ -468,8 +430,8 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
               </div>
             ) : (
               <LockedFeatureOverlay
-                title="Email - Points de vente"
-                description="Recevez des emails sur vos points de vente favoris"
+                title="Points de vente favoris"
+                description="Recevez des alertes sur vos points de vente favoris"
                 requiredLevel="Premium"
               >
                 <div className="space-y-3 p-4">
@@ -480,16 +442,21 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
             )}
           </TabsContent>
 
-          {/* Tab Espèces - Premium+ only */}
+          {/* Tab Espèces - Premium et Premium+ */}
           <TabsContent value="species" className="space-y-6">
-            {isPremiumPlus ? (
+            {isPremium || isPremiumPlus ? (
               <div className="space-y-3">
-                <Label className="flex items-center gap-2">
-                  <Fish className="h-4 w-4 text-primary" />
-                  Espèces favorites ({favoriteSpecies.length}/{MAX_SPECIES})
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2">
+                    <Fish className="h-4 w-4 text-primary" />
+                    Espèces favorites ({favoriteSpecies.length}/{MAX_SPECIES})
+                  </Label>
+                  <AlertTypeIndicator level={isPremiumPlus ? 'premium_plus' : 'premium'} />
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  Recevez un email quand un arrivage contient ces espèces
+                  {isPremiumPlus 
+                    ? 'Recevez Push / Email / SMS quand un arrivage contient ces espèces'
+                    : 'Recevez Push / Email quand un arrivage contient ces espèces'}
                 </p>
                 {favoriteSpecies.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-2">
@@ -534,20 +501,113 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
                   <Crown className="h-5 w-5 text-amber-500 shrink-0" />
                   <div>
                     <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                      Fonctionnalité Premium+
+                      Fonctionnalité Premium
                     </p>
                     <p className="text-xs text-amber-600 dark:text-amber-400">
-                      Passez à Premium+ pour recevoir des alertes sur vos espèces favorites
+                      Passez à Premium pour recevoir des alertes sur vos espèces favorites
                     </p>
                   </div>
                 </div>
                 <LockedFeatureOverlay
-                  title="Email - Espèces favorites"
-                  description="Recevez des emails quand vos espèces préférées sont disponibles"
-                  requiredLevel="Premium+"
+                  title="Espèces favorites"
+                  description="Recevez des alertes quand vos espèces préférées sont disponibles"
+                  requiredLevel="Premium"
                 >
                   <div className="space-y-3 p-4">
-                    <Label>Espèces favorites (0/10)</Label>
+                    <Label>Espèces favorites (0/3)</Label>
+                    <div className="h-40 border rounded-lg" />
+                  </div>
+                </LockedFeatureOverlay>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Tab Soutien - Premium et Premium+ */}
+          <TabsContent value="support" className="space-y-6">
+            {isPremium || isPremiumPlus ? (
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <Label className="flex items-center gap-2">
+                    <HandHeart className="h-4 w-4 text-red-500" />
+                    Pêcheur que vous soutenez
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    En tant que membre Premium, vous contribuez au pool SMS. Choisissez un pêcheur à soutenir pour qu'il reçoive une part de vos contributions.
+                  </p>
+                </div>
+
+                {supportedFisherman && (
+                  <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <HandHeart className="h-5 w-5 text-red-500" />
+                        <div>
+                          <p className="font-medium">
+                            {allFishermen?.find(f => f.id === supportedFisherman)?.company_name || 
+                             allFishermen?.find(f => f.id === supportedFisherman)?.boat_name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">Pêcheur soutenu</p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSupportedFisherman(null)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {!supportedFisherman && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto p-2 border rounded-lg">
+                    {allFishermen?.map(fisherman => (
+                      <button
+                        key={fisherman.id}
+                        onClick={() => setSupportedFisherman(fisherman.id)}
+                        className="text-left text-sm p-2 rounded hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors truncate min-w-0"
+                      >
+                        {fisherman.company_name || fisherman.boat_name}
+                      </button>
+                    ))}
+                    {(!allFishermen || allFishermen.length === 0) && (
+                      <div className="col-span-full flex items-center justify-center gap-2 py-4 text-muted-foreground text-sm">
+                        <AlertCircle className="h-4 w-4" />
+                        Aucun pêcheur disponible
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="p-3 rounded-lg bg-muted/50 text-xs text-muted-foreground">
+                  <p className="font-medium mb-1">Comment ça marche ?</p>
+                  <p>
+                    Votre abonnement Premium contribue au pool SMS qui finance les notifications aux clients. 
+                    En choisissant un pêcheur à soutenir, une partie de cette contribution lui est directement attribuée.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 p-4 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+                  <Crown className="h-5 w-5 text-amber-500 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                      Fonctionnalité Premium
+                    </p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      Passez à Premium pour soutenir un pêcheur de votre choix
+                    </p>
+                  </div>
+                </div>
+                <LockedFeatureOverlay
+                  title="Soutenir un pêcheur"
+                  description="Contribuez directement au succès d'un pêcheur"
+                  requiredLevel="Premium"
+                >
+                  <div className="space-y-3 p-4">
+                    <Label>Pêcheur soutenu</Label>
                     <div className="h-40 border rounded-lg" />
                   </div>
                 </LockedFeatureOverlay>
