@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import Header from '@/components/Header';
 import ClientPreferencesPanel from '@/components/ClientPreferencesPanel';
+import ArrivageCard from '@/components/ArrivageCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +20,7 @@ interface Drop {
   port_id: string | null;
   sale_point_id: string | null;
   eta_at: string;
+  sale_start_time: string;
   visible_at: string;
   public_visible_at: string | null;
   is_premium: boolean;
@@ -34,9 +36,17 @@ interface Drop {
   } | null;
   fishermen: {
     id: string;
+    slug: string | null;
     boat_name: string;
     company_name: string | null;
+    display_name_preference: string | null;
+    photo_url: string | null;
+    is_ambassador: boolean | null;
   } | null;
+  drop_photos: Array<{
+    photo_url: string;
+    display_order: number;
+  }>;
   offers: Array<{
     id: string;
     title: string;
@@ -45,6 +55,7 @@ interface Drop {
     total_units: number;
     species: {
       name: string;
+      scientific_name: string | null;
     };
   }>;
 }
@@ -132,6 +143,7 @@ const PremiumDashboard = () => {
           port_id,
           sale_point_id,
           eta_at,
+          sale_start_time,
           visible_at,
           public_visible_at,
           is_premium,
@@ -147,8 +159,16 @@ const PremiumDashboard = () => {
           ),
           fishermen (
             id,
+            slug,
             boat_name,
-            company_name
+            company_name,
+            display_name_preference,
+            photo_url,
+            is_ambassador
+          ),
+          drop_photos (
+            photo_url,
+            display_order
           ),
           offers (
             id,
@@ -157,7 +177,8 @@ const PremiumDashboard = () => {
             available_units,
             total_units,
             species (
-              name
+              name,
+              scientific_name
             )
           )
         `)
@@ -522,78 +543,55 @@ const PremiumDashboard = () => {
               <p className="text-muted-foreground">Chargement des arrivages premium...</p>
             </div>
           ) : drops && drops.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {drops.map((drop) => {
-                const etaDate = new Date(drop.eta_at);
-                const location = drop.fisherman_sale_points 
-                  ? drop.fisherman_sale_points.address || drop.fisherman_sale_points.label
-                  : drop.ports 
-                    ? `${drop.ports.name}, ${drop.ports.city}` 
-                    : 'Lieu non spécifié';
-                const access = getAccessType(drop);
+                const speciesNames = drop.offers.map(o => o.species.name).join(', ') || 'Arrivage du jour';
+                const scientificName = drop.offers[0]?.species.scientific_name || '';
+                const portName = drop.ports?.name || drop.fisherman_sale_points?.label || 'Port';
+                const city = drop.ports?.city || '';
+                const salePointLabel = drop.fisherman_sale_points?.label;
+                const firstOffer = drop.offers[0];
+                const totalAvailable = drop.offers.reduce((sum, o) => sum + o.available_units, 0);
+                const totalUnits = drop.offers.reduce((sum, o) => sum + o.total_units, 0);
                 const isFavorite = favoriteFishermen?.includes(drop.fisherman_id);
                 
+                // Déterminer le nom d'affichage du pêcheur
+                const displayName = drop.fishermen?.display_name_preference === 'company' && drop.fishermen?.company_name
+                  ? drop.fishermen.company_name
+                  : drop.fishermen?.boat_name || 'Pêcheur';
+                
                 return (
-                  <Card key={drop.id} className={`hover:shadow-lg transition-shadow ${isFavorite ? 'ring-2 ring-red-200' : ''}`}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="space-y-1 flex-1 min-w-0">
-                          <CardTitle className="flex items-center gap-2 text-lg">
-                            <MapPin className="h-5 w-5 text-primary flex-shrink-0" />
-                            <span className="line-clamp-1">{location}</span>
-                            {isFavorite && (
-                              <span className="text-red-500 text-xs">❤️</span>
-                            )}
-                          </CardTitle>
-                          <CardDescription className="flex items-center gap-2">
-                            <Clock className="h-4 w-4" />
-                            Arrivée : {getTimeUntil(etaDate)}
-                          </CardDescription>
-                        </div>
-                        <Badge className={`${access.color} text-white whitespace-nowrap flex-shrink-0`}>
-                          {access.type === 'premium' && <Crown className="h-3 w-3 mr-1" />}
-                          {access.label}
-                        </Badge>
+                  <div key={drop.id} className={`relative ${isFavorite ? 'ring-2 ring-red-200 rounded-lg' : ''}`}>
+                    {isFavorite && (
+                      <div className="absolute -top-2 -right-2 z-10 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                        ❤️ Favori
                       </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {drop.offers.length > 0 ? (
-                          <div className="space-y-2">
-                            {drop.offers.map((offer) => (
-                              <div key={offer.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                                <div className="flex items-center gap-3 flex-1 min-w-0">
-                                  <Fish className="h-5 w-5 text-primary flex-shrink-0" />
-                                  <div className="min-w-0">
-                                    <p className="font-medium line-clamp-1">{offer.species.name}</p>
-                                    <p className="text-sm text-muted-foreground">
-                                      {offer.available_units}/{offer.total_units} disponibles
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className="text-right flex-shrink-0 ml-2">
-                                  <p className="font-bold text-lg text-primary">{offer.unit_price}€</p>
-                                  {access.type === 'premium' && offer.available_units > 0 && (
-                                    <Button
-                                      size="sm"
-                                      className="mt-1"
-                                      onClick={() => handleReserve(offer.id)}
-                                    >
-                                      Réserver
-                                    </Button>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-muted-foreground text-center py-2">
-                            Aucune offre disponible
-                          </p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
+                    )}
+                    <ArrivageCard
+                      id={drop.id}
+                      salePointLabel={salePointLabel}
+                      species={speciesNames}
+                      scientificName={scientificName}
+                      port={portName}
+                      city={city}
+                      eta={new Date(drop.eta_at)}
+                      saleStartTime={drop.sale_start_time ? new Date(drop.sale_start_time) : undefined}
+                      pricePerPiece={firstOffer?.unit_price}
+                      quantity={totalAvailable}
+                      availableUnits={totalAvailable}
+                      totalUnits={totalUnits}
+                      isPremium={drop.is_premium}
+                      dropPhotos={drop.drop_photos}
+                      fisherman={{
+                        id: drop.fishermen?.id,
+                        slug: drop.fishermen?.slug || undefined,
+                        name: displayName,
+                        boat: drop.fishermen?.boat_name || '',
+                        isAmbassador: drop.fishermen?.is_ambassador || false,
+                      }}
+                      variant="full"
+                    />
+                  </div>
                 );
               })}
             </div>
