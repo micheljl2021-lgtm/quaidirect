@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -36,6 +37,7 @@ const TIME_SLOTS = [
   { value: 'fin_matinee', label: 'Fin matinée', description: '9h - 12h', icon: '☀️' },
   { value: 'midi', label: 'Midi', description: '12h - 14h', icon: '🌞' },
   { value: 'apres_midi', label: 'Après-midi', description: '14h - 18h', icon: '🌤️' },
+  { value: 'custom', label: 'Personnalisé', description: 'Heure précise', icon: '⚙️' },
 ];
 
 export function QuickDropModal({ open, onOpenChange, onSuccess }: QuickDropModalProps) {
@@ -51,6 +53,7 @@ export function QuickDropModal({ open, onOpenChange, onSuccess }: QuickDropModal
   // Form state
   const [date, setDate] = useState<Date>(new Date());
   const [timeSlot, setTimeSlot] = useState<string>('matin');
+  const [customTime, setCustomTime] = useState<string>('08:00');
   const [salePointId, setSalePointId] = useState<string>('');
   const [selectedSpeciesIds, setSelectedSpeciesIds] = useState<string[]>([]);
 
@@ -74,10 +77,15 @@ export function QuickDropModal({ open, onOpenChange, onSuccess }: QuickDropModal
       toast.error('Sélectionnez au moins une espèce');
       return;
     }
+    if (timeSlot === 'custom' && !customTime) {
+      toast.error('Indiquez une heure personnalisée');
+      return;
+    }
 
     const dropId = await publishQuickDrop({
       date,
       timeSlot,
+      customTime: timeSlot === 'custom' ? customTime : undefined,
       salePointId,
       speciesIds: selectedSpeciesIds,
     });
@@ -97,7 +105,7 @@ export function QuickDropModal({ open, onOpenChange, onSuccess }: QuickDropModal
     }
   };
 
-  const isValid = salePointId && selectedSpeciesIds.length > 0;
+  const isValid = salePointId && selectedSpeciesIds.length > 0 && (timeSlot !== 'custom' || customTime);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -146,7 +154,7 @@ export function QuickDropModal({ open, onOpenChange, onSuccess }: QuickDropModal
               className="grid grid-cols-2 gap-2"
             >
               {TIME_SLOTS.map((slot) => (
-                <div key={slot.value}>
+                <div key={slot.value} className={slot.value === 'custom' ? 'col-span-2' : ''}>
                   <RadioGroupItem
                     value={slot.value}
                     id={slot.value}
@@ -163,6 +171,22 @@ export function QuickDropModal({ open, onOpenChange, onSuccess }: QuickDropModal
                 </div>
               ))}
             </RadioGroup>
+
+            {/* Custom time input */}
+            {timeSlot === 'custom' && (
+              <div className="mt-3 flex items-center justify-center gap-2">
+                <Label htmlFor="custom-time" className="text-sm font-medium">
+                  Heure précise :
+                </Label>
+                <Input
+                  id="custom-time"
+                  type="time"
+                  value={customTime}
+                  onChange={(e) => setCustomTime(e.target.value)}
+                  className="w-32 text-center"
+                />
+              </div>
+            )}
           </div>
 
           {/* Sale Point */}

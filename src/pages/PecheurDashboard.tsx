@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
@@ -14,6 +14,7 @@ import MessagingSection from '@/components/dashboard/MessagingSection';
 import ArrivalsList from '@/components/dashboard/ArrivalsList';
 import ArrivalsListSkeleton from '@/components/dashboard/ArrivalsListSkeleton';
 import { MessagerieSection } from '@/components/dashboard/MessagerieSection';
+import { QuickDropModal } from '@/components/dashboard/QuickDropModal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Anchor, Loader2, ShoppingCart, MessageSquare, AlertCircle, Mail } from "lucide-react";
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -27,16 +28,28 @@ const PecheurDashboard = () => {
   const { user, userRole, effectiveRole, viewAsRole, isAdmin, isVerifiedFisherman, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [drops, setDrops] = useState<any[]>([]);
   const [archivedDrops, setArchivedDrops] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [fishermanId, setFishermanId] = useState<string | null>(null);
   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
   const messagingSectionRef = useRef<HTMLDivElement>(null);
+  const [showExpressModal, setShowExpressModal] = useState(false);
 
   // Get pre-selected drop ID from navigation state
   const preSelectedDropId = (location.state as any)?.selectedDropId as string | undefined;
   const scrollToMessaging = (location.state as any)?.scrollToMessaging as boolean | undefined;
+
+  // Check for ?express=true query param to auto-open the Express modal
+  useEffect(() => {
+    if (searchParams.get('express') === 'true') {
+      setShowExpressModal(true);
+      // Remove the query param after opening the modal
+      searchParams.delete('express');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   // Count unread messages
   const { data: unreadCount = 0 } = useQuery({
@@ -226,6 +239,16 @@ const PecheurDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      
+      {/* Express Modal - triggered by ?express=true query param */}
+      <QuickDropModal 
+        open={showExpressModal} 
+        onOpenChange={setShowExpressModal}
+        onSuccess={() => {
+          setShowExpressModal(false);
+          fetchDrops();
+        }}
+      />
       
       <div className="container px-4 py-6 md:py-8">
         {/* Test Mode Banner */}
