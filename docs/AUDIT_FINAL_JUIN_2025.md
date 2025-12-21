@@ -1,7 +1,7 @@
 # 🎯 Rapport d'Audit Final - QuaiDirect
 
-**Date :** 21 décembre 2024  
-**Version :** 1.0  
+**Date :** 21 décembre 2025  
+**Version :** 1.1  
 **Statut :** ✅ **VALIDÉ - Prêt pour production**
 
 ---
@@ -60,9 +60,9 @@
 
 | Métrique | Valeur | Statut |
 |----------|--------|--------|
-| Total Edge Functions | 48 | ✅ |
-| Sécurisées par `INTERNAL_FUNCTION_SECRET` | 48/48 | ✅ 100% |
-| CORS centralisé (`_shared/cors.ts`) | 48/48 | ✅ 100% |
+| Total Edge Functions | 47 | ✅ |
+| Sécurisées par `INTERNAL_FUNCTION_SECRET` | 47/47 | ✅ 100% |
+| CORS centralisé (`_shared/cors.ts`) | 47/47 | ✅ 100% |
 | Validation Zod | Implémentée sur fonctions critiques | ✅ |
 | Rate limiting | Activé sur auth, webhooks, SMS | ✅ |
 
@@ -81,7 +81,7 @@
 
 ### Phase 3 : Edge Functions ✅
 
-**Objectif :** Vérifier structure, sécurité et cohérence des 48 fonctions
+**Objectif :** Vérifier structure, sécurité et cohérence des 47 fonctions
 
 #### Catégories de fonctions
 
@@ -90,7 +90,7 @@
 | **Stripe & Paiements** | 8 | `create-checkout`, `stripe-webhook`, `customer-portal`, `create-basket-checkout` |
 | **Emails** | 12 | `send-fisherman-message`, `send-drop-notification`, `send-premium-welcome-email` |
 | **SMS** | 3 | `send-sms`, `check-sms-quota`, `purchase-sms-pack` |
-| **IA & Génération** | 6 | `marine-ai-assistant`, `generate-fisherman-description`, `generate-recipe` |
+| **IA & Génération** | 5 | `marine-ai-assistant`, `generate-fisherman-description`, `generate-recipe` |
 | **Géolocalisation** | 4 | `geocode-address`, `google-geocode-port`, `get-regulatory-zones` |
 | **Administration** | 8 | `approve-fisherman-access`, `generate-secure-edit-link`, `submit-secure-profile-edit` |
 | **Utilitaires** | 7 | `verify-fisherman-payment`, `check-subscription`, `enrich-species` |
@@ -116,6 +116,7 @@
 | `useFishermanZone` | `staleTime: 10min` | ✅ |
 | `useFishermanPaymentStatus` | useState/useEffect | ⚠️ Fonctionnel |
 | `useClientSubscriptionLevel` | useState/useEffect | ⚠️ Fonctionnel |
+| `useQuickDrop` | Gestion templates, presets, photos fallback | ✅ |
 
 #### Realtime
 
@@ -137,6 +138,8 @@
 | `Footer` | Liens complets, design cohérent | ✅ |
 | `ArrivageCard` | Memoization, photos multiples, accessibilité | ✅ |
 | `CreateArrivageWizard` | Wizard 3 étapes, templates rapides | ✅ |
+| `SpeciesPhotoPickerModal` | Fallback photos, preview, libellé dynamique | ✅ |
+| `QuickDropModal` | Intégration photos fallback | ✅ |
 
 #### Couverture de tests
 
@@ -145,12 +148,57 @@
 | Composants | 6 | ✅ |
 | Flows | 4 | ✅ |
 | Pages | 8 | ✅ |
-| Hooks | 1 | ✅ |
-| Libs | 2 | ✅ |
+| Hooks | 2 | ✅ |
+| Libs | 3 | ✅ |
 | Pricing | 1 | ✅ |
 | Service Worker | 1 | ✅ |
 | Edge Functions | 3 | ✅ |
-| **Total** | **26** | ✅ |
+| **Total** | **28** | ✅ |
+
+---
+
+## 🔄 Modifications Décembre 2025 (20-21/12/2025)
+
+### Suppression de l'intégration Pixabay
+
+| Action | Statut |
+|--------|--------|
+| Suppression de `fetch-species-photo` Edge Function | ✅ |
+| Retrait des colonnes orphelines `species` (english_name, latin_name, default_photo_url) | ✅ |
+| Nettoyage des références Pixabay dans le code | ✅ |
+
+### Système de photos fallback
+
+| Composant | Modification | Statut |
+|-----------|--------------|--------|
+| `src/lib/fallbackPhotos.ts` | Collection de 20 photos Unsplash + fonctions utilitaires | ✅ |
+| `useQuickDrop.ts` | Ajout de `getFallbackPhotos()` | ✅ |
+| `SpeciesPhotoPickerModal.tsx` | Prévisualisation fallback + libellé dynamique "Passer" | ✅ |
+| `QuickDropModal.tsx` | Passage des fallbackPhotos au picker | ✅ |
+| `CreateArrivageWizard.tsx` | Intégration photos fallback | ✅ |
+
+### Sécurité & RLS
+
+| Action | Statut |
+|--------|--------|
+| Vue `public_fishermen` convertie en `SECURITY INVOKER = true` | ✅ |
+| Ajout RLS policy "Allow anonymous read access to verified fishermen" | ✅ |
+| Linter Supabase : 0 alerte | ✅ |
+
+### IA & Quotas
+
+| Élément | Statut |
+|---------|--------|
+| Table `ai_usage` pour tracking des requêtes IA | ✅ |
+| Quotas IA par plan (Basic: 30/mois, Pro: 100/mois) | ✅ |
+| Policies RLS pour `ai_usage` | ✅ |
+
+### UX Pêcheur
+
+| Amélioration | Statut |
+|--------------|--------|
+| Alerte dans `PecheurPreferences` si aucune photo configurée | ✅ |
+| Message explicatif pour la photo favorite | ✅ |
 
 ---
 
@@ -203,14 +251,14 @@ quaidirect/
 │   │   └── onboarding/     # Onboarding pêcheur
 │   ├── pages/              # 35+ pages
 │   ├── hooks/              # 15+ hooks personnalisés
-│   ├── lib/                # Utilitaires
+│   ├── lib/                # Utilitaires (dont fallbackPhotos.ts)
 │   ├── config/             # pricing.ts, changelog.ts
 │   └── integrations/       # Supabase client & types
 ├── supabase/
-│   ├── functions/          # 48 Edge Functions
+│   ├── functions/          # 47 Edge Functions
 │   │   └── _shared/        # cors.ts partagé
 │   └── config.toml         # Configuration Supabase
-├── tests/                  # 26 fichiers de tests
+├── tests/                  # 28 fichiers de tests
 └── docs/                   # Documentation
 ```
 
@@ -222,9 +270,9 @@ quaidirect/
 |----------|--------|
 | Composants React | 80+ |
 | Pages | 35+ |
-| Edge Functions | 48 |
+| Edge Functions | 47 |
 | Tables Supabase | 58 |
-| Fichiers de tests | 26 |
+| Fichiers de tests | 28 |
 | Hooks personnalisés | 15+ |
 
 ---
@@ -260,10 +308,12 @@ Le projet **QuaiDirect** est en excellent état et prêt pour la production. Tou
 - ✅ **Edge Functions robustes** avec validation et gestion d'erreurs
 - ✅ **UI "fatigue-proof"** adaptée aux pêcheurs
 - ✅ **Tests solides** couvrant les parcours critiques
+- ✅ **Photos fallback** pour arrivages sans photo (décembre 2025)
+- ✅ **Quotas IA** implémentés par plan d'abonnement
 
 **Score final : 93/100** 🏆
 
 ---
 
-*Rapport généré le 21 décembre 2024*  
+*Rapport généré le 21 décembre 2025*  
 *Audit réalisé par Lovable AI*
