@@ -124,7 +124,6 @@ const App = () => (
             <Route path="/telecharger" element={<LazyRoute><Download /></LazyRoute>} />
             {/* Redirect legacy routes to canonical page */}
             <Route path="/pecheurs" element={<Navigate to="/devenir-pecheur" replace />} />
-            <Route path="/pecheurs/tarifs" element={<Navigate to="/devenir-pecheur" replace />} />
             <Route path="/ambassadeur-partenaire" element={<LazyRoute><AmbassadorPartner /></LazyRoute>} />
             <Route path="/drop/:id" element={<LazyRoute><DropDetail /></LazyRoute>} />
             <Route path="/pecheurs/:slug" element={<LazyRoute><FisherProfile /></LazyRoute>} />
@@ -179,8 +178,6 @@ const App = () => (
             } />
             {/* Legacy route - redirect to wizard */}
             <Route path="/pecheur/annonce-simple" element={<Navigate to="/pecheur/nouvel-arrivage" replace />} />
-            {/* Legacy route redirect */}
-            <Route path="/pecheur/nouvel-arrivage-v2" element={<Navigate to="/pecheur/nouvel-arrivage" replace />} />
             <Route path="/pecheur/modifier-arrivage/:dropId" element={
               <ProtectedFisherRoute>
                 <LazyRoute><EditArrivage /></LazyRoute>
@@ -231,11 +228,8 @@ const App = () => (
             <Route path="/pecheur/dashboard" element={<Navigate to="/dashboard/pecheur" replace />} />
             <Route path="/pecheur/creer-arrivage" element={<RedirectWithParams to="/pecheur/nouvel-arrivage" />} />
             <Route path="/arrivage/:id" element={<RedirectDropLegacy />} />
-            <Route path="/premium/paywall" element={<Navigate to="/premium" replace />} />
             <Route path="/premium/dashboard" element={<Navigate to="/dashboard/premium" replace />} />
             <Route path="/admin" element={<Navigate to="/dashboard/admin" replace />} />
-            <Route path="/demo/tracabilite" element={<Navigate to="/demo-tracabilite" replace />} />
-            <Route path="/annonce-simple" element={<Navigate to="/pecheur/annonce-simple" replace />} />
 
             {/* Catch-all 404 */}
             <Route path="*" element={<NotFound />} />
