@@ -7,6 +7,7 @@ interface SalePoint {
   label: string;
   address: string;
   is_primary: boolean | null;
+  photo_url?: string | null;
 }
 
 interface SpeciesPreset {
@@ -31,6 +32,12 @@ interface FishermanDefaults {
   default_time_slot: string | null;
 }
 
+interface FishermanPhotos {
+  boatPhoto: string | null;
+  dockPhoto: string | null;
+  favoritePhoto: string | null;
+}
+
 export interface QuickDropData {
   date: Date;
   timeSlot: string;
@@ -52,6 +59,11 @@ export function useQuickDrop() {
   const [salePoints, setSalePoints] = useState<SalePoint[]>([]);
   const [speciesPresets, setSpeciesPresets] = useState<SpeciesPreset[]>([]);
   const [templates, setTemplates] = useState<DropTemplate[]>([]);
+  const [fishermanPhotos, setFishermanPhotos] = useState<FishermanPhotos>({
+    boatPhoto: null,
+    dockPhoto: null,
+    favoritePhoto: null,
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [isPublishing, setIsPublishing] = useState(false);
 
@@ -65,10 +77,10 @@ export function useQuickDrop() {
       }
 
       try {
-        // Fetch fisherman info
+        // Fetch fisherman info with photos
         const { data: fisherman } = await supabase
           .from('fishermen')
-          .select('id, default_sale_point_id, default_time_slot')
+          .select('id, default_sale_point_id, default_time_slot, photo_boat_1, photo_dock_sale, favorite_photo_url')
           .eq('user_id', user.id)
           .maybeSingle();
 
@@ -79,11 +91,16 @@ export function useQuickDrop() {
 
         setFishermanId(fisherman.id);
         setDefaults(fisherman);
+        setFishermanPhotos({
+          boatPhoto: fisherman.photo_boat_1,
+          dockPhoto: fisherman.photo_dock_sale,
+          favoritePhoto: fisherman.favorite_photo_url,
+        });
 
-        // Fetch sale points
+        // Fetch sale points with photos
         const { data: salePointsData } = await supabase
           .from('fisherman_sale_points')
-          .select('id, label, address, is_primary')
+          .select('id, label, address, is_primary, photo_url')
           .eq('fisherman_id', fisherman.id)
           .order('is_primary', { ascending: false });
 
@@ -138,6 +155,16 @@ export function useQuickDrop() {
       console.error('Error fetching species name:', error);
       return null;
     }
+  };
+
+  // Get fallback photos based on selected sale point
+  const getFallbackPhotos = (salePointId: string) => {
+    const salePoint = salePoints.find(sp => sp.id === salePointId);
+    return {
+      boatPhoto: fishermanPhotos.boatPhoto || fishermanPhotos.dockPhoto,
+      salePointPhoto: salePoint?.photo_url || null,
+      favoritePhoto: fishermanPhotos.favoritePhoto,
+    };
   };
 
   const publishQuickDrop = async (data: QuickDropData): Promise<QuickDropResult> => {
@@ -305,10 +332,12 @@ export function useQuickDrop() {
     salePoints,
     speciesPresets,
     templates,
+    fishermanPhotos,
     isLoading,
     isPublishing,
     canUseQuickDrop,
     publishQuickDrop,
     publishFromTemplate,
+    getFallbackPhotos,
   };
 }

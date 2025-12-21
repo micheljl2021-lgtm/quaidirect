@@ -66,19 +66,34 @@ export default function CreateArrivageWizard() {
   });
   const [isPremium, setIsPremium] = useState(false);
 
-  // Load templates on mount
+  // State for fisherman photos (for fallback)
+  const [fishermanPhotos, setFishermanPhotos] = useState<{
+    boatPhoto: string | null;
+    dockPhoto: string | null;
+    favoritePhoto: string | null;
+  }>({ boatPhoto: null, dockPhoto: null, favoritePhoto: null });
+  const [salePointPhoto, setSalePointPhoto] = useState<string | null>(null);
+
+  // Load templates and fisherman photos on mount
   useEffect(() => {
-    const loadTemplates = async () => {
+    const loadTemplatesAndPhotos = async () => {
       if (!user) return;
       
       try {
         const { data: fishermanData } = await supabase
           .from("fishermen")
-          .select("id")
+          .select("id, photo_boat_1, photo_dock_sale, favorite_photo_url")
           .eq("user_id", user.id)
           .single();
 
         if (fishermanData) {
+          // Store fisherman photos for fallback
+          setFishermanPhotos({
+            boatPhoto: fishermanData.photo_boat_1,
+            dockPhoto: fishermanData.photo_dock_sale,
+            favoritePhoto: fishermanData.favorite_photo_url,
+          });
+
           const { data: templatesData } = await supabase
             .from("drop_templates")
             .select("*")
@@ -96,8 +111,28 @@ export default function CreateArrivageWizard() {
       }
     };
 
-    loadTemplates();
+    loadTemplatesAndPhotos();
   }, [user]);
+
+  // Update sale point photo when sale point changes
+  useEffect(() => {
+    const fetchSalePointPhoto = async () => {
+      if (!arrivageData.salePointId) {
+        setSalePointPhoto(null);
+        return;
+      }
+      
+      const { data } = await supabase
+        .from("fisherman_sale_points")
+        .select("photo_url")
+        .eq("id", arrivageData.salePointId)
+        .maybeSingle();
+      
+      setSalePointPhoto(data?.photo_url || null);
+    };
+    
+    fetchSalePointPhoto();
+  }, [arrivageData.salePointId]);
 
   const handleTemplateSelect = async (template: any) => {
     const payload = template.payload;
@@ -552,6 +587,11 @@ export default function CreateArrivageWizard() {
           onComplete={() => {
             setShowPhotoPicker(false);
             setShowMessageDialog(true);
+          }}
+          fallbackPhotos={{
+            boatPhoto: fishermanPhotos.boatPhoto || fishermanPhotos.dockPhoto,
+            salePointPhoto: salePointPhoto,
+            favoritePhoto: fishermanPhotos.favoritePhoto,
           }}
         />
       )}

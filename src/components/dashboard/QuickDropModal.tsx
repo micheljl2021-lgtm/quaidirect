@@ -40,7 +40,8 @@ export function QuickDropModal({ open, onOpenChange, onSuccess }: QuickDropModal
     salePoints, 
     speciesPresets, 
     isPublishing, 
-    publishQuickDrop 
+    publishQuickDrop,
+    getFallbackPhotos,
   } = useQuickDrop();
 
   // Form state
@@ -115,6 +116,9 @@ export function QuickDropModal({ open, onOpenChange, onSuccess }: QuickDropModal
   };
 
   const isValid = salePointId && selectedSpeciesIds.length > 0 && customTime;
+
+  // Get fallback photos for the photo picker
+  const fallbackPhotos = salePointId ? getFallbackPhotos(salePointId) : undefined;
 
   return (
     <>
@@ -246,6 +250,7 @@ export function QuickDropModal({ open, onOpenChange, onSuccess }: QuickDropModal
           dropId={createdDropResult.dropId}
           speciesName={createdDropResult.speciesName}
           onComplete={() => handlePhotoPickerComplete()}
+          fallbackPhotos={fallbackPhotos}
         />
       )}
     </>
