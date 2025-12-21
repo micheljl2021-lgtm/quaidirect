@@ -353,17 +353,26 @@ const Landing = () => {
                 </div>
               </div>
 
-              {/* CTA */}
-              <div className="pt-4">
+              {/* CTAs */}
+              <div className="flex flex-col gap-3 pt-4">
                 <Link to="/devenir-pecheur">
                   <Button 
                     size="lg" 
-                    className="text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 bg-primary hover:bg-primary/90 shadow-xl w-full sm:w-auto"
+                    className="text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 bg-primary hover:bg-primary/90 shadow-xl w-full"
                   >
                     <ArrowRight className="h-5 w-5 mr-2" />
                     Créer mon profil pêcheur
                   </Button>
                 </Link>
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="text-sm sm:text-base px-6 py-4 bg-white/10 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm w-full"
+                  onClick={scrollToContact}
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Demander une démo
+                </Button>
               </div>
             </div>
           </div>
