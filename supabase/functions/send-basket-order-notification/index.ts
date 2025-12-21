@@ -153,7 +153,7 @@ serve(async (req) => {
         ${order.notes ? `<p><strong>Notes du client :</strong> ${escapeHtml(order.notes)}</p>` : ''}
 
         <p style="margin-top: 30px;">
-          <a href="https://quaidirect.fr/dashboard/pecheur" 
+          <a href="${Deno.env.get('SITE_URL') || 'https://quaidirect.fr'}/dashboard/pecheur" 
              style="background: #0066cc; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
             Voir mes commandes
           </a>

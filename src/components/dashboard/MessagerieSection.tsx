@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,6 +38,7 @@ interface MessagerieSectionProps {
 
 export function MessagerieSection({ userId, userRole, fishermanId }: MessagerieSectionProps) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [replyContent, setReplyContent] = useState("");
   const [newMessageOpen, setNewMessageOpen] = useState(false);
@@ -387,7 +389,7 @@ export function MessagerieSection({ userId, userRole, fishermanId }: MessagerieS
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => window.location.href = `/pecheur/arrivage/${selectedMessage.related_drop_id}/modifier`}
+                          onClick={() => navigate(`/pecheur/modifier-arrivage/${selectedMessage.related_drop_id}`)}
                         >
                           Voir l'arrivage concerné
                         </Button>

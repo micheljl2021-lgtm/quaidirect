@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ const TIME_SLOTS = [
 
 export function Step1LieuHoraire({ initialData, onComplete, onCancel }: Step1Props) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [salePoints, setSalePoints] = useState<any[]>([]);
   const [selectedSalePoint, setSelectedSalePoint] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(initialData.date || new Date());
@@ -164,7 +166,7 @@ export function Step1LieuHoraire({ initialData, onComplete, onCancel }: Step1Pro
               <p className="text-sm text-muted-foreground mb-4">
                 Configure tes points de vente pour créer des arrivages
               </p>
-              <Button onClick={() => window.location.href = '/pecheur/points-de-vente'}>
+              <Button onClick={() => navigate('/pecheur/points-de-vente')}>
                 Configurer mes points de vente
               </Button>
             </div>
