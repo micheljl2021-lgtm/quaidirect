@@ -1,7 +1,6 @@
-// Cache version - update this on each deployment
-// Format: YYYYMMDD-HHMMSS or use build timestamp
-const CACHE_VERSION = '__CACHE_VERSION__'; // Will be replaced during build
-const CACHE_NAME = `quaidirect-v2-${CACHE_VERSION}`;
+// Cache version - simple timestamp-based versioning
+const CACHE_VERSION = '2025-06-21';
+const CACHE_NAME = `quaidirect-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `quaidirect-runtime-${CACHE_VERSION}`;
 const STATIC_CACHE = `quaidirect-static-${CACHE_VERSION}`;
 const API_CACHE = `quaidirect-api-${CACHE_VERSION}`;
