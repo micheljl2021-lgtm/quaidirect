@@ -2734,11 +2734,8 @@ export type Database = {
         Row: {
           bio: string | null
           boat_name: string | null
-          boat_registration: string | null
-          client_message: string | null
           company_name: string | null
           created_at: string | null
-          default_sale_point_id: string | null
           description: string | null
           display_name_preference: string | null
           facebook_url: string | null
@@ -2757,7 +2754,6 @@ export type Database = {
           photo_boat_2: string | null
           photo_dock_sale: string | null
           photo_url: string | null
-          seo_enriched_at: string | null
           seo_hours_location: string | null
           seo_how_to_order: Json | null
           seo_keywords: string[] | null
@@ -2765,7 +2761,6 @@ export type Database = {
           seo_meta_description: string | null
           seo_title: string | null
           slug: string | null
-          user_id: string | null
           verified_at: string | null
           website_url: string | null
           work_philosophy: string | null
@@ -2774,11 +2769,8 @@ export type Database = {
         Insert: {
           bio?: string | null
           boat_name?: string | null
-          boat_registration?: string | null
-          client_message?: string | null
           company_name?: string | null
           created_at?: string | null
-          default_sale_point_id?: string | null
           description?: string | null
           display_name_preference?: string | null
           facebook_url?: string | null
@@ -2797,7 +2789,6 @@ export type Database = {
           photo_boat_2?: string | null
           photo_dock_sale?: string | null
           photo_url?: string | null
-          seo_enriched_at?: string | null
           seo_hours_location?: string | null
           seo_how_to_order?: Json | null
           seo_keywords?: string[] | null
@@ -2805,7 +2796,6 @@ export type Database = {
           seo_meta_description?: string | null
           seo_title?: string | null
           slug?: string | null
-          user_id?: string | null
           verified_at?: string | null
           website_url?: string | null
           work_philosophy?: string | null
@@ -2814,11 +2804,8 @@ export type Database = {
         Update: {
           bio?: string | null
           boat_name?: string | null
-          boat_registration?: string | null
-          client_message?: string | null
           company_name?: string | null
           created_at?: string | null
-          default_sale_point_id?: string | null
           description?: string | null
           display_name_preference?: string | null
           facebook_url?: string | null
@@ -2837,7 +2824,6 @@ export type Database = {
           photo_boat_2?: string | null
           photo_dock_sale?: string | null
           photo_url?: string | null
-          seo_enriched_at?: string | null
           seo_hours_location?: string | null
           seo_how_to_order?: Json | null
           seo_keywords?: string[] | null
@@ -2845,21 +2831,12 @@ export type Database = {
           seo_meta_description?: string | null
           seo_title?: string | null
           slug?: string | null
-          user_id?: string | null
           verified_at?: string | null
           website_url?: string | null
           work_philosophy?: string | null
           years_experience?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "fishermen_default_sale_point_id_fkey"
-            columns: ["default_sale_point_id"]
-            isOneToOne: false
-            referencedRelation: "fisherman_sale_points"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Functions: {

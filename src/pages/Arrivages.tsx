@@ -91,12 +91,8 @@ const Arrivages = () => {
   const [filterPort, setFilterPort] = useState<string>('all');
   const [filterFisherman, setFilterFisherman] = useState<string>('all');
 
-  // Redirect anonymous users to auth page
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth', { replace: true });
-    }
-  }, [user, authLoading, navigate]);
+  // Anonymous users can now view this page - no redirect needed
+  // RLS policies on drops table handle visibility filtering
 
   useEffect(() => {
     // Update current time every 60 seconds for countdown display
@@ -112,10 +108,10 @@ const Arrivages = () => {
   const { data: salePoints } = useSalePoints({ enabled: !!user });
 
   // Fetch drops with RLS enforced server-side (without sale points join)
-  // Only fetch if user is authenticated
+  // Enabled for all users (anonymous get public drops via RLS)
   const { data: drops, isLoading, error } = useQuery({
-    queryKey: ['drops', user?.id],
-    enabled: !!user, // Only fetch if user is authenticated
+    queryKey: ['drops', user?.id ?? 'anonymous'],
+    enabled: true, // Always fetch - RLS handles visibility
     queryFn: async () => {
       // Grace period: show arrivals up to X hours after their sale_start_time
       const graceMs = LIMITS.ARRIVAL_GRACE_HOURS * 60 * 60 * 1000;
@@ -363,8 +359,8 @@ const Arrivages = () => {
     });
   }, [drops, filterZone, filterSpecies, filterPort, filterFisherman, isFisherman, showMyZoneOnly, fishermanZone]);
 
-  // Show loading state while checking auth
-  if (authLoading) {
+  // Show loading state while loading data
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -374,11 +370,6 @@ const Arrivages = () => {
         <Footer />
       </div>
     );
-  }
-
-  // If not authenticated, this will redirect (handled in useEffect above)
-  if (!user) {
-    return null;
   }
 
   return (
