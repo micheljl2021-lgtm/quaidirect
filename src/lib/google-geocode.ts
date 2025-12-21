@@ -16,27 +16,27 @@ export async function geocodeAddress(
   address: string
 ): Promise<GeocodeResult | null> {
   try {
-    console.log(`[Geocode Client] Requesting geocode for: ${address}`);
+    if (import.meta.env.DEV) console.log(`[Geocode Client] Requesting geocode for: ${address}`);
 
     const { data, error } = await supabase.functions.invoke('geocode-address', {
       body: { address },
     });
 
     if (error) {
-      console.error('[Geocode Client] Edge Function error:', error);
+      if (import.meta.env.DEV) console.error('[Geocode Client] Edge Function error:', error);
       return null;
     }
 
     if (!data || !data.lat || !data.lng) {
-      console.error('[Geocode Client] Invalid response data:', data);
+      if (import.meta.env.DEV) console.error('[Geocode Client] Invalid response data:', data);
       return null;
     }
 
-    console.log(`[Geocode Client] Success: ${data.lat}, ${data.lng}`);
+    if (import.meta.env.DEV) console.log(`[Geocode Client] Success: ${data.lat}, ${data.lng}`);
     return data as GeocodeResult;
 
   } catch (error) {
-    console.error('[Geocode Client] Unexpected error:', error);
+    if (import.meta.env.DEV) console.error('[Geocode Client] Unexpected error:', error);
     return null;
   }
 }

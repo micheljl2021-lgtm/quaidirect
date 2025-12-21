@@ -2732,7 +2732,6 @@ export type Database = {
     Views: {
       public_fishermen: {
         Row: {
-          affiliate_code: string | null
           ambassador_slot: number | null
           bio: string | null
           boat_name: string | null
@@ -2775,7 +2774,6 @@ export type Database = {
           zone_id: string | null
         }
         Insert: {
-          affiliate_code?: string | null
           ambassador_slot?: number | null
           bio?: string | null
           boat_name?: string | null
@@ -2818,7 +2816,6 @@ export type Database = {
           zone_id?: string | null
         }
         Update: {
-          affiliate_code?: string | null
           ambassador_slot?: number | null
           bio?: string | null
           boat_name?: string | null
