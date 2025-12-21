@@ -5,7 +5,7 @@ import { useClientSubscriptionLevel } from "@/hooks/useClientSubscriptionLevel";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Crown, User, Menu, X, Shield, Download, Smartphone } from "lucide-react";
+import { Crown, User, Menu, X, Shield, Download, Smartphone, Plus } from "lucide-react";
 import { AdminRoleSwitcher } from "@/components/admin/AdminRoleSwitcher";
 import logoQuaidirect from "@/assets/logo-quaidirect-full.png";
 import {
@@ -270,13 +270,23 @@ const Header = () => {
                 </NavLink>
               )}
               {userRole === 'fisherman' && (
-                <NavLink 
-                  to="/dashboard/pecheur" 
-                  className={mobileNavLinkClass}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Dashboard pêcheur
-                </NavLink>
+                <>
+                  <NavLink 
+                    to="/dashboard/pecheur" 
+                    className={mobileNavLinkClass}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Dashboard pêcheur
+                  </NavLink>
+                  <NavLink 
+                    to="/pecheur/nouvel-arrivage-v2" 
+                    className={({ isActive }) => `${mobileNavLinkClass({ isActive })} flex items-center gap-2 font-semibold text-primary`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Nouvel arrivage
+                  </NavLink>
+                </>
               )}
               {userRole === 'admin' && (
                 <NavLink 
