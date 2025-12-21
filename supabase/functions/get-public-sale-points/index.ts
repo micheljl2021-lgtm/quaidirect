@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders, handleCors } from '../_shared/cors.ts';
 
 // Rate limiting configuration
 const RATE_LIMIT = 30; // max requests (higher for public data endpoint)
@@ -51,9 +47,10 @@ const checkRateLimit = async (
 };
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get('origin');
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
@@ -83,7 +80,7 @@ serve(async (req) => {
         JSON.stringify({ error: 'Trop de requêtes. Veuillez patienter une minute.' }),
         {
           headers: { 
-            ...corsHeaders, 
+            ...getCorsHeaders(origin), 
             'Content-Type': 'application/json',
             'X-RateLimit-Remaining': '0',
             'Retry-After': '60'
@@ -119,20 +116,20 @@ serve(async (req) => {
       console.error('[get-public-sale-points] Supabase error', error);
       return new Response(
         JSON.stringify({ error: error.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' } }
       );
     }
 
     return new Response(
       JSON.stringify(data ?? []),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' } }
     );
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error('[get-public-sale-points] Unexpected error', message);
     return new Response(
       JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' } }
     );
   }
 });

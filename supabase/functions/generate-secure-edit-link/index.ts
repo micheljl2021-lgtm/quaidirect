@@ -1,20 +1,17 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@4.0.0";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://quaidirect.fr",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders, handleCors } from '../_shared/cors.ts';
 
 interface GenerateLinkRequest {
   supportRequestId: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get('origin');
 
   try {
     const supabaseClient = createClient(
@@ -117,8 +114,8 @@ const handler = async (req: Request): Promise<Response> => {
     if (tokenError) throw new Error(`Erreur création token: ${tokenError.message}`);
 
     // Construire l'URL du lien vers la page d'onboarding
-    const origin = req.headers.get("origin") || "https://quaidirect.fr";
-    const onboardingLink = `${origin}/pecheur/onboarding`;
+    const baseUrl = origin || "https://quaidirect.fr";
+    const onboardingLink = `${baseUrl}/pecheur/onboarding`;
 
     // Envoyer l'email via Resend
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
@@ -166,13 +163,13 @@ const handler = async (req: Request): Promise<Response> => {
         message: "Lien de modification envoyé avec succès",
         expiresAt: expiresAt.toISOString()
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      { headers: { ...getCorsHeaders(origin), "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error: any) {
     console.error("Erreur generate-secure-edit-link:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      { headers: { ...getCorsHeaders(origin), "Content-Type": "application/json" }, status: 500 }
     );
   }
 };
