@@ -1,13 +1,8 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resend } from "https://esm.sh/resend@2.0.0";
+import { Resend } from "https://esm.sh/resend@4.0.0";
+import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 interface CorrectionRequestPayload {
   dropId: string;
@@ -16,11 +11,12 @@ interface CorrectionRequestPayload {
   adminUserId: string;
 }
 
-serve(async (req: Request) => {
-  // Handle CORS preflight
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+Deno.serve(async (req: Request) => {
+  // Handle CORS preflight with origin validation
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get('Origin');
 
   try {
     const supabaseAdmin = createClient(
@@ -108,8 +104,8 @@ serve(async (req: Request) => {
       console.error("Error creating internal message:", messageError);
     }
 
-    // Send email notification
-    const siteUrl = Deno.env.get("SITE_URL") || "https://quaidirect.lovable.app";
+    // Send email notification with dynamic SITE_URL
+    const siteUrl = Deno.env.get("SITE_URL") || "https://quaidirect.fr";
     
     const emailHtml = `
 <!DOCTYPE html>
@@ -186,7 +182,7 @@ serve(async (req: Request) => {
       }),
       { 
         status: 200, 
-        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        headers: { ...getCorsHeaders(origin), "Content-Type": "application/json" } 
       }
     );
   } catch (error: any) {
@@ -195,7 +191,7 @@ serve(async (req: Request) => {
       JSON.stringify({ error: error.message }),
       { 
         status: 500, 
-        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        headers: { ...getCorsHeaders(origin), "Content-Type": "application/json" } 
       }
     );
   }

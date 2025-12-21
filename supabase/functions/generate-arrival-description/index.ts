@@ -1,15 +1,11 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+Deno.serve(async (req) => {
+  // Handle CORS preflight with origin validation
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
-serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const origin = req.headers.get('Origin');
 
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -22,7 +18,7 @@ serve(async (req) => {
     if (!species || species.length === 0) {
       return new Response(
         JSON.stringify({ error: "Aucune espèce fournie" }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -84,20 +80,20 @@ Règles:
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: "Trop de requêtes, réessaie dans quelques secondes." }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 429, headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' } }
         );
       }
       if (response.status === 402) {
         return new Response(
           JSON.stringify({ error: "Crédits IA épuisés. Contacte le support." }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 402, headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' } }
         );
       }
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
       return new Response(
         JSON.stringify({ error: "Erreur lors de la génération" }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -108,13 +104,14 @@ Règles:
 
     return new Response(
       JSON.stringify({ description }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error("Error in generate-arrival-description:", error);
+    const origin = req.headers.get('Origin');
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' } }
     );
   }
 });

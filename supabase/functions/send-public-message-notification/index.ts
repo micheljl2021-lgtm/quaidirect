@@ -1,8 +1,9 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resend } from "https://esm.sh/resend@2.0.0";
+import { Resend } from "https://esm.sh/resend@4.0.0";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { getCorsHeaders, handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 // Input validation schema
 const PublicMessageSchema = z.object({
@@ -77,7 +78,7 @@ const checkRateLimit = async (
   return { allowed: true, remaining: RATE_LIMIT - 1 };
 };
 
-serve(async (req: Request) => {
+Deno.serve(async (req: Request) => {
   // Handle CORS preflight with origin validation
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
@@ -158,10 +159,9 @@ serve(async (req: Request) => {
     const siteUrl = Deno.env.get("SITE_URL") || "https://quaidirect.fr";
 
     // Send email to fisherman
-    const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
     const { error: emailError } = await resend.emails.send({
       from: "QuaiDirect <notifications@quaidirect.fr>",
-      reply_to: senderEmail,
+      replyTo: senderEmail,
       to: [fishermanEmail],
       subject: `Nouveau message de ${escapeHtml(senderName)} sur QuaiDirect`,
       html: `
