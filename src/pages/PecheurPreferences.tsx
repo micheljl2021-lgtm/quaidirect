@@ -8,10 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Loader2, MapPin, Clock, Camera } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ArrowLeft, Save, Loader2, MapPin, Clock, Camera, Star, AlertTriangle } from "lucide-react";
 import { PhotoUpload } from "@/components/PhotoUpload";
 import { FavoritePhotoSelector } from "@/components/FavoritePhotoSelector";
-
 export default function PecheurPreferences() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -218,6 +218,16 @@ export default function PecheurPreferences() {
               <p className="text-sm text-muted-foreground -mt-2">
                 Ces photos apparaîtront sur votre page vitrine et dans vos arrivages
               </p>
+
+              {/* Alert if no photos configured */}
+              {!photoUrl && !photoBoat1 && !photoBoat2 && !photoDockSale && (
+                <Alert variant="default" className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
+                  <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  <AlertDescription className="text-amber-800 dark:text-amber-200">
+                    Ajoutez au moins une photo pour illustrer automatiquement vos arrivages
+                  </AlertDescription>
+                </Alert>
+              )}
               
               <PhotoUpload
                 label="Photo de profil principale"
@@ -250,6 +260,13 @@ export default function PecheurPreferences() {
 
             {/* Favorite Photo Selector */}
             <div className="pt-4 border-t">
+              <Label className="flex items-center gap-2 mb-2">
+                <Star className="h-4 w-4 text-yellow-500" />
+                Photo par défaut pour vos arrivages
+              </Label>
+              <p className="text-sm text-muted-foreground mb-3">
+                Cette photo sera utilisée automatiquement si vous ne prenez pas de photo lors de la création d'un arrivage
+              </p>
               <FavoritePhotoSelector
                 photoUrl={photoUrl || undefined}
                 photoBoat1={photoBoat1 || undefined}
