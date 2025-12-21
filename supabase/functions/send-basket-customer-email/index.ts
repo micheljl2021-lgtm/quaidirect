@@ -1,6 +1,6 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -15,20 +15,17 @@ const escapeHtml = (text: string): string => {
     .replace(/'/g, '&#039;');
 };
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://quaidirect.fr",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[SEND-BASKET-CUSTOMER-EMAIL] ${step}${detailsStr}`);
 };
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+Deno.serve(async (req) => {
+  // Handle CORS preflight with origin validation
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get('Origin');
 
   try {
     // Verify internal secret for webhook calls
@@ -39,14 +36,14 @@ serve(async (req) => {
       logStep('ERROR', 'Unauthorized: Invalid or missing internal secret');
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' },
       });
     }
   } catch (authError) {
     logStep('ERROR', 'Authentication check failed');
     return new Response(JSON.stringify({ error: 'Authentication failed' }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' },
     });
   }
 
@@ -111,6 +108,7 @@ serve(async (req) => {
     }
 
     const fishermanName = order.fishermen?.boat_name || order.fishermen?.company_name || 'Votre pêcheur';
+    const siteUrl = Deno.env.get("SITE_URL") || "https://quaidirect.fr";
 
     const emailResponse = await resend.emails.send({
       from: "QuaiDirect <support@quaidirect.fr>",
@@ -179,7 +177,7 @@ serve(async (req) => {
             </div>
 
             <div style="text-align: center; margin-bottom: 30px;">
-              <a href="https://quaidirect.fr/arrivages" 
+              <a href="${siteUrl}/arrivages" 
                  style="display: inline-block; background: #0066cc; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;">
                 Voir d'autres arrivages
               </a>
@@ -206,13 +204,13 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+      headers: { "Content-Type": "application/json", ...getCorsHeaders(origin) },
     });
   } catch (error: any) {
     logStep('ERROR', { message: error.message });
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      { status: 500, headers: { "Content-Type": "application/json", ...getCorsHeaders(origin) } }
     );
   }
 });

@@ -1,15 +1,12 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+Deno.serve(async (req) => {
+  // Handle CORS preflight with origin validation
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const origin = req.headers.get('Origin');
 
   try {
     const { species_id, species_name } = await req.json();
@@ -17,7 +14,7 @@ serve(async (req) => {
     if (!species_id && !species_name) {
       return new Response(
         JSON.stringify({ error: "species_id ou species_name requis" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...getCorsHeaders(origin), "Content-Type": "application/json" } }
       );
     }
 
@@ -39,7 +36,7 @@ serve(async (req) => {
       console.error("Species not found:", fetchError);
       return new Response(
         JSON.stringify({ error: "Espèce non trouvée" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 404, headers: { ...getCorsHeaders(origin), "Content-Type": "application/json" } }
       );
     }
 
@@ -58,7 +55,7 @@ serve(async (req) => {
           enriched: false,
           message: "Données déjà complètes"
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...getCorsHeaders(origin), "Content-Type": "application/json" } }
       );
     }
 
@@ -170,13 +167,13 @@ Je veux savoir:
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: "Limite de requêtes atteinte, réessayez plus tard" }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 429, headers: { ...getCorsHeaders(origin), "Content-Type": "application/json" } }
         );
       }
       if (response.status === 402) {
         return new Response(
           JSON.stringify({ error: "Crédits IA insuffisants" }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 402, headers: { ...getCorsHeaders(origin), "Content-Type": "application/json" } }
         );
       }
       throw new Error(`AI gateway error: ${response.status}`);
@@ -229,14 +226,15 @@ Je veux savoir:
         enriched: true,
         message: "Espèce enrichie avec succès"
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...getCorsHeaders(origin), "Content-Type": "application/json" } }
     );
 
   } catch (error) {
     console.error("enrich-species error:", error);
+    const origin = req.headers.get('Origin');
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Erreur inconnue" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...getCorsHeaders(origin), "Content-Type": "application/json" } }
     );
   }
 });

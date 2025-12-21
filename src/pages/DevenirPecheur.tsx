@@ -77,7 +77,7 @@ const DevenirPecheur = () => {
       <Header />
 
       <div className="container max-w-7xl mx-auto px-4 py-12">
-        <Button variant="ghost" onClick={() => window.history.back()} className="gap-2 mb-8">
+        <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2 mb-8">
           <ArrowLeft className="h-4 w-4" />
           Retour
         </Button>

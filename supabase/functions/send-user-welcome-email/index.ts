@@ -1,14 +1,7 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-
-const resendModule = await import("https://esm.sh/resend@2.0.0");
-const Resend = resendModule.Resend || resendModule.default?.Resend || resendModule.default;
+import { Resend } from "https://esm.sh/resend@4.0.0";
+import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://quaidirect.fr",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 // Escape HTML to prevent XSS attacks
 function escapeHtml(text: string | null | undefined): string {
@@ -26,12 +19,14 @@ interface UserWelcomeRequest {
   name?: string;
 }
 
-const handler = async (req: Request): Promise<Response> => {
+Deno.serve(async (req: Request): Promise<Response> => {
   console.log("[WELCOME-EMAIL] Function invoked");
   
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight with origin validation
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get('Origin');
 
   try {
     const body = await req.json();
@@ -46,6 +41,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("[WELCOME-EMAIL] Sending welcome email to:", email);
     console.log("[WELCOME-EMAIL] RESEND_API_KEY configured:", !!Deno.env.get("RESEND_API_KEY"));
+
+    const siteUrl = Deno.env.get("SITE_URL") || "https://quaidirect.fr";
 
     const emailResponse = await resend.emails.send({
       from: "QuaiDirect <support@quaidirect.fr>",
@@ -85,7 +82,7 @@ const handler = async (req: Request): Promise<Response> => {
               <div class="feature">Soutenir la pêche artisanale et le circuit court</div>
               
               <div style="text-align: center; margin: 30px 0;">
-                <a href="https://quaidirect.fr" class="button">🌊 Découvrir les arrivages</a>
+                <a href="${siteUrl}" class="button">🌊 Découvrir les arrivages</a>
               </div>
               
               <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
@@ -95,7 +92,7 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
             <div class="footer">
               <p>🎣 QuaiDirect - Du bateau à votre assiette<br>
-              <a href="https://quaidirect.fr" style="color: #0EA5E9;">quaidirect.fr</a></p>
+              <a href="${siteUrl}" style="color: #0EA5E9;">quaidirect.fr</a></p>
               <p style="font-size: 12px; color: #9ca3af;">
                 Questions ? Contactez-nous : <a href="mailto:support@quaidirect.fr" style="color: #0EA5E9;">support@quaidirect.fr</a>
               </p>
@@ -116,7 +113,7 @@ const handler = async (req: Request): Promise<Response> => {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        ...corsHeaders,
+        ...getCorsHeaders(origin),
       },
     });
   } catch (error: any) {
@@ -126,6 +123,7 @@ const handler = async (req: Request): Promise<Response> => {
       name: error.name
     });
     
+    const origin = req.headers.get('Origin');
     return new Response(
       JSON.stringify({ 
         success: false,
@@ -134,10 +132,8 @@ const handler = async (req: Request): Promise<Response> => {
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json", ...getCorsHeaders(origin) },
       }
     );
   }
-};
-
-serve(handler);
+});
