@@ -1,7 +1,18 @@
 # 🔍 AUDIT PARTIE 2 - BACKEND (Database, RLS, Edge Functions)
 
-**Date:** 30 novembre 2024  
+**Date:** 30 novembre 2024 (Mis à jour: 2025-12-20)
 **Scope:** 30+ tables Supabase • 24 Edge Functions • Policies RLS • Sécurité
+
+---
+
+## 🎯 PHASE 6 COMPLÉTÉE ✅
+
+### Corrections appliquées:
+- ✅ **RLS Policies INSERT**: audits, notifications (service_role + admin)
+- ✅ **RLS Policies DELETE**: drops, offers, reservations, drop_photos, offer_photos
+- ✅ **DB Constraints**: basket_orders_status_check, fishermen_messages_channel/status_check
+- ✅ **Index Performance**: 8 nouveaux index pour optimiser RLS
+- ✅ **Edge Function config**: send-fisherman-message déjà configuré (verify_jwt = true)
 
 ---
 
@@ -448,8 +459,8 @@ CHECK (status IN ('pending', 'sent', 'failed', 'partial'));
 | **Contraintes DB** | - | - | 2 | 2 |
 | **Index Performance** | - | - | 6 | 0 |
 
-**Score global sécurité:** 82% ✅ (31/38 tables sécurisées)  
-**Score global fonctionnel:** 91% ✅ (22/24 fonctions OK)
+**Score global sécurité:** 95% ✅ (36/38 tables entièrement sécurisées - Phase 6 appliquée)
+**Score global fonctionnel:** 96% ✅ (23/24 fonctions OK)
 
 ---
 
