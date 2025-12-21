@@ -230,7 +230,7 @@ const PecheurDashboard = () => {
         {/* Test Mode Banner */}
         {isTestMode && <TestModeBanner roleLabel="Pêcheur" />}
 
-        <DashboardHeader fishermanId={fishermanId} />
+        <DashboardHeader fishermanId={fishermanId} onDropCreated={fetchDrops} />
 
         {/* Alert for drops needing correction */}
         {dropsNeedingCorrection.length > 0 && (
