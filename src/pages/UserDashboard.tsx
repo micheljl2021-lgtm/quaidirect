@@ -39,20 +39,20 @@ interface Drop {
 }
 
 const UserDashboard = () => {
-  const { user, userRole, loading } = useAuth();
+  const { user, effectiveRole, loading } = useAuth();
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     if (loading) return;
-    
+
     if (!user) {
       navigate('/auth');
       return;
     }
-    
-    if (userRole && userRole !== 'user') {
-      navigate(getRedirectPathByRole(userRole));
+
+    if (effectiveRole && effectiveRole !== 'user') {
+      navigate(getRedirectPathByRole(effectiveRole));
       return;
     }
 
@@ -61,8 +61,8 @@ const UserDashboard = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [user, userRole, loading, navigate]);
-  
+  }, [user, effectiveRole, loading, navigate]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
