@@ -161,7 +161,7 @@ const PremiumDashboard = () => {
             )
           )
         `)
-        .eq('status', 'scheduled')
+        .in('status', ['scheduled', 'landed'])
         .gte('sale_start_time', new Date().toISOString())
         .order('eta_at', { ascending: true });
 
@@ -179,6 +179,8 @@ const PremiumDashboard = () => {
     },
     enabled: !!user,
     refetchInterval: 15000,
+    retry: 2,
+    staleTime: 30000,
   });
 
   // Fetch user reservations
