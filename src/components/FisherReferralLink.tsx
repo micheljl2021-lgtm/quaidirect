@@ -67,7 +67,7 @@ export const FisherReferralLink = ({ fishermanId }: FisherReferralLinkProps) => 
   };
 
   const referralUrl = affiliateCode
-    ? `${window.location.origin}?ref=${affiliateCode}`
+    ? `${window.location.origin}/premium?ref=${affiliateCode}`
     : '';
 
   const copyToClipboard = async () => {
