@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,8 +7,19 @@ import { CheckCircle2, Crown, Zap, ArrowLeft, Users, TrendingUp, Smartphone, Glo
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { FISHERMAN_PLANS, FISHERMAN_TRIAL_DAYS, AFFILIATE_CREDITS_RULES } from "@/config/pricing";
+import { useFishermanPaymentStatus } from "@/hooks/useFishermanPaymentStatus";
 
 const DevenirPecheur = () => {
+  const navigate = useNavigate();
+  const { isPaid, isLoading } = useFishermanPaymentStatus();
+
+  // Redirect paid fishermen to their dashboard
+  useEffect(() => {
+    if (!isLoading && isPaid) {
+      navigate('/dashboard/pecheur');
+    }
+  }, [isPaid, isLoading, navigate]);
+
   const plans = [
     {
       key: 'standard',
