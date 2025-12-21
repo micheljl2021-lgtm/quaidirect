@@ -2406,7 +2406,9 @@ export type Database = {
           cooking_tips: string | null
           cooking_vapeur: boolean | null
           created_at: string
+          default_photo_url: string | null
           description: string | null
+          english_name: string | null
           fao_code: string | null
           fao_zone: string | null
           fishing_area: Database["public"]["Enums"]["fishing_area"] | null
@@ -2415,6 +2417,7 @@ export type Database = {
           fun_facts: string | null
           id: string
           indicative_price: number | null
+          latin_name: string | null
           local_names: string[] | null
           min_size_cm: number | null
           name: string
@@ -2443,7 +2446,9 @@ export type Database = {
           cooking_tips?: string | null
           cooking_vapeur?: boolean | null
           created_at?: string
+          default_photo_url?: string | null
           description?: string | null
+          english_name?: string | null
           fao_code?: string | null
           fao_zone?: string | null
           fishing_area?: Database["public"]["Enums"]["fishing_area"] | null
@@ -2452,6 +2457,7 @@ export type Database = {
           fun_facts?: string | null
           id?: string
           indicative_price?: number | null
+          latin_name?: string | null
           local_names?: string[] | null
           min_size_cm?: number | null
           name: string
@@ -2480,7 +2486,9 @@ export type Database = {
           cooking_tips?: string | null
           cooking_vapeur?: boolean | null
           created_at?: string
+          default_photo_url?: string | null
           description?: string | null
+          english_name?: string | null
           fao_code?: string | null
           fao_zone?: string | null
           fishing_area?: Database["public"]["Enums"]["fishing_area"] | null
@@ -2489,6 +2497,7 @@ export type Database = {
           fun_facts?: string | null
           id?: string
           indicative_price?: number | null
+          latin_name?: string | null
           local_names?: string[] | null
           min_size_cm?: number | null
           name?: string
