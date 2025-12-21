@@ -10,7 +10,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -33,13 +32,6 @@ interface QuickDropModalProps {
   onSuccess?: () => void;
 }
 
-const TIME_SLOTS = [
-  { value: 'matin', label: 'Matin', description: '6h - 9h', icon: '🌅' },
-  { value: 'fin_matinee', label: 'Fin matinée', description: '9h - 12h', icon: '☀️' },
-  { value: 'midi', label: 'Midi', description: '12h - 14h', icon: '🌞' },
-  { value: 'apres_midi', label: 'Après-midi', description: '14h - 18h', icon: '🌤️' },
-  { value: 'custom', label: 'Personnalisé', description: 'Heure précise', icon: '⚙️' },
-];
 
 export function QuickDropModal({ open, onOpenChange, onSuccess }: QuickDropModalProps) {
   const navigate = useNavigate();
@@ -53,8 +45,7 @@ export function QuickDropModal({ open, onOpenChange, onSuccess }: QuickDropModal
 
   // Form state
   const [date, setDate] = useState<Date>(new Date());
-  const [timeSlot, setTimeSlot] = useState<string>('matin');
-  const [customTime, setCustomTime] = useState<string>('08:00');
+  const [customTime, setCustomTime] = useState<string>('07:00');
   const [salePointId, setSalePointId] = useState<string>('');
   const [selectedSpeciesIds, setSelectedSpeciesIds] = useState<string[]>([]);
 
@@ -64,14 +55,10 @@ export function QuickDropModal({ open, onOpenChange, onSuccess }: QuickDropModal
 
   // Initialize defaults
   useEffect(() => {
-    if (open && defaults) {
-      setTimeSlot(defaults.default_time_slot || 'matin');
-      setSalePointId(defaults.default_sale_point_id || salePoints[0]?.id || '');
+    if (open && salePoints.length > 0 && !salePointId) {
+      setSalePointId(defaults?.default_sale_point_id || salePoints[0]?.id || '');
     }
-    if (open && salePoints.length === 1) {
-      setSalePointId(salePoints[0].id);
-    }
-  }, [open, defaults, salePoints]);
+  }, [open, defaults, salePoints, salePointId]);
 
   const handlePublish = async () => {
     if (!salePointId) {
@@ -82,15 +69,15 @@ export function QuickDropModal({ open, onOpenChange, onSuccess }: QuickDropModal
       toast.error('Sélectionnez au moins une espèce');
       return;
     }
-    if (timeSlot === 'custom' && !customTime) {
-      toast.error('Indiquez une heure personnalisée');
+    if (!customTime) {
+      toast.error('Indiquez une heure de vente');
       return;
     }
 
     const result = await publishQuickDrop({
       date,
-      timeSlot,
-      customTime: timeSlot === 'custom' ? customTime : undefined,
+      timeSlot: 'custom',
+      customTime,
       salePointId,
       speciesIds: selectedSpeciesIds,
     });
@@ -127,7 +114,7 @@ export function QuickDropModal({ open, onOpenChange, onSuccess }: QuickDropModal
     onSuccess?.();
   };
 
-  const isValid = salePointId && selectedSpeciesIds.length > 0 && (timeSlot !== 'custom' || customTime);
+  const isValid = salePointId && selectedSpeciesIds.length > 0 && customTime;
 
   return (
     <>
@@ -165,74 +152,23 @@ export function QuickDropModal({ open, onOpenChange, onSuccess }: QuickDropModal
               </p>
             </div>
 
-            {/* Time Slot */}
-            <div className="space-y-2">
+            {/* Heure de vente */}
+            <div className="space-y-3">
               <Label className="flex items-center gap-2 text-base font-medium">
                 <Clock className="h-4 w-4" aria-hidden="true" />
-                Créneau horaire
+                Heure de vente
               </Label>
-              <RadioGroup
-                value={timeSlot}
-                onValueChange={setTimeSlot}
-                className="grid grid-cols-2 gap-2"
-              >
-                {TIME_SLOTS.map((slot) => (
-                  <div key={slot.value} className={slot.value === 'custom' ? 'col-span-2' : ''}>
-                    <RadioGroupItem
-                      value={slot.value}
-                      id={slot.value}
-                      className="peer sr-only"
-                    />
-                    <Label
-                      htmlFor={slot.value}
-                      className="flex flex-col items-center justify-center rounded-lg border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10 cursor-pointer transition-colors min-h-[72px]"
-                    >
-                      <span className="text-xl mb-1">{slot.icon}</span>
-                      <span className="font-medium text-sm">{slot.label}</span>
-                      <span className="text-xs text-muted-foreground">{slot.description}</span>
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
-
-              {/* Custom time input with quick buttons */}
-              {timeSlot === 'custom' && (
-                <div className="mt-4 space-y-3 p-3 bg-muted/50 rounded-lg border">
-                  <Label className="text-sm font-medium text-center block">
-                    Choisissez une heure :
-                  </Label>
-                  
-                  {/* Quick hour buttons */}
-                  <div className="flex flex-wrap gap-2 justify-center">
-                    {['05:00', '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00'].map((time) => (
-                      <Button
-                        key={time}
-                        type="button"
-                        variant={customTime === time ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setCustomTime(time)}
-                        className="min-w-[60px] h-10 text-base font-medium"
-                      >
-                        {time}
-                      </Button>
-                    ))}
-                  </div>
-                  
-                  {/* Or manual input */}
-                  <div className="flex items-center justify-center gap-3 pt-2 border-t">
-                    <Label htmlFor="custom-time" className="text-sm text-muted-foreground">
-                      Ou saisir :
-                    </Label>
-                    <Input
-                      id="custom-time"
-                      type="time"
-                      value={customTime}
-                      onChange={(e) => setCustomTime(e.target.value)}
-                      className="w-28 h-10 text-center text-base font-medium"
-                    />
-                  </div>
-                </div>
-              )}
+              <div className="flex items-center justify-center">
+                <Input 
+                  type="time" 
+                  value={customTime} 
+                  onChange={(e) => setCustomTime(e.target.value)}
+                  className="w-40 h-14 text-xl text-center font-medium"
+                />
+              </div>
+              <p className="text-sm text-muted-foreground text-center">
+                Indiquez l'heure à laquelle vous serez à quai
+              </p>
             </div>
 
             {/* Sale Point */}
