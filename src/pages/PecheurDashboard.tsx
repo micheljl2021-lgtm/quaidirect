@@ -20,6 +20,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { getRedirectPathByRole } from '@/lib/authRedirect';
 import { useQuery } from '@tanstack/react-query';
+import { TestModeBanner } from '@/components/admin/TestModeBanner';
 
 const PecheurDashboard = () => {
   const { user, userRole, effectiveRole, viewAsRole, isAdmin, isVerifiedFisherman, loading: authLoading } = useAuth();
@@ -218,11 +219,17 @@ const PecheurDashboard = () => {
   // Count drops needing correction
   const dropsNeedingCorrection = drops.filter(d => d.status === 'needs_correction');
 
+  // Mode test actif si l'admin simule un rôle "fisherman"
+  const isTestMode = isAdmin && viewAsRole === 'fisherman';
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       
       <div className="container px-4 py-6 md:py-8">
+        {/* Test Mode Banner */}
+        {isTestMode && <TestModeBanner roleLabel="Pêcheur" />}
+
         <DashboardHeader fishermanId={fishermanId} />
 
         {/* Alert for drops needing correction */}

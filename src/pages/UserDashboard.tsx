@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Fish, MapPin, Clock, TrendingUp, Calendar, ArrowRight, Loader2 } from 'lucide-react';
 import { getRedirectPathByRole } from '@/lib/authRedirect';
+import { TestModeBanner } from '@/components/admin/TestModeBanner';
 
 interface Drop {
   id: string;
@@ -39,9 +40,12 @@ interface Drop {
 }
 
 const UserDashboard = () => {
-  const { user, effectiveRole, loading } = useAuth();
+  const { user, effectiveRole, viewAsRole, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Mode test actif si l'admin simule un rôle "user"
+  const isTestMode = isAdmin && viewAsRole === 'user';
 
   useEffect(() => {
     if (loading) return;
@@ -51,7 +55,8 @@ const UserDashboard = () => {
       return;
     }
 
-    if (effectiveRole && effectiveRole !== 'user') {
+    // En mode test, on ne redirige PAS l'admin vers un autre dashboard
+    if (!isTestMode && effectiveRole && effectiveRole !== 'user') {
       navigate(getRedirectPathByRole(effectiveRole));
       return;
     }
@@ -61,7 +66,7 @@ const UserDashboard = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [user, effectiveRole, loading, navigate]);
+  }, [user, effectiveRole, isTestMode, loading, navigate]);
 
   if (loading) {
     return (
@@ -134,6 +139,9 @@ const UserDashboard = () => {
       <Header />
       
       <div className="container px-4 py-8 max-w-7xl mx-auto">
+        {/* Test Mode Banner */}
+        {isTestMode && <TestModeBanner roleLabel="Utilisateur standard" />}
+
         {/* Header Section */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">

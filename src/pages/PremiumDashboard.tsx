@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Crown, Fish, MapPin, Clock, Zap, Bell, Calendar, CheckCircle2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getRedirectPathByRole } from '@/lib/authRedirect';
+import { TestModeBanner } from '@/components/admin/TestModeBanner';
 
 interface Drop {
   id: string;
@@ -68,12 +69,15 @@ interface Reservation {
 }
 
 const PremiumDashboard = () => {
-  const { user, effectiveRole, loading } = useAuth();
+  const { user, effectiveRole, viewAsRole, isAdmin, loading } = useAuth();
   const { level, isPremium, isPremiumPlus } = useClientSubscriptionLevel();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showPreferences, setShowPreferences] = useState(false);
+
+  // Mode test actif si l'admin simule un rôle "premium"
+  const isTestMode = isAdmin && viewAsRole === 'premium';
 
   // Load favorite fishermen for sorting
   const { data: favoriteFishermen } = useQuery({
@@ -96,23 +100,18 @@ const PremiumDashboard = () => {
       return;
     }
 
-    // En mode normal, un admin reste sur son dashboard.
-    // En mode test (viewAsRole), effectiveRole n'est plus 'admin', donc pas de redirection.
-    if (effectiveRole === 'admin') {
+    // En mode test, on ne redirige PAS l'admin
+    if (!isTestMode && effectiveRole === 'admin') {
       navigate('/dashboard/admin');
       return;
     }
-
-    // Check subscription level instead of userRole for premium access
-    // This allows users with active payments to access premium dashboard
-    // even if their user_roles doesn't include 'premium'
 
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [user, effectiveRole, loading, navigate]);
+  }, [user, effectiveRole, isTestMode, loading, navigate]);
   
   if (loading) {
     return (
@@ -333,6 +332,8 @@ const PremiumDashboard = () => {
       <Header />
       
       <div className="container px-4 py-8 max-w-7xl mx-auto">
+        {/* Test Mode Banner */}
+        {isTestMode && <TestModeBanner roleLabel="Client Premium" />}
         {/* Premium Header */}
         <Card className="mb-8 border-2 border-primary bg-gradient-to-br from-primary/5 to-primary/10">
           <CardContent className="pt-6">
