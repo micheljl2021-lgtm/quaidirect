@@ -215,8 +215,8 @@ serve(async (req) => {
     
     console.log(`Species: ${speciesName} -> English: ${englishName}`);
 
-    // Search with English name (simpler, more effective query)
-    const searchQuery = encodeURIComponent(englishName);
+    // Search with terms to get raw/fresh fish (not cooked)
+    const searchQuery = encodeURIComponent(`${englishName} raw fresh`);
     const pixabayUrl = `https://pixabay.com/api/?key=${pixabayApiKey}&q=${searchQuery}&image_type=photo&orientation=horizontal&per_page=15&lang=en&safesearch=true`;
 
     console.log(`Searching Pixabay for: ${englishName}`);
@@ -276,11 +276,11 @@ serve(async (req) => {
       }
     }
 
-    // Last fallback: generic fish + food category
-    const genericQuery = encodeURIComponent(`${englishName} seafood`);
-    const genericUrl = `https://pixabay.com/api/?key=${pixabayApiKey}&q=${genericQuery}&image_type=photo&orientation=horizontal&per_page=10&lang=en&safesearch=true&category=food`;
+    // Last fallback: French search with "poisson marin pêcheur"
+    const genericQuery = encodeURIComponent(`${speciesName} poisson marin pêcheur`);
+    const genericUrl = `https://pixabay.com/api/?key=${pixabayApiKey}&q=${genericQuery}&image_type=photo&orientation=horizontal&per_page=10&lang=fr&safesearch=true`;
     
-    console.log(`Generic fallback search: ${englishName} seafood`);
+    console.log(`French fallback search: ${speciesName} poisson marin pêcheur`);
     
     const genericResponse = await fetch(genericUrl);
     
