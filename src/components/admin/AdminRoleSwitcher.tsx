@@ -17,16 +17,16 @@ export function AdminRoleSwitcher() {
   const viewAs = (role: string) => {
     switch (role) {
       case 'user':
-        navigate('/mon-compte');
+        navigate('/dashboard/user');
         break;
       case 'fisherman':
-        navigate('/pecheur/dashboard');
+        navigate('/dashboard/pecheur');
         break;
       case 'premium':
-        navigate('/premium/dashboard');
+        navigate('/dashboard/premium');
         break;
       case 'admin':
-        navigate('/admin');
+        navigate('/dashboard/admin');
         break;
       default:
         navigate('/');
