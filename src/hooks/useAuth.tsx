@@ -227,9 +227,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: 'Vous êtes maintenant connecté.',
       });
     } catch (error: any) {
+      // Traduire les erreurs Supabase courantes en français
+      let errorMessage = error.message;
+      if (error.message?.includes('Invalid login credentials')) {
+        errorMessage = 'Email ou mot de passe incorrect. Vérifiez vos identifiants ou créez un compte.';
+      } else if (error.message?.includes('Email not confirmed')) {
+        errorMessage = 'Veuillez confirmer votre email avant de vous connecter.';
+      } else if (error.message?.includes('Too many requests')) {
+        errorMessage = 'Trop de tentatives. Réessayez dans quelques minutes.';
+      }
+      
       toast({
         title: 'Erreur de connexion',
-        description: error.message,
+        description: errorMessage,
         variant: 'destructive',
       });
       throw error;
