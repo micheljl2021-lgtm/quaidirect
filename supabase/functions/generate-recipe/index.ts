@@ -1,25 +1,35 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { handleCors, getCorsHeaders, jsonResponse, errorResponse } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// Input validation schema
+const inputSchema = z.object({
+  species_id: z.string().uuid("ID d'espèce invalide"),
+  cooking_method: z.string().max(100).optional(),
+});
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get("Origin");
 
   try {
-    const { species_id, cooking_method } = await req.json();
-
-    if (!species_id) {
-      return new Response(
-        JSON.stringify({ error: "species_id requis" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const rawBody = await req.json();
+    
+    // Validate input with Zod
+    const parseResult = inputSchema.safeParse(rawBody);
+    if (!parseResult.success) {
+      const errorMessage = parseResult.error.errors
+        .map(e => `${e.path.join('.')}: ${e.message}`)
+        .join(', ');
+      console.warn("Validation failed:", errorMessage);
+      return errorResponse(errorMessage, 400, origin);
     }
+
+    const { species_id, cooking_method } = parseResult.data;
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -34,10 +44,7 @@ serve(async (req) => {
 
     if (fetchError || !speciesData) {
       console.error("Species not found:", fetchError);
-      return new Response(
-        JSON.stringify({ error: "Espèce non trouvée" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse("Espèce non trouvée", 404, origin);
     }
 
     console.log(`Generating recipe for: ${speciesData.name}, method: ${cooking_method || "any"}`);
@@ -163,16 +170,10 @@ Crée une recette simple et délicieuse, typique de la cuisine française médit
       console.error("AI gateway error:", response.status, errorText);
       
       if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Limite de requêtes atteinte, réessayez plus tard" }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return errorResponse("Limite de requêtes atteinte, réessayez plus tard", 429, origin);
       }
       if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Crédits IA insuffisants" }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return errorResponse("Crédits IA insuffisants", 402, origin);
       }
       throw new Error(`AI gateway error: ${response.status}`);
     }
@@ -247,24 +248,18 @@ Crée une recette simple et délicieuse, typique de la cuisine française médit
 
     console.log(`Successfully created recipe: ${newRecipe.title}`);
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        recipe: {
-          ...newRecipe,
-          species_name: speciesData.name,
-          ingredients: recipeData.ingredients
-        },
-        message: "Recette créée avec succès"
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResponse({
+      success: true,
+      recipe: {
+        ...newRecipe,
+        species_name: speciesData.name,
+        ingredients: recipeData.ingredients
+      },
+      message: "Recette créée avec succès"
+    }, 200, origin);
 
   } catch (error) {
     console.error("generate-recipe error:", error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Erreur inconnue" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return errorResponse(error instanceof Error ? error.message : "Erreur inconnue", 500, origin);
   }
 });
