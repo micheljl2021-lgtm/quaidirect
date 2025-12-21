@@ -310,7 +310,7 @@ const FisherProfile = () => {
           <meta property="og:description" content={(fisherman as any).seo_meta_description || ''} />
           {fisherman.photo_boat_1 && <meta property="og:image" content={fisherman.photo_boat_1} />}
           <meta property="og:type" content="website" />
-          <link rel="canonical" href={`https://quaidirect.fr/boutique/${fisherman.slug}`} />
+          <link rel="canonical" href={`https://quaidirect.fr/pecheurs/${fisherman.slug}`} />
           
           {/* JSON-LD Structured Data */}
           <script type="application/ld+json">
@@ -324,7 +324,7 @@ const FisherProfile = () => {
                 "@type": "PostalAddress",
                 "addressLocality": fisherman.main_fishing_zone
               },
-              "url": `https://quaidirect.fr/boutique/${fisherman.slug}`
+              "url": `https://quaidirect.fr/pecheurs/${fisherman.slug}`
               // Note: phone/email removed for privacy - contact via platform only
             })}
           </script>

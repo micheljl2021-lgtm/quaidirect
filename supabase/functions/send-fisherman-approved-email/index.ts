@@ -61,7 +61,7 @@ const handler = async (req: Request): Promise<Response> => {
         </ol>
 
         <p style="margin-top: 30px;">
-          <a href="https://quaidirect.fr/pecheur/onboarding" 
+          <a href="${Deno.env.get('SITE_URL') || 'https://quaidirect.fr'}/pecheur/onboarding" 
              style="background: #0066cc; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
             Compléter mon profil
           </a>
