@@ -19,7 +19,7 @@ const DropDetail = () => {
   const navigate = useNavigate();
 
   const { data: drop, isLoading, error } = useQuery({
-    queryKey: ['drop', id, user?.id ?? 'anon'],
+    queryKey: ['drop', id],
     queryFn: async () => {
       if (!id) throw new Error('ID manquant');
 
@@ -90,7 +90,9 @@ const DropDetail = () => {
 
       return data;
     },
-    enabled: !!id && !authLoading,
+    enabled: !!id,
+    retry: 2,
+    staleTime: 30000,
   });
 
   // Auto-redirect to homepage if drop not found - useEffect MUST be before any returns
