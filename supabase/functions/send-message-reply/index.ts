@@ -1,11 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resend } from "https://esm.sh/resend@2.0.0";
+import { Resend } from "https://esm.sh/resend@4.0.0";
+import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const SITE_URL = Deno.env.get('SITE_URL') || 'https://quaidirect.fr';
 
 interface ReplyPayload {
   originalMessageId: string;
@@ -14,10 +12,12 @@ interface ReplyPayload {
 }
 
 serve(async (req: Request) => {
+  const origin = req.headers.get('Origin');
+  const corsHeaders = getCorsHeaders(origin);
+
   // Handle CORS preflight
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
   try {
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
@@ -67,7 +67,7 @@ serve(async (req: Request) => {
     // Send email to original sender
     const { error: emailError } = await resend.emails.send({
       from: "QuaiDirect <notifications@quaidirect.fr>",
-      reply_to: replierEmail || "contact@quaidirect.fr",
+      replyTo: replierEmail || "contact@quaidirect.fr",
       to: [originalMessage.sender_email],
       subject: `Réponse de ${replierName} sur QuaiDirect`,
       html: `
@@ -109,7 +109,7 @@ serve(async (req: Request) => {
               </div>
               
               <p style="text-align: center; margin-top: 30px;">
-                <a href="${Deno.env.get("SITE_URL") || "https://quaidirect.fr"}/arrivages" class="cta-button">
+                <a href="${SITE_URL}/arrivages" class="cta-button">
                   Voir les arrivages disponibles
                 </a>
               </p>

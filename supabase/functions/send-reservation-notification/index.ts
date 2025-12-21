@@ -1,12 +1,10 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.80.0';
 import { Resend } from "https://esm.sh/resend@4.0.0";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const SITE_URL = Deno.env.get('SITE_URL') || 'https://quaidirect.fr';
 
 function escapeHtml(text: string): string {
   return text
@@ -24,10 +22,12 @@ interface NotificationPayload {
 }
 
 Deno.serve(async (req) => {
+  const origin = req.headers.get('Origin');
+  const corsHeaders = getCorsHeaders(origin);
+
   // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
   try {
     // Verify internal secret to prevent unauthorized calls
@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
               <p><strong>${safeClientName}</strong> a réservé un <strong>${safeBasketName}</strong>${totalPriceFormatted ? ` (${totalPriceFormatted})` : ''}.</p>
               <p>Rendez-vous sur votre dashboard pour voir les détails de la commande :</p>
               <p style="text-align: center; margin: 30px 0;">
-                <a href="https://quaidirect.fr/dashboard/pecheur" 
+                <a href="${SITE_URL}/dashboard/pecheur" 
                    style="background: #0066cc; color: white; padding: 14px 28px; 
                           text-decoration: none; border-radius: 6px; display: inline-block;">
                   Voir la commande

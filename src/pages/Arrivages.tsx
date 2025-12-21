@@ -558,7 +558,7 @@ const Arrivages = () => {
               </Badge>
             </div>
             {userRole !== 'premium' && (
-              <Button className="w-full mt-4" onClick={() => window.location.href = '/premium'}>
+              <Button className="w-full mt-4" onClick={() => navigate('/premium')}>
                 Passer Premium pour voir en avant-première
               </Button>
             )}

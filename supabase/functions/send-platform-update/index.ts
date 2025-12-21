@@ -1,22 +1,22 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { Resend } from "https://esm.sh/resend@2.0.0";
+import { Resend } from "https://esm.sh/resend@4.0.0";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const SITE_URL = Deno.env.get('SITE_URL') || 'https://quaidirect.fr';
 
 interface PlatformUpdateRequest {
   updateId: string;
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const origin = req.headers.get('Origin');
+  const corsHeaders = getCorsHeaders(origin);
+
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
@@ -173,7 +173,7 @@ serve(async (req) => {
                     
                     <p>Ces améliorations sont déjà disponibles sur votre tableau de bord.</p>
                     
-                    <a href="https://quaidirect.fr/dashboard/pecheur" class="cta">
+                    <a href="${SITE_URL}/dashboard/pecheur" class="cta">
                       Accéder à mon tableau de bord
                     </a>
                     

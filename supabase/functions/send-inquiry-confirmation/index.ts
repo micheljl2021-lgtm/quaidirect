@@ -15,10 +15,9 @@ const escapeHtml = (text: string): string => {
     .replace(/'/g, '&#039;');
 };
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://quaidirect.fr",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
+
+const SITE_URL = Deno.env.get('SITE_URL') || 'https://quaidirect.fr';
 
 // Rate limiting configuration
 const RATE_LIMIT = 3; // max requests
@@ -92,10 +91,11 @@ const getTypeLabel = (type: string): string => {
 
 const handler = async (req: Request): Promise<Response> => {
   console.log("send-inquiry-confirmation: Request received");
+  const origin = req.headers.get('Origin');
+  const corsHeaders = getCorsHeaders(origin);
 
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
   try {
     const supabaseClient = createClient(
@@ -189,7 +189,7 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
           <div class="footer">
             <p>Du poisson frais, en direct des pêcheurs de votre région</p>
-            <p><a href="https://quaidirect.fr">quaidirect.fr</a></p>
+            <p><a href="${SITE_URL}">${SITE_URL.replace('https://', '')}</a></p>
           </div>
         </div>
       </body>
