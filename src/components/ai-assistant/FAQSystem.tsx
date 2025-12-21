@@ -143,7 +143,7 @@ Chaque point peut avoir une photo et une description pour aider les clients.`,
     id: 'commissions',
     question: 'Comment fonctionnent les commissions ?',
     answer: `Les commissions QuaiDirect :
-• 8% sur les paniers vendus en ligne
+• 6% sur les paniers vendus en ligne
 • Pas de commission sur les ventes directes à quai
 • Versement automatique sur votre compte bancaire
 
