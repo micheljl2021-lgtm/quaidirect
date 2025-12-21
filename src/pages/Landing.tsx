@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Crown, MapPin, Bell, Shield, Users, Anchor, Send, Loader2, CheckCircle, MessageSquare, Clock } from "lucide-react";
+import { Crown, MapPin, Bell, Shield, Users, Anchor, Send, Loader2, CheckCircle, MessageSquare, Clock, Coins, Smartphone, Bot, ArrowRight, Fish } from "lucide-react";
 import { toast } from "sonner";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -162,6 +162,52 @@ function ContactSection() {
   );
 }
 
+// Section 3 bénéfices pêcheur
+function FishermanBenefitsSection() {
+  const benefits = [
+    {
+      icon: Users,
+      title: "Vente directe sans intermédiaire",
+      description: "Gardez le contrôle de vos prix et de vos clients"
+    },
+    {
+      icon: Bell,
+      title: "Prévenez vos clients en 1 clic",
+      description: "Email, SMS ou Push à chaque arrivage"
+    },
+    {
+      icon: Coins,
+      title: "Vos clients financent vos SMS",
+      description: "Les abonnements Premium vous rapportent des SMS gratuits"
+    }
+  ];
+
+  return (
+    <section className="container px-4 py-12 sm:py-16">
+      <div className="mx-auto max-w-5xl">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+          {benefits.map((benefit, index) => (
+            <div 
+              key={index}
+              className="flex flex-col items-center text-center p-6 rounded-2xl bg-card border border-border hover:border-primary/30 hover:shadow-lg transition-all"
+            >
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                <benefit.icon className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-lg font-bold text-foreground mb-2">
+                {benefit.title}
+              </h3>
+              <p className="text-muted-foreground text-sm">
+                {benefit.description}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 const Landing = () => {
   const navigate = useNavigate();
   const { data: arrivagesGrouped, isLoading: arrivagesLoading } = useArrivagesWithHistory();
@@ -248,6 +294,13 @@ const Landing = () => {
     { question: "Quels sont les avantages d'acheter en direct ?", answer: "Prix justes pour le pêcheur et le client, traçabilité totale (vous savez qui a pêché votre poisson, où et quand), fraîcheur garantie, et soutien à la pêche artisanale locale." }
   ];
 
+  const scrollToContact = () => {
+    const contactSection = document.querySelector('section:has(form)');
+    if (contactSection) {
+      contactSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-sky">
       {/* Structured Data for SEO */}
@@ -257,32 +310,160 @@ const Landing = () => {
       
       <Header />
       
-      {/* Hero Section with Background */}
+      {/* HERO Section - Orienté Pêcheur */}
       <section 
-        className="container px-4 pt-20 pb-16 relative"
+        className="relative min-h-[85vh] sm:min-h-[80vh] flex items-center"
         style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${fishingPortImage})`,
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.7)), url(${fishingPortImage})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center'
         }}
       >
-        <div className="mx-auto max-w-4xl text-center space-y-6 sm:space-y-8 px-2">
-          <div className="space-y-3 sm:space-y-4">
+        <div className="container px-4 py-12 sm:py-20">
+          <div className="mx-auto max-w-4xl text-center space-y-6 sm:space-y-8">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
+              <Anchor className="h-4 w-4 text-white" />
+              <span className="text-sm font-medium text-white">Pour les marins-pêcheurs</span>
+            </div>
+
+            {/* H1 principal */}
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">
-              Du bateau à votre assiette,
-              <span className="block text-white">
-                direct du quai
+              La plateforme des marins-pêcheurs
+              <span className="block mt-2 text-primary-foreground/90">
+                pour vendre en direct et fidéliser leurs clients
               </span>
             </h1>
-            <p className="text-base sm:text-lg md:text-xl text-white/90 max-w-2xl mx-auto">
-              Achetez du poisson frais directement auprès des marins-pêcheurs. 
-              Tracé, prix justes, qualité garantie.
+
+            {/* Sous-titre */}
+            <p className="text-lg sm:text-xl text-white/90 max-w-3xl mx-auto leading-relaxed">
+              Gestion des clients, alertes d'arrivage, page vitrine automatique et IA marine.
+              <span className="block mt-1">Tout depuis votre téléphone, directement au quai.</span>
             </p>
+
+            {/* CTAs */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <Button 
+                size="lg" 
+                className="text-lg px-8 py-6 bg-primary hover:bg-primary/90 shadow-lg"
+                onClick={scrollToContact}
+              >
+                <MessageSquare className="h-5 w-5 mr-2" />
+                Demander une démo pêcheur
+              </Button>
+              <Link to="/devenir-pecheur">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="text-lg px-8 py-6 bg-white/10 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm w-full sm:w-auto"
+                >
+                  <ArrowRight className="h-5 w-5 mr-2" />
+                  Créer mon compte pêcheur
+                </Button>
+              </Link>
+            </div>
+
+            {/* Features rapides */}
+            <div className="flex flex-wrap justify-center gap-4 pt-6">
+              <div className="flex items-center gap-2 text-white/80 text-sm">
+                <Smartphone className="h-4 w-4" />
+                <span>100% mobile</span>
+              </div>
+              <div className="flex items-center gap-2 text-white/80 text-sm">
+                <Bot className="h-4 w-4" />
+                <span>IA du marin incluse</span>
+              </div>
+              <div className="flex items-center gap-2 text-white/80 text-sm">
+                <CheckCircle className="h-4 w-4" />
+                <span>Simple et rapide</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Premium Cards Section - Moved up */}
+      {/* Bandeau secondaire - Pour les clients */}
+      <section className="bg-muted/50 border-b border-border">
+        <div className="container px-4 py-8 sm:py-10">
+          <div className="mx-auto max-w-4xl flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="text-center sm:text-left">
+              <div className="flex items-center gap-2 justify-center sm:justify-start mb-2">
+                <Fish className="h-5 w-5 text-primary" />
+                <span className="text-sm font-medium text-primary">Pour les clients</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground">
+                Du bateau à votre assiette, direct du quai.
+              </h2>
+              <p className="text-muted-foreground mt-1">
+                Achetez du poisson frais directement auprès des marins-pêcheurs locaux.
+              </p>
+            </div>
+            <Link to="/arrivages">
+              <Button variant="outline" size="lg" className="gap-2 whitespace-nowrap">
+                <MapPin className="h-5 w-5" />
+                Voir les arrivages
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 3 bénéfices pêcheur */}
+      <FishermanBenefitsSection />
+
+      {/* Testimonials Section - Remonté */}
+      <section className="container px-4 py-16 border-t border-border bg-muted/30">
+        <div className="mx-auto max-w-6xl">
+          <div className="text-center space-y-4 mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground">
+              Ils nous font confiance
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              Découvrez les témoignages de nos marins-pêcheurs partenaires
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="bg-card">
+              <CardContent className="pt-6 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Anchor className="h-6 w-6 text-primary" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-foreground">Sébastien Z.</h3>
+                    <p className="text-sm text-muted-foreground">Hyères</p>
+                  </div>
+                </div>
+                <p className="text-muted-foreground italic">
+                  "Enfin une plateforme qui valorise notre travail ! Plus de galère avec les intermédiaires, 
+                  je vends direct aux clients qui apprécient la qualité de ma pêche."
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card">
+              <CardContent className="pt-6 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Anchor className="h-6 w-6 text-primary" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-foreground">Sébastien P.</h3>
+                    <p className="text-sm text-muted-foreground">Carqueiranne</p>
+                  </div>
+                </div>
+                <p className="text-muted-foreground italic">
+                  "Simple et efficace. Mes clients me suivent et connaissent mes horaires d'arrivée. 
+                  C'est exactement ce dont on avait besoin pour digitaliser notre métier."
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Premium Cards Section - Pour les clients */}
       <PremiumCardsSection />
 
       {/* Photo Carousel */}
@@ -290,7 +471,7 @@ const Landing = () => {
         <section className="container px-4 py-16 border-t border-border">
           <div className="mx-auto max-w-6xl">
             <div className="text-center space-y-4 mb-8">
-              <h2 className="text-4xl font-bold text-foreground">
+              <h2 className="text-3xl sm:text-4xl font-bold text-foreground">
                 Photos récentes de nos pêcheurs
               </h2>
               <p className="text-lg text-muted-foreground">
@@ -311,7 +492,7 @@ const Landing = () => {
       <section className="container px-4 py-16 border-t border-border">
         <div className="mx-auto max-w-6xl">
           <div className="text-center space-y-4 mb-12">
-            <h2 className="text-4xl font-bold text-foreground">
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground">
               Arrivages à venir
             </h2>
             <p className="text-lg text-muted-foreground">
@@ -370,58 +551,6 @@ const Landing = () => {
               </CardContent>
             </Card>
           )}
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className="container px-4 py-16 border-t border-border bg-muted/30">
-        <div className="mx-auto max-w-6xl">
-          <div className="text-center space-y-4 mb-12">
-            <h2 className="text-4xl font-bold text-foreground">
-              Ils nous font confiance
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              Découvrez les témoignages de nos marins-pêcheurs partenaires
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="bg-card">
-              <CardContent className="pt-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Anchor className="h-6 w-6 text-primary" aria-hidden="true" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-foreground">Sébastien Z.</h3>
-                    <p className="text-sm text-muted-foreground">Hyères</p>
-                  </div>
-                </div>
-                <p className="text-muted-foreground italic">
-                  "Enfin une plateforme qui valorise notre travail ! Plus de galère avec les intermédiaires, 
-                  je vends direct aux clients qui apprécient la qualité de ma pêche."
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card">
-              <CardContent className="pt-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Anchor className="h-6 w-6 text-primary" aria-hidden="true" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-foreground">Sébastien P.</h3>
-                    <p className="text-sm text-muted-foreground">Carqueiranne</p>
-                  </div>
-                </div>
-                <p className="text-muted-foreground italic">
-                  "Simple et efficace. Mes clients me suivent et connaissent mes horaires d'arrivée. 
-                  C'est exactement ce dont on avait besoin pour digitaliser notre métier."
-                </p>
-              </CardContent>
-            </Card>
-          </div>
         </div>
       </section>
 
