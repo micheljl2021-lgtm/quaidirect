@@ -55,6 +55,7 @@ export const useArrivagesWithHistory = (fishermanId?: string) => {
             display_order
           )
         `)
+        .in('status', ['scheduled', 'landed'])
         .order('sale_start_time', { ascending: false });
 
       // Filtrer par pêcheur si spécifié
