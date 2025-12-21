@@ -298,7 +298,7 @@ const PecheurDashboard = () => {
         {isDataLoading ? (
           <DashboardStatsSkeleton />
         ) : (
-          <DashboardStats drops={drops} />
+          <DashboardStats drops={drops} archivedDrops={archivedDrops} />
         )}
 
         <Tabs defaultValue="arrivages" className="space-y-4 md:space-y-6">

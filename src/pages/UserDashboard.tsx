@@ -4,40 +4,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import Header from '@/components/Header';
+import ArrivageCard from '@/components/ArrivageCard';
 import ClientPreferencesPanel from '@/components/ClientPreferencesPanel';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Fish, MapPin, Clock, TrendingUp, Calendar, ArrowRight, Loader2 } from 'lucide-react';
 import { getRedirectPathByRole } from '@/lib/authRedirect';
 import { TestModeBanner } from '@/components/admin/TestModeBanner';
-
-interface Drop {
-  id: string;
-  port_id: string | null;
-  sale_point_id: string | null;
-  eta_at: string;
-  visible_at: string;
-  public_visible_at: string | null;
-  is_premium: boolean;
-  ports: {
-    name: string;
-    city: string;
-  } | null;
-  fisherman_sale_points: {
-    label: string;
-    address: string;
-  } | null;
-  offers: Array<{
-    id: string;
-    title: string;
-    unit_price: number;
-    available_units: number;
-    species: {
-      name: string;
-    };
-  }>;
-}
 
 const UserDashboard = () => {
   const { user, effectiveRole, viewAsRole, isAdmin, loading } = useAuth();
@@ -63,7 +37,7 @@ const UserDashboard = () => {
 
     const timer = setInterval(() => {
       setCurrentTime(new Date());
-    }, 1000);
+    }, 60000);
 
     return () => clearInterval(timer);
   }, [user, effectiveRole, isTestMode, loading, navigate]);
@@ -77,26 +51,43 @@ const UserDashboard = () => {
   }
 
   const { data: drops, isLoading } = useQuery({
-    queryKey: ['public-drops', user?.id],
+    queryKey: ['user-dashboard-drops', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('drops')
         .select(`
-          id,
-          port_id,
-          sale_point_id,
-          eta_at,
-          visible_at,
-          public_visible_at,
-          is_premium,
-          status,
+          *,
+          fishermen:public_fishermen!fisherman_id (
+            id,
+            boat_name,
+            company_name,
+            display_name_preference,
+            photo_url,
+            slug,
+            is_ambassador
+          ),
           ports (
+            id,
             name,
             city
           ),
           fisherman_sale_points (
+            id,
             label,
             address
+          ),
+          drop_photos (
+            id,
+            photo_url,
+            display_order
+          ),
+          drop_species (
+            id,
+            species (
+              id,
+              name,
+              scientific_name
+            )
           ),
           offers (
             id,
@@ -104,6 +95,7 @@ const UserDashboard = () => {
             unit_price,
             available_units,
             species (
+              id,
               name
             )
           )
@@ -113,7 +105,7 @@ const UserDashboard = () => {
         .order('eta_at', { ascending: true });
 
       if (error) throw error;
-      return data as Drop[];
+      return data;
     },
     enabled: !!user,
     refetchInterval: 30000,
@@ -240,76 +232,51 @@ const UserDashboard = () => {
             </div>
           ) : drops && drops.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {drops.slice(0, 4).map((drop) => {
-                const etaDate = new Date(drop.eta_at);
-                const location = drop.fisherman_sale_points 
-                  ? drop.fisherman_sale_points.address || drop.fisherman_sale_points.label
-                  : drop.ports 
-                    ? `${drop.ports.name}, ${drop.ports.city}` 
-                    : 'Lieu non spécifié';
+              {drops.slice(0, 4).map((drop) => {
+                // Get species list from drop_species or offers
+                const speciesList = drop.drop_species?.map((ds: any) => ds.species?.name).filter(Boolean) || 
+                  drop.offers?.map((o: any) => o.species?.name).filter(Boolean) || [];
+                const species = speciesList.join(', ') || 'Espèces à découvrir';
+                
+                // Get location
+                const salePoint = drop.fisherman_sale_points;
+                const port = drop.ports;
+                const locationDisplay = salePoint?.label || (port ? `${port.name}, ${port.city}` : 'Lieu non spécifié');
+                
+                // Get fisherman name
+                const fisherman = drop.fishermen;
+                const fisherName = fisherman?.display_name_preference === 'company_name'
+                  ? (fisherman?.company_name || fisherman?.boat_name)
+                  : fisherman?.boat_name;
+                
+                // Get first offer price
+                const firstOffer = drop.offers?.[0];
                 
                 return (
-                  <Card key={drop.id} className="hover:shadow-lg transition-shadow">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-1 flex-1">
-                          <CardTitle className="flex items-center gap-2 text-lg">
-                            <MapPin className="h-5 w-5 text-primary flex-shrink-0" />
-                            <span className="line-clamp-1">{location}</span>
-                          </CardTitle>
-                          <CardDescription className="flex items-center gap-2">
-                            <Clock className="h-4 w-4" />
-                            {getTimeUntil(etaDate)}
-                          </CardDescription>
-                        </div>
-                        {drop.is_premium && (
-                          <Badge variant="secondary" className="ml-2 flex-shrink-0">
-                            Premium
-                          </Badge>
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {drop.offers.length > 0 ? (
-                          <>
-                            <div className="space-y-2">
-                              {drop.offers.slice(0, 2).map((offer) => (
-                                <div key={offer.id} className="flex items-center justify-between p-2 rounded bg-muted/50">
-                                  <div className="flex items-center gap-2">
-                                    <Fish className="h-4 w-4 text-primary flex-shrink-0" />
-                                    <div className="min-w-0">
-                                      <p className="font-medium text-sm line-clamp-1">{offer.species.name}</p>
-                                      <p className="text-xs text-muted-foreground">
-                                        {offer.available_units} disponibles
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <p className="font-bold text-primary flex-shrink-0">{offer.unit_price}€</p>
-                                </div>
-                              ))}
-                              {drop.offers.length > 2 && (
-                                <p className="text-xs text-muted-foreground text-center">
-                                  +{drop.offers.length - 2} autres offres
-                                </p>
-                              )}
-                            </div>
-                            <Button 
-                              variant="outline" 
-                              className="w-full"
-                              onClick={() => navigate('/arrivages')}
-                            >
-                              Voir les détails
-                            </Button>
-                          </>
-                        ) : (
-                          <p className="text-sm text-muted-foreground text-center py-2">
-                            Aucune offre disponible
-                          </p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <ArrivageCard
+                    key={drop.id}
+                    id={drop.id}
+                    salePointLabel={salePoint?.label}
+                    species={species}
+                    scientificName=""
+                    port={locationDisplay}
+                    eta={new Date(drop.eta_at)}
+                    saleStartTime={drop.sale_start_time ? new Date(drop.sale_start_time) : undefined}
+                    pricePerPiece={firstOffer?.unit_price}
+                    quantity={firstOffer?.available_units || 0}
+                    availableUnits={firstOffer?.available_units}
+                    totalUnits={firstOffer?.available_units}
+                    dropPhotos={drop.drop_photos}
+                    fisherman={{
+                      id: fisherman?.id,
+                      slug: fisherman?.slug,
+                      name: fisherName || 'Pêcheur',
+                      boat: fisherman?.boat_name || '',
+                      isAmbassador: fisherman?.is_ambassador
+                    }}
+                    canReserve={false}
+                    variant="compact"
+                  />
                 );
               })}
             </div>
