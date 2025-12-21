@@ -11,7 +11,7 @@ import { useClientSubscriptionLevel } from "@/hooks/useClientSubscriptionLevel";
 import Header from "@/components/Header";
 import { getReferralCode } from "@/lib/referralTracking";
 
-// Définition des niveaux clients - Mise à jour avec les vraies fonctionnalités
+// Définition des niveaux clients - Mise à jour avec les limites exactes
 const CLIENT_LEVELS = {
   follower: {
     name: "Standard",
@@ -32,11 +32,12 @@ const CLIENT_LEVELS = {
     priceAnnual: "25€",
     priceIdMonthly: "price_1SZ489H0VhS1yyE0Nc9KZhy1",
     priceIdAnnual: "price_1SZ48UH0VhS1yyE0iYmXen3H",
-    description: "Notifications email + Badge",
+    description: "Notifications email + alertes personnalisées",
     features: [
       { icon: Check, title: "Tout Standard inclus" },
-      { icon: Crown, title: "✨ Personnaliser votre badge Premium (couleur)" },
       { icon: Mail, title: "📧 Emails : arrivages, espèces, points de vente" },
+      { icon: MapPin, title: "🏪 Suivre 2 points de vente favoris" },
+      { icon: MessageSquare, title: "🐟 Suivre 3 espèces favorites" },
       { icon: Bell, title: "🔔 Choix : Push ou Email" },
       { icon: Heart, title: "🎣 Choix d'un pêcheur favori à soutenir" },
     ],
@@ -51,7 +52,7 @@ const CLIENT_LEVELS = {
     features: [
       { icon: Check, title: "Tout Premium inclus" },
       { icon: MessageSquare, title: "📱 Alertes SMS en plus des emails" },
-      { icon: Mail, title: "📧 Email sur 5 points de vente favoris" },
+      { icon: MapPin, title: "🏪 Suivre 5 points de vente favoris" },
       { icon: MessageSquare, title: "🐟 Suivre 10 espèces favorites" },
       { icon: Bell, title: "🔔 Choix : Push / Email / SMS" },
       { icon: Heart, title: "💰 Contribution cagnotte SMS pêcheurs" },
