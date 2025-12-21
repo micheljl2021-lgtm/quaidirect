@@ -1,24 +1,36 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { handleCors, getCorsHeaders, jsonResponse, errorResponse } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// Input validation schema
+const inputSchema = z.object({
+  yearsExperience: z.string().min(1, "Années d'expérience requises").max(200),
+  passion: z.string().min(1, "Passion requise").max(500),
+  workStyle: z.string().min(1, "Style de travail requis").max(500),
+  clientMessage: z.string().min(1, "Message client requis").max(1000),
+});
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get("Origin");
 
   try {
-    const { yearsExperience, passion, workStyle, clientMessage } = await req.json();
-
-    if (!yearsExperience || !passion || !workStyle || !clientMessage) {
-      return new Response(
-        JSON.stringify({ error: 'Toutes les réponses sont requises' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    const rawBody = await req.json();
+    
+    // Validate input with Zod
+    const parseResult = inputSchema.safeParse(rawBody);
+    if (!parseResult.success) {
+      const errorMessage = parseResult.error.errors
+        .map(e => `${e.path.join('.')}: ${e.message}`)
+        .join(', ');
+      console.warn("Validation failed:", errorMessage);
+      return errorResponse(errorMessage, 400, origin);
     }
+
+    const { yearsExperience, passion, workStyle, clientMessage } = parseResult.data;
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -71,17 +83,11 @@ Génère maintenant une belle description professionnelle.`;
       console.error('Erreur API Lovable:', response.status, errorText);
       
       if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Limite de requêtes atteinte. Veuillez réessayer dans quelques instants.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return errorResponse('Limite de requêtes atteinte. Veuillez réessayer dans quelques instants.', 429, origin);
       }
       
       if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'Crédits Lovable AI épuisés. Veuillez recharger votre compte.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return errorResponse('Crédits Lovable AI épuisés. Veuillez recharger votre compte.', 402, origin);
       }
 
       throw new Error(`Erreur API: ${response.status}`);
@@ -96,16 +102,10 @@ Génère maintenant une belle description professionnelle.`;
 
     console.log('Description générée avec succès');
 
-    return new Response(
-      JSON.stringify({ description: generatedDescription.trim() }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({ description: generatedDescription.trim() }, 200, origin);
 
   } catch (error) {
     console.error('Erreur dans generate-fisherman-description:', error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Erreur inconnue' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return errorResponse(error instanceof Error ? error.message : 'Erreur inconnue', 500, origin);
   }
 });

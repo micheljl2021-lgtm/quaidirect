@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://quaidirect.fr",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { handleCors, getCorsHeaders, jsonResponse, errorResponse } from "../_shared/cors.ts";
 
 // Rate limiting configuration
 const RATE_LIMIT = 10; // max requests
@@ -51,9 +47,11 @@ const checkRateLimit = async (
 };
 
 const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get("Origin");
 
   try {
     const supabaseClient = createClient(
@@ -71,7 +69,7 @@ const handler = async (req: Request): Promise<Response> => {
         JSON.stringify({ valid: false, error: 'Trop de requêtes. Veuillez patienter.' }),
         {
           headers: { 
-            ...corsHeaders, 
+            ...getCorsHeaders(origin), 
             'Content-Type': 'application/json',
             'X-RateLimit-Remaining': '0',
             'Retry-After': '60'
@@ -115,66 +113,45 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     if (tokenError || !tokenData) {
-      return new Response(
-        JSON.stringify({ 
-          valid: false, 
-          error: "Token invalide ou expiré" 
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
+      return jsonResponse({ valid: false, error: "Token invalide ou expiré" }, 400, origin);
     }
 
     // Vérifier expiration
     const now = new Date();
     const expiresAt = new Date(tokenData.expires_at);
     if (now > expiresAt) {
-      return new Response(
-        JSON.stringify({ 
-          valid: false, 
-          error: "Ce lien a expiré. Veuillez contacter le support pour obtenir un nouveau lien." 
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
+      return jsonResponse({ 
+        valid: false, 
+        error: "Ce lien a expiré. Veuillez contacter le support pour obtenir un nouveau lien." 
+      }, 400, origin);
     }
 
     // Vérifier si déjà utilisé
     if (tokenData.used_at) {
-      return new Response(
-        JSON.stringify({ 
-          valid: false, 
-          error: "Ce lien a déjà été utilisé. Il ne peut être utilisé qu'une seule fois." 
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
+      return jsonResponse({ 
+        valid: false, 
+        error: "Ce lien a déjà été utilisé. Il ne peut être utilisé qu'une seule fois." 
+      }, 400, origin);
     }
 
     // Vérifier si révoqué
     if (tokenData.revoked_at) {
-      return new Response(
-        JSON.stringify({ 
-          valid: false, 
-          error: "Ce lien a été révoqué. Veuillez contacter le support." 
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
+      return jsonResponse({ 
+        valid: false, 
+        error: "Ce lien a été révoqué. Veuillez contacter le support." 
+      }, 400, origin);
     }
 
     // Token valide, retourner les données du pêcheur
-    return new Response(
-      JSON.stringify({ 
-        valid: true, 
-        fisherman: tokenData.fishermen,
-        tokenId: tokenData.id,
-        expiresAt: tokenData.expires_at
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-    );
+    return jsonResponse({ 
+      valid: true, 
+      fisherman: tokenData.fishermen,
+      tokenId: tokenData.id,
+      expiresAt: tokenData.expires_at
+    }, 200, origin);
   } catch (error: any) {
     console.error("Erreur validate-secure-token:", error);
-    return new Response(
-      JSON.stringify({ valid: false, error: error.message }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-    );
+    return errorResponse(error.message, 500, origin);
   }
 };
 
