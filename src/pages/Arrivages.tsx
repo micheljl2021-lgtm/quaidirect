@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Fish, Filter, MapPin, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSalePoints } from '@/hooks/useSalePoints';
 import { useQuery } from '@tanstack/react-query';
 import { LIMITS } from '@/lib/constants';
@@ -78,6 +78,7 @@ const Arrivages = () => {
   const { user, userRole, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const [currentTime, setCurrentTime] = useState(new Date());
   const { fishermanZone, isFisherman } = useFishermanZone();
@@ -90,6 +91,14 @@ const Arrivages = () => {
   const [filterSpecies, setFilterSpecies] = useState<string>('all');
   const [filterPort, setFilterPort] = useState<string>('all');
   const [filterFisherman, setFilterFisherman] = useState<string>('all');
+
+  // Synchroniser le filtre pêcheur avec l'URL
+  useEffect(() => {
+    const fishermanParam = searchParams.get('fisherman');
+    if (fishermanParam) {
+      setFilterFisherman(fishermanParam);
+    }
+  }, [searchParams]);
 
   // Anonymous users can now view this page - no redirect needed
   // RLS policies on drops table handle visibility filtering

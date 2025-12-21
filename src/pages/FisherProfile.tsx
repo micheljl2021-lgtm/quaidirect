@@ -434,7 +434,7 @@ const FisherProfile = () => {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Button size="lg" onClick={() => navigate(`/arrivages?pecheur=${fisherman.id}`)}>
+            <Button size="lg" onClick={() => navigate(`/arrivages?fisherman=${fisherman.id}`)}>
               Voir les arrivages & commander
             </Button>
             
