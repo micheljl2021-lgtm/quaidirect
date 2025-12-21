@@ -279,7 +279,7 @@ const Header = () => {
                     Dashboard pêcheur
                   </NavLink>
                   <NavLink 
-                    to="/pecheur/nouvel-arrivage-v2" 
+                    to="/pecheur/nouvel-arrivage" 
                     className={({ isActive }) => `${mobileNavLinkClass({ isActive })} flex items-center gap-2 font-semibold text-primary`}
                     onClick={() => setIsMenuOpen(false)}
                   >
