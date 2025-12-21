@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { getRedirectPathByRole } from '@/lib/authRedirect';
 import { useQuery } from '@tanstack/react-query';
 import { TestModeBanner } from '@/components/admin/TestModeBanner';
+import { QuickActionBar } from '@/components/dashboard/QuickActionBar';
 
 const PecheurDashboard = () => {
   const { user, userRole, effectiveRole, viewAsRole, isAdmin, isVerifiedFisherman, loading: authLoading } = useAuth();
@@ -231,6 +232,9 @@ const PecheurDashboard = () => {
         {isTestMode && <TestModeBanner roleLabel="Pêcheur" />}
 
         <DashboardHeader fishermanId={fishermanId} onDropCreated={fetchDrops} />
+
+        {/* Barre d'actions rapides */}
+        <QuickActionBar fishermanId={fishermanId} onDropCreated={fetchDrops} />
 
         {/* Alert for drops needing correction */}
         {dropsNeedingCorrection.length > 0 && (
