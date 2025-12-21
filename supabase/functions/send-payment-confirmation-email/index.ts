@@ -1,13 +1,8 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
+import { getCorsHeaders, handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const SITE_URL = Deno.env.get("SITE_URL") || "https://quaidirect.fr";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://quaidirect.fr",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 // Escape HTML to prevent XSS attacks
 function escapeHtml(text: string | null | undefined): string {
@@ -20,7 +15,7 @@ function escapeHtml(text: string | null | undefined): string {
     .replace(/'/g, '&#039;');
 }
 
-// Single source of truth for plan labels (mirrors pricing.ts)
+// Single source of truth for plan labels - Synchronized with pricing.ts
 const PLAN_CONFIG: Record<string, { label: string; features: string[] }> = {
   standard: {
     label: 'Standard',
@@ -29,6 +24,8 @@ const PLAN_CONFIG: Record<string, { label: string; features: string[] }> = {
       '✅ Partage WhatsApp instantané',
       '✅ IA pour générer vos textes et descriptions',
       '✅ 50 SMS/mois inclus',
+      '✅ 200 SMS bonus ouverture',
+      '✅ 1 point de vente',
     ],
   },
   pro: {
@@ -37,8 +34,9 @@ const PLAN_CONFIG: Record<string, { label: string; features: string[] }> = {
       '✅ Emails illimités à vos clients',
       '✅ IA avancée (prix, météo, marée)',
       '✅ 200 SMS/mois inclus',
+      '✅ 1000 SMS bonus ouverture',
       '✅ Statistiques et estimation CA',
-      '✅ Multi-points de vente',
+      '✅ Multi-points de vente (jusqu\'à 3)',
       '✅ Support prioritaire',
     ],
   },
@@ -48,7 +46,9 @@ const PLAN_CONFIG: Record<string, { label: string; features: string[] }> = {
       '✅ Emails illimités à vos clients',
       '✅ IA complète + photo → annonce',
       '✅ 1500 SMS/mois inclus',
+      '✅ Multi-points de vente (jusqu\'à 10)',
       '✅ Dashboard avancé',
+      '✅ Numéro SMS vérifié (quand disponible)',
       '✅ Support prioritaire dédié',
     ],
   },
@@ -77,6 +77,8 @@ const PLAN_CONFIG: Record<string, { label: string; features: string[] }> = {
       '✅ Partage WhatsApp instantané',
       '✅ IA pour générer vos textes et descriptions',
       '✅ 50 SMS/mois inclus',
+      '✅ 200 SMS bonus ouverture',
+      '✅ 1 point de vente',
     ],
   },
 };
@@ -98,10 +100,12 @@ interface PaymentConfirmationRequest {
   nextBillingDate: string;
 }
 
-const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+Deno.serve(async (req: Request): Promise<Response> => {
+  // Handle CORS preflight
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get('origin');
 
   try {
     // Verify internal secret for webhook calls
@@ -110,10 +114,7 @@ const handler = async (req: Request): Promise<Response> => {
     
     if (!expectedSecret || internalSecret !== expectedSecret) {
       console.error('[PAYMENT-CONFIRMATION] Unauthorized: Invalid or missing internal secret');
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return errorResponse('Unauthorized', 401, origin);
     }
 
     const { userEmail, boatName, plan, amountPaid, invoiceUrl, nextBillingDate }: PaymentConfirmationRequest = await req.json();
@@ -215,17 +216,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("[PAYMENT-CONFIRMATION] Email sent successfully:", emailResponse);
 
-    return new Response(JSON.stringify(emailResponse), {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
+    return jsonResponse(emailResponse, 200, origin);
   } catch (error: any) {
     console.error("[PAYMENT-CONFIRMATION] Error:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
+    return errorResponse(error.message, 500, origin);
   }
-};
-
-serve(handler);
+});
