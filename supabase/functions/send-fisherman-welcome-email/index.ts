@@ -1,13 +1,8 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
+import { getCorsHeaders, handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const SITE_URL = Deno.env.get("SITE_URL") || "https://quaidirect.fr";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://quaidirect.fr",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 // Escape HTML to prevent XSS attacks
 function escapeHtml(text: string | null | undefined): string {
@@ -20,12 +15,13 @@ function escapeHtml(text: string | null | undefined): string {
     .replace(/'/g, '&#039;');
 }
 
-// Single source of truth for plan labels
-const PLAN_CONFIG: Record<string, { label: string; priceCents: number; period: string; features: string[] }> = {
+// Single source of truth for plan labels - Synchronized with pricing.ts
+const PLAN_CONFIG: Record<string, { label: string; priceCents: number; period: string; salePoints: number; features: string[] }> = {
   standard: {
     label: 'Standard',
     priceCents: 15000,
     period: 'an',
+    salePoints: 1,
     features: [
       '✅ Emails illimités à vos clients',
       '✅ Partage WhatsApp instantané',
@@ -37,6 +33,7 @@ const PLAN_CONFIG: Record<string, { label: string; priceCents: number; period: s
     label: 'Pro',
     priceCents: 29900,
     period: 'an',
+    salePoints: 3,
     features: [
       '✅ Emails illimités à vos clients',
       '✅ Partage WhatsApp instantané',
@@ -51,6 +48,7 @@ const PLAN_CONFIG: Record<string, { label: string; priceCents: number; period: s
     label: 'Elite',
     priceCents: 19900,
     period: 'mois',
+    salePoints: 10,
     features: [
       '✅ Emails illimités à vos clients',
       '✅ IA complète + génération photo → annonce',
@@ -66,6 +64,7 @@ const PLAN_CONFIG: Record<string, { label: string; priceCents: number; period: s
     label: 'Standard',
     priceCents: 15000,
     period: 'an',
+    salePoints: 1,
     features: [
       '✅ Emails illimités à vos clients',
       '✅ Partage WhatsApp instantané',
@@ -88,10 +87,12 @@ interface FishermanWelcomeRequest {
   fishermanPhoto?: string;
 }
 
-const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+Deno.serve(async (req: Request): Promise<Response> => {
+  // Handle CORS preflight
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get('origin');
 
   try {
     // Verify internal secret for webhook calls
@@ -100,10 +101,7 @@ const handler = async (req: Request): Promise<Response> => {
     
     if (!expectedSecret || internalSecret !== expectedSecret) {
       console.error('[FISHERMAN-WELCOME] Unauthorized: Invalid or missing internal secret');
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return errorResponse('Unauthorized', 401, origin);
     }
 
     const { userEmail, boatName, plan, fishermanZone, fishermanPhoto }: FishermanWelcomeRequest = await req.json();
@@ -154,7 +152,7 @@ const handler = async (req: Request): Promise<Response> => {
             <h2 style="color: #1e293b; margin: 0 0 16px 0; font-size: 18px;">📍 Prochaines étapes :</h2>
             <ol style="line-height: 1.8; color: #475569; margin: 0 0 24px 0; padding-left: 20px;">
               <li><strong>Complétez votre profil pêcheur</strong> avec vos infos bateau et zones de pêche</li>
-              <li><strong>Ajoutez vos points de vente</strong> (jusqu'à ${plan === 'elite' ? '10' : plan === 'pro' ? '3' : '2'} emplacements)</li>
+              <li><strong>Ajoutez vos points de vente</strong> (jusqu'à ${config.salePoints} emplacement${config.salePoints > 1 ? 's' : ''})</li>
               <li><strong>Créez votre premier arrivage</strong> en moins de 2 minutes</li>
               <li><strong>Importez vos contacts clients</strong> pour les informer automatiquement</li>
             </ol>
@@ -183,17 +181,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("[FISHERMAN-WELCOME] Email sent successfully:", emailResponse);
 
-    return new Response(JSON.stringify(emailResponse), {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
+    return jsonResponse(emailResponse, 200, origin);
   } catch (error: any) {
     console.error("[FISHERMAN-WELCOME] Error:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
+    return errorResponse(error.message, 500, origin);
   }
-};
-
-serve(handler);
+});
