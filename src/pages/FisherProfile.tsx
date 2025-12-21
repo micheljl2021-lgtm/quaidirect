@@ -77,7 +77,8 @@ const FisherProfile = () => {
       };
     },
     enabled: !!slug,
-    retry: 1,
+    retry: 2,
+    staleTime: 30000,
   });
 
   // Check if current user is the owner by querying the full fishermen table
@@ -237,6 +238,16 @@ const FisherProfile = () => {
     }
   };
 
+  // Auto-redirect to homepage if fisherman not found - useEffect MUST be before any returns
+  useEffect(() => {
+    if (!isLoading && !fisherman && !fishermanError) {
+      const timeout = setTimeout(() => {
+        navigate('/', { replace: true });
+      }, 2000);
+      return () => clearTimeout(timeout);
+    }
+  }, [isLoading, fisherman, fishermanError, navigate]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -244,16 +255,6 @@ const FisherProfile = () => {
       </div>
     );
   }
-
-  // Auto-redirect to homepage if fisherman not found
-  useEffect(() => {
-    if (!isLoading && !fisherman) {
-      const timeout = setTimeout(() => {
-        navigate('/', { replace: true });
-      }, 2000);
-      return () => clearTimeout(timeout);
-    }
-  }, [isLoading, fisherman, navigate]);
 
   if (!fisherman) {
     return (
