@@ -15,11 +15,9 @@ const escapeHtml = (text: string): string => {
     .replace(/'/g, '&#039;');
 };
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders, handleCors } from "../_shared/cors.ts";
+
+const SITE_URL = Deno.env.get('SITE_URL') || 'https://quaidirect.fr';
 
 interface SupportResponseRequest {
   requestId: string;
@@ -28,10 +26,12 @@ interface SupportResponseRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  const origin = req.headers.get('Origin');
+  const corsHeaders = getCorsHeaders(origin);
+  
   // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
   try {
     const { requestId, status, adminResponse }: SupportResponseRequest = await req.json();
@@ -109,7 +109,7 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
           
           <p>Vous pouvez consulter l'historique de vos demandes sur :</p>
-          <p><a href="https://quaidirect.fr/pecheur/support" style="color: #0EA5E9;">https://quaidirect.fr/pecheur/support</a></p>
+          <p><a href="${SITE_URL}/pecheur/support" style="color: #0EA5E9;">${SITE_URL}/pecheur/support</a></p>
           
           <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
           
