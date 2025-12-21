@@ -288,11 +288,11 @@ const ArrivageCard = ({
         {/* Fisherman & Note */}
         <div className="pt-2 border-t border-border space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
-            {(fisherman.slug || fisherman.id) ? (
+        {fisherman.slug ? (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(`/boutique/${fisherman.slug || fisherman.id}`);
+                  navigate(`/pecheurs/${fisherman.slug}`);
                 }}
                 className="flex items-center gap-1.5 text-xs text-primary hover:underline focus:outline-none"
               >

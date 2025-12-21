@@ -238,16 +238,7 @@ const FisherProfile = () => {
     }
   };
 
-  // Auto-redirect to homepage if fisherman not found - useEffect MUST be before any returns
-  useEffect(() => {
-    if (!isLoading && !fisherman && !fishermanError) {
-      const timeout = setTimeout(() => {
-        navigate('/', { replace: true });
-      }, 2000);
-      return () => clearTimeout(timeout);
-    }
-  }, [isLoading, fisherman, fishermanError, navigate]);
-
+  // Affichage du message "non trouvé" sans redirection automatique
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -260,14 +251,14 @@ const FisherProfile = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
-        <div className="flex-1 flex items-center justify-center">
-          <Card className="max-w-md">
+        <div className="flex-1 flex items-center justify-center p-4">
+          <Card className="max-w-md w-full">
             <CardContent className="pt-6 text-center space-y-4">
               <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto" />
               <div>
-                <p className="text-lg font-medium">Pêcheur introuvable</p>
+                <p className="text-lg font-medium">Profil pêcheur introuvable</p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Ce profil n'existe pas ou n'est pas encore publié.
+                  Ce profil n'existe pas ou n'est pas encore publié sur QuaiDirect.
                 </p>
                 {fishermanError && (
                   <p className="text-xs text-destructive mt-2">
@@ -275,7 +266,14 @@ const FisherProfile = () => {
                   </p>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">Redirection vers l'accueil...</p>
+              <div className="flex flex-col gap-2 pt-4">
+                <Button onClick={() => navigate('/arrivages')} className="w-full">
+                  Voir tous les arrivages
+                </Button>
+                <Button variant="outline" onClick={() => navigate('/')} className="w-full">
+                  Retour à l'accueil
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
