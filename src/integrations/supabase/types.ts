@@ -2732,14 +2732,13 @@ export type Database = {
     Views: {
       public_fishermen: {
         Row: {
-          ambassador_slot: number | null
           bio: string | null
           boat_name: string | null
+          boat_registration: string | null
           client_message: string | null
           company_name: string | null
           created_at: string | null
           default_sale_point_id: string | null
-          default_time_slot: string | null
           description: string | null
           display_name_preference: string | null
           facebook_url: string | null
@@ -2766,22 +2765,20 @@ export type Database = {
           seo_meta_description: string | null
           seo_title: string | null
           slug: string | null
-          updated_at: string | null
+          user_id: string | null
           verified_at: string | null
           website_url: string | null
           work_philosophy: string | null
           years_experience: string | null
-          zone_id: string | null
         }
         Insert: {
-          ambassador_slot?: number | null
           bio?: string | null
           boat_name?: string | null
+          boat_registration?: string | null
           client_message?: string | null
           company_name?: string | null
           created_at?: string | null
           default_sale_point_id?: string | null
-          default_time_slot?: string | null
           description?: string | null
           display_name_preference?: string | null
           facebook_url?: string | null
@@ -2808,22 +2805,20 @@ export type Database = {
           seo_meta_description?: string | null
           seo_title?: string | null
           slug?: string | null
-          updated_at?: string | null
+          user_id?: string | null
           verified_at?: string | null
           website_url?: string | null
           work_philosophy?: string | null
           years_experience?: string | null
-          zone_id?: string | null
         }
         Update: {
-          ambassador_slot?: number | null
           bio?: string | null
           boat_name?: string | null
+          boat_registration?: string | null
           client_message?: string | null
           company_name?: string | null
           created_at?: string | null
           default_sale_point_id?: string | null
-          default_time_slot?: string | null
           description?: string | null
           display_name_preference?: string | null
           facebook_url?: string | null
@@ -2850,12 +2845,11 @@ export type Database = {
           seo_meta_description?: string | null
           seo_title?: string | null
           slug?: string | null
-          updated_at?: string | null
+          user_id?: string | null
           verified_at?: string | null
           website_url?: string | null
           work_philosophy?: string | null
           years_experience?: string | null
-          zone_id?: string | null
         }
         Relationships: [
           {
@@ -2863,13 +2857,6 @@ export type Database = {
             columns: ["default_sale_point_id"]
             isOneToOne: false
             referencedRelation: "fisherman_sale_points"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fishermen_zone_id_fkey"
-            columns: ["zone_id"]
-            isOneToOne: false
-            referencedRelation: "zones_peche"
             referencedColumns: ["id"]
           },
         ]
