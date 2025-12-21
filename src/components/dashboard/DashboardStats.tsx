@@ -3,21 +3,23 @@ import { Anchor, Calendar, Package, TrendingUp } from 'lucide-react';
 
 interface DashboardStatsProps {
   drops: any[];
+  archivedDrops?: any[];
 }
 
-const DashboardStats = ({ drops }: DashboardStatsProps) => {
+const DashboardStats = ({ drops, archivedDrops = [] }: DashboardStatsProps) => {
   const todayCount = drops.filter(d => {
     const today = new Date().toDateString();
     return new Date(d.eta_at).toDateString() === today;
   }).length;
 
   const totalOffers = drops.reduce((sum, d) => sum + (d.offers?.length || 0), 0);
+  const totalDrops = drops.length + archivedDrops.length;
 
   const stats = [
     { label: "Aujourd'hui", value: todayCount, icon: Calendar, color: 'text-blue-500' },
     { label: 'Actifs', value: drops.length, icon: Anchor, color: 'text-green-500' },
     { label: 'Total offres', value: totalOffers, icon: Package, color: 'text-orange-500' },
-    { label: 'Total arrivages', value: drops.length, icon: TrendingUp, color: 'text-purple-500' },
+    { label: 'Total arrivages', value: totalDrops, icon: TrendingUp, color: 'text-purple-500' },
   ];
 
   return (

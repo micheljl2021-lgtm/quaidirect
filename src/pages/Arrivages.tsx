@@ -493,9 +493,13 @@ const Arrivages = () => {
               {/* Filtre Pêcheur */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">Pêcheur</label>
-                <Select value={filterFisherman} onValueChange={setFilterFisherman}>
+                <Select 
+                  value={filterFisherman} 
+                  onValueChange={setFilterFisherman}
+                  disabled={uniqueFishermen.length === 0}
+                >
                   <SelectTrigger className="z-50">
-                    <SelectValue placeholder="Tous les pêcheurs" />
+                    <SelectValue placeholder={uniqueFishermen.length === 0 ? "Aucun pêcheur" : "Tous les pêcheurs"} />
                   </SelectTrigger>
                   <SelectContent className="z-50">
                     <SelectItem value="all">Tous les pêcheurs</SelectItem>
@@ -504,6 +508,9 @@ const Arrivages = () => {
                     ))}
                   </SelectContent>
                 </Select>
+                {uniqueFishermen.length === 0 && drops && drops.length > 0 && (
+                  <p className="text-xs text-muted-foreground">Données pêcheurs en chargement...</p>
+                )}
               </div>
             </div>
 
