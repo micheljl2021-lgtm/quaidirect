@@ -136,3 +136,6 @@ verify_jwt = true  # Requires authentication - sends reply emails to visitors
 
 [functions.verify-fisherman-payment]
 verify_jwt = true  # Requires authentication - verifies payment status from Stripe
+
+[functions.fetch-species-photo]
+verify_jwt = true  # Requires authentication - fetches species photos from Pixabay
