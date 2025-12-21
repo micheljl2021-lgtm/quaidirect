@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -44,6 +44,20 @@ export function SpeciesPhotoPickerModal({
     bucket: 'fishermen-photos',
     folder: 'drops',
   });
+
+  // Determine which fallback photo will be used and its label
+  const fallbackInfo = useMemo(() => {
+    if (fallbackPhotos?.salePointPhoto) {
+      return { url: fallbackPhotos.salePointPhoto, label: "photo du point de vente" };
+    }
+    if (fallbackPhotos?.boatPhoto) {
+      return { url: fallbackPhotos.boatPhoto, label: "photo du bateau" };
+    }
+    if (fallbackPhotos?.favoritePhoto) {
+      return { url: fallbackPhotos.favoritePhoto, label: "photo favorite" };
+    }
+    return null;
+  }, [fallbackPhotos]);
 
   const handleCameraCapture = () => {
     cameraInputRef.current?.click();
@@ -97,24 +111,15 @@ export function SpeciesPhotoPickerModal({
   };
 
   const handleSkip = async () => {
-    // Use fallback photo if available (prioritize: sale point > boat > favorite)
-    const fallbackUrl = fallbackPhotos?.salePointPhoto 
-      || fallbackPhotos?.boatPhoto 
-      || fallbackPhotos?.favoritePhoto;
-    
-    if (fallbackUrl) {
+    if (fallbackInfo?.url) {
       setIsSaving(true);
-      await savePhotoToDrop(fallbackUrl);
+      await savePhotoToDrop(fallbackInfo.url);
     } else {
-      // No fallback photo available, just complete
       onComplete();
     }
   };
 
   const isProcessing = uploading || isSaving;
-
-  // Determine what fallback will be used for the skip button text
-  const hasFallback = !!(fallbackPhotos?.salePointPhoto || fallbackPhotos?.boatPhoto || fallbackPhotos?.favoritePhoto);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -179,9 +184,26 @@ export function SpeciesPhotoPickerModal({
               <span className="text-muted-foreground">Traitement en cours...</span>
             </div>
           )}
+
+          {/* Fallback photo preview */}
+          {fallbackInfo && !isProcessing && (
+            <div className="mt-2 p-3 bg-muted/50 rounded-lg border border-border/50">
+              <p className="text-sm text-muted-foreground mb-2">
+                Si vous passez, nous utiliserons :
+              </p>
+              <div className="flex items-center gap-3">
+                <img 
+                  src={fallbackInfo.url} 
+                  alt="Photo par défaut" 
+                  className="w-14 h-14 rounded-lg object-cover border border-border"
+                />
+                <span className="text-sm font-medium">Votre {fallbackInfo.label}</span>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Skip button */}
+        {/* Skip button with dynamic label */}
         <Button
           variant="ghost"
           onClick={handleSkip}
@@ -189,7 +211,9 @@ export function SpeciesPhotoPickerModal({
           className="w-full text-muted-foreground"
         >
           <X className="h-4 w-4 mr-2" aria-hidden="true" />
-          {hasFallback ? 'Utiliser photo du bateau' : 'Passer cette étape'}
+          {fallbackInfo 
+            ? `Utiliser la ${fallbackInfo.label}` 
+            : 'Passer sans photo'}
         </Button>
       </DialogContent>
     </Dialog>
