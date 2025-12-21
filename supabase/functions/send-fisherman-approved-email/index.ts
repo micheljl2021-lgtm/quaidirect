@@ -1,12 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
+import { getCorsHeaders, handleCors } from '../_shared/cors.ts';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://quaidirect.fr",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 // Escape HTML to prevent XSS attacks
 function escapeHtml(text: string | null | undefined): string {
@@ -26,9 +22,10 @@ interface FishermenApprovedRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get('origin');
 
   try {
     const { userEmail, boatName, plan }: FishermenApprovedRequest = await req.json();
@@ -78,13 +75,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     return new Response(JSON.stringify(emailResponse), {
       status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+      headers: { "Content-Type": "application/json", ...getCorsHeaders(origin) },
     });
   } catch (error: any) {
     console.error("Error in send-fisherman-approved-email:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      { status: 500, headers: { "Content-Type": "application/json", ...getCorsHeaders(origin) } }
     );
   }
 };

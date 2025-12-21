@@ -2,20 +2,17 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { Resend } from "https://esm.sh/resend@4.0.0";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://quaidirect.fr",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders, handleCors } from '../_shared/cors.ts';
 
 interface BillingLinkRequest {
   supportRequestId: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get('origin');
 
   try {
     const supabaseClient = createClient(
@@ -90,10 +87,10 @@ const handler = async (req: Request): Promise<Response> => {
     const customerId = customers.data[0].id;
 
     // Créer une session Customer Portal
-    const origin = req.headers.get("origin") || "https://quaidirect.fr";
+    const baseUrl = origin || "https://quaidirect.fr";
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${origin}/dashboard/pecheur`,
+      return_url: `${baseUrl}/dashboard/pecheur`,
     });
 
     // Envoyer l'email avec le lien
@@ -133,13 +130,13 @@ const handler = async (req: Request): Promise<Response> => {
         success: true, 
         message: "Lien du portail de facturation envoyé avec succès"
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      { headers: { ...getCorsHeaders(origin), "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error: any) {
     console.error("Erreur send-billing-portal-link:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      { headers: { ...getCorsHeaders(origin), "Content-Type": "application/json" }, status: 500 }
     );
   }
 };

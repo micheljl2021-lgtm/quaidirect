@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders, handleCors } from '../_shared/cors.ts';
 
 const DATA_GOUV_API_BASE = 'https://api-tabulaire.data.gouv.fr/api/resources';
 const RESOURCE_ID = '8132049d-6548-4720-9a2c-97402636a04a';
@@ -99,9 +95,10 @@ function detectRegion(zone: string, departement?: string): string {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get('origin');
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -249,13 +246,13 @@ Deno.serve(async (req) => {
         changes_detected: changes.length,
         timestamp: new Date().toISOString(),
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('❌ Sync error:', error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' } }
     );
   }
 });

@@ -1,9 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://quaidirect.fr',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders, handleCors } from '../_shared/cors.ts';
 
 interface GeocodeRequest {
   port_name: string;
@@ -17,10 +13,10 @@ interface GeocodeResponse {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get('origin');
 
   try {
     const googleMapsApiKey = Deno.env.get('GOOGLE_MAPS_API_KEY_SERVER');
@@ -29,7 +25,7 @@ serve(async (req) => {
       console.error('[Geocode] Missing GOOGLE_MAPS_API_KEY_SERVER');
       return new Response(
         JSON.stringify({ error: 'Configuration serveur manquante' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -40,7 +36,7 @@ serve(async (req) => {
       console.error('[Geocode] Missing required fields');
       return new Response(
         JSON.stringify({ error: 'Nom du port et ville requis' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -61,7 +57,7 @@ serve(async (req) => {
           error: 'Aucun résultat trouvé pour cette adresse',
           status: data.status 
         }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 404, headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -80,7 +76,7 @@ serve(async (req) => {
       JSON.stringify(geocodeResponse),
       { 
         status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' } 
       }
     );
 
@@ -89,7 +85,7 @@ serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : 'Erreur interne du serveur';
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' } }
     );
   }
 });

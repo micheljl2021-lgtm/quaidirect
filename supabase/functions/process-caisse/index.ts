@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://quaidirect.fr',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders, handleCors } from '../_shared/cors.ts';
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -246,9 +242,10 @@ const generateReceiptEmailHTML = (data: {
 };
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get('origin');
 
   const supabaseClient = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
@@ -443,7 +440,7 @@ serve(async (req) => {
         message: 'Réservation confirmée ! Reçu envoyé par e-mail.',
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' },
         status: 200,
       }
     );
@@ -453,7 +450,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: errorMessage }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' },
         status: 500,
       }
     );

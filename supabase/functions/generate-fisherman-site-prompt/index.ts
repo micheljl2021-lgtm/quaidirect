@@ -1,11 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://quaidirect.fr',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders, handleCors } from '../_shared/cors.ts';
 
 const typeLogic: Record<string, any> = {
   ligneur: {
@@ -41,9 +37,10 @@ const typeLogic: Record<string, any> = {
 };
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get('origin');
 
   try {
     const supabaseClient = createClient(
@@ -79,7 +76,7 @@ serve(async (req) => {
       if (!requestData[field]) {
         return new Response(
           JSON.stringify({ error: `Missing required field: ${field}` }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 400, headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' } }
         );
       }
     }
@@ -225,7 +222,7 @@ Génère maintenant le prompt Lovable complet, structuré, prêt à être copié
         }
       }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' } 
       }
     );
 
@@ -235,7 +232,7 @@ Génère maintenant le prompt Lovable complet, structuré, prêt à être copié
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { 
         status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' } 
       }
     );
   }
