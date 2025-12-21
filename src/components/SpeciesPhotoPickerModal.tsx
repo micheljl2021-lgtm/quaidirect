@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -37,9 +37,6 @@ export function SpeciesPhotoPickerModal({
 }: SpeciesPhotoPickerModalProps) {
   const [isSaving, setIsSaving] = useState(false);
   
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  const galleryInputRef = useRef<HTMLInputElement>(null);
-  
   const { uploadPhoto, uploading } = usePhotoUpload({
     bucket: 'fishermen-photos',
     folder: 'drops',
@@ -58,14 +55,6 @@ export function SpeciesPhotoPickerModal({
     }
     return null;
   }, [fallbackPhotos]);
-
-  const handleCameraCapture = () => {
-    cameraInputRef.current?.click();
-  };
-
-  const handleGallerySelect = () => {
-    galleryInputRef.current?.click();
-  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -135,47 +124,37 @@ export function SpeciesPhotoPickerModal({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Camera and Gallery options */}
+          {/* Camera and Gallery options - using native labels for mobile compatibility */}
           <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant="outline"
-              size="lg"
-              className="h-24 flex-col gap-2"
-              onClick={handleCameraCapture}
-              disabled={isProcessing}
-            >
-              <Camera className="h-8 w-8" aria-hidden="true" />
-              <span className="text-sm font-medium">Prendre une photo</span>
-            </Button>
+            <label className="cursor-pointer">
+              <div className={`h-24 flex flex-col items-center justify-center gap-2 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}>
+                <Camera className="h-8 w-8" aria-hidden="true" />
+                <span className="text-sm font-medium">Prendre une photo</span>
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleFileChange}
+                className="hidden"
+                disabled={isProcessing}
+              />
+            </label>
             
-            <Button
-              variant="outline"
-              size="lg"
-              className="h-24 flex-col gap-2"
-              onClick={handleGallerySelect}
-              disabled={isProcessing}
-            >
-              <ImageIcon className="h-8 w-8" aria-hidden="true" />
-              <span className="text-sm font-medium">Galerie</span>
-            </Button>
+            <label className="cursor-pointer">
+              <div className={`h-24 flex flex-col items-center justify-center gap-2 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}>
+                <ImageIcon className="h-8 w-8" aria-hidden="true" />
+                <span className="text-sm font-medium">Galerie</span>
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+                disabled={isProcessing}
+              />
+            </label>
           </div>
-
-          {/* Hidden file inputs */}
-          <input
-            ref={cameraInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-          <input
-            ref={galleryInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="hidden"
-          />
 
           {/* Loading state */}
           {isProcessing && (

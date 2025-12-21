@@ -194,8 +194,6 @@ const PecheurDashboard = () => {
           .in('status', ['scheduled', 'landed', 'needs_correction'])
           .order('created_at', { ascending: false }) as { data: any[] | null; error: any };
 
-        if (!activeError) setDrops(activeData || []);
-
         // Fetch archived drops
         const { data: archivedData, error: archivedError } = await supabase
           .from('drops')
@@ -211,7 +209,25 @@ const PecheurDashboard = () => {
           .order('created_at', { ascending: false })
           .limit(10) as { data: any[] | null; error: any };
 
-        if (!archivedError) setArchivedDrops(archivedData || []);
+        // Filter expired drops from active to history (sale_start_time + 2h is in the past)
+        const now = new Date();
+        const allActive = activeData || [];
+        
+        const expiredDrops = allActive.filter(drop => {
+          // Use sale_start_time + 2 hours as expiration, fallback to eta_at
+          const saleStart = drop.sale_start_time ? new Date(drop.sale_start_time) : new Date(drop.eta_at);
+          const expirationTime = new Date(saleStart.getTime() + 2 * 60 * 60 * 1000); // +2h
+          return expirationTime < now;
+        });
+
+        const stillActiveDrops = allActive.filter(drop => {
+          const saleStart = drop.sale_start_time ? new Date(drop.sale_start_time) : new Date(drop.eta_at);
+          const expirationTime = new Date(saleStart.getTime() + 2 * 60 * 60 * 1000);
+          return expirationTime >= now;
+        });
+
+        if (!activeError) setDrops(stillActiveDrops);
+        if (!archivedError) setArchivedDrops([...expiredDrops, ...(archivedData || [])]);
       }
     } catch (error) {
       console.error('Error fetching drops:', error);

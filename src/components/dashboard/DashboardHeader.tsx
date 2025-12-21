@@ -1,31 +1,21 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Anchor, Plus, Settings, Users, Bot, Pencil, HelpCircle, Map, MoreHorizontal, Zap, FileText, Edit } from 'lucide-react';
+import { Anchor, Settings, Users, Bot, Pencil, HelpCircle, Map, MoreHorizontal } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { QuickDropModal } from './QuickDropModal';
-import { TemplatePickerModal } from './TemplatePickerModal';
-import { useQuickDrop } from '@/hooks/useQuickDrop';
 
 interface DashboardHeaderProps {
   fishermanId: string | null;
   onDropCreated?: () => void;
 }
 
-const DashboardHeader = ({ fishermanId, onDropCreated }: DashboardHeaderProps) => {
+const DashboardHeader = ({ fishermanId }: DashboardHeaderProps) => {
   const navigate = useNavigate();
-  const [showQuickDropModal, setShowQuickDropModal] = useState(false);
-  const [showTemplateModal, setShowTemplateModal] = useState(false);
-  
-  const { canUseQuickDrop, templates } = useQuickDrop();
-  const hasTemplates = templates.length > 0;
 
   const handleViewStorefront = async () => {
     if (!fishermanId) return;
@@ -63,151 +53,80 @@ const DashboardHeader = ({ fishermanId, onDropCreated }: DashboardHeaderProps) =
           </p>
         </div>
 
-        {/* Actions */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          {/* Bouton principal avec menu déroulant si quick drop disponible */}
-          {canUseQuickDrop ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  size="default"
-                  className="gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 flex-1 sm:flex-none min-w-[160px]"
-                >
-                  <Plus className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
-                  <span className="text-sm sm:text-base">Nouvel arrivage</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56 bg-background z-50">
-                <DropdownMenuItem
-                  onClick={() => setShowQuickDropModal(true)}
-                  className="gap-3 py-3 cursor-pointer text-green-600 dark:text-green-400 font-medium"
-                >
-                  <Zap className="h-4 w-4" aria-hidden="true" />
-                  Arrivage Express (30s)
-                </DropdownMenuItem>
-                {hasTemplates && (
-                  <DropdownMenuItem
-                    onClick={() => setShowTemplateModal(true)}
-                    className="gap-3 py-3 cursor-pointer"
-                  >
-                    <FileText className="h-4 w-4" aria-hidden="true" />
-                    Depuis un modèle
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => navigate('/pecheur/nouvel-arrivage')}
-                  className="gap-3 py-3 cursor-pointer"
-                >
-                  <Edit className="h-4 w-4" aria-hidden="true" />
-                  Création détaillée
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button 
-              size="default"
-              className="gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 flex-1 sm:flex-none min-w-[140px]"
-              onClick={() => navigate('/pecheur/nouvel-arrivage')}
-            >
-              <Plus className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
-              <span className="text-sm sm:text-base">Nouvel arrivage</span>
-            </Button>
-          )}
+        {/* Actions - navigation buttons only (QuickActionBar handles drop creation) */}
+        {fishermanId && (
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            {/* Desktop: tous les boutons visibles */}
+            <div className="hidden lg:flex gap-2 flex-wrap">
+              <Button size="sm" variant="outline" className="gap-2" onClick={handleViewStorefront}>
+                <Anchor className="h-4 w-4" aria-hidden="true" />
+                Ma page vitrine
+              </Button>
+              <Button size="sm" variant="outline" className="gap-2" onClick={() => navigate('/pecheur/preferences')}>
+                <Settings className="h-4 w-4" aria-hidden="true" />
+                Préférences
+              </Button>
+              <Button size="sm" variant="outline" className="gap-2" onClick={() => navigate('/pecheur/edit-profile')}>
+                <Pencil className="h-4 w-4" aria-hidden="true" />
+                Ma vitrine
+              </Button>
+              <Button size="sm" variant="outline" className="gap-2" onClick={() => navigate('/pecheur/contacts')}>
+                <Users className="h-4 w-4" aria-hidden="true" />
+                Carnet de clients
+              </Button>
+              <Button size="sm" variant="outline" className="gap-2" onClick={() => navigate('/pecheur/zones-reglementaires')}>
+                <Map className="h-4 w-4" aria-hidden="true" />
+                Mes zones
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 border-0"
+                onClick={() => navigate('/pecheur/ia-marin')}
+              >
+                <Bot className="h-4 w-4" aria-hidden="true" />
+                IA du Marin
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                className="gap-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 border-0"
+                onClick={() => navigate('/pecheur/support')}
+              >
+                <HelpCircle className="h-4 w-4" aria-hidden="true" />
+                Support
+              </Button>
+            </div>
 
-          {fishermanId && (
-            <>
-              {/* Desktop: tous les boutons visibles */}
-              <div className="hidden lg:flex gap-2 flex-wrap">
-                <Button size="sm" variant="outline" className="gap-2" onClick={handleViewStorefront}>
-                  <Anchor className="h-4 w-4" aria-hidden="true" />
-                  Ma page vitrine
-                </Button>
-                <Button size="sm" variant="outline" className="gap-2" onClick={() => navigate('/pecheur/preferences')}>
-                  <Settings className="h-4 w-4" aria-hidden="true" />
-                  Préférences
-                </Button>
-                <Button size="sm" variant="outline" className="gap-2" onClick={() => navigate('/pecheur/edit-profile')}>
-                  <Pencil className="h-4 w-4" aria-hidden="true" />
-                  Ma vitrine
-                </Button>
-                <Button size="sm" variant="outline" className="gap-2" onClick={() => navigate('/pecheur/contacts')}>
-                  <Users className="h-4 w-4" aria-hidden="true" />
-                  Carnet de clients
-                </Button>
-                <Button size="sm" variant="outline" className="gap-2" onClick={() => navigate('/pecheur/zones-reglementaires')}>
-                  <Map className="h-4 w-4" aria-hidden="true" />
-                  Mes zones
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 border-0"
-                  onClick={() => navigate('/pecheur/ia-marin')}
-                >
-                  <Bot className="h-4 w-4" aria-hidden="true" />
-                  IA du Marin
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  className="gap-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 border-0"
-                  onClick={() => navigate('/pecheur/support')}
-                >
-                  <HelpCircle className="h-4 w-4" aria-hidden="true" />
-                  Support
-                </Button>
-              </div>
-
-              {/* Tablette/Mobile: menu déroulant */}
-              <div className="lg:hidden">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button size="default" variant="outline" className="gap-2">
-                      <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
-                      <span className="text-sm">Plus</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 bg-background z-50">
-                    {mobileActions.map((action) => (
-                      <DropdownMenuItem
-                        key={action.label}
-                        onClick={action.onClick}
-                        className={`gap-3 py-3 cursor-pointer ${
-                          action.special === 'ai' ? 'text-purple-600 dark:text-purple-400' :
-                          action.special === 'support' ? 'text-orange-600 dark:text-orange-400' : ''
-                        }`}
-                      >
-                        <action.icon className="h-4 w-4" aria-hidden="true" />
-                        {action.label}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </>
-          )}
-        </div>
+            {/* Tablette/Mobile: menu déroulant */}
+            <div className="lg:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="default" variant="outline" className="gap-2">
+                    <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                    <span className="text-sm">Plus</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-background z-50">
+                  {mobileActions.map((action) => (
+                    <DropdownMenuItem
+                      key={action.label}
+                      onClick={action.onClick}
+                      className={`gap-3 py-3 cursor-pointer ${
+                        action.special === 'ai' ? 'text-purple-600 dark:text-purple-400' :
+                        action.special === 'support' ? 'text-orange-600 dark:text-orange-400' : ''
+                      }`}
+                    >
+                      <action.icon className="h-4 w-4" aria-hidden="true" />
+                      {action.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        )}
       </div>
-
-      {/* Modals */}
-      <QuickDropModal
-        open={showQuickDropModal}
-        onOpenChange={setShowQuickDropModal}
-        onSuccess={() => {
-          setShowQuickDropModal(false);
-          onDropCreated?.();
-        }}
-      />
-
-      <TemplatePickerModal
-        open={showTemplateModal}
-        onOpenChange={setShowTemplateModal}
-        onSuccess={() => {
-          setShowTemplateModal(false);
-          onDropCreated?.();
-        }}
-      />
     </>
   );
 };
