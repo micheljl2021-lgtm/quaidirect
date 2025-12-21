@@ -68,7 +68,7 @@ interface Reservation {
 }
 
 const PremiumDashboard = () => {
-  const { user, userRole, loading } = useAuth();
+  const { user, effectiveRole, loading } = useAuth();
   const { level, isPremium, isPremiumPlus } = useClientSubscriptionLevel();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -90,14 +90,15 @@ const PremiumDashboard = () => {
 
   useEffect(() => {
     if (loading) return;
-    
+
     if (!user) {
       navigate('/auth');
       return;
     }
-    
-    // Admin redirect
-    if (userRole === 'admin') {
+
+    // En mode normal, un admin reste sur son dashboard.
+    // En mode test (viewAsRole), effectiveRole n'est plus 'admin', donc pas de redirection.
+    if (effectiveRole === 'admin') {
       navigate('/dashboard/admin');
       return;
     }
@@ -111,7 +112,7 @@ const PremiumDashboard = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [user, userRole, loading, navigate]);
+  }, [user, effectiveRole, loading, navigate]);
   
   if (loading) {
     return (

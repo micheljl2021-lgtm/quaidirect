@@ -1,14 +1,30 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+
+export type AppRole = 'visitor' | 'user' | 'premium' | 'fisherman' | 'admin';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  userRole: string | null;
+
+  /** Rôle réel issu de la base */
+  userRole: AppRole | null;
+
+  /** Pour les admins : rôle simulé (UX uniquement, ne change pas les droits backend) */
+  viewAsRole: AppRole | null;
+
+  /** Rôle effectif à utiliser côté UI/routing */
+  effectiveRole: AppRole | null;
+
+  isAdmin: boolean;
   isVerifiedFisherman: boolean;
+
+  setViewAsRole: (role: AppRole | null) => void;
+  clearViewAsRole: () => void;
+
   signIn: (email: string) => Promise<void>;
   signInWithPassword: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
@@ -18,13 +34,62 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const parseRole = (value: string | null): AppRole | null => {
+  if (!value) return null;
+  const allowed: AppRole[] = ['visitor', 'user', 'premium', 'fisherman', 'admin'];
+  return allowed.includes(value as AppRole) ? (value as AppRole) : null;
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<AppRole | null>(null);
   const [isVerifiedFisherman, setIsVerifiedFisherman] = useState(false);
+
+  const [viewAsRole, setViewAsRoleState] = useState<AppRole | null>(() => {
+    try {
+      return parseRole(sessionStorage.getItem('qd_view_as_role'));
+    } catch {
+      return null;
+    }
+  });
+
   const { toast } = useToast();
+
+  const isAdmin = userRole === 'admin';
+  const effectiveRole = useMemo<AppRole | null>(() => {
+    if (userRole !== 'admin') return userRole;
+    return viewAsRole ?? userRole;
+  }, [userRole, viewAsRole]);
+
+  const setViewAsRole = (role: AppRole | null) => {
+    if (!isAdmin) return;
+
+    const next = role === 'admin' ? null : role;
+    setViewAsRoleState(next);
+
+    try {
+      if (next) sessionStorage.setItem('qd_view_as_role', next);
+      else sessionStorage.removeItem('qd_view_as_role');
+    } catch {
+      // ignore storage errors
+    }
+  };
+
+  const clearViewAsRole = () => setViewAsRole(null);
+
+  // Empêche l'utilisation du mode test si on n'est pas admin
+  useEffect(() => {
+    if (userRole && userRole !== 'admin' && viewAsRole) {
+      setViewAsRoleState(null);
+      try {
+        sessionStorage.removeItem('qd_view_as_role');
+      } catch {
+        // ignore
+      }
+    }
+  }, [userRole, viewAsRole]);
 
   useEffect(() => {
     // Set up auth state listener
@@ -32,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
           // Fetch user role
           setTimeout(() => {
@@ -41,6 +106,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setUserRole(null);
           setIsVerifiedFisherman(false);
+          setViewAsRoleState(null);
+          try {
+            sessionStorage.removeItem('qd_view_as_role');
+          } catch {
+            // ignore
+          }
         }
       }
     );
@@ -49,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
+
       if (session?.user) {
         fetchUserRole(session.user.id);
       }
@@ -66,16 +137,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('user_roles')
         .select('role')
         .eq('user_id', userId);
-      
+
       if (roleError) {
         console.error('Error fetching roles:', roleError);
         return;
       }
 
       // Priority order: admin > fisherman > premium > user
-      const roles = rolesData?.map(r => r.role) || [];
-      let primaryRole = null;
-      
+      const roles = (rolesData?.map(r => r.role) || []) as AppRole[];
+      let primaryRole: AppRole | null = null;
+
       if (roles.includes('admin')) {
         primaryRole = 'admin';
       } else if (roles.includes('fisherman')) {
@@ -95,19 +166,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .select('boat_name, siret')
           .eq('user_id', userId)
           .maybeSingle() as { data: { boat_name: string | null; siret: string | null } | null; error: any };
-        
+
         if (fishermanError) {
           console.error('Error fetching fisherman:', fishermanError);
           return;
         }
 
         // Fisherman is "verified" if onboarding is complete (no admin verification needed)
-        const isOnboardingComplete = fishermanData && 
-          fishermanData.boat_name && 
+        const isOnboardingComplete = fishermanData &&
+          fishermanData.boat_name &&
           fishermanData.boat_name !== 'À compléter' &&
-          fishermanData.siret && 
+          fishermanData.siret &&
           fishermanData.siret !== 'À compléter';
-        
+
         setIsVerifiedFisherman(!!isOnboardingComplete);
       } else {
         setIsVerifiedFisherman(false);
@@ -125,9 +196,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           emailRedirectTo: `${window.location.origin}/`,
         },
       });
-      
+
       if (error) throw error;
-      
+
       toast({
         title: 'Code envoyé',
         description: 'Vérifiez votre boîte e-mail pour le code de connexion.',
@@ -148,9 +219,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         password,
       });
-      
+
       if (error) throw error;
-      
+
       toast({
         title: 'Connexion réussie',
         description: 'Vous êtes maintenant connecté.',
@@ -173,7 +244,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           redirectTo: `${window.location.origin}/auth`,
         },
       });
-      
+
       if (error) throw error;
     } catch (error: any) {
       toast({
@@ -192,9 +263,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         token,
         type: 'email',
       });
-      
+
       if (error) throw error;
-      
+
       toast({
         title: 'Connexion réussie',
         description: 'Vous êtes maintenant connecté.',
@@ -216,13 +287,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // Ignore errors - we'll clean up locally anyway
     }
-    
+
     // Always reset local state, regardless of API response
     setSession(null);
     setUser(null);
     setUserRole(null);
     setIsVerifiedFisherman(false);
-    
+    setViewAsRoleState(null);
+    try {
+      sessionStorage.removeItem('qd_view_as_role');
+    } catch {
+      // ignore
+    }
+
     toast({
       title: 'Déconnexion',
       description: 'À bientôt !',
@@ -230,17 +307,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      session, 
-      loading, 
+    <AuthContext.Provider value={{
+      user,
+      session,
+      loading,
       userRole,
+      viewAsRole,
+      effectiveRole,
+      isAdmin,
       isVerifiedFisherman,
+      setViewAsRole,
+      clearViewAsRole,
       signIn,
       signInWithPassword,
       signInWithGoogle,
-      verifyOtp, 
-      signOut 
+      verifyOtp,
+      signOut
     }}>
       {children}
     </AuthContext.Provider>
@@ -254,3 +336,4 @@ export function useAuth() {
   }
   return context;
 }
+

@@ -6,6 +6,7 @@ import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Crown, User, Menu, X, Shield, Download, Smartphone } from "lucide-react";
+import { AdminRoleSwitcher } from "@/components/admin/AdminRoleSwitcher";
 import logoQuaidirect from "@/assets/logo-quaidirect-full.png";
 import {
   DropdownMenu,
@@ -133,6 +134,8 @@ const Header = () => {
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-3">
+          {userRole === 'admin' && <AdminRoleSwitcher />}
+
           {!isInstalled && (
             <Button 
               variant="ghost" 

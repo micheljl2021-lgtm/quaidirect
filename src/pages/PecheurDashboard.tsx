@@ -22,7 +22,7 @@ import { getRedirectPathByRole } from '@/lib/authRedirect';
 import { useQuery } from '@tanstack/react-query';
 
 const PecheurDashboard = () => {
-  const { user, userRole, isVerifiedFisherman, loading: authLoading } = useAuth();
+  const { user, userRole, effectiveRole, viewAsRole, isAdmin, isVerifiedFisherman, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [drops, setDrops] = useState<any[]>([]);
@@ -64,16 +64,19 @@ const PecheurDashboard = () => {
 
   useEffect(() => {
     if (authLoading) return;
-    
+
     if (!user) {
       navigate('/auth');
       return;
     }
 
-    if (userRole && userRole !== 'fisherman' && userRole !== 'admin') {
-      navigate(getRedirectPathByRole(userRole));
+    if (effectiveRole && effectiveRole !== 'fisherman' && effectiveRole !== 'admin') {
+      navigate(getRedirectPathByRole(effectiveRole));
       return;
     }
+
+    const isFisherView = effectiveRole === 'fisherman' || effectiveRole === 'admin';
+    if (!isFisherView) return;
 
     // Check if fisherman has completed onboarding
     const checkOnboardingStatus = async () => {
@@ -84,18 +87,34 @@ const PecheurDashboard = () => {
         .maybeSingle();
 
       if (!fisherman) {
+        // Mode test: on autorise l'accès au dashboard pêcheur même sans profil pêcheur
+        if (isAdmin && viewAsRole === 'fisherman') {
+          setOnboardingComplete(true);
+          setFishermanId(null);
+          setLoading(false);
+          return;
+        }
+
         // No fisherman record - redirect to payment
         navigate('/pecheur/payment');
         return;
       }
 
       // Check if critical fields are filled (onboarding complete)
-      const isOnboardingDone = fisherman.boat_name && 
-                               fisherman.boat_name !== 'À compléter' &&
-                               fisherman.siret && 
-                               fisherman.siret !== 'À compléter';
-      
+      const isOnboardingDone = fisherman.boat_name &&
+        fisherman.boat_name !== 'À compléter' &&
+        fisherman.siret &&
+        fisherman.siret !== 'À compléter';
+
       if (!isOnboardingDone) {
+        // Mode test: ne bloque pas sur l'onboarding, on veut pouvoir vérifier l'UI
+        if (isAdmin && viewAsRole === 'fisherman') {
+          setOnboardingComplete(true);
+          setFishermanId(fisherman.id);
+          fetchDrops();
+          return;
+        }
+
         // Onboarding not complete - redirect to onboarding
         navigate('/pecheur/onboarding');
         return;
@@ -108,10 +127,8 @@ const PecheurDashboard = () => {
       fetchDrops();
     };
 
-    if (userRole === 'fisherman' || userRole === 'admin') {
-      checkOnboardingStatus();
-    }
-  }, [user, userRole, authLoading, navigate]);
+    checkOnboardingStatus();
+  }, [user, userRole, effectiveRole, viewAsRole, isAdmin, authLoading, navigate]);
 
   // Realtime subscription for drops
   useEffect(() => {
