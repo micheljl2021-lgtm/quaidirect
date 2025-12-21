@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useFishermanPaymentStatus } from '@/hooks/useFishermanPaymentStatus';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -14,8 +15,16 @@ const PecheurPayment = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isPaid, isLoading: paymentLoading } = useFishermanPaymentStatus();
   const [loading, setLoading] = useState<string | null>(null);
   const [isWhitelisted, setIsWhitelisted] = useState(false);
+
+  // Redirect paid fishermen to their dashboard
+  useEffect(() => {
+    if (!paymentLoading && isPaid) {
+      navigate('/dashboard/pecheur');
+    }
+  }, [isPaid, paymentLoading, navigate]);
 
   useEffect(() => {
     const checkWhitelist = async () => {

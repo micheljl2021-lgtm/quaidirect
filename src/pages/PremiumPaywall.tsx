@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Crown, Check, MapPin, Bell, Star, ArrowLeft, Mail, MessageSquare, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useClientSubscriptionLevel } from "@/hooks/useClientSubscriptionLevel";
 import Header from "@/components/Header";
 import { getReferralCode } from "@/lib/referralTracking";
 
@@ -65,7 +66,15 @@ export default function PremiumPaywall() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { isPremium, isPremiumPlus, isLoading: subscriptionLoading } = useClientSubscriptionLevel();
   const [loading, setLoading] = useState<string | null>(null);
+
+  // Redirect premium users to their dashboard
+  useEffect(() => {
+    if (!subscriptionLoading && (isPremium || isPremiumPlus)) {
+      navigate('/dashboard/premium');
+    }
+  }, [isPremium, isPremiumPlus, subscriptionLoading, navigate]);
 
   const handleSubscribe = async (priceId: string, plan: string) => {
     setLoading(plan);

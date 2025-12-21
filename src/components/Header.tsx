@@ -103,9 +103,11 @@ const Header = () => {
           <NavLink to="/panier" className={navLinkClass}>
             Panier
           </NavLink>
-          <NavLink to="/premium" className={navLinkClass}>
-            Premium
-          </NavLink>
+          {!hasClientPremiumSubscription && (
+            <NavLink to="/premium" className={navLinkClass}>
+              Premium
+            </NavLink>
+          )}
           {/* Afficher dashboard user si rôle user ET pas d'abonnement premium */}
           {userRole === 'user' && !hasClientPremiumSubscription && (
             <NavLink to="/dashboard/user" className={navLinkClass}>
@@ -241,13 +243,15 @@ const Header = () => {
               >
                 Panier
               </NavLink>
-              <NavLink 
-                to="/premium" 
-                className={mobileNavLinkClass}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Premium
-              </NavLink>
+              {!hasClientPremiumSubscription && (
+                <NavLink 
+                  to="/premium" 
+                  className={mobileNavLinkClass}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Premium
+                </NavLink>
+              )}
               {/* Afficher dashboard user si rôle user ET pas d'abonnement premium */}
               {userRole === 'user' && !hasClientPremiumSubscription && (
                 <NavLink 
