@@ -149,6 +149,102 @@ const generateReceiptHTML = (data: any) => {
   `;
 };
 
+// Generate receipt email HTML
+const generateReceiptEmailHTML = (data: {
+  buyerName: string;
+  boatName: string;
+  speciesName: string;
+  finalWeight: number;
+  totalAmount: number;
+  portName: string;
+  saleDate: string;
+  receiptUrl: string;
+}) => {
+  const safeBuyerName = escapeHtml(data.buyerName || 'Client');
+  const safeBoatName = escapeHtml(data.boatName);
+  const safeSpeciesName = escapeHtml(data.speciesName);
+  const safePortName = escapeHtml(data.portName);
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7fa;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #0077b6 0%, #00a8e8 100%); padding: 32px 24px; text-align: center;">
+      <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700;">🐟 QuaiDirect</h1>
+      <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 16px;">Votre reçu de vente</p>
+    </div>
+
+    <!-- Content -->
+    <div style="padding: 32px 24px;">
+      <p style="font-size: 16px; color: #333; margin: 0 0 24px 0;">
+        Bonjour ${safeBuyerName},
+      </p>
+      
+      <p style="font-size: 16px; color: #333; margin: 0 0 24px 0;">
+        Merci pour votre achat de poisson frais auprès du <strong>${safeBoatName}</strong> ! Voici le récapitulatif de votre commande :
+      </p>
+
+      <!-- Order Summary -->
+      <div style="background-color: #f8fafc; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+        <h3 style="margin: 0 0 16px 0; color: #0077b6; font-size: 18px;">📋 Détails de la vente</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 8px 0; color: #666; font-size: 14px;">Espèce</td>
+            <td style="padding: 8px 0; color: #333; font-size: 14px; text-align: right; font-weight: 600;">${safeSpeciesName}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #666; font-size: 14px;">Poids</td>
+            <td style="padding: 8px 0; color: #333; font-size: 14px; text-align: right; font-weight: 600;">${data.finalWeight} kg</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #666; font-size: 14px;">Lieu</td>
+            <td style="padding: 8px 0; color: #333; font-size: 14px; text-align: right; font-weight: 600;">${safePortName}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #666; font-size: 14px;">Date</td>
+            <td style="padding: 8px 0; color: #333; font-size: 14px; text-align: right; font-weight: 600;">${new Date(data.saleDate).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}</td>
+          </tr>
+          <tr style="border-top: 2px solid #e2e8f0;">
+            <td style="padding: 16px 0 8px 0; color: #333; font-size: 18px; font-weight: 700;">Total</td>
+            <td style="padding: 16px 0 8px 0; color: #0077b6; font-size: 18px; text-align: right; font-weight: 700;">${data.totalAmount.toFixed(2)} €</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Receipt Download Button -->
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="${data.receiptUrl}" 
+           style="display: inline-block; background: linear-gradient(135deg, #0077b6 0%, #00a8e8 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+          📄 Télécharger le reçu complet
+        </a>
+      </div>
+
+      <p style="font-size: 14px; color: #666; margin: 24px 0 0 0; text-align: center;">
+        Merci de soutenir la pêche artisanale locale ! 🎣
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="background-color: #f8fafc; padding: 24px; text-align: center; border-top: 1px solid #e2e8f0;">
+      <p style="margin: 0 0 8px 0; color: #666; font-size: 12px;">
+        QuaiDirect - Vente directe de poisson frais à quai
+      </p>
+      <p style="margin: 0; color: #999; font-size: 12px;">
+        © ${new Date().getFullYear()} QuaiDirect. Tous droits réservés.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -263,7 +359,7 @@ serve(async (req) => {
       throw uploadError;
     }
 
-    const receiptUrl = `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/receipts/${user.id}/${fileName}`;
+    const receiptUrl = `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/public/receipts/${user.id}/${fileName}`;
     logStep('Receipt uploaded', { url: receiptUrl });
 
     // Create sale record
@@ -291,8 +387,54 @@ serve(async (req) => {
 
     logStep('Sale record created');
 
-    // TODO: Send email with receipt (requires email service integration)
-    // For now, we'll just return success
+    // Send email with receipt to buyer
+    const buyerEmail = reservation.user?.email;
+    const buyerName = reservation.user?.full_name || 'Client';
+    
+    if (buyerEmail) {
+      logStep('Sending receipt email', { to: buyerEmail });
+
+      const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+      
+      if (RESEND_API_KEY) {
+        const emailHTML = generateReceiptEmailHTML({
+          buyerName,
+          boatName: reservation.offer.drop.fisherman.boat_name,
+          speciesName: reservation.offer.species.name,
+          finalWeight: finalWeightKg,
+          totalAmount,
+          portName: `${reservation.offer.drop.port.name}, ${reservation.offer.drop.port.city}`,
+          saleDate: new Date().toISOString(),
+          receiptUrl,
+        });
+
+        const emailResponse = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${RESEND_API_KEY}`,
+          },
+          body: JSON.stringify({
+            from: 'QuaiDirect <noreply@quaidirect.fr>',
+            to: [buyerEmail],
+            subject: `🐟 Votre reçu de vente - ${reservation.offer.species.name}`,
+            html: emailHTML,
+          }),
+        });
+
+        if (emailResponse.ok) {
+          logStep('Receipt email sent successfully', { to: buyerEmail });
+        } else {
+          const emailError = await emailResponse.text();
+          logStep('WARNING: Failed to send receipt email', { error: emailError });
+          // Don't throw - sale is still successful even if email fails
+        }
+      } else {
+        logStep('WARNING: RESEND_API_KEY not configured, skipping email');
+      }
+    } else {
+      logStep('WARNING: No buyer email found, skipping email');
+    }
 
     return new Response(
       JSON.stringify({

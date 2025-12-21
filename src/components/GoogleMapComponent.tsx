@@ -103,7 +103,7 @@ const GoogleMapComponent = ({
   useEffect(() => {
     if (!isLoaded && !loadError && !hasTimedOut) {
       timeoutRef.current = setTimeout(() => {
-        console.error('[Google Maps] Loading timeout exceeded after', LOADING_TIMEOUT_MS, 'ms');
+        if (import.meta.env.DEV) console.error('[Google Maps] Loading timeout exceeded after', LOADING_TIMEOUT_MS, 'ms');
         setHasTimedOut(true);
       }, LOADING_TIMEOUT_MS);
     }
@@ -123,18 +123,20 @@ const GoogleMapComponent = ({
     };
   }, [isLoaded, loadError, hasTimedOut, loadAttempt]);
 
-  // Log loading state for debugging
+  // Log loading state for debugging (dev only)
   useEffect(() => {
-    if (loadError) {
-      console.error('[Google Maps] Load error:', loadError.message);
-    }
-    if (isLoaded) {
-      console.info('[Google Maps] Successfully loaded');
+    if (import.meta.env.DEV) {
+      if (loadError) {
+        console.error('[Google Maps] Load error:', loadError.message);
+      }
+      if (isLoaded) {
+        console.info('[Google Maps] Successfully loaded');
+      }
     }
   }, [isLoaded, loadError]);
 
   const handleRetry = useCallback(() => {
-    console.info('[Google Maps] Retrying by re-mounting map...');
+    if (import.meta.env.DEV) console.info('[Google Maps] Retrying by re-mounting map...');
     setHasTimedOut(false);
     // Force re-mount of the GoogleMap component (does not reload the whole page)
     setLoadAttempt(prev => prev + 1);
@@ -143,7 +145,7 @@ const GoogleMapComponent = ({
   const onLoad = useCallback((map: google.maps.Map) => {
     setMap(map);
     // Force initial center on Hyères, France
-    console.log('[GoogleMap] onLoad: Forcing initial center on Hyères');
+    if (import.meta.env.DEV) console.log('[GoogleMap] onLoad: Forcing initial center on Hyères');
     map.setCenter(defaultMapConfig.center);
     map.setZoom(defaultMapConfig.zoom);
   }, []);
@@ -161,7 +163,7 @@ const GoogleMapComponent = ({
 
     // Priorité 1: Position utilisateur
     if (userLocation) {
-      console.log('[GoogleMap] Centering on user location:', userLocation);
+      if (import.meta.env.DEV) console.log('[GoogleMap] Centering on user location:', userLocation);
       map.setCenter(userLocation);
       map.setZoom(12);
       return;
@@ -172,7 +174,7 @@ const GoogleMapComponent = ({
 
     // Priorité 2: Centrer sur les drops actifs (ARRIVAGES EN PRIORITÉ)
     if (drops && drops.length > 0) {
-      console.log('[GoogleMap] Found', drops.length, 'drops - centering on arrivals first');
+      if (import.meta.env.DEV) console.log('[GoogleMap] Found', drops.length, 'drops - centering on arrivals first');
       drops.forEach(drop => {
         if (drop.latitude && drop.longitude) {
           bounds.extend(new google.maps.LatLng(drop.latitude, drop.longitude));
@@ -183,7 +185,7 @@ const GoogleMapComponent = ({
 
     // Priorité 3: Centrer sur les points de vente (si pas de drops)
     if (!hasPoints && salePoints && salePoints.length > 0) {
-      console.log('[GoogleMap] No drops, found', salePoints.length, 'sale points');
+      if (import.meta.env.DEV) console.log('[GoogleMap] No drops, found', salePoints.length, 'sale points');
       salePoints.forEach(sp => {
         if (sp.latitude && sp.longitude) {
           bounds.extend(new google.maps.LatLng(sp.latitude, sp.longitude));
@@ -193,7 +195,7 @@ const GoogleMapComponent = ({
     }
 
     if (hasPoints) {
-      console.log('[GoogleMap] Fitting bounds to points');
+      if (import.meta.env.DEV) console.log('[GoogleMap] Fitting bounds to points');
       map.fitBounds(bounds);
       const listener = google.maps.event.addListener(map, 'idle', () => {
         const currentZoom = map.getZoom();
@@ -204,7 +206,7 @@ const GoogleMapComponent = ({
       });
     } else {
       // Priorité 4: Centre par défaut (Hyères, France)
-      console.log('[GoogleMap] No points found, centering on Hyères (default)');
+      if (import.meta.env.DEV) console.log('[GoogleMap] No points found, centering on Hyères (default)');
       map.setCenter(defaultMapConfig.center);
       map.setZoom(defaultMapConfig.zoom);
     }

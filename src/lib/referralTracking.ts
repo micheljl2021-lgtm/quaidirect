@@ -21,7 +21,7 @@ export const captureReferralCode = (): string | null => {
     const cleanCode = refCode.trim().toUpperCase();
     localStorage.setItem(REFERRER_CODE_KEY, cleanCode);
     localStorage.setItem(REFERRER_TIMESTAMP_KEY, Date.now().toString());
-    console.log('[REFERRAL] Code captured:', cleanCode);
+    if (import.meta.env.DEV) console.log('[REFERRAL] Code captured:', cleanCode);
     return cleanCode;
   }
   
@@ -45,7 +45,7 @@ export const getReferralCode = (): string | null => {
   
   if (Date.now() - storedAt > expiryMs) {
     clearReferralData();
-    console.log('[REFERRAL] Code expired, cleared');
+    if (import.meta.env.DEV) console.log('[REFERRAL] Code expired, cleared');
     return null;
   }
   
@@ -58,7 +58,7 @@ export const getReferralCode = (): string | null => {
 export const setReferrerFishermanId = (fishermanId: string): void => {
   if (typeof window === 'undefined') return;
   localStorage.setItem(REFERRER_FISHERMAN_ID_KEY, fishermanId);
-  console.log('[REFERRAL] Fisherman ID set:', fishermanId);
+  if (import.meta.env.DEV) console.log('[REFERRAL] Fisherman ID set:', fishermanId);
 };
 
 /**
@@ -77,7 +77,7 @@ export const clearReferralData = (): void => {
   localStorage.removeItem(REFERRER_CODE_KEY);
   localStorage.removeItem(REFERRER_TIMESTAMP_KEY);
   localStorage.removeItem(REFERRER_FISHERMAN_ID_KEY);
-  console.log('[REFERRAL] Data cleared');
+  if (import.meta.env.DEV) console.log('[REFERRAL] Data cleared');
 };
 
 /**
