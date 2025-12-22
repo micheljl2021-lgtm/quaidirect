@@ -330,6 +330,7 @@ const PecheurOnboarding = () => {
         zone_id: formData.zoneId || null,
         fishing_zones: formData.fishingZones ? [formData.fishingZones] : null,
         fishing_methods: formData.fishingMethods as any,
+        photo_url: formData.profilePhoto,
         photo_boat_1: formData.photoBoat1,
         photo_boat_2: formData.photoBoat2,
         photo_dock_sale: formData.photoDockSale,
@@ -341,6 +342,8 @@ const PecheurOnboarding = () => {
         onboarding_step: currentStep,
         onboarding_data: { 
           selectedSpecies: formData.selectedSpecies,
+          selectedPorts: formData.selectedPorts,
+          fishingMethodOther: formData.fishingMethodOther,
           salePoint1Label: formData.salePoint1Label,
           salePoint1Address: formData.salePoint1Address,
           salePoint1Description: formData.salePoint1Description,
@@ -415,6 +418,7 @@ const PecheurOnboarding = () => {
           zone_id: formData.zoneId || null,
           fishing_zones: formData.fishingZones ? [formData.fishingZones] : null,
           fishing_methods: formData.fishingMethods as any,
+          photo_url: formData.profilePhoto,
           photo_boat_1: formData.photoBoat1,
           photo_boat_2: formData.photoBoat2,
           photo_dock_sale: formData.photoDockSale,
@@ -424,7 +428,10 @@ const PecheurOnboarding = () => {
           client_message: formData.clientMessage,
           generated_description: formData.generatedDescription,
           onboarding_step: 6,
-          onboarding_data: {},
+          onboarding_data: {
+            selectedPorts: formData.selectedPorts,
+            fishingMethodOther: formData.fishingMethodOther,
+          },
           verified_at: new Date().toISOString(), // Auto-verify on onboarding completion
         }], { onConflict: 'user_id' })
         .select()

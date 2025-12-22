@@ -10,7 +10,8 @@ const steps = [
   { number: 2, label: "Liens" },
   { number: 3, label: "Zones & Méthodes" },
   { number: 4, label: "Espèces" },
-  { number: 5, label: "Photos & Description" },
+  { number: 5, label: "Photos" },
+  { number: 6, label: "Points de vente" },
 ];
 
 export function OnboardingStepIndicator({ currentStep }: OnboardingStepIndicatorProps) {
