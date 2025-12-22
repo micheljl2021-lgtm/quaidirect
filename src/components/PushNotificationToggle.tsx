@@ -115,10 +115,12 @@ const PushNotificationToggle = ({ fishermanId }: PushNotificationToggleProps) =>
       }
 
       // Get FCM token
+      console.log('[FCM] Requesting FCM token...');
       const token = await requestFCMToken();
       
       if (!token) {
-        throw new Error('Impossible d\'obtenir le token FCM');
+        console.error('[FCM] Token request failed - check browser console for Firebase errors');
+        throw new Error('Impossible d\'obtenir le token. Vérifiez que les notifications sont autorisées et que vous n\'utilisez pas de bloqueur de publicités.');
       }
 
       console.log('[FCM] Token obtained, saving to database...');
