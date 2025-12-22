@@ -315,71 +315,9 @@ const Landing = () => {
       <section className="min-h-[80vh] sm:min-h-[75vh]">
         <div className="grid grid-cols-1 md:grid-cols-2 min-h-[80vh] sm:min-h-[75vh]">
           
-          {/* Bloc Gauche - Pêcheur */}
+          {/* Bloc Gauche - Client (Premier sur mobile) */}
           <div 
-            className="relative flex items-center justify-center p-6 sm:p-10 lg:p-16 min-h-[45vh] md:min-h-full"
-            style={{
-              backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.9)), url(${fishingPortImage})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center'
-            }}
-          >
-            <div className="relative z-10 text-center space-y-5 max-w-md">
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
-                <Anchor className="h-4 w-4 text-white" />
-                <span className="text-sm font-medium text-white">Espace Pêcheur</span>
-              </div>
-
-              {/* Titre */}
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight">
-                Vous êtes marin-pêcheur ?
-              </h2>
-
-              {/* Sous-titre */}
-              <p className="text-base sm:text-lg text-white/85 leading-relaxed">
-                Vendez en direct, fidélisez vos clients, gagnez du temps.
-              </p>
-
-              {/* Features */}
-              <div className="flex flex-wrap justify-center gap-3 pt-2">
-                <div className="flex items-center gap-1.5 text-white/70 text-xs sm:text-sm">
-                  <Smartphone className="h-3.5 w-3.5" />
-                  <span>100% mobile</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-white/70 text-xs sm:text-sm">
-                  <Bot className="h-3.5 w-3.5" />
-                  <span>IA incluse</span>
-                </div>
-              </div>
-
-              {/* CTAs */}
-              <div className="flex flex-col gap-3 pt-4">
-                <Link to="/devenir-pecheur">
-                  <Button 
-                    size="lg" 
-                    className="text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 bg-primary hover:bg-primary/90 shadow-xl w-full"
-                  >
-                    <ArrowRight className="h-5 w-5 mr-2" />
-                    Créer mon profil pêcheur
-                  </Button>
-                </Link>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="text-sm sm:text-base px-6 py-4 bg-white/10 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm w-full"
-                  onClick={scrollToContact}
-                >
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Demander une démo
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Bloc Droite - Client */}
-          <div 
-            className="relative flex items-center justify-center p-6 sm:p-10 lg:p-16 min-h-[45vh] md:min-h-full"
+            className="relative flex items-center justify-center p-6 sm:p-10 lg:p-16 min-h-[45vh] md:min-h-full order-1 md:order-1"
             style={{
               backgroundImage: `linear-gradient(rgba(14, 165, 233, 0.85), rgba(6, 182, 212, 0.9)), url(${freshFishImage})`,
               backgroundSize: 'cover',
@@ -436,6 +374,78 @@ const Landing = () => {
                     Devenir Premium
                   </Button>
                 </Link>
+              </div>
+
+              {/* Flèche vers section pêcheur sur mobile uniquement */}
+              <div className="md:hidden pt-4 animate-bounce">
+                <div className="flex flex-col items-center gap-1 text-white/70">
+                  <span className="text-xs font-medium">Vous êtes pêcheur ?</span>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bloc Droite - Pêcheur (Second sur mobile) */}
+          <div 
+            className="relative flex items-center justify-center p-6 sm:p-10 lg:p-16 min-h-[45vh] md:min-h-full order-2 md:order-2"
+            style={{
+              backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.9)), url(${fishingPortImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}
+          >
+            <div className="relative z-10 text-center space-y-5 max-w-md">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
+                <Anchor className="h-4 w-4 text-white" />
+                <span className="text-sm font-medium text-white">Espace Pêcheur</span>
+              </div>
+
+              {/* Titre */}
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight">
+                Vous êtes marin-pêcheur ?
+              </h2>
+
+              {/* Sous-titre */}
+              <p className="text-base sm:text-lg text-white/85 leading-relaxed">
+                Vendez en direct, fidélisez vos clients, gagnez du temps.
+              </p>
+
+              {/* Features */}
+              <div className="flex flex-wrap justify-center gap-3 pt-2">
+                <div className="flex items-center gap-1.5 text-white/70 text-xs sm:text-sm">
+                  <Smartphone className="h-3.5 w-3.5" />
+                  <span>100% mobile</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-white/70 text-xs sm:text-sm">
+                  <Bot className="h-3.5 w-3.5" />
+                  <span>IA incluse</span>
+                </div>
+              </div>
+
+              {/* CTAs */}
+              <div className="flex flex-col gap-3 pt-4">
+                <Link to="/devenir-pecheur">
+                  <Button 
+                    size="lg" 
+                    className="text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 bg-primary hover:bg-primary/90 shadow-xl w-full"
+                  >
+                    <ArrowRight className="h-5 w-5 mr-2" />
+                    Créer mon profil pêcheur
+                  </Button>
+                </Link>
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="text-sm sm:text-base px-6 py-4 bg-white/10 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm w-full"
+                  onClick={scrollToContact}
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Demander une démo
+                </Button>
               </div>
             </div>
           </div>
