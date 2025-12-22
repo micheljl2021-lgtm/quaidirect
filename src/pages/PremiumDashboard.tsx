@@ -132,6 +132,10 @@ const PremiumDashboard = () => {
     );
   }
 
+  // Calculer le début du jour pour le filtre
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+
   // Fetch drops premium (avec accès anticipé)
   const { data: drops, isLoading, refetch } = useQuery({
     queryKey: ['premium-drops', user?.id, favoriteFishermen],
@@ -183,7 +187,7 @@ const PremiumDashboard = () => {
           )
         `)
         .in('status', ['scheduled', 'landed'])
-        .gte('sale_start_time', new Date().toISOString())
+        .gte('sale_start_time', startOfToday.toISOString())
         .order('eta_at', { ascending: true });
 
       if (error) throw error;

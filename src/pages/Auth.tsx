@@ -144,21 +144,7 @@ const Auth = () => {
       
       if (data.user) {
         console.log('[SIGNUP] User created:', data.user.id);
-        
-        // Assigner le rôle 'user' de base
-        try {
-          const { error: roleError } = await supabase
-            .from('user_roles')
-            .insert({ user_id: data.user.id, role: 'user' });
-
-          if (roleError) {
-            console.error('[SIGNUP] Error assigning user role:', roleError);
-          } else {
-            console.log('[SIGNUP] User role assigned successfully');
-          }
-        } catch (roleError) {
-          console.error('[SIGNUP] Exception assigning role:', roleError);
-        }
+        // Note: Le rôle 'user' est automatiquement assigné par le trigger handle_new_user
 
         // Auto-follow si code de parrainage présent
         await handleAutoFollow(data.user.id);
