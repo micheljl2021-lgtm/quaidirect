@@ -6,10 +6,11 @@ import { useQuery } from '@tanstack/react-query';
 import Header from '@/components/Header';
 import ArrivageCard from '@/components/ArrivageCard';
 import ClientPreferencesPanel from '@/components/ClientPreferencesPanel';
+import PushNotificationToggle from '@/components/PushNotificationToggle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Fish, MapPin, Clock, TrendingUp, Calendar, ArrowRight, Loader2 } from 'lucide-react';
+import { Fish, MapPin, Clock, TrendingUp, Calendar, ArrowRight, Loader2, Bell } from 'lucide-react';
 import { getRedirectPathByRole } from '@/lib/authRedirect';
 import { TestModeBanner } from '@/components/admin/TestModeBanner';
 
@@ -147,6 +148,26 @@ const UserDashboard = () => {
             Découvrez les arrivages de poisson frais directement des pêcheurs
           </p>
         </div>
+
+        {/* Notifications Section */}
+        <Card className="mb-8 border-primary/20">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-primary/10">
+                  <Bell className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Notifications push</CardTitle>
+                  <CardDescription>
+                    Recevez une alerte dès qu'un pêcheur publie un nouvel arrivage
+                  </CardDescription>
+                </div>
+              </div>
+              <PushNotificationToggle />
+            </div>
+          </CardHeader>
+        </Card>
 
         {/* Preferences Panel */}
         <div className="mb-8">
