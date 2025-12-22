@@ -1,5 +1,6 @@
+// Firebase Cloud Messaging integration for QuaiDirect push notifications
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getMessaging, getToken, onMessage, Messaging } from 'firebase/messaging';
+import { getMessaging, getToken, onMessage, type Messaging } from 'firebase/messaging';
 
 // Firebase configuration
 const firebaseConfig = {

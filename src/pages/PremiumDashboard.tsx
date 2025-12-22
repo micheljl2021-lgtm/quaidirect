@@ -161,7 +161,7 @@ const PremiumDashboard = () => {
             label,
             address
           ),
-          fishermen (
+          fishermen:public_fishermen!fisherman_id (
             id,
             slug,
             boat_name,
