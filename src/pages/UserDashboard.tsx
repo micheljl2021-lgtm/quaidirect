@@ -50,6 +50,10 @@ const UserDashboard = () => {
     );
   }
 
+  // Calculer le début du jour pour le filtre
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+
   const { data: drops, isLoading } = useQuery({
     queryKey: ['user-dashboard-drops', user?.id],
     queryFn: async () => {
@@ -101,7 +105,7 @@ const UserDashboard = () => {
           )
         `)
         .eq('status', 'scheduled')
-        .gte('sale_start_time', new Date().toISOString())
+        .gte('sale_start_time', startOfToday.toISOString())
         .order('eta_at', { ascending: true });
 
       if (error) throw error;

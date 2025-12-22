@@ -223,7 +223,7 @@ export default function ClientPreferencesPanel({ compact = false }: ClientPrefer
     } else {
       toast({
         title: 'Limite atteinte',
-        description: `Maximum ${max} sélection(s)`,
+        description: `Maximum ${max} sélection(s). Désélectionnez d'abord un élément pour en ajouter un autre.`,
         variant: 'destructive',
       });
     }
