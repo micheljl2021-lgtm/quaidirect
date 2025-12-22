@@ -37,33 +37,61 @@ export const getFirebaseMessaging = (): Messaging | null => {
   return messaging;
 };
 
-// Request FCM token
+// Request FCM token with detailed error logging
 export const requestFCMToken = async (): Promise<string | null> => {
   const msg = getFirebaseMessaging();
   if (!msg) {
-    console.error('[Firebase] Messaging not available');
+    console.error('[Firebase] Messaging not available - check browser support for notifications and service workers');
     return null;
   }
 
   try {
+    // Check notification permission first
+    const permission = Notification.permission;
+    console.log('[Firebase] Current notification permission:', permission);
+    
+    if (permission === 'denied') {
+      console.error('[Firebase] Notifications are blocked by user');
+      return null;
+    }
+
     // Register custom service worker for FCM
+    console.log('[Firebase] Registering service worker...');
     const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
     console.log('[Firebase] Service worker registered:', registration.scope);
 
+    // Wait for the service worker to be ready
+    await navigator.serviceWorker.ready;
+    console.log('[Firebase] Service worker is ready');
+
+    console.log('[Firebase] Requesting FCM token with VAPID key...');
     const token = await getToken(msg, {
       vapidKey: VAPID_KEY,
       serviceWorkerRegistration: registration,
     });
 
     if (token) {
-      console.log('[Firebase] FCM Token obtained:', token.substring(0, 20) + '...');
+      console.log('[Firebase] FCM Token obtained successfully:', token.substring(0, 20) + '...');
       return token;
     } else {
-      console.warn('[Firebase] No FCM token available');
+      console.warn('[Firebase] No FCM token returned - notification permission may not be granted');
       return null;
     }
-  } catch (error) {
+  } catch (error: any) {
+    // Detailed error logging
     console.error('[Firebase] Error getting FCM token:', error);
+    console.error('[Firebase] Error code:', error?.code);
+    console.error('[Firebase] Error message:', error?.message);
+    
+    // Common error hints
+    if (error?.code === 'messaging/permission-blocked') {
+      console.error('[Firebase] Hint: User has blocked notifications');
+    } else if (error?.code === 'messaging/failed-service-worker-registration') {
+      console.error('[Firebase] Hint: Service worker registration failed - check firebase-messaging-sw.js');
+    } else if (error?.message?.includes('VAPID')) {
+      console.error('[Firebase] Hint: VAPID key may be incorrect');
+    }
+    
     return null;
   }
 };
