@@ -1,18 +1,23 @@
 import { useState, useEffect } from 'react';
-import { Copy, Check, Link2, Share2, Users } from 'lucide-react';
+import { Copy, Check, Link2, Share2, Users, Facebook, Twitter, MessageCircle, Send, Linkedin, Mail } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { ShareOnQuaiDirectButton } from '@/components/SocialShareButtons';
 
 interface FisherReferralLinkProps {
   fishermanId: string;
+  fishermanName?: string;
+  fishermanSlug?: string;
 }
 
-export const FisherReferralLink = ({ fishermanId }: FisherReferralLinkProps) => {
+export const FisherReferralLink = ({ fishermanId, fishermanName, fishermanSlug }: FisherReferralLinkProps) => {
   const [affiliateCode, setAffiliateCode] = useState<string | null>(null);
+  const [boatName, setBoatName] = useState<string>('');
+  const [slug, setSlug] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [stats, setStats] = useState({ referralCount: 0, smsEarned: 0 });
@@ -21,32 +26,34 @@ export const FisherReferralLink = ({ fishermanId }: FisherReferralLinkProps) => 
   useEffect(() => {
     const fetchAffiliateData = async () => {
       try {
-        // Récupérer le code d'affiliation du pêcheur
+        // Récupérer le code d'affiliation et les infos du pêcheur
         const { data: fisherman, error } = await supabase
           .from('fishermen')
-          .select('affiliate_code')
+          .select('affiliate_code, boat_name, company_name, slug')
           .eq('id', fishermanId)
           .single();
 
         if (error) throw error;
 
-        if (fisherman?.affiliate_code) {
-          setAffiliateCode(fisherman.affiliate_code);
-        } else {
-          // Générer un code si non existant
-          const newCode = generateAffiliateCode();
-          const { error: updateError } = await supabase
-            .from('fishermen')
-            .update({ affiliate_code: newCode })
-            .eq('id', fishermanId);
+        if (fisherman) {
+          setBoatName(fisherman.company_name || fisherman.boat_name || '');
+          setSlug(fisherman.slug);
 
-          if (!updateError) {
-            setAffiliateCode(newCode);
+          if (fisherman.affiliate_code) {
+            setAffiliateCode(fisherman.affiliate_code);
+          } else {
+            // Générer un code si non existant
+            const newCode = generateAffiliateCode();
+            const { error: updateError } = await supabase
+              .from('fishermen')
+              .update({ affiliate_code: newCode })
+              .eq('id', fishermanId);
+
+            if (!updateError) {
+              setAffiliateCode(newCode);
+            }
           }
         }
-
-        // Note: Les stats de parrainage seront disponibles une fois les parrainages effectués
-        // Pour l'instant, on garde les valeurs par défaut à 0
       } catch (error) {
         console.error('Error fetching affiliate data:', error);
       } finally {
@@ -160,6 +167,15 @@ export const FisherReferralLink = ({ fishermanId }: FisherReferralLinkProps) => 
               <Share2 className="h-4 w-4" />
             </Button>
           )}
+        </div>
+
+        {/* Partager sur les réseaux sociaux */}
+        <div className="pt-4 border-t">
+          <p className="text-sm font-medium mb-3">📣 Annoncez votre présence sur QuaiDirect</p>
+          <ShareOnQuaiDirectButton 
+            fishermanName={boatName || fishermanName || 'Pêcheur'} 
+            fishermanSlug={slug || fishermanSlug}
+          />
         </div>
 
         {/* Statistiques */}

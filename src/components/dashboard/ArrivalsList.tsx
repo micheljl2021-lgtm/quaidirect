@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Anchor, CheckCircle, Copy, Package, Pencil, Plus, History } from 'lucide-react';
+import { ShareDropButton } from '@/components/SocialShareButtons';
 
 interface ArrivalsListProps {
   drops: any[];
@@ -163,6 +164,30 @@ const ArrivalsList = ({ drops, archivedDrops, fishermanId, onRefresh }: Arrivals
                     </div>
                     <TooltipProvider>
                       <div className="flex flex-wrap gap-2">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <ShareDropButton
+                                dropId={drop.id}
+                                fishermanName="Mon arrivage"
+                                species={drop.offers?.map((o: any) => o.title || o.species?.name).filter(Boolean).slice(0, 2).join(', ') || 
+                                  drop.drop_species?.map((ds: any) => ds.species?.name).filter(Boolean).slice(0, 2).join(', ') || 
+                                  'Produits frais'}
+                                saleTime={new Date(drop.sale_start_time || drop.eta_at).toLocaleString('fr-FR', {
+                                  day: 'numeric',
+                                  month: 'long',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                                variant="ghost"
+                                size="sm"
+                              />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Partager sur les réseaux sociaux</p>
+                          </TooltipContent>
+                        </Tooltip>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button variant="ghost" size="sm" className="gap-1 text-xs sm:text-sm" onClick={(e) => handleSaveAsTemplate(e, drop)}>
