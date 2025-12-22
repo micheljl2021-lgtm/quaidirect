@@ -142,3 +142,6 @@ verify_jwt = true  # Requires authentication - geocodes addresses via Google Map
 
 [functions.google-geocode-port]
 verify_jwt = true  # Requires authentication - geocodes ports via Google Maps
+
+[functions.send-fcm-notification]
+verify_jwt = false  # Called internally by other functions

@@ -38,6 +38,37 @@ async function sendEmail(to: string, subject: string, htmlContent: string, resen
   }
 }
 
+// Send FCM notification via internal function
+async function sendFCMNotification(
+  supabaseUrl: string,
+  userIds: string[],
+  message: { title: string; body: string; data?: Record<string, string> },
+  internalSecret: string
+): Promise<{ sent: number; failed: number }> {
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-fcm-notification`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-secret': internalSecret,
+      },
+      body: JSON.stringify({ userIds, message }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('FCM notification failed:', errorText);
+      return { sent: 0, failed: userIds.length };
+    }
+
+    const result = await response.json();
+    return { sent: result.sent || 0, failed: result.failed || 0 };
+  } catch (error) {
+    console.error('Error calling FCM function:', error);
+    return { sent: 0, failed: userIds.length };
+  }
+}
+
 serve(async (req) => {
   const origin = req.headers.get('Origin');
   const corsHeaders = getCorsHeaders(origin);
@@ -73,6 +104,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
     const siteUrl = Deno.env.get('SITE_URL') || 'https://quaidirect.fr';
+    const functionSecret = Deno.env.get('INTERNAL_FUNCTION_SECRET') || '';
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -129,12 +161,29 @@ serve(async (req) => {
     const pushUserIds = Array.from(new Set([...fishermenFollowerIds, ...portProximityUserIds]));
     console.log('Total PUSH users:', pushUserIds.length);
 
-    // Note: Push notifications require proper VAPID implementation - for now we log subscriptions
+    // Send FCM notifications
     let pushSentCount = 0;
-    if (pushUserIds.length > 0) {
-      const { data: subscriptions } = await supabase.from('push_subscriptions').select('*').in('user_id', pushUserIds);
-      console.log(`Found ${subscriptions?.length || 0} push subscriptions (push sending requires VAPID library)`);
-      // TODO: Implement proper web-push with external service or library
+    let pushFailedCount = 0;
+    
+    if (pushUserIds.length > 0 && functionSecret) {
+      const dropUrl = `${siteUrl}/drop/${dropId}`;
+      const fcmResult = await sendFCMNotification(
+        supabaseUrl,
+        pushUserIds,
+        {
+          title: `🐟 ${fishermanName}`,
+          body: `${speciesNames} - ${saleTime} à ${locationName}`,
+          data: {
+            url: dropUrl,
+            dropId: dropId,
+            type: 'new_drop',
+          },
+        },
+        functionSecret
+      );
+      pushSentCount = fcmResult.sent;
+      pushFailedCount = fcmResult.failed;
+      console.log(`FCM notifications: ${pushSentCount} sent, ${pushFailedCount} failed`);
     }
 
     // Email notifications
@@ -156,7 +205,11 @@ serve(async (req) => {
       }
     }
 
-    return jsonResponse({ message: 'Notifications sent', push: { targeted: pushUserIds.length, sent: pushSentCount }, email: { sent: emailSentCount } }, 200, origin);
+    return jsonResponse({ 
+      message: 'Notifications sent', 
+      push: { targeted: pushUserIds.length, sent: pushSentCount, failed: pushFailedCount }, 
+      email: { sent: emailSentCount } 
+    }, 200, origin);
   } catch (error) {
     console.error('Error:', error);
     return errorResponse(error instanceof Error ? error.message : 'Unknown error', 500, origin);
