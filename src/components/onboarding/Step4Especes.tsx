@@ -1,5 +1,5 @@
 import { Fish, Plus, Search, ChevronDown, ChevronUp, Star, Filter } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -85,6 +85,7 @@ export function Step4Especes({ formData, onChange }: Step4EspecesProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [customSpecies, setCustomSpecies] = useState("");
   const [showAllSpecies, setShowAllSpecies] = useState(false);
+  const collapsibleContentRef = useRef<HTMLDivElement>(null);
 
   // Determine basin from postal code
   const basin = useMemo(() => {
@@ -201,6 +202,7 @@ export function Step4Especes({ formData, onChange }: Step4EspecesProps) {
       ? [...currentSpecies, speciesId]
       : currentSpecies.filter(s => s !== speciesId);
     onChange('selectedSpecies', newSpecies);
+    // Keep the collapsible open - don't close it after selection
   };
 
   const handleAddCustomSpecies = async () => {
@@ -238,6 +240,10 @@ export function Step4Especes({ formData, onChange }: Step4EspecesProps) {
     <div
       key={s.id}
       className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+      onClick={(e) => {
+        // Prevent the click from bubbling up and closing the collapsible
+        e.stopPropagation();
+      }}
     >
       <Checkbox
         id={s.id}
@@ -247,6 +253,7 @@ export function Step4Especes({ formData, onChange }: Step4EspecesProps) {
       <label
         htmlFor={s.id}
         className="flex-1 text-sm cursor-pointer"
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="font-medium">{s.name}</div>
         {s.scientific_name && (
@@ -303,6 +310,7 @@ export function Step4Especes({ formData, onChange }: Step4EspecesProps) {
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={(e) => e.currentTarget.select()}
             placeholder="Rechercher une espèce..."
             className="pl-10"
           />
@@ -327,16 +335,29 @@ export function Step4Especes({ formData, onChange }: Step4EspecesProps) {
         )}
       </div>
 
-      {/* All Other Species - Collapsible */}
-      <Collapsible open={showAllSpecies} onOpenChange={setShowAllSpecies}>
+      {/* All Other Species - Collapsible - Controlled to prevent auto-close */}
+      <Collapsible 
+        open={showAllSpecies} 
+        onOpenChange={(open) => {
+          // Only allow the button click to toggle, not other events
+          setShowAllSpecies(open);
+        }}
+      >
         <CollapsibleTrigger asChild>
-          <Button variant="outline" className="w-full justify-between">
+          <Button 
+            variant="outline" 
+            className="w-full justify-between"
+            type="button"
+          >
             <span>Voir toutes les espèces ({otherSpecies.length})</span>
             {showAllSpecies ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </Button>
         </CollapsibleTrigger>
-        <CollapsibleContent className="mt-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto p-1">
+        <CollapsibleContent className="mt-4" ref={collapsibleContentRef}>
+          <div 
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto p-1"
+            onClick={(e) => e.stopPropagation()}
+          >
             {filteredOther.map((s) => (
               <SpeciesItem key={s.id} s={s} />
             ))}
@@ -357,6 +378,7 @@ export function Step4Especes({ formData, onChange }: Step4EspecesProps) {
             id="customSpecies"
             value={customSpecies}
             onChange={(e) => setCustomSpecies(e.target.value)}
+            onFocus={(e) => e.currentTarget.select()}
             placeholder="Ex: Étoile, Violon..."
             onKeyDown={(e) => {
               if (e.key === 'Enter') {

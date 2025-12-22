@@ -1,4 +1,4 @@
-import { Camera, Sparkles, Loader2 } from "lucide-react";
+import { Camera, Sparkles, Loader2, User } from "lucide-react";
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 interface Step5PhotosProps {
   formData: {
+    profilePhoto: string;
     photoBoat1: string;
     photoBoat2: string;
     photoDockSale: string;
@@ -78,6 +79,23 @@ export function Step5Photos({ formData, onChange }: Step5PhotosProps) {
 
       {/* Photos Section */}
       <div className="space-y-6">
+        {/* Profile Photo - New! */}
+        <div className="p-4 border-2 border-primary/20 rounded-lg bg-primary/5">
+          <h3 className="font-semibold mb-4 flex items-center gap-2">
+            <User className="h-5 w-5 text-primary" />
+            Photo de profil (recommandé)
+          </h3>
+          <PhotoUpload
+            label="Votre photo ou celle de votre équipage"
+            value={formData.profilePhoto}
+            onChange={(url) => onChange('profilePhoto', url || '')}
+            bucket="fishermen-photos"
+          />
+          <p className="text-xs text-muted-foreground mt-2">
+            Cette photo sera affichée sur votre profil public
+          </p>
+        </div>
+
         <div>
           <h3 className="font-semibold mb-4">Photos de votre bateau (max 2)</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -121,6 +139,7 @@ export function Step5Photos({ formData, onChange }: Step5PhotosProps) {
               id="yearsExperience"
               value={formData.yearsExperience}
               onChange={(e) => onChange('yearsExperience', e.target.value)}
+              onFocus={(e) => e.currentTarget.select()}
               placeholder="Ex: 15 ans, toute ma vie, depuis 2010..."
             />
           </div>
@@ -131,6 +150,7 @@ export function Step5Photos({ formData, onChange }: Step5PhotosProps) {
               id="passion"
               value={formData.passion}
               onChange={(e) => onChange('passion', e.target.value)}
+              onFocus={(e) => e.currentTarget.select()}
               placeholder="Ex: Le contact avec la mer, la liberté, ramener du poisson frais..."
               rows={3}
             />
@@ -142,6 +162,7 @@ export function Step5Photos({ formData, onChange }: Step5PhotosProps) {
               id="workStyle"
               value={formData.workStyle}
               onChange={(e) => onChange('workStyle', e.target.value)}
+              onFocus={(e) => e.currentTarget.select()}
               placeholder="Ex: Respect des saisons, petites quantités, pêche côtière durable..."
               rows={3}
             />
@@ -153,6 +174,7 @@ export function Step5Photos({ formData, onChange }: Step5PhotosProps) {
               id="clientMessage"
               value={formData.clientMessage}
               onChange={(e) => onChange('clientMessage', e.target.value)}
+              onFocus={(e) => e.currentTarget.select()}
               placeholder="Ex: Venez découvrir la vraie saveur du poisson frais de Méditerranée..."
               rows={3}
             />
@@ -186,6 +208,7 @@ export function Step5Photos({ formData, onChange }: Step5PhotosProps) {
               id="generatedDescription"
               value={formData.generatedDescription}
               onChange={(e) => onChange('generatedDescription', e.target.value)}
+              onFocus={(e) => e.currentTarget.select()}
               rows={6}
               className="bg-white"
             />
