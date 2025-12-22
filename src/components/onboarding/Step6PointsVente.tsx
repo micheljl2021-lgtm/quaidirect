@@ -238,7 +238,7 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
               label="Photo du point de vente 1"
               value={formData.salePoint1Photo || null}
               onChange={(url) => onChange('salePoint1Photo', url)}
-              bucket="photos"
+              bucket="fishermen-photos"
               folder="sale-points"
             />
           </div>
@@ -316,7 +316,7 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
                 label="Photo du point de vente 2"
                 value={formData.salePoint2Photo || null}
                 onChange={(url) => onChange('salePoint2Photo', url)}
-                bucket="photos"
+                bucket="fishermen-photos"
                 folder="sale-points"
               />
             </div>

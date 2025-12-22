@@ -1,21 +1,15 @@
-import { Anchor, Loader2, Scale } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Anchor, Loader2, MapPin } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { RegulatoryZonesSelector } from "@/components/RegulatoryZonesSelector";
-
-interface SelectedRegulatoryZone {
-  zone_id: string;
-  is_primary: boolean;
-  subscribed_to_updates: boolean;
-}
+import { getBasinFromDepartement, type FishingBasin } from "@/lib/ports";
 
 interface Step3ZonesMethodesProps {
   formData: {
@@ -24,7 +18,8 @@ interface Step3ZonesMethodesProps {
     fishingZones: string;
     fishingMethods: string[];
     fishingMethodOther?: string;
-    regulatoryZones?: SelectedRegulatoryZone[];
+    selectedPorts?: string[];
+    postalCode?: string;
   };
   onChange: (field: string, value: any) => void;
 }
@@ -64,6 +59,7 @@ const FishingMethodsSelector = ({ formData, onChange, handleMethodToggle }: Fish
             placeholder="Précisez votre méthode de pêche..."
             value={formData.fishingMethodOther || ''}
             onChange={(e) => onChange('fishingMethodOther', e.target.value)}
+            onFocus={(e) => e.currentTarget.select()}
           />
         </div>
       )}
@@ -89,8 +85,19 @@ const FISHING_METHODS = [
   { id: "autre", label: "Autre (préciser)" },
 ];
 
+const BASIN_LABELS: Record<FishingBasin, string> = {
+  MEDITERRANEE: "Méditerranée",
+  ATLANTIQUE: "Atlantique",
+  MANCHE: "Manche",
+};
+
 export function Step3ZonesMethodes({ formData, onChange }: Step3ZonesMethodesProps) {
-  const [activeTab, setActiveTab] = useState<string>("general");
+  // Determine basin from postal code
+  const basin = useMemo(() => {
+    if (!formData.postalCode || formData.postalCode.length < 2) return null;
+    const dep = formData.postalCode.substring(0, 2);
+    return getBasinFromDepartement(dep);
+  }, [formData.postalCode]);
 
   // Charger les zones depuis la base de données
   const { data: zones = [], isLoading: zonesLoading } = useQuery({
@@ -106,15 +113,17 @@ export function Step3ZonesMethodes({ formData, onChange }: Step3ZonesMethodesPro
     },
   });
 
-  // Check if regulatory zones are available
-  const { data: regulatoryZonesCount } = useQuery({
-    queryKey: ['regulatory_zones_count'],
+  // Charger les ports depuis la base de données
+  const { data: ports = [], isLoading: portsLoading } = useQuery({
+    queryKey: ['ports_onboarding', basin],
     queryFn: async () => {
-      const { count, error } = await supabase
-        .from('regulatory_fishing_zones')
-        .select('*', { count: 'exact', head: true });
+      const { data, error } = await supabase
+        .from('ports')
+        .select('id, name, city')
+        .order('name');
+      
       if (error) throw error;
-      return count || 0;
+      return data || [];
     },
   });
 
@@ -141,13 +150,19 @@ export function Step3ZonesMethodes({ formData, onChange }: Step3ZonesMethodesPro
     onChange('fishingMethods', newMethods);
   };
 
-  const handleRegulatoryZonesChange = (zones: SelectedRegulatoryZone[]) => {
-    onChange('regulatoryZones', zones);
+  const handlePortToggle = (portId: string, checked: boolean) => {
+    const currentPorts = formData.selectedPorts || [];
+    if (checked) {
+      if (currentPorts.length >= 3) {
+        return; // Maximum 3 ports
+      }
+      onChange('selectedPorts', [...currentPorts, portId]);
+    } else {
+      onChange('selectedPorts', currentPorts.filter(p => p !== portId));
+    }
   };
 
-  // Detect region from selected general zone
-  const selectedZone = zones.find(z => z.id === formData.zoneId);
-  const detectedRegion = selectedZone?.region;
+  const selectedPortsCount = formData.selectedPorts?.length || 0;
 
   return (
     <div className="space-y-6">
@@ -160,95 +175,113 @@ export function Step3ZonesMethodes({ formData, onChange }: Step3ZonesMethodesPro
         <p className="text-muted-foreground">Où et comment vous pêchez</p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="general">Zone générale</TabsTrigger>
-          <TabsTrigger value="regulatory" className="relative">
-            <Scale className="h-4 w-4 mr-1" />
-            Zones réglementaires
-            {regulatoryZonesCount && regulatoryZonesCount > 0 && (
-              <span className="ml-1 text-xs text-primary">(officiel)</span>
-            )}
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="general" className="space-y-6 mt-4">
-          {/* Main Fishing Zone - Dynamique depuis la base */}
-          <div className="space-y-2">
-            <Label htmlFor="mainFishingZone">Zone principale de pêche *</Label>
-            {zonesLoading ? (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Chargement des zones...
-              </div>
-            ) : (
-              <Select
-                value={formData.zoneId || ''}
-                onValueChange={handleZoneChange}
-              >
-                <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Sélectionnez votre zone principale" />
-                </SelectTrigger>
-                <SelectContent className="bg-background border z-50">
-                  {Object.entries(zonesByRegion).map(([region, regionZones]) => (
-                    <SelectGroup key={region}>
-                      <SelectLabel className="font-semibold text-primary">{region}</SelectLabel>
-                      {regionZones.map((zone) => (
-                        <SelectItem key={zone.id} value={zone.id}>
-                          {zone.name}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
+      {/* Main Fishing Zone */}
+      <div className="space-y-2">
+        <Label htmlFor="mainFishingZone">Zone principale de pêche *</Label>
+        {zonesLoading ? (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Chargement des zones...
+          </div>
+        ) : (
+          <Select
+            value={formData.zoneId || ''}
+            onValueChange={handleZoneChange}
+          >
+            <SelectTrigger className="bg-background">
+              <SelectValue placeholder="Sélectionnez votre zone principale" />
+            </SelectTrigger>
+            <SelectContent className="bg-background border z-50">
+              {Object.entries(zonesByRegion).map(([region, regionZones]) => (
+                <SelectGroup key={region}>
+                  <SelectLabel className="font-semibold text-primary">{region}</SelectLabel>
+                  {regionZones.map((zone) => (
+                    <SelectItem key={zone.id} value={zone.id}>
+                      {zone.name}
+                    </SelectItem>
                   ))}
-                </SelectContent>
-              </Select>
-            )}
+                </SelectGroup>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+
+      {/* Ports Selection */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Label className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-primary" />
+            Ports habituels de vente
+          </Label>
+          <Badge variant={selectedPortsCount >= 3 ? "destructive" : "secondary"}>
+            {selectedPortsCount}/3 sélectionnés
+          </Badge>
+        </div>
+        
+        {basin && (
+          <p className="text-sm text-muted-foreground">
+            Ports de la zone : {BASIN_LABELS[basin]}
+          </p>
+        )}
+
+        {portsLoading ? (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Chargement des ports...
           </div>
-
-          {/* Detailed Zones */}
-          <div className="space-y-2">
-            <Label htmlFor="fishingZones">Zones détaillées (optionnel)</Label>
-            <Textarea
-              id="fishingZones"
-              value={formData.fishingZones}
-              onChange={(e) => onChange('fishingZones', e.target.value)}
-              placeholder="Ex: Au large de Porquerolles, côté sud de Giens..."
-              rows={3}
-            />
-            <p className="text-xs text-muted-foreground">Décrivez plus précisément vos zones de pêche</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto p-1">
+            {ports.map((port) => {
+              const isSelected = formData.selectedPorts?.includes(port.id);
+              const isDisabled = !isSelected && selectedPortsCount >= 3;
+              
+              return (
+                <div 
+                  key={port.id} 
+                  className={`flex items-center space-x-2 p-2 border rounded-lg transition-colors ${
+                    isSelected ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'
+                  } ${isDisabled ? 'opacity-50' : ''}`}
+                >
+                  <Checkbox
+                    id={`port-${port.id}`}
+                    checked={isSelected}
+                    disabled={isDisabled}
+                    onCheckedChange={(checked) => handlePortToggle(port.id, checked as boolean)}
+                  />
+                  <label
+                    htmlFor={`port-${port.id}`}
+                    className={`text-sm font-medium leading-none cursor-pointer flex-1 ${isDisabled ? 'cursor-not-allowed' : ''}`}
+                  >
+                    {port.name}
+                    {port.city && <span className="text-xs text-muted-foreground ml-1">({port.city})</span>}
+                  </label>
+                </div>
+              );
+            })}
           </div>
-        </TabsContent>
+        )}
+        
+        {selectedPortsCount >= 3 && (
+          <p className="text-xs text-destructive">
+            Maximum 3 ports. Désélectionnez-en un pour en choisir un autre.
+          </p>
+        )}
+      </div>
 
-        <TabsContent value="regulatory" className="space-y-4 mt-4">
-          {regulatoryZonesCount === 0 ? (
-            <Alert>
-              <Scale className="h-4 w-4" />
-              <AlertDescription>
-                Les zones réglementaires officielles ne sont pas encore disponibles. 
-                Elles seront synchronisées prochainement depuis data.gouv.fr.
-                En attendant, utilisez l'onglet "Zone générale".
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <>
-              <Alert className="bg-blue-50 border-blue-200">
-                <Scale className="h-4 w-4 text-blue-600" />
-                <AlertDescription className="text-blue-800">
-                  <strong>Zones officielles data.gouv.fr</strong><br />
-                  Sélectionnez vos zones de pêche réglementaires. Vous serez notifié des changements d'arrêtés.
-                </AlertDescription>
-              </Alert>
-
-              <RegulatoryZonesSelector
-                region={detectedRegion}
-                selectedZones={formData.regulatoryZones || []}
-                onZonesChange={handleRegulatoryZonesChange}
-                maxHeight="300px"
-              />
-            </>
-          )}
-        </TabsContent>
-      </Tabs>
+      {/* Detailed Zones */}
+      <div className="space-y-2">
+        <Label htmlFor="fishingZones">Zones détaillées (optionnel)</Label>
+        <Textarea
+          id="fishingZones"
+          value={formData.fishingZones}
+          onChange={(e) => onChange('fishingZones', e.target.value)}
+          placeholder="Ex: Au large de Porquerolles, côté sud de Giens..."
+          rows={3}
+          onFocus={(e) => e.currentTarget.select()}
+        />
+        <p className="text-xs text-muted-foreground">Décrivez plus précisément vos zones de pêche</p>
+      </div>
 
       {/* Fishing Methods */}
       <FishingMethodsSelector formData={formData} onChange={onChange} handleMethodToggle={handleMethodToggle} />

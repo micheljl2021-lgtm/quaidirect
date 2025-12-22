@@ -37,6 +37,7 @@ export function Step1Societe({ formData, onChange }: Step1SocieteProps) {
           id="siret"
           value={formData.siret}
           onChange={(e) => onChange('siret', e.target.value.replace(/\D/g, '').slice(0, 14))}
+          onFocus={(e) => e.currentTarget.select()}
           placeholder="12345678901234"
           maxLength={14}
           required
@@ -53,6 +54,7 @@ export function Step1Societe({ formData, onChange }: Step1SocieteProps) {
           id="boatName"
           value={formData.boatName}
           onChange={(e) => onChange('boatName', e.target.value)}
+          onFocus={(e) => e.currentTarget.select()}
           placeholder="Ex: L'Étoile des Mers"
           required
         />
@@ -65,6 +67,7 @@ export function Step1Societe({ formData, onChange }: Step1SocieteProps) {
           id="ownerName"
           value={formData.ownerName}
           onChange={(e) => onChange('ownerName', e.target.value)}
+          onFocus={(e) => e.currentTarget.select()}
           placeholder="Ex: Jean Dupont"
           required
         />
@@ -77,6 +80,7 @@ export function Step1Societe({ formData, onChange }: Step1SocieteProps) {
           id="companyName"
           value={formData.companyName}
           onChange={(e) => onChange('companyName', e.target.value)}
+          onFocus={(e) => e.currentTarget.select()}
           placeholder="Ex: SARL Les Pêcheurs du Var"
         />
         <p className="text-xs text-muted-foreground">Raison sociale de votre entreprise</p>
@@ -89,6 +93,7 @@ export function Step1Societe({ formData, onChange }: Step1SocieteProps) {
           id="address"
           value={formData.address}
           onChange={(e) => onChange('address', e.target.value)}
+          onFocus={(e) => e.currentTarget.select()}
           placeholder="Ex: 12 Quai des Pêcheurs"
           required
         />
@@ -102,6 +107,7 @@ export function Step1Societe({ formData, onChange }: Step1SocieteProps) {
             id="postalCode"
             value={formData.postalCode}
             onChange={(e) => onChange('postalCode', e.target.value.replace(/\D/g, '').slice(0, 5))}
+            onFocus={(e) => e.currentTarget.select()}
             placeholder="83400"
             maxLength={5}
             required
@@ -113,6 +119,7 @@ export function Step1Societe({ formData, onChange }: Step1SocieteProps) {
             id="city"
             value={formData.city}
             onChange={(e) => onChange('city', e.target.value)}
+            onFocus={(e) => e.currentTarget.select()}
             placeholder="Hyères"
             required
           />
@@ -127,6 +134,7 @@ export function Step1Societe({ formData, onChange }: Step1SocieteProps) {
           type="tel"
           value={formData.phone}
           onChange={(e) => onChange('phone', e.target.value)}
+          onFocus={(e) => e.currentTarget.select()}
           placeholder="06 12 34 56 78"
           required
         />
@@ -140,6 +148,7 @@ export function Step1Societe({ formData, onChange }: Step1SocieteProps) {
           type="email"
           value={formData.email}
           onChange={(e) => onChange('email', e.target.value)}
+          onFocus={(e) => e.currentTarget.select()}
           placeholder="votre.email@exemple.fr"
           required
         />
