@@ -93,7 +93,7 @@ export function QuickDropModal({ open, onOpenChange, onSuccess }: QuickDropModal
         handlePhotoPickerComplete(result.dropId);
       }
     } else {
-      toast.error('Erreur lors de la publication');
+      toast.error(result.error || 'Erreur lors de la publication');
     }
   };
 
