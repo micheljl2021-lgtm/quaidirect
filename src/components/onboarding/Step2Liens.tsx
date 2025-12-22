@@ -48,6 +48,7 @@ export function Step2Liens({ formData, onChange }: Step2LiensProps) {
           type="url"
           value={formData.facebookUrl}
           onChange={(e) => onChange('facebookUrl', e.target.value)}
+          onFocus={(e) => e.currentTarget.select()}
           placeholder="https://facebook.com/votre-page"
         />
         <p className="text-xs text-muted-foreground">Les clients pourront suivre votre actualité et vos arrivages</p>
@@ -64,6 +65,7 @@ export function Step2Liens({ formData, onChange }: Step2LiensProps) {
           type="url"
           value={formData.instagramUrl}
           onChange={(e) => onChange('instagramUrl', e.target.value)}
+          onFocus={(e) => e.currentTarget.select()}
           placeholder="https://instagram.com/votre-compte"
         />
         <p className="text-xs text-muted-foreground">Partagez vos plus belles photos de pêche</p>
@@ -80,6 +82,7 @@ export function Step2Liens({ formData, onChange }: Step2LiensProps) {
           type="url"
           value={formData.websiteUrl}
           onChange={(e) => onChange('websiteUrl', e.target.value)}
+          onFocus={(e) => e.currentTarget.select()}
           placeholder="https://votre-site.fr"
         />
         <p className="text-xs text-muted-foreground">Si vous avez déjà un site personnel ou associatif</p>

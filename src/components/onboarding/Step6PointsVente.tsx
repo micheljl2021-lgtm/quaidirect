@@ -200,6 +200,7 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
               placeholder="Ex: Marché du port, Quai de la criée..."
               value={formData.salePoint1Label || ''}
               onChange={(e) => onChange('salePoint1Label', e.target.value)}
+              onFocus={(e) => e.currentTarget.select()}
               required
             />
           </div>
@@ -279,6 +280,7 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
                 placeholder="Ex: Parking du port..."
                 value={formData.salePoint2Label || ''}
                 onChange={(e) => onChange('salePoint2Label', e.target.value)}
+                onFocus={(e) => e.currentTarget.select()}
               />
             </div>
 
