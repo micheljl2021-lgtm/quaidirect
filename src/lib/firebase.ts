@@ -55,16 +55,14 @@ export const requestFCMToken = async (): Promise<string | null> => {
       return null;
     }
 
-    // Use the main service worker which now includes FCM support
-    console.log('[Firebase] Getting service worker registration...');
-    let registration = await navigator.serviceWorker.getRegistration('/');
-    
-    if (!registration) {
-      console.log('[Firebase] No existing SW, registering /sw.js...');
-      registration = await navigator.serviceWorker.register('/sw.js');
-    }
-    
+    // Always (re)register the main service worker which includes FCM support.
+    // This also upgrades older registrations that previously used another SW script.
+    console.log('[Firebase] Registering/refreshing /sw.js...');
+    const registration = await navigator.serviceWorker.register('/sw.js');
     console.log('[Firebase] Service worker registration:', registration.scope);
+
+    // Try to update to the latest version (non-blocking)
+    registration.update().catch(() => {});
 
     // Wait for the service worker to be ready
     await navigator.serviceWorker.ready;
