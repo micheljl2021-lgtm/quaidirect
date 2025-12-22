@@ -1,5 +1,47 @@
+// =============================================
+// Firebase Cloud Messaging - MUST be at the top
+// =============================================
+importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
+
+// Initialize Firebase for FCM
+firebase.initializeApp({
+  apiKey: "AIzaSyCk_r6Pv2-PdvLoJRkn-GHRK1NOu58JMkg",
+  authDomain: "arcane-argon-426216-b7.firebaseapp.com",
+  projectId: "arcane-argon-426216-b7",
+  storageBucket: "arcane-argon-426216-b7.firebasestorage.app",
+  messagingSenderId: "425193275047",
+  appId: "1:425193275047:web:e3b3f08dcb366d919da582",
+});
+
+const fcmMessaging = firebase.messaging();
+
+// Handle FCM background messages
+fcmMessaging.onBackgroundMessage((payload) => {
+  console.log('[FCM SW] Background message received:', payload);
+
+  const notificationTitle = payload.notification?.title || payload.data?.title || 'QuaiDirect';
+  const notificationOptions = {
+    body: payload.notification?.body || payload.data?.body || 'Nouvelle notification',
+    icon: payload.notification?.icon || '/icon-192.png',
+    badge: '/icon-192.png',
+    data: payload.data || {},
+    vibrate: [200, 100, 200],
+    tag: 'quaidirect-fcm',
+    requireInteraction: false,
+  };
+
+  return self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+console.log('[SW] Firebase Messaging initialized');
+
+// =============================================
+// Cache Management
+// =============================================
+
 // Cache version - simple timestamp-based versioning
-const CACHE_VERSION = '2025-06-21';
+const CACHE_VERSION = '2025-06-22';
 const CACHE_NAME = `quaidirect-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `quaidirect-runtime-${CACHE_VERSION}`;
 const STATIC_CACHE = `quaidirect-static-${CACHE_VERSION}`;

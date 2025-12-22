@@ -55,10 +55,16 @@ export const requestFCMToken = async (): Promise<string | null> => {
       return null;
     }
 
-    // Register custom service worker for FCM
-    console.log('[Firebase] Registering service worker...');
-    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-    console.log('[Firebase] Service worker registered:', registration.scope);
+    // Use the main service worker which now includes FCM support
+    console.log('[Firebase] Getting service worker registration...');
+    let registration = await navigator.serviceWorker.getRegistration('/');
+    
+    if (!registration) {
+      console.log('[Firebase] No existing SW, registering /sw.js...');
+      registration = await navigator.serviceWorker.register('/sw.js');
+    }
+    
+    console.log('[Firebase] Service worker registration:', registration.scope);
 
     // Wait for the service worker to be ready
     await navigator.serviceWorker.ready;
