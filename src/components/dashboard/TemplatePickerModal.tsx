@@ -85,22 +85,22 @@ export function TemplatePickerModal({ open, onOpenChange, onSuccess }: TemplateP
       return;
     }
 
-    const dropId = await publishFromTemplate(selectedTemplateId, {
+    const result = await publishFromTemplate(selectedTemplateId, {
       date,
       timeSlot,
       salePointId,
     });
 
-    if (dropId) {
+    if (result.success && result.dropId) {
       toast.success('Arrivage publié depuis le modèle !', {
         action: {
           label: 'Voir',
-          onClick: () => navigate(`/arrivages/${dropId}`),
+          onClick: () => navigate(`/arrivages/${result.dropId}`),
         },
       });
       onSuccess?.();
     } else {
-      toast.error('Erreur lors de la publication');
+      toast.error(result.error || 'Erreur lors de la publication');
     }
   };
 

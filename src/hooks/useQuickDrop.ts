@@ -50,6 +50,7 @@ export interface QuickDropResult {
   success: boolean;
   dropId: string | null;
   speciesName: string | null;
+  error?: string | null;
 }
 
 export function useQuickDrop() {
@@ -169,7 +170,7 @@ export function useQuickDrop() {
 
   const publishQuickDrop = async (data: QuickDropData): Promise<QuickDropResult> => {
     if (!fishermanId || !data.salePointId || data.speciesIds.length === 0) {
-      return { success: false, dropId: null, speciesName: null };
+      return { success: false, dropId: null, speciesName: null, error: 'Données manquantes' };
     }
 
     setIsPublishing(true);
@@ -177,23 +178,23 @@ export function useQuickDrop() {
     try {
       // Calculate ETA based on date and time slot (or custom time)
       const eta = new Date(data.date);
-      
+
       if (data.timeSlot === 'custom' && data.customTime) {
         // Parse custom time (format: HH:MM)
         const [hours, minutes] = data.customTime.split(':').map(Number);
         eta.setHours(hours, minutes, 0, 0);
       } else {
         const timeSlotHours: Record<string, number> = {
-          'matin': 7,
-          'fin_matinee': 10,
-          'midi': 12,
-          'apres_midi': 15,
+          matin: 7,
+          fin_matinee: 10,
+          midi: 12,
+          apres_midi: 15,
         };
         eta.setHours(timeSlotHours[data.timeSlot] || 8, 0, 0, 0);
       }
 
       // Get sale point details for location
-      const salePoint = salePoints.find(sp => sp.id === data.salePointId);
+      const salePoint = salePoints.find((sp) => sp.id === data.salePointId);
 
       // Create the drop
       const { data: newDrop, error: dropError } = await supabase
@@ -213,7 +214,7 @@ export function useQuickDrop() {
       if (dropError) throw dropError;
 
       // Insert species
-      const speciesInserts = data.speciesIds.map(speciesId => ({
+      const speciesInserts = data.speciesIds.map((speciesId) => ({
         drop_id: newDrop.id,
         species_id: speciesId,
       }));
@@ -227,43 +228,44 @@ export function useQuickDrop() {
       // Get the first species name for the photo picker
       const firstSpeciesName = await getSpeciesName(data.speciesIds[0]);
 
-      return { 
-        success: true, 
-        dropId: newDrop.id, 
-        speciesName: firstSpeciesName 
+      return {
+        success: true,
+        dropId: newDrop.id,
+        speciesName: firstSpeciesName,
       };
     } catch (error) {
       console.error('Error publishing quick drop:', error);
-      return { success: false, dropId: null, speciesName: null };
+      const message = (error as any)?.message || 'Erreur lors de la publication';
+      return { success: false, dropId: null, speciesName: null, error: message };
     } finally {
       setIsPublishing(false);
     }
   };
 
   const publishFromTemplate = async (
-    templateId: string, 
+    templateId: string,
     overrides: { date: Date; timeSlot: string; customTime?: string; salePointId: string }
   ): Promise<QuickDropResult> => {
-    if (!fishermanId) return { success: false, dropId: null, speciesName: null };
+    if (!fishermanId) return { success: false, dropId: null, speciesName: null, error: 'Non connecté' };
 
     setIsPublishing(true);
 
     try {
-      const template = templates.find(t => t.id === templateId);
-      if (!template) return { success: false, dropId: null, speciesName: null };
+      const template = templates.find((t) => t.id === templateId);
+      if (!template) return { success: false, dropId: null, speciesName: null, error: 'Modèle introuvable' };
 
       // Calculate ETA
       const eta = new Date(overrides.date);
-      
+
       if (overrides.timeSlot === 'custom' && overrides.customTime) {
         const [hours, minutes] = overrides.customTime.split(':').map(Number);
         eta.setHours(hours, minutes, 0, 0);
       } else {
         const timeSlotHours: Record<string, number> = {
-          'matin': 7,
-          'fin_matinee': 10,
-          'midi': 12,
-          'apres_midi': 15,
+          matin: 7,
+          fin_matinee: 10,
+          midi: 12,
+          apres_midi: 15,
         };
         eta.setHours(timeSlotHours[overrides.timeSlot] || 8, 0, 0, 0);
       }
@@ -294,9 +296,11 @@ export function useQuickDrop() {
           species_id: s.speciesId,
         }));
 
-        await supabase
+        const { error: speciesError } = await supabase
           .from('drop_species')
           .insert(speciesInserts);
+
+        if (speciesError) throw speciesError;
 
         firstSpeciesId = template.payload.species[0]?.speciesId || null;
       }
@@ -313,14 +317,15 @@ export function useQuickDrop() {
         .update({ usage_count: (template.usage_count || 0) + 1 })
         .eq('id', templateId);
 
-      return { 
-        success: true, 
-        dropId: newDrop.id, 
-        speciesName: firstSpeciesName 
+      return {
+        success: true,
+        dropId: newDrop.id,
+        speciesName: firstSpeciesName,
       };
     } catch (error) {
       console.error('Error publishing from template:', error);
-      return { success: false, dropId: null, speciesName: null };
+      const message = (error as any)?.message || 'Erreur lors de la publication';
+      return { success: false, dropId: null, speciesName: null, error: message };
     } finally {
       setIsPublishing(false);
     }
