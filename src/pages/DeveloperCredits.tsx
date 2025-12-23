@@ -1,5 +1,5 @@
 import { Helmet } from "react-helmet";
-import { Code, Clock, Calendar, Anchor, Ship, Fish, Users, Database, CreditCard, Bell, Map, Sparkles, Trophy, Zap, Moon, Coffee } from "lucide-react";
+import { Code, Clock, Calendar, Anchor, Ship, Fish, Users, Database, CreditCard, Bell, Map, Sparkles, Trophy, Zap, Moon, Coffee, MessageSquare, Brain, Euro, CheckCircle2, XCircle, AlertTriangle, Smartphone, Mail, Target, TrendingUp, Globe, Heart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -26,7 +26,7 @@ const DeveloperCredits = () => {
       week: "Semaine 1",
       period: "9-15 Nov 2025",
       title: "Fondations",
-      hours: 98, // 14h × 7j
+      hours: 98,
       items: [
         "Setup projet React + TypeScript + Vite",
         "Design system maritime personnalisé (Tailwind)",
@@ -116,7 +116,7 @@ const DeveloperCredits = () => {
       week: "Semaine 7",
       period: "21-23 Déc 2025",
       title: "Admin & Sécurité",
-      hours: 42, // 14h × 3j
+      hours: 42,
       items: [
         "Dashboard admin complet (19 composants)",
         "Validation pêcheurs + gestion abonnements",
@@ -148,6 +148,24 @@ const DeveloperCredits = () => {
     { name: "Framer Motion", category: "Animation" }
   ];
 
+  const competitorComparison = [
+    { feature: "Prix pêcheur", quaidirect: "150€/an fixe", others: "15-30% commission", advantage: true },
+    { feature: "CRM mobile intégré", quaidirect: "✓", others: "✗", advantage: true },
+    { feature: "IA assistant pêcheur", quaidirect: "✓", others: "✗", advantage: true },
+    { feature: "Publication arrivage", quaidirect: "20 secondes", others: "5-10 min", advantage: true },
+    { feature: "Choix total pêcheur", quaidirect: "100%", others: "Imposé", advantage: true },
+    { feature: "Micro-site SEO auto", quaidirect: "✓", others: "✗", advantage: true },
+    { feature: "Vente directe à quai", quaidirect: "✓", others: "Relais/Livraison", advantage: true },
+    { feature: "Notifications clients", quaidirect: "Email + SMS + Push", others: "Email seul", advantage: true },
+  ];
+
+  const aiCategories = [
+    { icon: MessageSquare, title: "Clientèle", desc: "Rédaction WhatsApp/SMS, posts réseaux sociaux, réponses clients pro" },
+    { icon: Fish, title: "Pêche & Météo", desc: "Stratégie de pêche, conditions marines, choix de zones, sécurité" },
+    { icon: Ship, title: "Bateau", desc: "Checklists départ/retour, maintenance, carnet de bord, sécurité" },
+    { icon: TrendingUp, title: "Business", desc: "Estimation revenus, organisation journées, récaps administratifs" },
+  ];
+
   return (
     <>
       <Helmet>
@@ -156,6 +174,20 @@ const DeveloperCredits = () => {
       </Helmet>
 
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
+        {/* BETA Banner */}
+        <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-white py-3 px-4">
+          <div className="container mx-auto flex flex-col sm:flex-row items-center justify-center gap-2 text-center">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 animate-pulse" />
+              <span className="font-bold text-lg">VERSION BETA ACTIVE</span>
+              <AlertTriangle className="h-5 w-5 animate-pulse" />
+            </div>
+            <span className="text-sm sm:text-base">
+              Développement intensif en cours • ~14h de code/jour • Nouvelles fonctionnalités quotidiennes
+            </span>
+          </div>
+        </div>
+
         {/* Hero Section */}
         <div className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-accent/10" />
@@ -225,6 +257,229 @@ const DeveloperCredits = () => {
                   <Coffee className="inline h-4 w-4 ml-3 mr-1" />
                   Alimenté au café ☕
                 </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* CRM Pêcheur Section */}
+          <Card className="mb-12 border-2 border-blue-500/50 bg-gradient-to-br from-blue-500/10 to-cyan-500/10">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3 text-2xl">
+                <Smartphone className="h-8 w-8 text-blue-500" />
+                CRM Pêcheur - La Révolution Mobile
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-lg text-muted-foreground mb-6">
+                <strong className="text-foreground">Première app au monde</strong> qui permet aux marins-pêcheurs de gérer leur portefeuille clients directement depuis leur téléphone, même en mer.
+              </p>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="bg-background/50 rounded-lg p-4 border border-blue-500/20">
+                  <Users className="h-6 w-6 text-blue-500 mb-2" />
+                  <h4 className="font-semibold text-foreground mb-1">Gestion contacts</h4>
+                  <p className="text-sm text-muted-foreground">Import multi-formats (CSV, Excel, copier-coller intelligent)</p>
+                </div>
+                <div className="bg-background/50 rounded-lg p-4 border border-blue-500/20">
+                  <Target className="h-6 w-6 text-blue-500 mb-2" />
+                  <h4 className="font-semibold text-foreground mb-1">Segmentation</h4>
+                  <p className="text-sm text-muted-foreground">Groupes : particuliers, restaurants, poissonniers...</p>
+                </div>
+                <div className="bg-background/50 rounded-lg p-4 border border-blue-500/20">
+                  <Mail className="h-6 w-6 text-blue-500 mb-2" />
+                  <h4 className="font-semibold text-foreground mb-1">Email groupé</h4>
+                  <p className="text-sm text-muted-foreground">Envoi en 1 clic à tous vos contacts ou un groupe</p>
+                </div>
+                <div className="bg-background/50 rounded-lg p-4 border border-blue-500/20">
+                  <MessageSquare className="h-6 w-6 text-blue-500 mb-2" />
+                  <h4 className="font-semibold text-foreground mb-1">SMS groupé</h4>
+                  <p className="text-sm text-muted-foreground">Notification instantanée d'arrivage par SMS</p>
+                </div>
+                <div className="bg-background/50 rounded-lg p-4 border border-blue-500/20">
+                  <Bell className="h-6 w-6 text-blue-500 mb-2" />
+                  <h4 className="font-semibold text-foreground mb-1">Notifications auto</h4>
+                  <p className="text-sm text-muted-foreground">Vos clients prévenus dès que vous publiez</p>
+                </div>
+                <div className="bg-background/50 rounded-lg p-4 border border-blue-500/20">
+                  <Clock className="h-6 w-6 text-blue-500 mb-2" />
+                  <h4 className="font-semibold text-foreground mb-1">Historique</h4>
+                  <p className="text-sm text-muted-foreground">Suivi des envois et derniers contacts</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* IA du Marin Section */}
+          <Card className="mb-12 border-2 border-purple-500/50 bg-gradient-to-br from-purple-500/10 to-pink-500/10">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3 text-2xl">
+                <Brain className="h-8 w-8 text-purple-500" />
+                IA du Marin - L'Assistant Révolutionnaire
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-background/50 rounded-lg p-4 mb-6 border border-purple-500/30">
+                <p className="text-center font-semibold text-purple-600 dark:text-purple-400">
+                  🚀 AUCUN CONCURRENT ne propose d'IA intégrée pour les pêcheurs artisanaux
+                </p>
+              </div>
+              <p className="text-lg text-muted-foreground mb-6">
+                Une IA spécialisée 100% maritime, parlant le langage des pêcheurs. Elle couvre 4 domaines essentiels :
+              </p>
+              <div className="grid md:grid-cols-2 gap-4">
+                {aiCategories.map((cat, index) => (
+                  <div key={index} className="bg-background/50 rounded-lg p-4 border border-purple-500/20">
+                    <div className="flex items-center gap-3 mb-2">
+                      <cat.icon className="h-6 w-6 text-purple-500" />
+                      <h4 className="font-semibold text-foreground">{cat.title}</h4>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{cat.desc}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 p-4 bg-purple-500/10 rounded-lg border border-purple-500/20">
+                <p className="text-sm text-muted-foreground">
+                  <strong className="text-foreground">Évolution prévue :</strong> L'IA du Marin sera enrichie progressivement avec de nouvelles capacités : analyse de marché, prévisions météo avancées, conseils réglementaires, aide administrative, et bien plus.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Modèle 150€/an Section */}
+          <Card className="mb-12 border-2 border-green-500/50 bg-gradient-to-br from-green-500/10 to-emerald-500/10">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3 text-2xl">
+                <Euro className="h-8 w-8 text-green-500" />
+                Le Modèle 150€/an - L'Accessibilité
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-lg text-muted-foreground mb-6">
+                <strong className="text-foreground">Pourquoi seulement 150€/an ?</strong> Parce que QuaiDirect a été créé de A à Z pour être accessible à tous les pêcheurs artisanaux.
+              </p>
+              <div className="grid md:grid-cols-2 gap-6 mb-6">
+                <div className="bg-background/50 rounded-lg p-5 border border-green-500/20">
+                  <h4 className="font-bold text-lg text-foreground mb-3 flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    Notre modèle
+                  </h4>
+                  <ul className="space-y-2 text-muted-foreground">
+                    <li>✓ Abonnement fixe = prévisibilité totale</li>
+                    <li>✓ 0% de commission sur vos ventes</li>
+                    <li>✓ Tout inclus : CRM, IA, notifications, SEO...</li>
+                    <li>✓ Support direct et mises à jour gratuites</li>
+                  </ul>
+                </div>
+                <div className="bg-background/50 rounded-lg p-5 border border-red-500/20">
+                  <h4 className="font-bold text-lg text-foreground mb-3 flex items-center gap-2">
+                    <XCircle className="h-5 w-5 text-red-500" />
+                    Les marketplaces
+                  </h4>
+                  <ul className="space-y-2 text-muted-foreground">
+                    <li>✗ 15-30% de commission par vente</li>
+                    <li>✗ Règles imposées par la plateforme</li>
+                    <li>✗ Pas de relation directe client</li>
+                    <li>✗ Dépendance totale à l'intermédiaire</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="bg-green-500/10 rounded-lg p-5 border border-green-500/30">
+                <h4 className="font-bold text-lg text-foreground mb-2">💰 Calcul simple :</h4>
+                <p className="text-muted-foreground">
+                  Si vous faites <strong className="text-foreground">500€ de ventes/mois</strong> :
+                </p>
+                <ul className="mt-2 text-muted-foreground">
+                  <li>• Avec 15% de commission → <span className="text-red-500 font-semibold">75€/mois = 900€/an perdu</span></li>
+                  <li>• Avec QuaiDirect → <span className="text-green-500 font-semibold">12,50€/mois = 150€/an tout inclus</span></li>
+                </ul>
+                <p className="mt-3 text-lg font-bold text-green-600 dark:text-green-400">
+                  = 750€ d'économie par an minimum
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Comparatif Concurrence */}
+          <Card className="mb-12 border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3 text-2xl">
+                <Globe className="h-8 w-8 text-primary" />
+                Ce qui nous différencie de la concurrence
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-6">
+                Après analyse des solutions existantes (Poiscaille, Directement des Quais, Fishmarket, Pourdebon...), voici ce que QuaiDirect apporte de différent :
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">Fonctionnalité</th>
+                      <th className="text-center py-3 px-4 font-semibold text-primary">QuaiDirect</th>
+                      <th className="text-center py-3 px-4 font-semibold text-muted-foreground">Autres</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {competitorComparison.map((row, index) => (
+                      <tr key={index} className="border-b border-border/50">
+                        <td className="py-3 px-4 text-foreground">{row.feature}</td>
+                        <td className="py-3 px-4 text-center">
+                          <span className="text-green-500 font-medium">{row.quaidirect}</span>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <span className="text-red-400">{row.others}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Innovation Côté Client */}
+          <Card className="mb-12 border-2 border-cyan-500/50 bg-gradient-to-br from-cyan-500/10 to-teal-500/10">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3 text-2xl">
+                <Heart className="h-8 w-8 text-cyan-500" />
+                Innovation Côté Client
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-lg text-muted-foreground mb-6">
+                Les clients aussi bénéficient d'une expérience inédite sur le marché :
+              </p>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="bg-background/50 rounded-lg p-4 border border-cyan-500/20">
+                  <Map className="h-6 w-6 text-cyan-500 mb-2" />
+                  <h4 className="font-semibold text-foreground mb-1">Carte interactive</h4>
+                  <p className="text-sm text-muted-foreground">Visualisez tous les ports et arrivages en temps réel sur une carte</p>
+                </div>
+                <div className="bg-background/50 rounded-lg p-4 border border-cyan-500/20">
+                  <Globe className="h-6 w-6 text-cyan-500 mb-2" />
+                  <h4 className="font-semibold text-foreground mb-1">Micro-sites pêcheurs</h4>
+                  <p className="text-sm text-muted-foreground">Chaque pêcheur a sa page SEO générée automatiquement par IA</p>
+                </div>
+                <div className="bg-background/50 rounded-lg p-4 border border-cyan-500/20">
+                  <CreditCard className="h-6 w-6 text-cyan-500 mb-2" />
+                  <h4 className="font-semibold text-foreground mb-1">Paniers préconfigurés</h4>
+                  <p className="text-sm text-muted-foreground">25€ / 45€ / 75€ - Commande et paiement en quelques clics</p>
+                </div>
+                <div className="bg-background/50 rounded-lg p-4 border border-cyan-500/20">
+                  <Bell className="h-6 w-6 text-cyan-500 mb-2" />
+                  <h4 className="font-semibold text-foreground mb-1">Notifications Premium</h4>
+                  <p className="text-sm text-muted-foreground">Alertes personnalisées selon vos ports et espèces préférés</p>
+                </div>
+                <div className="bg-background/50 rounded-lg p-4 border border-cyan-500/20">
+                  <Fish className="h-6 w-6 text-cyan-500 mb-2" />
+                  <h4 className="font-semibold text-foreground mb-1">Traçabilité 100%</h4>
+                  <p className="text-sm text-muted-foreground">Qui a pêché, où, quand, comment - transparence totale</p>
+                </div>
+                <div className="bg-background/50 rounded-lg p-4 border border-cyan-500/20">
+                  <Sparkles className="h-6 w-6 text-cyan-500 mb-2" />
+                  <h4 className="font-semibold text-foreground mb-1">Recettes IA</h4>
+                  <p className="text-sm text-muted-foreground">Suggestions de recettes générées par IA selon les espèces</p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -414,10 +669,22 @@ const DeveloperCredits = () => {
 
           {/* Signature */}
           <div className="text-center py-12 border-t border-border">
-            <div className="flex justify-center mb-4">
+            <div className="flex flex-wrap justify-center gap-2 mb-4">
               <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
                 <Trophy className="h-3 w-3 mr-1" />
-                45 jours • 630 heures • 1 développeur
+                45 jours
+              </Badge>
+              <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+                <Clock className="h-3 w-3 mr-1" />
+                630+ heures
+              </Badge>
+              <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+                <Code className="h-3 w-3 mr-1" />
+                1 développeur
+              </Badge>
+              <Badge className="bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30">
+                <AlertTriangle className="h-3 w-3 mr-1" />
+                BETA ACTIVE
               </Badge>
             </div>
             <p className="text-muted-foreground mb-2">
@@ -428,6 +695,9 @@ const DeveloperCredits = () => {
             </p>
             <p className="text-sm text-muted-foreground mt-2">
               © 2025 QuaiDirect - Tous droits réservés
+            </p>
+            <p className="text-xs text-muted-foreground mt-4 italic">
+              "Je continue de coder chaque jour pour améliorer cette plateforme. Le développement ne s'arrête jamais."
             </p>
           </div>
         </div>
