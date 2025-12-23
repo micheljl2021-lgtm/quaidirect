@@ -16,13 +16,15 @@ import ArrivalsListSkeleton from '@/components/dashboard/ArrivalsListSkeleton';
 import { MessagerieSection } from '@/components/dashboard/MessagerieSection';
 import { QuickDropModal } from '@/components/dashboard/QuickDropModal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Anchor, Loader2, ShoppingCart, MessageSquare, AlertCircle, Mail } from "lucide-react";
+import { Anchor, Loader2, ShoppingCart, MessageSquare, AlertCircle, Mail, Bell } from "lucide-react";
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { getRedirectPathByRole } from '@/lib/authRedirect';
 import { useQuery } from '@tanstack/react-query';
 import { TestModeBanner } from '@/components/admin/TestModeBanner';
 import { QuickActionBar } from '@/components/dashboard/QuickActionBar';
+import PushNotificationToggle from '@/components/PushNotificationToggle';
 
 const PecheurDashboard = () => {
   const { user, userRole, effectiveRole, viewAsRole, isAdmin, isVerifiedFisherman, loading: authLoading } = useAuth();
@@ -297,6 +299,27 @@ const PecheurDashboard = () => {
         {fishermanId && <SalePointsSection fishermanId={fishermanId} />}
 
         {fishermanId && <FisherReferralLink fishermanId={fishermanId} />}
+
+        {/* Notifications Push */}
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Bell className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Notifications Push</CardTitle>
+                  <CardDescription>
+                    Recevez des alertes sur votre appareil
+                  </CardDescription>
+                </div>
+              </div>
+              <PushNotificationToggle />
+            </div>
+          </CardHeader>
+        </Card>
+
         {isDataLoading ? (
           <DashboardStatsSkeleton />
         ) : (
