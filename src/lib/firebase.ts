@@ -81,6 +81,12 @@ export const requestFCMToken = async (): Promise<string | null> => {
     await navigator.serviceWorker.ready;
     console.log('[Firebase] Service worker is ready');
 
+    if (!VAPID_KEY) {
+      const err: any = new Error('Clé VAPID manquante (VITE_VAPID_PUBLIC_KEY)');
+      err.code = 'missing-vapid-key';
+      throw err;
+    }
+
     console.log('[Firebase] Requesting FCM token with VAPID key...');
     const token = await getToken(msg, {
       vapidKey: VAPID_KEY,
@@ -90,16 +96,17 @@ export const requestFCMToken = async (): Promise<string | null> => {
     if (token) {
       console.log('[Firebase] FCM Token obtained successfully:', token.substring(0, 20) + '...');
       return token;
-    } else {
-      console.warn('[Firebase] No FCM token returned - notification permission may not be granted');
-      return null;
     }
+
+    const err: any = new Error('Aucun token FCM retourné');
+    err.code = 'no-token';
+    throw err;
   } catch (error: any) {
     // Detailed error logging
     console.error('[Firebase] Error getting FCM token:', error);
     console.error('[Firebase] Error code:', error?.code);
     console.error('[Firebase] Error message:', error?.message);
-    
+
     // Common error hints
     if (error?.code === 'messaging/permission-blocked') {
       console.error('[Firebase] Hint: User has blocked notifications');
@@ -108,8 +115,11 @@ export const requestFCMToken = async (): Promise<string | null> => {
     } else if (error?.message?.includes('VAPID')) {
       console.error('[Firebase] Hint: VAPID key may be incorrect');
     }
-    
-    return null;
+
+    // Re-throw a normalized error so UI can show the code/message
+    const normalized: any = new Error(error?.message || 'Erreur inconnue lors de l\'initialisation des notifications');
+    normalized.code = error?.code || 'unknown';
+    throw normalized;
   }
 };
 

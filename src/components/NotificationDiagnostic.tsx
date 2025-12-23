@@ -56,9 +56,11 @@ const NotificationDiagnostic = () => {
       return;
     }
 
+    const hasEnvPrefix = rawVapidKey.startsWith('VITE_');
+
     updateStep(0, {
-      status: rawVapidKey !== normalizedVapidKey ? 'warning' : 'ok',
-      message: `Clé: ${normalizedVapidKey.substring(0, 12)}...${rawVapidKey !== normalizedVapidKey ? ' (préfixe VITE_ détecté)' : ''}`,
+      status: hasEnvPrefix ? 'warning' : 'ok',
+      message: `Clé: ${normalizedVapidKey.substring(0, 12)}... (valeur brute: ${rawVapidKey.substring(0, 5)}..., len ${rawVapidKey.length})${hasEnvPrefix ? ' → retirez le préfixe VITE_ dans la valeur' : ''}`,
     });
 
     // Step 1: Browser support
