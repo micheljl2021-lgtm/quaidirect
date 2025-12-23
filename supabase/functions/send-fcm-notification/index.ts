@@ -83,13 +83,14 @@ async function getAccessToken(serviceAccount: any): Promise<string> {
   return tokenData.access_token;
 }
 
-// Send FCM notification to a single token
+// Send FCM notification to a single token - returns userId if available
 async function sendToToken(
   token: string,
+  userId: string | null,
   message: FCMMessage,
   accessToken: string,
   projectId: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; userId: string | null; error?: string }> {
   try {
     const fcmPayload = {
       message: {
@@ -127,14 +128,14 @@ async function sendToToken(
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`FCM send failed for token ${token.substring(0, 20)}...:`, errorText);
-      return { success: false, error: errorText };
+      return { success: false, userId, error: errorText };
     }
 
     console.log(`FCM notification sent to token ${token.substring(0, 20)}...`);
-    return { success: true };
+    return { success: true, userId };
   } catch (error) {
     console.error('FCM send error:', error);
-    return { success: false, error: String(error) };
+    return { success: false, userId, error: String(error) };
   }
 }
 
@@ -201,9 +202,17 @@ serve(async (req) => {
     const accessToken = await getAccessToken(serviceAccount);
     console.log('Access token obtained');
 
-    let tokensToSend: string[] = directTokens || [];
+    // Track tokens with their userIds for fallback reporting
+    let tokenUserMap: { token: string; userId: string | null }[] = [];
+    
+    // If direct tokens provided (no userId mapping)
+    if (directTokens && directTokens.length > 0) {
+      tokenUserMap = directTokens.map(token => ({ token, userId: null }));
+    }
 
     // If userIds provided, fetch their FCM tokens from database
+    const usersWithoutTokens: string[] = [];
+    
     if (userIds && userIds.length > 0) {
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
       const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -211,25 +220,47 @@ serve(async (req) => {
 
       const { data: subscriptions, error } = await supabase
         .from('fcm_tokens')
-        .select('token')
+        .select('token, user_id')
         .in('user_id', userIds);
 
       if (error) {
         console.error('Error fetching FCM tokens:', error);
       } else if (subscriptions) {
-        tokensToSend = [...tokensToSend, ...subscriptions.map(s => s.token)];
+        // Map tokens to their userIds
+        for (const sub of subscriptions) {
+          tokenUserMap.push({ token: sub.token, userId: sub.user_id });
+        }
+        
+        // Find users without any token
+        const usersWithTokens = new Set(subscriptions.map(s => s.user_id));
+        for (const userId of userIds) {
+          if (!usersWithTokens.has(userId)) {
+            usersWithoutTokens.push(userId);
+          }
+        }
+      } else {
+        // No tokens at all, all users need fallback
+        usersWithoutTokens.push(...userIds);
       }
     }
 
-    // Remove duplicates
-    tokensToSend = [...new Set(tokensToSend)];
-    console.log(`Sending to ${tokensToSend.length} tokens`);
+    // Remove duplicate tokens
+    const seenTokens = new Set<string>();
+    tokenUserMap = tokenUserMap.filter(({ token }) => {
+      if (seenTokens.has(token)) return false;
+      seenTokens.add(token);
+      return true;
+    });
 
-    if (tokensToSend.length === 0) {
+    console.log(`Sending to ${tokenUserMap.length} tokens, ${usersWithoutTokens.length} users without tokens`);
+
+    if (tokenUserMap.length === 0 && usersWithoutTokens.length === 0) {
       return new Response(JSON.stringify({ 
         message: 'No tokens to send to',
         sent: 0,
-        failed: 0 
+        failed: 0,
+        failedUserIds: [],
+        usersWithoutTokens: []
       }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -238,18 +269,28 @@ serve(async (req) => {
 
     // Send notifications
     const results = await Promise.all(
-      tokensToSend.map(token => sendToToken(token, message, accessToken, projectId))
+      tokenUserMap.map(({ token, userId }) => 
+        sendToToken(token, userId, message, accessToken, projectId)
+      )
     );
 
     const sent = results.filter(r => r.success).length;
     const failed = results.filter(r => !r.success).length;
+    
+    // Collect userIds that failed to receive push notification
+    const failedUserIds = results
+      .filter(r => !r.success && r.userId)
+      .map(r => r.userId as string);
 
     console.log(`FCM notifications: ${sent} sent, ${failed} failed`);
+    console.log(`Users needing fallback: ${failedUserIds.length} failed + ${usersWithoutTokens.length} without tokens`);
 
     return new Response(JSON.stringify({ 
       message: 'Notifications processed',
       sent,
       failed,
+      failedUserIds,
+      usersWithoutTokens,
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
