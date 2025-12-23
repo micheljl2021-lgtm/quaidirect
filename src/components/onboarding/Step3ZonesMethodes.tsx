@@ -1,5 +1,5 @@
-import { Anchor, Loader2, MapPin } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import { Anchor, Loader2, MapPin, AlertCircle } from "lucide-react";
+import { useMemo } from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { getBasinFromDepartement, type FishingBasin } from "@/lib/ports";
+import { getBasinFromDepartement, getDepartmentsForBasin, type FishingBasin } from "@/lib/ports";
 
 interface Step3ZonesMethodesProps {
   formData: {
@@ -91,6 +91,13 @@ const BASIN_LABELS: Record<FishingBasin, string> = {
   MANCHE: "Manche",
 };
 
+// Mapping bassin → nom de région dans la base de données
+const BASIN_TO_REGION: Record<FishingBasin, string> = {
+  MEDITERRANEE: "Méditerranée",
+  ATLANTIQUE: "Atlantique",
+  MANCHE: "Manche",
+};
+
 export function Step3ZonesMethodes({ formData, onChange }: Step3ZonesMethodesProps) {
   // Determine basin from postal code
   const basin = useMemo(() => {
@@ -99,32 +106,49 @@ export function Step3ZonesMethodes({ formData, onChange }: Step3ZonesMethodesPro
     return getBasinFromDepartement(dep);
   }, [formData.postalCode]);
 
-  // Charger les zones depuis la base de données
+  // Charger les zones depuis la base de données - filtrées par région si bassin connu
   const { data: zones = [], isLoading: zonesLoading } = useQuery({
-    queryKey: ['zones_peche_onboarding'],
+    queryKey: ['zones_peche_onboarding', basin],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('zones_peche')
-        .select('id, name, region')
-        .order('region, name');
+        .select('id, name, region');
+      
+      // Filtrer par région si bassin détecté
+      if (basin) {
+        const regionName = BASIN_TO_REGION[basin];
+        query = query.eq('region', regionName);
+      }
+      
+      const { data, error } = await query.order('name');
       
       if (error) throw error;
       return data || [];
     },
   });
 
-  // Charger les ports depuis la base de données
+  // Charger les ports depuis la base de données - filtrés par département si bassin connu
   const { data: ports = [], isLoading: portsLoading } = useQuery({
     queryKey: ['ports_onboarding', basin],
     queryFn: async () => {
+      // Si pas de bassin, retourner liste vide
+      if (!basin) return [];
+      
+      const departments = getDepartmentsForBasin(basin);
+      
+      // Construire les filtres OR pour chaque département (postal_code commence par le code département)
+      const filters = departments.map(dep => `postal_code.like.${dep}%`).join(',');
+      
       const { data, error } = await supabase
         .from('ports')
-        .select('id, name, city')
+        .select('id, name, city, postal_code')
+        .or(filters)
         .order('name');
       
       if (error) throw error;
       return data || [];
     },
+    enabled: !!basin, // Ne charger que si le bassin est connu
   });
 
   // Grouper les zones par région
@@ -214,58 +238,73 @@ export function Step3ZonesMethodes({ formData, onChange }: Step3ZonesMethodesPro
             <MapPin className="h-4 w-4 text-primary" />
             Ports habituels de vente
           </Label>
-          <Badge variant={selectedPortsCount >= 3 ? "destructive" : "secondary"}>
-            {selectedPortsCount}/3 sélectionnés
-          </Badge>
+          {basin && (
+            <Badge variant={selectedPortsCount >= 3 ? "destructive" : "secondary"}>
+              {selectedPortsCount}/3 sélectionnés
+            </Badge>
+          )}
         </div>
         
-        {basin && (
-          <p className="text-sm text-muted-foreground">
-            Ports de la zone : {BASIN_LABELS[basin]}
-          </p>
-        )}
-
-        {portsLoading ? (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Chargement des ports...
-          </div>
+        {!basin ? (
+          <Alert className="bg-amber-50 border-amber-200">
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-800">
+              Veuillez renseigner votre code postal à l'étape 1 pour voir les ports de votre région.
+            </AlertDescription>
+          </Alert>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto p-1">
-            {ports.map((port) => {
-              const isSelected = formData.selectedPorts?.includes(port.id);
-              const isDisabled = !isSelected && selectedPortsCount >= 3;
-              
-              return (
-                <div 
-                  key={port.id} 
-                  className={`flex items-center space-x-2 p-2 border rounded-lg transition-colors ${
-                    isSelected ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'
-                  } ${isDisabled ? 'opacity-50' : ''}`}
-                >
-                  <Checkbox
-                    id={`port-${port.id}`}
-                    checked={isSelected}
-                    disabled={isDisabled}
-                    onCheckedChange={(checked) => handlePortToggle(port.id, checked as boolean)}
-                  />
-                  <label
-                    htmlFor={`port-${port.id}`}
-                    className={`text-sm font-medium leading-none cursor-pointer flex-1 ${isDisabled ? 'cursor-not-allowed' : ''}`}
-                  >
-                    {port.name}
-                    {port.city && <span className="text-xs text-muted-foreground ml-1">({port.city})</span>}
-                  </label>
-                </div>
-              );
-            })}
-          </div>
-        )}
-        
-        {selectedPortsCount >= 3 && (
-          <p className="text-xs text-destructive">
-            Maximum 3 ports. Désélectionnez-en un pour en choisir un autre.
-          </p>
+          <>
+            <p className="text-sm text-muted-foreground">
+              Ports de la zone : <span className="font-medium text-foreground">{BASIN_LABELS[basin]}</span>
+            </p>
+
+            {portsLoading ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Chargement des ports...
+              </div>
+            ) : ports.length === 0 ? (
+              <p className="text-sm text-muted-foreground italic">
+                Aucun port trouvé pour cette région.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto p-1">
+                {ports.map((port) => {
+                  const isSelected = formData.selectedPorts?.includes(port.id);
+                  const isDisabled = !isSelected && selectedPortsCount >= 3;
+                  
+                  return (
+                    <div 
+                      key={port.id} 
+                      className={`flex items-center space-x-2 p-2 border rounded-lg transition-colors ${
+                        isSelected ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'
+                      } ${isDisabled ? 'opacity-50' : ''}`}
+                    >
+                      <Checkbox
+                        id={`port-${port.id}`}
+                        checked={isSelected}
+                        disabled={isDisabled}
+                        onCheckedChange={(checked) => handlePortToggle(port.id, checked as boolean)}
+                      />
+                      <label
+                        htmlFor={`port-${port.id}`}
+                        className={`text-sm font-medium leading-none cursor-pointer flex-1 ${isDisabled ? 'cursor-not-allowed' : ''}`}
+                      >
+                        {port.name}
+                        {port.city && <span className="text-xs text-muted-foreground ml-1">({port.city})</span>}
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            
+            {selectedPortsCount >= 3 && (
+              <p className="text-xs text-destructive">
+                Maximum 3 ports. Désélectionnez-en un pour en choisir un autre.
+              </p>
+            )}
+          </>
         )}
       </div>
 
