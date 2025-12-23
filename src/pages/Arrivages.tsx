@@ -145,7 +145,7 @@ const Arrivages = () => {
             name,
             city
           ),
-          fisherman_sale_points (
+          fisherman_sale_points!sale_point_id (
             id,
             label,
             address
