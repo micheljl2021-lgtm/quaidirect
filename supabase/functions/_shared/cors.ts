@@ -9,7 +9,7 @@
 const ALLOWED_ORIGINS = [
   'https://quaidirect.fr',
   'https://www.quaidirect.fr',
-  'https://quaidirect.lovable.app', // Development/preview (legacy)
+  'https://quaidirect.lovable.app', // Development/preview
 ];
 
 /**
@@ -18,12 +18,10 @@ const ALLOWED_ORIGINS = [
  * @returns CORS headers with validated origin or default
  */
 export const getCorsHeaders = (origin?: string | null): Record<string, string> => {
-  const isLovablePreview = !!origin && origin.endsWith('.lovableproject.com');
-
-  const allowedOrigin = origin && (ALLOWED_ORIGINS.includes(origin) || isLovablePreview)
-    ? origin
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) 
+    ? origin 
     : 'https://quaidirect.fr';
-
+  
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',

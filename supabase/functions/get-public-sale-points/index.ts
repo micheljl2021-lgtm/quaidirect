@@ -90,19 +90,6 @@ serve(async (req) => {
       );
     }
 
-    // Check if user is authenticated via Authorization header
-    const authHeader = req.headers.get('Authorization');
-    let isAuthenticated = false;
-    
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1];
-      // Verify the token
-      const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
-      if (!authError && user) {
-        isAuthenticated = true;
-      }
-    }
-
     const { data, error } = await supabaseClient
       .from('fisherman_sale_points')
       .select(`
@@ -133,21 +120,8 @@ serve(async (req) => {
       );
     }
 
-    // SÉCURITÉ: Si l'utilisateur n'est PAS authentifié, on masque l'adresse
-    const sanitizedData = (data ?? []).map((sp: any) => {
-      if (!isAuthenticated) {
-        // Anonyme: on ne renvoie PAS l'adresse
-        return {
-          ...sp,
-          address: null, // Masquer l'adresse pour les anonymes
-        };
-      }
-      // Authentifié: on renvoie tout
-      return sp;
-    });
-
     return new Response(
-      JSON.stringify(sanitizedData),
+      JSON.stringify(data ?? []),
       { status: 200, headers: { ...getCorsHeaders(origin), 'Content-Type': 'application/json' } }
     );
   } catch (err) {

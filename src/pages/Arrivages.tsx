@@ -18,7 +18,7 @@ import { useSalePoints } from '@/hooks/useSalePoints';
 import { useQuery } from '@tanstack/react-query';
 import { LIMITS } from '@/lib/constants';
 import { useFishermanZone } from '@/hooks/useFishermanZone';
-import { getDropLocationLabel } from '@/lib/dropLocationUtils';
+
 interface Drop {
   id: string;
   port_id: string;
@@ -145,7 +145,7 @@ const Arrivages = () => {
             name,
             city
           ),
-          fisherman_sale_points!sale_point_id (
+          fisherman_sale_points (
             id,
             label,
             address
@@ -631,16 +631,13 @@ const Arrivages = () => {
             const etaDate = drop.eta_at ? new Date(drop.eta_at) : null;
             const saleDate = drop.sale_start_time ? new Date(drop.sale_start_time) : null;
             
-            // Utiliser getDropLocationLabel pour masquer l'adresse aux anonymes
-            const salePointLabel = drop.fisherman_sale_points?.label || null;
-            
-            // SÉCURITÉ: !!user garantit que seuls les connectés voient l'adresse
-            const portName = getDropLocationLabel({
-              isAuthenticated: !!user,
-              salePointId: drop.sale_point_id,
-              salePoints: salePoints,
-              port: drop.ports,
-            });
+            // Joindre côté client les sale points (chargés via Edge Function)
+            const salePoint = salePoints?.find((sp: any) => sp.id === drop.sale_point_id);
+            // Utiliser le label du point de vente depuis la jointure Supabase
+            const salePointLabel = drop.fisherman_sale_points?.label || salePoint?.label || null;
+            const portName = drop.ports?.name 
+              ? `${drop.ports.name}, ${drop.ports.city}` 
+              : (salePoint?.address || salePointLabel || 'Point de vente');
             
             const displayName = drop.fishermen?.display_name_preference === 'company_name'
               ? (drop.fishermen?.company_name || drop.fishermen?.boat_name || 'Pêcheur')

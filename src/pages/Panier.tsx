@@ -11,7 +11,6 @@ import { ShoppingCart, Check, Loader2, Package, Anchor, MapPin, Calendar, Chevro
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { getDropLocationLabel } from '@/lib/dropLocationUtils';
 
 const STRIPE_BASKETS = {
   discovery: {
@@ -381,16 +380,9 @@ const Panier = () => {
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <MapPin className="h-4 w-4" aria-hidden="true" />
                         <span className="font-medium">
-                          {getDropLocationLabel({
-                            isAuthenticated: !!user,
-                            salePointId: drop.sale_point_id,
-                            salePoints: drop.fisherman_sale_points ? [{
-                              id: drop.fisherman_sale_points.id,
-                              label: drop.fisherman_sale_points.label,
-                              address: drop.fisherman_sale_points.address,
-                            }] : [],
-                            port: drop.ports,
-                          })}
+                          {drop.ports 
+                            ? `${drop.ports.name} - ${drop.ports.city}` 
+                            : drop.fisherman_sale_points?.label || 'Point de vente'}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground">
@@ -415,16 +407,9 @@ const Panier = () => {
             <h2 className="text-2xl font-bold mb-2">Choisissez votre panier</h2>
             <p className="text-muted-foreground mb-4">
               Retrait : <strong>
-                {getDropLocationLabel({
-                  isAuthenticated: !!user,
-                  salePointId: selectedDrop?.sale_point_id,
-                  salePoints: selectedDrop?.fisherman_sale_points ? [{
-                    id: selectedDrop.fisherman_sale_points.id,
-                    label: selectedDrop.fisherman_sale_points.label,
-                    address: selectedDrop.fisherman_sale_points.address,
-                  }] : [],
-                  port: selectedDrop?.ports,
-                })}
+                {selectedDrop?.ports 
+                  ? selectedDrop.ports.name 
+                  : selectedDrop?.fisherman_sale_points?.label}
               </strong> le{' '}
               <strong>{format(new Date(selectedDrop?.sale_start_time), "d MMMM 'à' HH:mm", { locale: fr })}</strong>
             </p>

@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Fish, MapPin, Clock, TrendingUp, Calendar, ArrowRight, Loader2, Bell } from 'lucide-react';
 import { getRedirectPathByRole } from '@/lib/authRedirect';
 import { TestModeBanner } from '@/components/admin/TestModeBanner';
-import { getDropLocationLabel } from '@/lib/dropLocationUtils';
+
 const UserDashboard = () => {
   const { user, effectiveRole, viewAsRole, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
@@ -76,7 +76,7 @@ const UserDashboard = () => {
             name,
             city
           ),
-          fisherman_sale_points!sale_point_id (
+          fisherman_sale_points (
             id,
             label,
             address
@@ -256,93 +256,51 @@ const UserDashboard = () => {
               <p className="text-muted-foreground">Chargement des arrivages...</p>
             </div>
           ) : drops && drops.length > 0 ? (
-            <div className="space-y-4">
-              {drops.slice(0, 6).map((drop) => {
-                // Get location info - utilisateur CONNECTÉ = voit l'adresse complète
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {drops.slice(0, 4).map((drop) => {
+                // Get species list from drop_species or offers
+                const speciesList = drop.drop_species?.map((ds: any) => ds.species?.name).filter(Boolean) || 
+                  drop.offers?.map((o: any) => o.species?.name).filter(Boolean) || [];
+                const species = speciesList.join(', ') || 'Espèces à découvrir';
+                
+                // Get location
                 const salePoint = drop.fisherman_sale_points;
-                const salePointLabel = salePoint?.label || null;
+                const port = drop.ports;
+                const locationDisplay = salePoint?.label || (port ? `${port.name}, ${port.city}` : 'Lieu non spécifié');
                 
-                // Construire la liste des sale points pour getDropLocationLabel
-                const salePointsForLabel = salePoint ? [{
-                  id: salePoint.id,
-                  label: salePoint.label,
-                  address: salePoint.address,
-                }] : [];
-                
-                const portName = getDropLocationLabel({
-                  isAuthenticated: true, // UserDashboard = toujours connecté
-                  salePointId: drop.sale_point_id,
-                  salePoints: salePointsForLabel,
-                  port: drop.ports,
-                });
-                
-                // Get fisherman display name
+                // Get fisherman name
                 const fisherman = drop.fishermen;
-                const displayName = fisherman?.display_name_preference === 'company_name'
+                const fisherName = fisherman?.display_name_preference === 'company_name'
                   ? (fisherman?.company_name || fisherman?.boat_name)
                   : fisherman?.boat_name;
                 
-                const etaDate = drop.eta_at ? new Date(drop.eta_at) : null;
-                const saleDate = drop.sale_start_time ? new Date(drop.sale_start_time) : null;
-                
-                // Si le drop a des offres, afficher une card par offre
-                if (drop.offers && drop.offers.length > 0) {
-                  const validOffers = drop.offers.filter((offer: any) => offer.species && offer.species.id);
-                  
-                  if (validOffers.length > 0) {
-                    return validOffers.map((offer: any) => (
-                      <ArrivageCard
-                        key={`${drop.id}-${offer.id}`}
-                        id={drop.id}
-                        salePointLabel={salePointLabel}
-                        species={offer.species.name}
-                        scientificName={offer.species.scientific_name || ''}
-                        port={portName}
-                        eta={etaDate || saleDate!}
-                        saleStartTime={saleDate}
-                        pricePerPiece={offer.unit_price}
-                        quantity={offer.available_units}
-                        isPremium={drop.is_premium}
-                        dropPhotos={drop.drop_photos}
-                        fisherman={{
-                          id: fisherman?.id,
-                          slug: fisherman?.slug,
-                          name: displayName || 'Pêcheur',
-                          boat: fisherman?.boat_name || 'Bateau',
-                          isAmbassador: fisherman?.is_ambassador
-                        }}
-                      />
-                    ));
-                  }
-                }
-                
-                // Fallback: utiliser drop_species si pas d'offres
-                const allSpecies = drop.drop_species?.map((ds: any) => ds.species?.name).filter(Boolean) || [];
-                const speciesName = allSpecies.length > 0 ? allSpecies.join(', ') : 'Arrivage du jour';
-                const speciesFromDropSpecies = drop.drop_species?.[0]?.species;
-                const scientificName = speciesFromDropSpecies?.scientific_name || '';
+                // Get first offer price
+                const firstOffer = drop.offers?.[0];
                 
                 return (
                   <ArrivageCard
                     key={drop.id}
                     id={drop.id}
-                    salePointLabel={salePointLabel}
-                    species={speciesName}
-                    scientificName={scientificName}
-                    port={portName}
-                    eta={etaDate || saleDate!}
-                    saleStartTime={saleDate}
-                    pricePerPiece={undefined}
-                    quantity={0}
-                    isPremium={drop.is_premium}
+                    salePointLabel={salePoint?.label}
+                    species={species}
+                    scientificName=""
+                    port={locationDisplay}
+                    eta={new Date(drop.eta_at)}
+                    saleStartTime={drop.sale_start_time ? new Date(drop.sale_start_time) : undefined}
+                    pricePerPiece={firstOffer?.unit_price}
+                    quantity={firstOffer?.available_units || 0}
+                    availableUnits={firstOffer?.available_units}
+                    totalUnits={firstOffer?.available_units}
                     dropPhotos={drop.drop_photos}
                     fisherman={{
                       id: fisherman?.id,
                       slug: fisherman?.slug,
-                      name: displayName || 'Pêcheur',
-                      boat: fisherman?.boat_name || 'Bateau',
+                      name: fisherName || 'Pêcheur',
+                      boat: fisherman?.boat_name || '',
                       isAmbassador: fisherman?.is_ambassador
                     }}
+                    canReserve={false}
+                    variant="compact"
                   />
                 );
               })}

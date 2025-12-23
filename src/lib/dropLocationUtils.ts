@@ -6,8 +6,8 @@
 interface SalePoint {
   id: string;
   label: string;
-  address?: string | null;
-  photo_url?: string | null;
+  address?: string;
+  photo_url?: string;
 }
 
 interface Port {
