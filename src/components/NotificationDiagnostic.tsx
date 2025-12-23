@@ -48,13 +48,18 @@ const NotificationDiagnostic = () => {
     updateStep(0, { status: 'checking' });
     await new Promise(r => setTimeout(r, 200));
     
-    const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-    if (!vapidKey) {
+    const rawVapidKey = (import.meta.env.VITE_VAPID_PUBLIC_KEY || '').trim();
+    const normalizedVapidKey = rawVapidKey.replace(/^VITE_/, '');
+    if (!rawVapidKey) {
       updateStep(0, { status: 'error', message: 'VITE_VAPID_PUBLIC_KEY non configurée' });
       setIsRunning(false);
       return;
     }
-    updateStep(0, { status: 'ok', message: `Clé: ${vapidKey.substring(0, 12)}...` });
+
+    updateStep(0, {
+      status: rawVapidKey !== normalizedVapidKey ? 'warning' : 'ok',
+      message: `Clé: ${normalizedVapidKey.substring(0, 12)}...${rawVapidKey !== normalizedVapidKey ? ' (préfixe VITE_ détecté)' : ''}`,
+    });
 
     // Step 1: Browser support
     updateStep(1, { status: 'checking' });

@@ -13,11 +13,17 @@ const firebaseConfig = {
 };
 
 // VAPID key for web push - from environment variable
-const VAPID_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || "";
+const RAW_VAPID_KEY = (import.meta.env.VITE_VAPID_PUBLIC_KEY || "").trim();
+
+// Guardrail: sometimes the value is mistakenly saved with a "VITE_" prefix (that's the env var prefix, not part of the key)
+const VAPID_KEY = RAW_VAPID_KEY.replace(/^VITE_/, "");
 
 // Log VAPID key status for debugging
-if (!VAPID_KEY) {
-  console.error('[Firebase] VAPID_PUBLIC_KEY is not configured in environment');
+if (!RAW_VAPID_KEY) {
+  console.error('[Firebase] VITE_VAPID_PUBLIC_KEY is not configured in environment');
+} else if (RAW_VAPID_KEY !== VAPID_KEY) {
+  console.warn('[Firebase] VAPID key value starts with "VITE_" prefix; auto-correcting.');
+  console.log('[Firebase] VAPID key configured, prefix:', VAPID_KEY.substring(0, 12) + '...');
 } else {
   console.log('[Firebase] VAPID key configured, prefix:', VAPID_KEY.substring(0, 12) + '...');
 }
