@@ -149,9 +149,11 @@ const PushNotificationToggle = ({ fishermanId }: PushNotificationToggleProps) =>
       toast.success('🔔 Notifications activées ! Vous serez alerté des nouveaux arrivages');
     } catch (err) {
       console.error('[FCM] Error subscribing:', err);
+      const errorCode = (err as any)?.code;
       const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
-      toast.error(`Erreur lors de l'activation: ${errorMessage}`);
-      setError(errorMessage);
+      const label = `${errorCode ? `[${errorCode}] ` : ''}${errorMessage}`;
+      toast.error(`Erreur lors de l'activation: ${label}`);
+      setError(label);
     } finally {
       setIsLoading(false);
     }
