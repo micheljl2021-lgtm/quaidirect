@@ -8,12 +8,15 @@ import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { DEFAULT_PHOTO_URLS } from "@/components/DefaultPhotoSelector";
 import { getFallbackPhotoByDropId, isFallbackPhoto } from "@/lib/fallbackPhotos";
+import { getLocationLabel } from "@/lib/locationDisplayUtils";
 interface ArrivageCardProps {
   id: string;
-  salePointLabel?: string; // Titre principal = nom du point de vente
-  species: string; // Maintenant affiché comme sous-titre
+  salePoint?: { id: string; label: string; address: string } | null;
+  portData?: { name: string; city: string } | null;
+  salePointLabel?: string; // Legacy - utilisé si salePoint n'est pas fourni
+  species: string;
   scientificName: string;
-  port: string;
+  port: string; // Legacy fallback
   city?: string;
   eta: Date;
   saleStartTime?: Date;
@@ -39,6 +42,8 @@ interface ArrivageCardProps {
 
 const ArrivageCard = ({ 
   id,
+  salePoint,
+  portData,
   salePointLabel,
   species, 
   scientificName,
@@ -60,6 +65,9 @@ const ArrivageCard = ({
 }: ArrivageCardProps) => {
   const navigate = useNavigate();
   const [imgError, setImgError] = useState(false);
+  
+  // Utiliser locationDisplayUtils pour l'affichage cohérent
+  const displayLocation = getLocationLabel({ salePoint, port: portData, fallback: port });
   const displayTime = saleStartTime || eta;
   const timeToSale = formatDistanceToNow(displayTime, { addSuffix: true, locale: fr });
   
@@ -199,7 +207,7 @@ const ArrivageCard = ({
           <div className="flex items-center gap-2">
             <MapPin className="h-4 w-4 text-primary flex-shrink-0" aria-hidden="true" />
             <div className="min-w-0">
-              <p className="font-medium text-foreground truncate">{port}</p>
+              <p className="font-medium text-foreground truncate">{displayLocation}</p>
               {city && variant === 'full' && (
                 <p className="text-xs text-muted-foreground truncate">{city}</p>
               )}
