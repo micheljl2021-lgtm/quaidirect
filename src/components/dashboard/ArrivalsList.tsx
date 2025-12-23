@@ -115,52 +115,68 @@ const ArrivalsList = ({ drops, archivedDrops, fishermanId, onRefresh }: Arrivals
             </div>
           ) : (
             <div className="space-y-4">
-              {drops.map(drop => (
+              {drops.map(drop => {
+                // Get the first photo (sorted by display_order)
+                const firstPhoto = drop.drop_photos
+                  ?.sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0))
+                  ?.[0]?.photo_url;
+
+                return (
                 <div 
                   key={drop.id}
                   className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                     <div 
-                      className="space-y-1 flex-1 cursor-pointer"
+                      className="flex gap-3 flex-1 cursor-pointer"
                       onClick={() => navigate(`/drop/${drop.id}`)}
                     >
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-medium">
-                          {drop.sale_point?.label || drop.sale_point?.address || drop.port?.name || 'Point de vente'}
-                        </h3>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          drop.status === 'scheduled' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' :
-                          drop.status === 'landed' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' :
-                          'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-                        }`}>
-                          {drop.status === 'scheduled' ? 'Programmé' : 'Arrivé'}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        ETA : {new Date(drop.eta_at).toLocaleString('fr-FR')}
-                      </p>
-                      {drop.offers?.length > 0 ? (
-                        <p className="text-sm text-muted-foreground">
-                          {drop.offers.length} offre(s) détaillée(s)
-                        </p>
-                      ) : drop.drop_species?.length > 0 ? (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {drop.drop_species
-                            .filter((ds: any) => ds.species && ds.species.id)
-                            .slice(0, 3)
-                            .map((ds: any) => (
-                              <span key={ds.species.id} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                                {ds.species.name}
-                              </span>
-                            ))}
-                          {drop.drop_species.length > 3 && (
-                            <span className="text-xs text-muted-foreground">+{drop.drop_species.length - 3}</span>
-                          )}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">Présence au port</p>
+                      {/* Photo thumbnail */}
+                      {firstPhoto && (
+                        <img 
+                          src={firstPhoto} 
+                          alt="Arrivage"
+                          className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                        />
                       )}
+                      <div className="space-y-1 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-medium">
+                            {drop.sale_point?.label || drop.sale_point?.address || drop.port?.name || 'Point de vente'}
+                          </h3>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            drop.status === 'scheduled' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' :
+                            drop.status === 'landed' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' :
+                            'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                          }`}>
+                            {drop.status === 'scheduled' ? 'Programmé' : 'Arrivé'}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          ETA : {new Date(drop.eta_at).toLocaleString('fr-FR')}
+                        </p>
+                        {drop.offers?.length > 0 ? (
+                          <p className="text-sm text-muted-foreground">
+                            {drop.offers.length} offre(s) détaillée(s)
+                          </p>
+                        ) : drop.drop_species?.length > 0 ? (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {drop.drop_species
+                              .filter((ds: any) => ds.species && ds.species.id)
+                              .slice(0, 3)
+                              .map((ds: any) => (
+                                <span key={ds.species.id} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                                  {ds.species.name}
+                                </span>
+                              ))}
+                            {drop.drop_species.length > 3 && (
+                              <span className="text-xs text-muted-foreground">+{drop.drop_species.length - 3}</span>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">Présence au port</p>
+                        )}
+                      </div>
                     </div>
                     <TooltipProvider>
                       <div className="flex flex-wrap gap-2">
@@ -252,7 +268,7 @@ const ArrivalsList = ({ drops, archivedDrops, fishermanId, onRefresh }: Arrivals
                     </TooltipProvider>
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
           )}
         </CardContent>

@@ -198,6 +198,58 @@ const PecheurOnboarding = () => {
         setCurrentStep(fisherman.onboarding_step || 1);
         
         const savedData = fisherman.onboarding_data as Partial<FormData> || {};
+        
+        // Load sale points from fisherman_sale_points table if not in onboarding_data
+        let salePoint1Data = {
+          label: savedData.salePoint1Label || "",
+          address: savedData.salePoint1Address || "",
+          description: savedData.salePoint1Description || "",
+          lat: savedData.salePoint1Lat,
+          lng: savedData.salePoint1Lng,
+          photo: savedData.salePoint1Photo || "",
+        };
+        let salePoint2Data = {
+          label: savedData.salePoint2Label || "",
+          address: savedData.salePoint2Address || "",
+          description: savedData.salePoint2Description || "",
+          lat: savedData.salePoint2Lat,
+          lng: savedData.salePoint2Lng,
+          photo: savedData.salePoint2Photo || "",
+        };
+
+        // If no sale points in onboarding_data, load from fisherman_sale_points table
+        if (!salePoint1Data.label && !salePoint1Data.address) {
+          const { data: existingSalePoints } = await supabase
+            .from('fisherman_sale_points')
+            .select('*')
+            .eq('fisherman_id', fisherman.id)
+            .order('is_primary', { ascending: false });
+
+          if (existingSalePoints && existingSalePoints.length > 0) {
+            const primary = existingSalePoints[0];
+            salePoint1Data = {
+              label: primary.label || "",
+              address: primary.address || "",
+              description: primary.description || "",
+              lat: primary.latitude || undefined,
+              lng: primary.longitude || undefined,
+              photo: primary.photo_url || "",
+            };
+
+            if (existingSalePoints.length > 1) {
+              const secondary = existingSalePoints[1];
+              salePoint2Data = {
+                label: secondary.label || "",
+                address: secondary.address || "",
+                description: secondary.description || "",
+                lat: secondary.latitude || undefined,
+                lng: secondary.longitude || undefined,
+                photo: secondary.photo_url || "",
+              };
+            }
+          }
+        }
+        
         setFormData({
           siret: fisherman.siret || "",
           boatName: fisherman.boat_name || "",
@@ -227,18 +279,18 @@ const PecheurOnboarding = () => {
           workStyle: fisherman.work_philosophy || "",
           clientMessage: fisherman.client_message || "",
           generatedDescription: fisherman.generated_description || "",
-          salePoint1Label: savedData.salePoint1Label || "",
-          salePoint1Address: savedData.salePoint1Address || "",
-          salePoint1Description: savedData.salePoint1Description || "",
-          salePoint1Lat: savedData.salePoint1Lat,
-          salePoint1Lng: savedData.salePoint1Lng,
-          salePoint1Photo: savedData.salePoint1Photo || "",
-          salePoint2Label: savedData.salePoint2Label || "",
-          salePoint2Address: savedData.salePoint2Address || "",
-          salePoint2Description: savedData.salePoint2Description || "",
-          salePoint2Lat: savedData.salePoint2Lat,
-          salePoint2Lng: savedData.salePoint2Lng,
-          salePoint2Photo: savedData.salePoint2Photo || "",
+          salePoint1Label: salePoint1Data.label,
+          salePoint1Address: salePoint1Data.address,
+          salePoint1Description: salePoint1Data.description,
+          salePoint1Lat: salePoint1Data.lat,
+          salePoint1Lng: salePoint1Data.lng,
+          salePoint1Photo: salePoint1Data.photo,
+          salePoint2Label: salePoint2Data.label,
+          salePoint2Address: salePoint2Data.address,
+          salePoint2Description: salePoint2Data.description,
+          salePoint2Lat: salePoint2Data.lat,
+          salePoint2Lng: salePoint2Data.lng,
+          salePoint2Photo: salePoint2Data.photo,
         });
       }
     };
@@ -439,17 +491,19 @@ const PecheurOnboarding = () => {
 
       if (fishermanError) throw fishermanError;
 
-      // Delete existing sale points before re-inserting
-      await supabase
+      // Get existing sale points to update them instead of deleting
+      const { data: existingSalePoints } = await supabase
         .from('fisherman_sale_points')
-        .delete()
-        .eq('fisherman_id', fishermanData.id);
+        .select('id, is_primary')
+        .eq('fisherman_id', fishermanData.id)
+        .order('is_primary', { ascending: false });
 
-      // Save sale points with coordinates
-      const salePointsToInsert = [];
-      
+      const existingPrimaryId = existingSalePoints?.find(sp => sp.is_primary)?.id;
+      const existingSecondaryId = existingSalePoints?.find(sp => !sp.is_primary)?.id;
+
+      // Save/update sale points with coordinates
       if (formData.salePoint1Label && formData.salePoint1Address) {
-        salePointsToInsert.push({
+        const salePoint1Data = {
           fisherman_id: fishermanData.id,
           label: formData.salePoint1Label,
           address: formData.salePoint1Address,
@@ -458,11 +512,24 @@ const PecheurOnboarding = () => {
           longitude: formData.salePoint1Lng || null,
           photo_url: formData.salePoint1Photo || null,
           is_primary: true,
-        });
+        };
+
+        if (existingPrimaryId) {
+          // Update existing primary sale point
+          await supabase
+            .from('fisherman_sale_points')
+            .update(salePoint1Data)
+            .eq('id', existingPrimaryId);
+        } else {
+          // Insert new primary sale point
+          await supabase
+            .from('fisherman_sale_points')
+            .insert([salePoint1Data]);
+        }
       }
 
       if (formData.salePoint2Label && formData.salePoint2Address) {
-        salePointsToInsert.push({
+        const salePoint2Data = {
           fisherman_id: fishermanData.id,
           label: formData.salePoint2Label,
           address: formData.salePoint2Address,
@@ -471,15 +538,20 @@ const PecheurOnboarding = () => {
           longitude: formData.salePoint2Lng || null,
           photo_url: formData.salePoint2Photo || null,
           is_primary: false,
-        });
-      }
+        };
 
-      if (salePointsToInsert.length > 0) {
-        const { error: salePointsError } = await supabase
-          .from('fisherman_sale_points')
-          .insert(salePointsToInsert);
-
-        if (salePointsError) throw salePointsError;
+        if (existingSecondaryId) {
+          // Update existing secondary sale point
+          await supabase
+            .from('fisherman_sale_points')
+            .update(salePoint2Data)
+            .eq('id', existingSecondaryId);
+        } else {
+          // Insert new secondary sale point
+          await supabase
+            .from('fisherman_sale_points')
+            .insert([salePoint2Data]);
+        }
       }
 
       // Save species associations

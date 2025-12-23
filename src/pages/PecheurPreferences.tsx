@@ -251,7 +251,7 @@ export default function PecheurPreferences() {
               />
               
               <PhotoUpload
-                label="Photo de vente à quai"
+                label="Photo de vous ou de votre équipe de marin pêcheur"
                 value={photoDockSale}
                 onChange={setPhotoDockSale}
                 bucket="fishermen-photos"

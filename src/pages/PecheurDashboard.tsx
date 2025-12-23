@@ -188,7 +188,8 @@ const PecheurDashboard = () => {
             port:ports(*),
             sale_point:fisherman_sale_points(*),
             offers(*),
-            drop_species(species:species(*))
+            drop_species(species:species(*)),
+            drop_photos(photo_url, display_order)
           `)
           .eq('fisherman_id', fisherman.id)
           .in('status', ['scheduled', 'landed', 'needs_correction'])
@@ -202,7 +203,8 @@ const PecheurDashboard = () => {
             port:ports(*),
             sale_point:fisherman_sale_points(*),
             offers(*),
-            drop_species(species:species(*))
+            drop_species(species:species(*)),
+            drop_photos(photo_url, display_order)
           `)
           .eq('fisherman_id', fisherman.id)
           .in('status', ['completed', 'cancelled'])
