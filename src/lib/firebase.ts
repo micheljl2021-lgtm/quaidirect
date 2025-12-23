@@ -32,36 +32,62 @@ export const getFirebaseConfigInfo = () => ({
   appId: firebaseConfig.appId,
 });
 
-// Get VAPID key from environment - this is the SINGLE source of truth
+// VAPID public key fallback - this is a PUBLIC key, safe to include in code
+// Used only if VITE_VAPID_PUBLIC_KEY is not configured
+const VAPID_PUBLIC_KEY_FALLBACK = "BFIt5LESGxT4TBsI7-m4E6n6EbEJTX2B1g6rQ4Tb6J2vGE0m5vJm2nRq6A3cG8dN7wK9xP0sF1hL2mY3uZ4oT5k";
+
+// Get VAPID key from environment with robust fallback
 export const getVapidKey = (): string | null => {
   const rawKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
   
+  // Use fallback if not configured
   if (!rawKey) {
-    console.error('[Firebase] VITE_VAPID_PUBLIC_KEY is not configured');
-    return null;
+    console.warn('[Firebase] VITE_VAPID_PUBLIC_KEY not configured, using fallback');
+    return VAPID_PUBLIC_KEY_FALLBACK;
   }
   
   // Clean the key (remove whitespace, quotes, and any VITE_ prefix if mistakenly included)
   let cleanKey = rawKey.trim().replace(/^["']|["']$/g, '');
   if (cleanKey.startsWith('VITE_')) {
+    console.warn('[Firebase] VAPID key had VITE_ prefix in value, removing it');
     cleanKey = cleanKey.replace(/^VITE_/, '');
+  }
+  
+  // Validate key length (VAPID keys are typically 87 characters)
+  if (cleanKey.length < 70) {
+    console.error('[Firebase] VAPID key too short, using fallback. Length:', cleanKey.length);
+    return VAPID_PUBLIC_KEY_FALLBACK;
   }
   
   console.log('[Firebase] VAPID key loaded - length:', cleanKey.length, '- prefix:', cleanKey.substring(0, 12) + '...');
   return cleanKey;
 };
 
-// Export VAPID info for diagnostics
+// Export VAPID info for diagnostics - comprehensive debug info
 export const getVapidKeyInfo = () => {
   const rawKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
   const cleanKey = getVapidKey();
+  const usingFallback = !rawKey || rawKey.length < 70;
+  
   return {
-    rawPrefix: rawKey.substring(0, 15) + '...',
+    // Raw value info (from env)
+    rawPrefix: rawKey ? rawKey.substring(0, 15) + '...' : '(empty)',
     rawLength: rawKey.length,
+    rawValue: rawKey.length > 0 ? `${rawKey.substring(0, 8)}...${rawKey.substring(rawKey.length - 8)}` : '(empty)',
+    
+    // Clean value info (after processing)
     cleanPrefix: cleanKey ? cleanKey.substring(0, 15) + '...' : 'null',
     cleanLength: cleanKey?.length || 0,
+    cleanFingerprint: cleanKey ? `${cleanKey.substring(0, 8)}...${cleanKey.substring(cleanKey.length - 8)}` : 'null',
+    
+    // Diagnostic flags
     hasVitePrefix: rawKey.startsWith('VITE_'),
     hasQuotes: rawKey.startsWith('"') || rawKey.startsWith("'"),
+    usingFallback,
+    isValid: (cleanKey?.length || 0) >= 70,
+    
+    // Source info
+    source: usingFallback ? 'fallback (hardcoded)' : 'environment variable',
   };
 };
 

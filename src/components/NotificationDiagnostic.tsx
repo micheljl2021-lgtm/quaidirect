@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { requestFCMToken } from '@/lib/firebase';
+import { requestFCMToken, getVapidKeyInfo, getFirebaseConfigInfo } from '@/lib/firebase';
 import { 
   Bell, 
   BellOff, 
@@ -14,7 +14,8 @@ import {
   Loader2, 
   RefreshCw,
   Trash2,
-  Send
+  Send,
+  Info
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -44,34 +45,38 @@ const NotificationDiagnostic = () => {
       { label: 'Token en base', status: 'pending' },
     ]);
 
-    // Step 0: Check VAPID key
+    // Step 0: Check VAPID key with comprehensive info
     updateStep(0, { status: 'checking' });
     await new Promise(r => setTimeout(r, 200));
     
-    const rawVapidKey = (import.meta.env.VITE_VAPID_PUBLIC_KEY || '').trim();
-    const normalizedVapidKey = rawVapidKey.replace(/^VITE_/, '');
+    const vapidInfo = getVapidKeyInfo();
+    const firebaseInfo = getFirebaseConfigInfo();
+    
+    // Log full debug info to console
+    console.log('[Diagnostic] VAPID Info:', vapidInfo);
+    console.log('[Diagnostic] Firebase Info:', firebaseInfo);
 
-    if (!rawVapidKey) {
-      updateStep(0, { status: 'error', message: 'VITE_VAPID_PUBLIC_KEY non configurée' });
-      setIsRunning(false);
-      return;
-    }
-
-    const hadVitePrefix = rawVapidKey !== normalizedVapidKey;
-    const normalizedLen = normalizedVapidKey.length;
-
-    if (normalizedLen < 70) {
+    if (!vapidInfo.isValid) {
       updateStep(0, {
         status: 'error',
-        message: `Clé VAPID invalide (trop courte, len ${normalizedLen}). Collez uniquement la clé (souvent elle commence par "B...")`,
+        message: `Clé VAPID invalide (len ${vapidInfo.cleanLength}). Source: ${vapidInfo.source}`,
       });
       setIsRunning(false);
       return;
     }
 
+    // Build detailed message
+    const vapidMessage = [
+      `Fingerprint: ${vapidInfo.cleanFingerprint}`,
+      `Longueur: ${vapidInfo.cleanLength}`,
+      `Source: ${vapidInfo.source}`,
+      vapidInfo.hasVitePrefix ? '⚠️ Préfixe VITE_ dans la valeur (corrigé)' : '',
+      vapidInfo.hasQuotes ? '⚠️ Quotes détectées (nettoyées)' : '',
+    ].filter(Boolean).join('\n');
+
     updateStep(0, {
-      status: 'ok',
-      message: `Clé: ${normalizedVapidKey.substring(0, 12)}... (len ${normalizedLen})${hadVitePrefix ? ' — préfixe VITE_ détecté dans la valeur, corrigé automatiquement' : ''}`,
+      status: vapidInfo.usingFallback ? 'warning' : 'ok',
+      message: vapidMessage,
     });
 
     // Step 1: Browser support
@@ -267,15 +272,28 @@ const NotificationDiagnostic = () => {
         </p>
 
         {/* Current status */}
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-muted-foreground">Permission actuelle:</span>
-          <Badge variant={
-            Notification.permission === 'granted' ? 'default' :
-            Notification.permission === 'denied' ? 'destructive' : 'secondary'
-          }>
-            {Notification.permission === 'granted' ? 'Accordée' :
-             Notification.permission === 'denied' ? 'Bloquée' : 'Non demandée'}
-          </Badge>
+        <div className="flex flex-col gap-2 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">Permission actuelle:</span>
+            <Badge variant={
+              Notification.permission === 'granted' ? 'default' :
+              Notification.permission === 'denied' ? 'destructive' : 'secondary'
+            }>
+              {Notification.permission === 'granted' ? 'Accordée' :
+               Notification.permission === 'denied' ? 'Bloquée' : 'Non demandée'}
+            </Badge>
+          </div>
+          
+          {/* Quick VAPID fingerprint display */}
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Info className="h-3 w-3" />
+            <span>
+              VAPID: {(() => {
+                const info = getVapidKeyInfo();
+                return `${info.cleanFingerprint} (${info.source})`;
+              })()}
+            </span>
+          </div>
         </div>
 
         {/* Diagnostic steps */}
