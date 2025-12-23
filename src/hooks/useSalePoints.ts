@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface SalePoint {
   id: string;
   label: string;
-  address: string;
+  address: string | null; // Peut être null pour les anonymes
   latitude: number | null;
   longitude: number | null;
   photo_url: string | null;
@@ -65,7 +65,7 @@ export const useSalePoints = (options: UseSalePointsOptions = {}): UseSalePoints
         return {
           id: sp.id as string,
           label: sp.label as string,
-          address: sp.address as string,
+          address: (sp.address as string | null) || null, // Peut être null pour les anonymes
           latitude: sp.latitude as number | null,
           longitude: sp.longitude as number | null,
           photo_url: sp.photo_url as string | null,

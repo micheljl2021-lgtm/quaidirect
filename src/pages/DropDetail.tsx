@@ -12,6 +12,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { MapPin, Clock, Fish, User, Loader2, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { getDropLocationLabel } from '@/lib/dropLocationUtils';
 
 const DropDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -218,13 +219,16 @@ const DropDetail = () => {
             <div className="flex items-center gap-2 text-muted-foreground">
               <MapPin className="h-5 w-5" aria-hidden="true" />
               <span>
-                {drop.ports 
-                  ? `${drop.ports.name}, ${drop.ports.city}`
-                  : user 
-                    ? (drop.fisherman_sale_points?.label 
-                        ? `${drop.fisherman_sale_points.label}${drop.fisherman_sale_points.address ? ` - ${drop.fisherman_sale_points.address}` : ''}`
-                        : 'Point de vente partenaire')
-                    : 'Point de vente partenaire'}
+                {getDropLocationLabel({
+                  isAuthenticated: !!user,
+                  salePointId: drop.sale_point_id,
+                  salePoints: drop.fisherman_sale_points ? [{
+                    id: drop.fisherman_sale_points.id,
+                    label: drop.fisherman_sale_points.label,
+                    address: drop.fisherman_sale_points.address,
+                  }] : [],
+                  port: drop.ports,
+                })}
               </span>
             </div>
             {saleDateTime && (
