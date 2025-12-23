@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SalePoint {
   id: string;
@@ -35,33 +36,41 @@ export interface UseSalePointsResult {
 }
 
 /**
- * Hook centralisé pour récupérer les points de vente
- * Les points de vente sont PUBLICS et accessibles à tous (anonymes et connectés)
+ * Hook centralisé pour récupérer les points de vente.
  * 
- * @param options.enabled - Active/désactive le fetch (default: true)
+ * IMPORTANT:
+ * - Les anonymes obtiennent des adresses MASQUÉES (address: null)
+ * - Les utilisateurs connectés obtiennent les adresses complètes
+ * 
+ * Note technique: le cache React Query doit dépendre de l'état de session,
+ * sinon on peut garder en mémoire une réponse "anonyme" et l'afficher même après login.
  */
 export const useSalePoints = (options: UseSalePointsOptions = {}): UseSalePointsResult => {
   const { enabled = true } = options;
+  const { session } = useAuth();
+
+  // Cache key séparée entre anonyme et connecté (évite de réutiliser des adresses masquées)
+  const authKey = session?.user?.id ?? 'anon';
 
   const query = useQuery<SalePoint[], Error>({
-    queryKey: ['sale-points-public'],
+    queryKey: ['sale-points-public', authKey],
     queryFn: async (): Promise<SalePoint[]> => {
       const { data, error } = await supabase.functions.invoke('get-public-sale-points');
-      
+
       if (error) {
         console.error('[useSalePoints] Error:', error);
         throw error;
       }
-      
+
       if (!data || !Array.isArray(data)) {
         return [];
       }
-      
+
       // Normalize fishermen key and cast to proper type
       return data.map((sp: Record<string, unknown>): SalePoint => {
         const fishermenKey = Object.keys(sp).find(k => k.startsWith('fishermen'));
         const fishermen = fishermenKey ? sp[fishermenKey] : null;
-        
+
         return {
           id: sp.id as string,
           label: sp.label as string,
