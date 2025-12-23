@@ -287,7 +287,7 @@ const NotificationDiagnostic = () => {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium">{step.label}</p>
                   {step.message && (
-                    <p className="text-xs text-muted-foreground truncate">{step.message}</p>
+                    <p className="text-xs text-muted-foreground break-words whitespace-pre-wrap">{step.message}</p>
                   )}
                 </div>
               </div>
