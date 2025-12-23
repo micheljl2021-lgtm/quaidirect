@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import { useQuickDrop } from '@/hooks/useQuickDrop';
 import { toast } from 'sonner';
-import { FileText, Loader2, MapPin, Clock, CalendarIcon, ArrowLeft, Check } from 'lucide-react';
+import { FileText, Loader2, MapPin, Clock, CalendarIcon, ArrowLeft, Check, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -44,7 +44,9 @@ export function TemplatePickerModal({ open, onOpenChange, onSuccess }: TemplateP
     salePoints, 
     templates, 
     isPublishing, 
-    publishFromTemplate 
+    publishFromTemplate,
+    isAuthenticated,
+    authLoading,
   } = useQuickDrop();
 
   // Step management
@@ -80,6 +82,17 @@ export function TemplatePickerModal({ open, onOpenChange, onSuccess }: TemplateP
   };
 
   const handlePublish = async () => {
+    // Double vérification de l'authentification
+    if (!isAuthenticated) {
+      toast.error('Vous êtes déconnecté. Veuillez vous reconnecter.', {
+        action: {
+          label: 'Connexion',
+          onClick: () => navigate('/auth'),
+        },
+      });
+      return;
+    }
+
     if (!selectedTemplateId || !salePointId) {
       toast.error('Données manquantes');
       return;
@@ -103,6 +116,44 @@ export function TemplatePickerModal({ open, onOpenChange, onSuccess }: TemplateP
       toast.error(result.error || 'Erreur lors de la publication');
     }
   };
+
+  // Si l'utilisateur n'est pas connecté, afficher un message
+  if (!isAuthenticated && !authLoading) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <AlertCircle className="h-5 w-5 text-destructive" aria-hidden="true" />
+              Connexion requise
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-6 text-center space-y-4">
+            <p className="text-muted-foreground">
+              Vous devez être connecté pour publier un arrivage.
+            </p>
+            <Button onClick={() => navigate('/auth')} className="gap-2">
+              Se connecter
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Loading state pendant vérification auth
+  if (authLoading) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md">
+          <div className="py-12 flex flex-col items-center justify-center gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Vérification de la session...</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

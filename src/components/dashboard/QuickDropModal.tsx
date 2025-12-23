@@ -22,7 +22,7 @@ import { SpeciesQuickSelector } from './SpeciesQuickSelector';
 import { SpeciesPhotoPickerModal } from '@/components/SpeciesPhotoPickerModal';
 import { useQuickDrop, QuickDropResult } from '@/hooks/useQuickDrop';
 import { toast } from 'sonner';
-import { Zap, Loader2, MapPin, Clock, CalendarIcon } from 'lucide-react';
+import { Zap, Loader2, MapPin, Clock, CalendarIcon, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -36,10 +36,13 @@ interface QuickDropModalProps {
 export function QuickDropModal({ open, onOpenChange, onSuccess }: QuickDropModalProps) {
   const navigate = useNavigate();
   const { 
+    user,
     defaults, 
     salePoints, 
     speciesPresets, 
     isPublishing, 
+    isAuthenticated,
+    authLoading,
     publishQuickDrop,
     getFallbackPhotos,
   } = useQuickDrop();
@@ -62,6 +65,17 @@ export function QuickDropModal({ open, onOpenChange, onSuccess }: QuickDropModal
   }, [open, defaults, salePoints, salePointId]);
 
   const handlePublish = async () => {
+    // Double vérification de l'authentification
+    if (!isAuthenticated) {
+      toast.error('Vous êtes déconnecté. Veuillez vous reconnecter.', {
+        action: {
+          label: 'Connexion',
+          onClick: () => navigate('/auth'),
+        },
+      });
+      return;
+    }
+
     if (!salePointId) {
       toast.error('Sélectionnez un point de vente');
       return;
@@ -85,13 +99,8 @@ export function QuickDropModal({ open, onOpenChange, onSuccess }: QuickDropModal
 
     if (result.success && result.dropId) {
       setCreatedDropResult(result);
-      // Show photo picker instead of closing
-      if (result.speciesName) {
-        setShowPhotoPicker(true);
-      } else {
-        // No species name, complete without photo
-        handlePhotoPickerComplete(result.dropId);
-      }
+      // Always show photo picker - with fallback for species name
+      setShowPhotoPicker(true);
     } else {
       toast.error(result.error || 'Erreur lors de la publication');
     }
@@ -119,6 +128,47 @@ export function QuickDropModal({ open, onOpenChange, onSuccess }: QuickDropModal
 
   // Get fallback photos for the photo picker
   const fallbackPhotos = salePointId ? getFallbackPhotos(salePointId) : undefined;
+
+  // Si l'utilisateur n'est pas connecté, afficher un message
+  if (!isAuthenticated && !authLoading) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <AlertCircle className="h-5 w-5 text-destructive" aria-hidden="true" />
+              Connexion requise
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-6 text-center space-y-4">
+            <p className="text-muted-foreground">
+              Vous devez être connecté pour publier un arrivage.
+            </p>
+            <Button onClick={() => navigate('/auth')} className="gap-2">
+              Se connecter
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Loading state pendant vérification auth
+  if (authLoading) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md">
+          <div className="py-12 flex flex-col items-center justify-center gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Vérification de la session...</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Derive species name for photo picker - use fallback if needed
+  const speciesNameForPicker = createdDropResult?.speciesName || 'votre pêche du jour';
 
   return (
     <>
@@ -238,8 +288,8 @@ export function QuickDropModal({ open, onOpenChange, onSuccess }: QuickDropModal
         </DialogContent>
       </Dialog>
 
-      {/* Photo Picker Modal */}
-      {showPhotoPicker && createdDropResult?.dropId && createdDropResult?.speciesName && (
+      {/* Photo Picker Modal - always show with fallback species name */}
+      {showPhotoPicker && createdDropResult?.dropId && (
         <SpeciesPhotoPickerModal
           open={showPhotoPicker}
           onOpenChange={(open) => {
@@ -248,7 +298,7 @@ export function QuickDropModal({ open, onOpenChange, onSuccess }: QuickDropModal
             }
           }}
           dropId={createdDropResult.dropId}
-          speciesName={createdDropResult.speciesName}
+          speciesName={speciesNameForPicker}
           onComplete={() => handlePhotoPickerComplete()}
           fallbackPhotos={fallbackPhotos}
         />

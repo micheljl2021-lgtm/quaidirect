@@ -54,7 +54,7 @@ export interface QuickDropResult {
 }
 
 export function useQuickDrop() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [fishermanId, setFishermanId] = useState<string | null>(null);
   const [defaults, setDefaults] = useState<FishermanDefaults | null>(null);
   const [salePoints, setSalePoints] = useState<SalePoint[]>([]);
@@ -68,7 +68,8 @@ export function useQuickDrop() {
   const [isLoading, setIsLoading] = useState(true);
   const [isPublishing, setIsPublishing] = useState(false);
 
-  const canUseQuickDrop = salePoints.length > 0;
+  const isAuthenticated = !!user && !authLoading;
+  const canUseQuickDrop = salePoints.length > 0 && isAuthenticated;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -169,8 +170,19 @@ export function useQuickDrop() {
   };
 
   const publishQuickDrop = async (data: QuickDropData): Promise<QuickDropResult> => {
-    if (!fishermanId || !data.salePointId || data.speciesIds.length === 0) {
-      return { success: false, dropId: null, speciesName: null, error: 'Données manquantes' };
+    // Vérification explicite de la session utilisateur
+    if (!user) {
+      console.error('[publishQuickDrop] Aucun utilisateur connecté');
+      return { success: false, dropId: null, speciesName: null, error: 'Vous êtes déconnecté. Veuillez vous reconnecter.' };
+    }
+    
+    if (!fishermanId) {
+      console.error('[publishQuickDrop] Profil pêcheur non trouvé');
+      return { success: false, dropId: null, speciesName: null, error: 'Profil pêcheur introuvable. Complétez votre onboarding.' };
+    }
+    
+    if (!data.salePointId || data.speciesIds.length === 0) {
+      return { success: false, dropId: null, speciesName: null, error: 'Données manquantes (point de vente ou espèces)' };
     }
 
     setIsPublishing(true);
@@ -246,7 +258,16 @@ export function useQuickDrop() {
     templateId: string,
     overrides: { date: Date; timeSlot: string; customTime?: string; salePointId: string }
   ): Promise<QuickDropResult> => {
-    if (!fishermanId) return { success: false, dropId: null, speciesName: null, error: 'Non connecté' };
+    // Vérification explicite de la session utilisateur
+    if (!user) {
+      console.error('[publishFromTemplate] Aucun utilisateur connecté');
+      return { success: false, dropId: null, speciesName: null, error: 'Vous êtes déconnecté. Veuillez vous reconnecter.' };
+    }
+    
+    if (!fishermanId) {
+      console.error('[publishFromTemplate] Profil pêcheur non trouvé');
+      return { success: false, dropId: null, speciesName: null, error: 'Profil pêcheur introuvable. Complétez votre onboarding.' };
+    }
 
     setIsPublishing(true);
 
@@ -332,6 +353,7 @@ export function useQuickDrop() {
   };
 
   return {
+    user,
     fishermanId,
     defaults,
     salePoints,
@@ -340,6 +362,8 @@ export function useQuickDrop() {
     fishermanPhotos,
     isLoading,
     isPublishing,
+    isAuthenticated,
+    authLoading,
     canUseQuickDrop,
     publishQuickDrop,
     publishFromTemplate,
