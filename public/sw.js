@@ -1,57 +1,15 @@
 // =============================================
-// QuaiDirect Service Worker - Version 2025-12-23-v2
-// Firebase Cloud Messaging + Caching
+// QuaiDirect Service Worker - Simplified Version
+// Push notifications + Caching (NO Firebase SDK)
 // =============================================
 
-// Cache version - update this to force cache refresh
-const CACHE_VERSION = '2025-12-23-v2';
+// Cache version - this placeholder is replaced at build time
+const CACHE_VERSION = '__CACHE_VERSION__';
 const CACHE_NAME = `quaidirect-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `quaidirect-runtime-${CACHE_VERSION}`;
-const STATIC_CACHE = `quaidirect-static-${CACHE_VERSION}`;
 
-// Firebase SDK - using compat version for service worker (10.12.0)
-importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
-
-// Initialize Firebase for FCM
-let fcmMessaging = null;
-try {
-  firebase.initializeApp({
-    apiKey: "AIzaSyCk_r6Pv2-PdvLoJRkn-GHRK1NOu58JMkg",
-    authDomain: "arcane-argon-426216-b7.firebaseapp.com",
-    projectId: "arcane-argon-426216-b7",
-    storageBucket: "arcane-argon-426216-b7.firebasestorage.app",
-    messagingSenderId: "425193275047",
-    appId: "1:425193275047:web:e3b3f08dcb366d919da582",
-  });
-  fcmMessaging = firebase.messaging();
-  console.log('[SW] Firebase Messaging initialized successfully');
-} catch (err) {
-  console.error('[SW] Firebase init error:', err);
-}
-
-// Handle FCM background messages
-if (fcmMessaging) {
-  fcmMessaging.onBackgroundMessage((payload) => {
-    console.log('[SW] FCM Background message received:', payload);
-
-    const notificationTitle = payload.notification?.title || payload.data?.title || 'QuaiDirect';
-    const notificationOptions = {
-      body: payload.notification?.body || payload.data?.body || 'Nouvelle notification',
-      icon: payload.notification?.icon || payload.data?.icon || '/icon-192.png',
-      badge: '/icon-192.png',
-      data: {
-        url: payload.data?.url || payload.fcmOptions?.link || '/',
-        ...payload.data
-      },
-      vibrate: [200, 100, 200],
-      tag: 'quaidirect-fcm',
-      requireInteraction: true,
-    };
-
-    return self.registration.showNotification(notificationTitle, notificationOptions);
-  });
-}
+// Log version on load
+console.log('[SW] Service worker loaded - Version:', CACHE_VERSION);
 
 // =============================================
 // Cache Management
@@ -64,6 +22,23 @@ const PRECACHE_ASSETS = [
   '/icon-192.png',
   '/icon-512.png',
 ];
+
+// URLs to never cache (external scripts, APIs)
+const NEVER_CACHE_PATTERNS = [
+  'gstatic.com',
+  'googleapis.com',
+  'firebase',
+  'supabase.co',
+  '/rest/v1/',
+  '/functions/v1/',
+  '/auth/',
+  'chrome-extension',
+];
+
+// Check if URL should be cached
+const shouldCache = (url) => {
+  return !NEVER_CACHE_PATTERNS.some(pattern => url.includes(pattern));
+};
 
 // Install event
 self.addEventListener('install', (event) => {
@@ -89,7 +64,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   console.log('[SW] Activating version:', CACHE_VERSION);
   
-  const currentCaches = [CACHE_NAME, RUNTIME_CACHE, STATIC_CACHE];
+  const currentCaches = [CACHE_NAME, RUNTIME_CACHE];
   
   event.waitUntil(
     caches.keys()
@@ -97,7 +72,7 @@ self.addEventListener('activate', (event) => {
         return Promise.all(
           cacheNames
             .filter((cacheName) => {
-              // Delete old caches that don't match current version
+              // Delete old QuaiDirect caches that don't match current version
               return cacheName.startsWith('quaidirect-') && 
                      !currentCaches.includes(cacheName);
             })
@@ -124,19 +99,14 @@ self.addEventListener('fetch', (event) => {
   // Skip non-http requests
   if (!url.startsWith('http')) return;
   
-  // Skip API and Supabase requests (don't cache these)
-  if (url.includes('/rest/v1/') || 
-      url.includes('/functions/v1/') ||
-      url.includes('supabase.co') ||
-      url.includes('/auth/')) {
-    return;
-  }
+  // Skip URLs that should never be cached
+  if (!shouldCache(url)) return;
 
   event.respondWith(
     fetch(event.request)
       .then((response) => {
         // Cache successful responses
-        if (response.status === 200) {
+        if (response.status === 200 && shouldCache(url)) {
           const responseClone = response.clone();
           caches.open(RUNTIME_CACHE).then((cache) => {
             cache.put(event.request, responseClone);
@@ -158,7 +128,11 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Handle push events (fallback if FCM doesn't work)
+// =============================================
+// Push Notifications (NO Firebase SDK needed)
+// =============================================
+
+// Handle push events - this receives FCM messages in background
 self.addEventListener('push', (event) => {
   console.log('[SW] Push event received');
   
@@ -166,19 +140,39 @@ self.addEventListener('push', (event) => {
     title: 'QuaiDirect',
     body: 'Nouvelle notification',
     icon: '/icon-192.png',
+    url: '/',
   };
 
   if (event.data) {
     try {
       const payload = event.data.json();
-      data = {
-        title: payload.notification?.title || payload.title || data.title,
-        body: payload.notification?.body || payload.body || data.body,
-        icon: payload.notification?.icon || payload.icon || data.icon,
-        data: payload.data || {},
-      };
+      console.log('[SW] Push payload:', payload);
+      
+      // Handle FCM format
+      if (payload.notification) {
+        data = {
+          title: payload.notification.title || data.title,
+          body: payload.notification.body || data.body,
+          icon: payload.notification.icon || data.icon,
+          url: payload.data?.url || payload.fcmOptions?.link || data.url,
+        };
+      } else {
+        // Handle direct data format
+        data = {
+          title: payload.title || data.title,
+          body: payload.body || data.body,
+          icon: payload.icon || data.icon,
+          url: payload.url || payload.data?.url || data.url,
+        };
+      }
     } catch (e) {
       console.error('[SW] Error parsing push data:', e);
+      // Try as text
+      try {
+        data.body = event.data.text();
+      } catch (e2) {
+        console.error('[SW] Error parsing push text:', e2);
+      }
     }
   }
 
@@ -186,10 +180,14 @@ self.addEventListener('push', (event) => {
     body: data.body,
     icon: data.icon,
     badge: '/icon-192.png',
-    data: data.data || {},
+    data: { url: data.url },
     vibrate: [200, 100, 200],
     tag: 'quaidirect-push',
     requireInteraction: true,
+    actions: [
+      { action: 'open', title: 'Voir' },
+      { action: 'close', title: 'Fermer' },
+    ],
   };
 
   event.waitUntil(
@@ -201,6 +199,11 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   console.log('[SW] Notification clicked:', event.notification.tag);
   event.notification.close();
+
+  // Handle actions
+  if (event.action === 'close') {
+    return;
+  }
 
   const urlToOpen = event.notification.data?.url || '/';
 
@@ -221,8 +224,13 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// Message handler for client-SW communication
+// =============================================
+// Message Handler (for client-SW communication)
+// =============================================
+
 self.addEventListener('message', (event) => {
+  console.log('[SW] Message received:', event.data?.type);
+  
   if (event.data?.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
@@ -231,6 +239,20 @@ self.addEventListener('message', (event) => {
     if (event.ports && event.ports[0]) {
       event.ports[0].postMessage({ version: CACHE_VERSION });
     }
+  }
+  
+  if (event.data?.type === 'CLEAR_CACHE') {
+    event.waitUntil(
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => caches.delete(cacheName))
+        );
+      }).then(() => {
+        if (event.ports && event.ports[0]) {
+          event.ports[0].postMessage({ cleared: true });
+        }
+      })
+    );
   }
   
   if (event.data?.type === 'FORCE_UPDATE') {
@@ -245,5 +267,3 @@ self.addEventListener('message', (event) => {
     );
   }
 });
-
-console.log('[SW] Service worker script loaded - Version:', CACHE_VERSION);

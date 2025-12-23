@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { requestFCMToken, getFirebaseMessaging } from "@/lib/firebase";
+import { requestFCMToken, getFirebaseMessaging, getFirebaseConfigInfo, getVapidKeyInfo } from "@/lib/firebase";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +35,8 @@ const NotificationDebugPanel = () => {
   const [results, setResults] = useState<DiagnosticResult[]>([]);
   const [platform, setPlatform] = useState<string>('');
   const [tokenInDb, setTokenInDb] = useState<string | null>(null);
+  const [configInfo, setConfigInfo] = useState<any>(null);
+  const [swVersion, setSwVersion] = useState<string | null>(null);
 
   useEffect(() => {
     // Detect platform
@@ -71,21 +73,35 @@ const NotificationDebugPanel = () => {
     setIsRunning(true);
     setResults([]);
     setTokenInDb(null);
+    setSwVersion(null);
+
+    // Get Firebase config info for display
+    const fbConfig = getFirebaseConfigInfo();
+    const vapidInfo = getVapidKeyInfo();
+    setConfigInfo({ firebase: fbConfig, vapid: vapidInfo });
+
+    // Step 0: Display config info
+    addResult({
+      step: 'config',
+      status: 'success',
+      message: 'Configuration Firebase',
+      detail: `API Key: ${fbConfig.apiKeyPrefix} (${fbConfig.apiKeyLength} chars)\nProject: ${fbConfig.projectId}\nSender: ${fbConfig.messagingSenderId}`
+    });
 
     // Step 1: Check VAPID Key
     addResult({ step: 'vapid', status: 'pending', message: 'Vérification clé VAPID...' });
-    const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-    if (vapidKey && vapidKey.length > 50) {
+    if (vapidInfo.cleanLength > 50) {
+      const hasIssues = vapidInfo.hasVitePrefix || vapidInfo.hasQuotes;
       updateResult('vapid', { 
-        status: 'success', 
-        message: 'Clé VAPID configurée',
-        detail: `Longueur: ${vapidKey.length} | Début: ${vapidKey.substring(0, 12)}...`
+        status: hasIssues ? 'warning' : 'success', 
+        message: hasIssues ? 'Clé VAPID avec pollution' : 'Clé VAPID OK',
+        detail: `Raw: ${vapidInfo.rawPrefix} (${vapidInfo.rawLength} chars)\nClean: ${vapidInfo.cleanPrefix} (${vapidInfo.cleanLength} chars)${hasIssues ? '\n⚠️ Préfixe VITE_ ou quotes détectés' : ''}`
       });
     } else {
       updateResult('vapid', { 
         status: 'error', 
         message: 'Clé VAPID manquante ou invalide',
-        detail: vapidKey ? `Longueur: ${vapidKey.length}` : 'Non définie'
+        detail: `Longueur: ${vapidInfo.rawLength}`
       });
       setIsRunning(false);
       return;
@@ -159,11 +175,28 @@ const NotificationDebugPanel = () => {
       } else {
         const mainReg = registrations.find(r => r.active?.scriptURL.includes('sw.js'));
         if (mainReg) {
-          updateResult('sw', { 
-            status: 'success', 
-            message: 'Service Worker actif',
-            detail: `URL: ${mainReg.active?.scriptURL.split('/').pop()} | Scope: ${mainReg.scope}`
-          });
+          // Try to get SW version
+          try {
+            const messageChannel = new MessageChannel();
+            const versionPromise = new Promise<string>((resolve) => {
+              messageChannel.port1.onmessage = (e) => resolve(e.data?.version || 'unknown');
+              setTimeout(() => resolve('timeout'), 2000);
+            });
+            mainReg.active?.postMessage({ type: 'GET_VERSION' }, [messageChannel.port2]);
+            const version = await versionPromise;
+            setSwVersion(version);
+            updateResult('sw', { 
+              status: 'success', 
+              message: 'Service Worker actif',
+              detail: `Version: ${version}\nScope: ${mainReg.scope}`
+            });
+          } catch (e) {
+            updateResult('sw', { 
+              status: 'success', 
+              message: 'Service Worker actif',
+              detail: `Scope: ${mainReg.scope}`
+            });
+          }
         } else {
           updateResult('sw', { 
             status: 'warning', 
@@ -295,10 +328,15 @@ const NotificationDebugPanel = () => {
         });
       }
     } catch (tokenErr: any) {
+      // Detailed error for debugging
+      let errorDetail = `Code: ${tokenErr.code || 'unknown'}\nMessage: ${tokenErr.message}`;
+      if (tokenErr.originalError) {
+        errorDetail += `\nOriginal: ${JSON.stringify(tokenErr.originalError, Object.getOwnPropertyNames(tokenErr.originalError), 2).substring(0, 300)}`;
+      }
       updateResult('token', { 
         status: 'error', 
         message: 'Erreur obtention token',
-        detail: `${tokenErr.code || ''} ${tokenErr.message}`
+        detail: errorDetail
       });
     }
 
@@ -399,6 +437,8 @@ const NotificationDebugPanel = () => {
 
   const getStepIcon = (step: string) => {
     switch (step) {
+      case 'config':
+        return <Key className="h-4 w-4" />;
       case 'vapid':
         return <Key className="h-4 w-4" />;
       case 'browser':
