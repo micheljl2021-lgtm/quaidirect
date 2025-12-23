@@ -9,9 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft, Save, Loader2, MapPin, Clock, Camera, Star, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Save, Loader2, MapPin, Clock, Camera, Star, AlertTriangle, Bell } from "lucide-react";
 import { PhotoUpload } from "@/components/PhotoUpload";
 import { FavoritePhotoSelector } from "@/components/FavoritePhotoSelector";
+import NotificationDiagnostic from "@/components/NotificationDiagnostic";
+
 export default function PecheurPreferences() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -275,6 +277,15 @@ export default function PecheurPreferences() {
                 selectedPhotoUrl={favoritePhotoUrl || undefined}
                 onSelect={setFavoritePhotoUrl}
               />
+            </div>
+
+            {/* Notifications Section */}
+            <div className="pt-4 border-t">
+              <Label className="flex items-center gap-2 mb-4 text-base font-semibold">
+                <Bell className="h-4 w-4" />
+                Notifications push
+              </Label>
+              <NotificationDiagnostic />
             </div>
 
             {/* Save Button */}
