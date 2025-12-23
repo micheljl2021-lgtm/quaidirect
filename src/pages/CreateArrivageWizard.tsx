@@ -572,8 +572,8 @@ export default function CreateArrivageWizard() {
         dropTime={createdDropInfo.time}
       />
 
-      {/* Photo Picker Modal */}
-      {showPhotoPicker && createdDropId && firstSpeciesName && (
+      {/* Photo Picker Modal - always show with fallback species name */}
+      {showPhotoPicker && createdDropId && (
         <SpeciesPhotoPickerModal
           open={showPhotoPicker}
           onOpenChange={(open) => {
@@ -583,7 +583,7 @@ export default function CreateArrivageWizard() {
             }
           }}
           dropId={createdDropId}
-          speciesName={firstSpeciesName}
+          speciesName={firstSpeciesName || 'votre pêche du jour'}
           onComplete={() => {
             setShowPhotoPicker(false);
             setShowMessageDialog(true);
