@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Fish, MapPin, Clock, TrendingUp, Calendar, ArrowRight, Loader2, Bell } from 'lucide-react';
 import { getRedirectPathByRole } from '@/lib/authRedirect';
 import { TestModeBanner } from '@/components/admin/TestModeBanner';
-
+import { getDropLocationLabel } from '@/lib/dropLocationUtils';
 const UserDashboard = () => {
   const { user, effectiveRole, viewAsRole, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
@@ -76,7 +76,7 @@ const UserDashboard = () => {
             name,
             city
           ),
-          fisherman_sale_points (
+          fisherman_sale_points!sale_point_id (
             id,
             label,
             address
@@ -258,11 +258,23 @@ const UserDashboard = () => {
           ) : drops && drops.length > 0 ? (
             <div className="space-y-4">
               {drops.slice(0, 6).map((drop) => {
-                // Get location info
+                // Get location info - utilisateur CONNECTÉ = voit l'adresse complète
                 const salePoint = drop.fisherman_sale_points;
-                const port = drop.ports;
                 const salePointLabel = salePoint?.label || null;
-                const portName = port ? `${port.name}, ${port.city}` : (salePoint?.address || salePointLabel || 'Point de vente');
+                
+                // Construire la liste des sale points pour getDropLocationLabel
+                const salePointsForLabel = salePoint ? [{
+                  id: salePoint.id,
+                  label: salePoint.label,
+                  address: salePoint.address,
+                }] : [];
+                
+                const portName = getDropLocationLabel({
+                  isAuthenticated: true, // UserDashboard = toujours connecté
+                  salePointId: drop.sale_point_id,
+                  salePoints: salePointsForLabel,
+                  port: drop.ports,
+                });
                 
                 // Get fisherman display name
                 const fisherman = drop.fishermen;
