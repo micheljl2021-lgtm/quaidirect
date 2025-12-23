@@ -4,81 +4,92 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 const DeveloperCredits = () => {
-  // Configuration - À personnaliser
-  const startDate = "8 Janvier 2025";
-  const hoursPerDay = 8; // Moyenne estimée
-  const totalDays = 170; // Jours de développement estimés
-  const totalHours = hoursPerDay * totalDays;
+  // Configuration - Valeurs réelles
+  const startDate = "9 Novembre 2025";
+  const hoursPerDay = 12; // Moyenne réelle (souvent plus)
+  const totalDays = 45; // Du 9 nov au 23 déc 2025
+  const totalHours = hoursPerDay * totalDays; // ~540h
 
   const milestones = [
     {
-      phase: "Phase 1 - Fondations",
-      period: "Janvier 2025",
+      phase: "Phase 1 - Fondations & Architecture",
+      period: "9-20 Novembre 2025",
       items: [
         "Architecture React + TypeScript + Vite",
         "Intégration Supabase (Auth, Database, Storage)",
-        "Design system Tailwind personnalisé",
-        "Structure de navigation multi-rôles"
+        "Design system Tailwind personnalisé maritime",
+        "Structure de navigation multi-rôles (visitor, user, premium, fisherman, admin)",
+        "Système d'authentification complet",
+        "Configuration RLS et sécurité de base"
       ]
     },
     {
-      phase: "Phase 2 - Espace Pêcheur",
-      period: "Février - Mars 2025",
+      phase: "Phase 2 - Espace Pêcheur Complet",
+      period: "21 Nov - 5 Déc 2025",
       items: [
-        "Onboarding pêcheur en 6 étapes",
-        "Dashboard pêcheur complet",
-        "Création d'arrivages (Express + Wizard)",
-        "Gestion des points de vente",
-        "Gestion des espèces et préférences",
-        "Système de templates d'arrivages"
+        "Onboarding pêcheur en 6 étapes avec validation",
+        "Dashboard pêcheur avec statistiques temps réel",
+        "Création d'arrivages Express (20 secondes)",
+        "Wizard d'arrivage détaillé avec espèces",
+        "Gestion des points de vente personnalisés",
+        "Système de templates et presets d'arrivages",
+        "Gestion des contacts clients (import, groupes)",
+        "Photos par espèce avec fallback intelligent"
       ]
     },
     {
-      phase: "Phase 3 - Espace Client",
-      period: "Avril - Mai 2025",
+      phase: "Phase 3 - Espace Client & Premium",
+      period: "6-12 Déc 2025",
       items: [
         "Landing page optimisée SEO",
-        "Liste des arrivages avec filtres",
-        "Carte interactive Google Maps",
-        "Profils pêcheurs publics (micro-sites)",
+        "Liste des arrivages avec filtres avancés",
+        "Carte interactive Google Maps (ports, arrivages)",
+        "Profils pêcheurs publics (micro-sites SEO)",
         "Système de paniers (25€ / 45€ / 75€)",
-        "Abonnement Premium avec préférences"
+        "Abonnement Premium avec préférences",
+        "Suivi des ports et espèces favorites",
+        "Notifications prioritaires Premium"
       ]
     },
     {
-      phase: "Phase 4 - Paiements & Notifications",
-      period: "Juin - Août 2025",
+      phase: "Phase 4 - Paiements & Intégrations",
+      period: "13-17 Déc 2025",
       items: [
-        "Intégration Stripe complète",
-        "Webhooks Stripe (abonnements, paniers)",
+        "Intégration Stripe complète (checkout, webhooks)",
+        "Abonnements pêcheurs (Basic/Pro)",
+        "Paiement paniers clients",
+        "Customer Portal Stripe",
         "Notifications email via Resend",
-        "Notifications push (FCM)",
-        "Système SMS (Twilio - en cours)",
-        "Gestion des contacts pêcheurs"
+        "Notifications push Firebase FCM",
+        "Système SMS Twilio (en développement)",
+        "35+ Edge Functions Supabase"
       ]
     },
     {
       phase: "Phase 5 - IA & Fonctionnalités Avancées",
-      period: "Septembre - Novembre 2025",
+      period: "18-20 Déc 2025",
       items: [
         "IA du Marin (assistant IA pour pêcheurs)",
         "Génération SEO automatique des profils",
         "Génération de descriptions par IA",
-        "Système de recettes avec IA",
+        "Système de recettes avec génération IA",
         "Zones réglementaires de pêche",
-        "Module Caisse pour ventes à quai"
+        "Module Caisse pour ventes à quai",
+        "Quotas IA par niveau d'abonnement"
       ]
     },
     {
-      phase: "Phase 6 - Admin & Optimisations",
-      period: "Décembre 2025",
+      phase: "Phase 6 - Admin, Sécurité & Polish",
+      period: "21-23 Déc 2025",
       items: [
-        "Dashboard admin complet",
-        "Validation des pêcheurs",
-        "Gestion des abonnements",
-        "Mises à jour plateforme",
-        "Optimisations RLS & sécurité",
-        "PWA & installation mobile"
+        "Dashboard admin complet avec onglets",
+        "Validation et gestion des pêcheurs",
+        "Gestion des abonnements et paiements",
+        "Mises à jour plateforme (email broadcast)",
+        "Audit sécurité RLS complet",
+        "Nettoyage colonnes orphelines",
+        "PWA & installation mobile",
+        "Optimisations performances"
       ]
     }
   ];
