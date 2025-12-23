@@ -63,6 +63,7 @@ const PecheurWallet = lazy(() => import("./pages/PecheurWallet"));
 const AdminPushTest = lazy(() => import("./pages/AdminPushTest"));
 const Download = lazy(() => import("./pages/Download"));
 const PecheurZonesReglementaires = lazy(() => import("./pages/PecheurZonesReglementaires"));
+const DeveloperCredits = lazy(() => import("./pages/DeveloperCredits"));
 
 // Wrapper for lazy-loaded routes
 const LazyRoute = ({ children }: { children: React.ReactNode }) => (
@@ -230,6 +231,9 @@ const App = () => (
             <Route path="/arrivage/:id" element={<RedirectDropLegacy />} />
             <Route path="/premium/dashboard" element={<Navigate to="/dashboard/premium" replace />} />
             <Route path="/admin" element={<Navigate to="/dashboard/admin" replace />} />
+
+            {/* Hidden developer page (not linked in navigation) */}
+            <Route path="/dev/credits" element={<LazyRoute><DeveloperCredits /></LazyRoute>} />
 
             {/* Catch-all 404 */}
             <Route path="*" element={<NotFound />} />
