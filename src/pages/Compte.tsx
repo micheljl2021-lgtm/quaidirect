@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useClientSubscriptionLevel } from "@/hooks/useClientSubscriptionLevel";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
+import PushNotificationToggle from "@/components/PushNotificationToggle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -314,44 +315,40 @@ const Compte = () => {
             </CardContent>
           </Card>
 
-          {/* Bloc Notifications */}
+          {/* Bloc Notifications Push - Activation */}
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Bell className="h-5 w-5 text-primary" />
-                <CardTitle>Notifications</CardTitle>
+                <CardTitle>Notifications Push</CardTitle>
               </div>
               <CardDescription>
-                Configurer mes alertes
+                Recevez des alertes sur votre appareil pour les arrivages
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Notifications Push</p>
-                    <p className="text-xs text-muted-foreground">Alertes du navigateur pour les arrivages</p>
-                  </div>
-                  <Switch
-                    checked={notificationPrefs.push_enabled}
-                    onCheckedChange={(v) => handleNotificationToggle('push_enabled', v)}
-                    disabled={savingNotifs}
-                  />
+              {/* Toggle d'activation Push - le vrai composant */}
+              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Activer les notifications push</p>
+                  <p className="text-xs text-muted-foreground">Alertes en temps réel sur votre navigateur/téléphone</p>
                 </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Notifications Email</p>
-                    <p className="text-xs text-muted-foreground">
-                      {isPremium ? 'Alertes par email (points de vente, espèces)' : 'Réservé aux abonnés Premium'}
-                    </p>
-                  </div>
-                  <Switch
-                    checked={notificationPrefs.email_enabled}
-                    onCheckedChange={(v) => handleNotificationToggle('email_enabled', v)}
-                    disabled={savingNotifs || !isPremium}
-                  />
+                <PushNotificationToggle />
+              </div>
+              
+              {/* Préférence email (sauvegardée en base) */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Notifications Email</p>
+                  <p className="text-xs text-muted-foreground">
+                    {isPremium ? 'Alertes par email (points de vente, espèces)' : 'Réservé aux abonnés Premium'}
+                  </p>
                 </div>
+                <Switch
+                  checked={notificationPrefs.email_enabled}
+                  onCheckedChange={(v) => handleNotificationToggle('email_enabled', v)}
+                  disabled={savingNotifs || !isPremium}
+                />
               </div>
             </CardContent>
           </Card>
