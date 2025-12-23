@@ -12,8 +12,15 @@ const firebaseConfig = {
   appId: "1:425193275047:web:e3b3f08dcb366d919da582",
 };
 
-// VAPID key for web push
-const VAPID_KEY = "BOtX3NFoSWNKMfJGfOALKab5JcTNzWKuYmEg4pumfS9BJ7PlOm5KTmYn9PtvdT-CC9BQ9Yy2eK4ypkYM8jHiU";
+// VAPID key for web push - from environment variable
+const VAPID_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || "";
+
+// Log VAPID key status for debugging
+if (!VAPID_KEY) {
+  console.error('[Firebase] VAPID_PUBLIC_KEY is not configured in environment');
+} else {
+  console.log('[Firebase] VAPID key configured, prefix:', VAPID_KEY.substring(0, 12) + '...');
+}
 
 // Initialize Firebase (only once)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();

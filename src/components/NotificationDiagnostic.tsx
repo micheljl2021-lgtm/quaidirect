@@ -36,6 +36,7 @@ const NotificationDiagnostic = () => {
   const runDiagnostic = async () => {
     setIsRunning(true);
     setSteps([
+      { label: 'Clé VAPID', status: 'pending' },
       { label: 'Support navigateur', status: 'pending' },
       { label: 'Permission notifications', status: 'pending' },
       { label: 'Service Worker', status: 'pending' },
@@ -43,88 +44,102 @@ const NotificationDiagnostic = () => {
       { label: 'Token en base', status: 'pending' },
     ]);
 
-    // Step 1: Browser support
+    // Step 0: Check VAPID key
     updateStep(0, { status: 'checking' });
-    await new Promise(r => setTimeout(r, 300));
+    await new Promise(r => setTimeout(r, 200));
+    
+    const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+    if (!vapidKey) {
+      updateStep(0, { status: 'error', message: 'VITE_VAPID_PUBLIC_KEY non configurée' });
+      setIsRunning(false);
+      return;
+    }
+    updateStep(0, { status: 'ok', message: `Clé: ${vapidKey.substring(0, 12)}...` });
+
+    // Step 1: Browser support
+    updateStep(1, { status: 'checking' });
+    await new Promise(r => setTimeout(r, 200));
     
     if (!('Notification' in window)) {
-      updateStep(0, { status: 'error', message: 'API Notification non disponible' });
+      updateStep(1, { status: 'error', message: 'API Notification non disponible' });
       setIsRunning(false);
       return;
     }
     if (!('serviceWorker' in navigator)) {
-      updateStep(0, { status: 'error', message: 'Service Workers non supportés' });
+      updateStep(1, { status: 'error', message: 'Service Workers non supportés' });
       setIsRunning(false);
       return;
     }
-    updateStep(0, { status: 'ok', message: 'Notifications et SW supportés' });
+    updateStep(1, { status: 'ok', message: 'Notifications et SW supportés' });
 
     // Step 2: Permission
-    updateStep(1, { status: 'checking' });
-    await new Promise(r => setTimeout(r, 300));
+    updateStep(2, { status: 'checking' });
+    await new Promise(r => setTimeout(r, 200));
     
     const permission = Notification.permission;
     if (permission === 'denied') {
-      updateStep(1, { status: 'error', message: 'Permission bloquée - réinitialisez dans les paramètres du navigateur' });
+      updateStep(2, { status: 'error', message: 'Permission bloquée - réinitialisez dans les paramètres du navigateur' });
       setIsRunning(false);
       return;
     } else if (permission === 'default') {
-      updateStep(1, { status: 'warning', message: 'Permission non demandée - cliquez sur "Activer" pour demander' });
+      updateStep(2, { status: 'warning', message: 'Permission non demandée - cliquez sur "Activer" pour demander' });
     } else {
-      updateStep(1, { status: 'ok', message: 'Permission accordée' });
+      updateStep(2, { status: 'ok', message: 'Permission accordée' });
     }
 
     // Step 3: Service Worker
-    updateStep(2, { status: 'checking' });
+    updateStep(3, { status: 'checking' });
     try {
       const registrations = await navigator.serviceWorker.getRegistrations();
       const swReg = registrations.find(r => r.active?.scriptURL.includes('sw.js'));
       
       if (swReg) {
-        updateStep(2, { status: 'ok', message: `SW actif: ${swReg.scope}` });
+        updateStep(3, { status: 'ok', message: `SW actif: ${swReg.scope}` });
       } else {
-        updateStep(2, { status: 'warning', message: 'SW non trouvé, tentative d\'enregistrement...' });
+        updateStep(3, { status: 'warning', message: 'SW non trouvé, tentative d\'enregistrement...' });
         
         try {
           await navigator.serviceWorker.register('/sw.js');
           await navigator.serviceWorker.ready;
-          updateStep(2, { status: 'ok', message: 'SW enregistré avec succès' });
+          updateStep(3, { status: 'ok', message: 'SW enregistré avec succès' });
         } catch (swError: any) {
-          updateStep(2, { status: 'error', message: `Échec enregistrement SW: ${swError.message}` });
+          updateStep(3, { status: 'error', message: `Échec enregistrement SW: ${swError.message}` });
           setIsRunning(false);
           return;
         }
       }
     } catch (swError: any) {
-      updateStep(2, { status: 'error', message: `Erreur SW: ${swError.message}` });
+      updateStep(3, { status: 'error', message: `Erreur SW: ${swError.message}` });
       setIsRunning(false);
       return;
     }
 
     // Step 4: FCM Token
-    updateStep(3, { status: 'checking' });
+    updateStep(4, { status: 'checking' });
     try {
       // Only try if permission is granted
       if (Notification.permission === 'granted') {
         const token = await requestFCMToken();
         if (token) {
-          updateStep(3, { status: 'ok', message: `Token obtenu: ${token.substring(0, 20)}...` });
+          updateStep(4, { status: 'ok', message: `Token obtenu: ${token.substring(0, 20)}...` });
         } else {
-          updateStep(3, { status: 'error', message: 'Impossible d\'obtenir le token - vérifiez la console' });
+          updateStep(4, { status: 'error', message: 'Impossible d\'obtenir le token - voir console pour détails (code erreur Firebase)' });
           setIsRunning(false);
           return;
         }
       } else {
-        updateStep(3, { status: 'warning', message: 'Permission requise d\'abord' });
+        updateStep(4, { status: 'warning', message: 'Permission requise d\'abord' });
       }
     } catch (tokenError: any) {
-      updateStep(3, { status: 'error', message: `Erreur token: ${tokenError.message}` });
+      const errorCode = tokenError?.code || 'unknown';
+      const errorMsg = tokenError?.message || 'Erreur inconnue';
+      updateStep(4, { status: 'error', message: `Erreur FCM [${errorCode}]: ${errorMsg}` });
       setIsRunning(false);
       return;
     }
 
     // Step 5: Token in database
-    updateStep(4, { status: 'checking' });
+    updateStep(5, { status: 'checking' });
     if (user) {
       try {
         const { data, error } = await supabase
@@ -134,17 +149,17 @@ const NotificationDiagnostic = () => {
           .maybeSingle();
 
         if (error) {
-          updateStep(4, { status: 'error', message: `Erreur BDD: ${error.message}` });
+          updateStep(5, { status: 'error', message: `Erreur BDD: ${error.message}` });
         } else if (data) {
-          updateStep(4, { status: 'ok', message: `Token enregistré le ${new Date(data.created_at).toLocaleDateString('fr-FR')}` });
+          updateStep(5, { status: 'ok', message: `Token enregistré le ${new Date(data.created_at).toLocaleDateString('fr-FR')}` });
         } else {
-          updateStep(4, { status: 'warning', message: 'Aucun token en base - cliquez sur "Activer" ci-dessus' });
+          updateStep(5, { status: 'warning', message: 'Aucun token en base - cliquez sur "Activer" ci-dessus' });
         }
       } catch (dbError: any) {
-        updateStep(4, { status: 'error', message: `Erreur: ${dbError.message}` });
+        updateStep(5, { status: 'error', message: `Erreur: ${dbError.message}` });
       }
     } else {
-      updateStep(4, { status: 'warning', message: 'Non connecté' });
+      updateStep(5, { status: 'warning', message: 'Non connecté' });
     }
 
     setIsRunning(false);
