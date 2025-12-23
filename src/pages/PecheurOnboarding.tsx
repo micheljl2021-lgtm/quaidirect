@@ -448,8 +448,11 @@ const PecheurOnboarding = () => {
     if (!validateStep(6) || !user) return;
 
     setLoading(true);
+    let currentStep = 'fishermen';
+    
     try {
       // Final save
+      console.log('[Onboarding] Step 1/4: Saving fisherman profile...');
       const { data: fishermanData, error: fishermanError } = await supabase
         .from('fishermen')
         .upsert([{
@@ -489,9 +492,16 @@ const PecheurOnboarding = () => {
         .select()
         .single();
 
-      if (fishermanError) throw fishermanError;
+      if (fishermanError) {
+        console.error('[Onboarding] Fisherman save error:', fishermanError);
+        throw new Error(`Erreur profil pêcheur: ${fishermanError.message}`);
+      }
+      console.log('[Onboarding] Fisherman saved:', fishermanData.id);
 
       // Get existing sale points to update them instead of deleting
+      currentStep = 'sale_points';
+      console.log('[Onboarding] Step 2/4: Saving sale points...');
+      
       const { data: existingSalePoints } = await supabase
         .from('fisherman_sale_points')
         .select('id, is_primary')
@@ -515,17 +525,24 @@ const PecheurOnboarding = () => {
         };
 
         if (existingPrimaryId) {
-          // Update existing primary sale point
-          await supabase
+          const { error: sp1Error } = await supabase
             .from('fisherman_sale_points')
             .update(salePoint1Data)
             .eq('id', existingPrimaryId);
+          if (sp1Error) {
+            console.error('[Onboarding] Sale point 1 update error:', sp1Error);
+            throw new Error(`Erreur point de vente 1: ${sp1Error.message}`);
+          }
         } else {
-          // Insert new primary sale point
-          await supabase
+          const { error: sp1Error } = await supabase
             .from('fisherman_sale_points')
             .insert([salePoint1Data]);
+          if (sp1Error) {
+            console.error('[Onboarding] Sale point 1 insert error:', sp1Error);
+            throw new Error(`Erreur point de vente 1: ${sp1Error.message}`);
+          }
         }
+        console.log('[Onboarding] Sale point 1 saved');
       }
 
       if (formData.salePoint2Label && formData.salePoint2Address) {
@@ -541,21 +558,43 @@ const PecheurOnboarding = () => {
         };
 
         if (existingSecondaryId) {
-          // Update existing secondary sale point
-          await supabase
+          const { error: sp2Error } = await supabase
             .from('fisherman_sale_points')
             .update(salePoint2Data)
             .eq('id', existingSecondaryId);
+          if (sp2Error) {
+            console.error('[Onboarding] Sale point 2 update error:', sp2Error);
+            throw new Error(`Erreur point de vente 2: ${sp2Error.message}`);
+          }
         } else {
-          // Insert new secondary sale point
-          await supabase
+          const { error: sp2Error } = await supabase
             .from('fisherman_sale_points')
             .insert([salePoint2Data]);
+          if (sp2Error) {
+            console.error('[Onboarding] Sale point 2 insert error:', sp2Error);
+            throw new Error(`Erreur point de vente 2: ${sp2Error.message}`);
+          }
         }
+        console.log('[Onboarding] Sale point 2 saved');
       }
 
       // Save species associations
+      currentStep = 'species';
+      console.log('[Onboarding] Step 3/4: Saving species...');
+      
       if (formData.selectedSpecies.length > 0 && fishermanData) {
+        // First, delete existing species associations for this fisherman
+        const { error: deleteError } = await supabase
+          .from('fishermen_species')
+          .delete()
+          .eq('fisherman_id', fishermanData.id);
+        
+        if (deleteError) {
+          console.error('[Onboarding] Species delete error:', deleteError);
+          throw new Error(`Erreur suppression espèces: ${deleteError.message}`);
+        }
+
+        // Then insert the new species
         const speciesInserts = formData.selectedSpecies.map(speciesId => ({
           fisherman_id: fishermanData.id,
           species_id: speciesId,
@@ -563,19 +602,25 @@ const PecheurOnboarding = () => {
 
         const { error: speciesError } = await supabase
           .from('fishermen_species')
-          .upsert(speciesInserts);
+          .insert(speciesInserts);
 
-        if (speciesError) throw speciesError;
+        if (speciesError) {
+          console.error('[Onboarding] Species insert error:', speciesError);
+          throw new Error(`Erreur espèces: ${speciesError.message}`);
+        }
+        console.log('[Onboarding] Species saved:', formData.selectedSpecies.length);
       }
 
       // Clear sessionStorage after successful submission
+      console.log('[Onboarding] Step 4/4: Cleanup & redirect...');
       clearSessionData();
 
       toast.success("Profil créé avec succès !");
       navigate(`/onboarding/confirmation?slug=${fishermanData.slug}`);
-    } catch (error) {
-      console.error('Erreur soumission:', error);
-      toast.error("Impossible de créer le profil");
+    } catch (error: any) {
+      console.error(`[Onboarding] Error at step "${currentStep}":`, error);
+      const errorMessage = error?.message || 'Erreur inconnue';
+      toast.error(`Erreur: ${errorMessage}`, { duration: 8000 });
     } finally {
       setLoading(false);
     }
