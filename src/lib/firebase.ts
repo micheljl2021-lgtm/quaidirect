@@ -2,9 +2,19 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage, type Messaging } from 'firebase/messaging';
 
-// Firebase configuration - must match sw.js
+// Get Firebase API key from environment variable
+const getFirebaseApiKey = (): string => {
+  const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
+  if (!apiKey) {
+    console.warn('[Firebase] VITE_FIREBASE_API_KEY not set, using fallback');
+    return "AIzaSyCk_r6Pv2-PdvLoJRkn-GHRK1NOu58JMkg";
+  }
+  return apiKey.trim();
+};
+
+// Firebase configuration - uses environment variable for API key
 const firebaseConfig = {
-  apiKey: "AIzaSyCk_r6Pv2-PdvLoJRkn-GHRK1NOu58JMkg",
+  apiKey: getFirebaseApiKey(),
   authDomain: "arcane-argon-426216-b7.firebaseapp.com",
   projectId: "arcane-argon-426216-b7",
   storageBucket: "arcane-argon-426216-b7.firebasestorage.app",
@@ -13,8 +23,17 @@ const firebaseConfig = {
   measurementId: "G-ERMEXSWNZS"
 };
 
+// Export config for diagnostic purposes (without exposing full key)
+export const getFirebaseConfigInfo = () => ({
+  apiKeyPrefix: firebaseConfig.apiKey.substring(0, 10) + '...',
+  apiKeyLength: firebaseConfig.apiKey.length,
+  projectId: firebaseConfig.projectId,
+  messagingSenderId: firebaseConfig.messagingSenderId,
+  appId: firebaseConfig.appId,
+});
+
 // Get VAPID key from environment - this is the SINGLE source of truth
-const getVapidKey = (): string | null => {
+export const getVapidKey = (): string | null => {
   const rawKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
   
   if (!rawKey) {
@@ -30,6 +49,20 @@ const getVapidKey = (): string | null => {
   
   console.log('[Firebase] VAPID key loaded - length:', cleanKey.length, '- prefix:', cleanKey.substring(0, 12) + '...');
   return cleanKey;
+};
+
+// Export VAPID info for diagnostics
+export const getVapidKeyInfo = () => {
+  const rawKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
+  const cleanKey = getVapidKey();
+  return {
+    rawPrefix: rawKey.substring(0, 15) + '...',
+    rawLength: rawKey.length,
+    cleanPrefix: cleanKey ? cleanKey.substring(0, 15) + '...' : 'null',
+    cleanLength: cleanKey?.length || 0,
+    hasVitePrefix: rawKey.startsWith('VITE_'),
+    hasQuotes: rawKey.startsWith('"') || rawKey.startsWith("'"),
+  };
 };
 
 // Initialize Firebase (singleton)
@@ -161,10 +194,14 @@ export const requestFCMToken = async (): Promise<string | null> => {
     console.error('[Firebase] Error getting FCM token:', error);
     console.error('[Firebase] Error code:', error?.code);
     console.error('[Firebase] Error message:', error?.message);
+    
+    // Additional debug info
+    console.error('[Firebase] Full error object:', JSON.stringify(error, null, 2));
 
     // Re-throw with normalized error
     const normalized: any = new Error(error?.message || 'Erreur inconnue');
     normalized.code = error?.code || 'unknown';
+    normalized.originalError = error;
     throw normalized;
   }
 };
