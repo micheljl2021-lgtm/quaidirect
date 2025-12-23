@@ -50,17 +50,28 @@ const NotificationDiagnostic = () => {
     
     const rawVapidKey = (import.meta.env.VITE_VAPID_PUBLIC_KEY || '').trim();
     const normalizedVapidKey = rawVapidKey.replace(/^VITE_/, '');
+
     if (!rawVapidKey) {
       updateStep(0, { status: 'error', message: 'VITE_VAPID_PUBLIC_KEY non configurée' });
       setIsRunning(false);
       return;
     }
 
-    const hasEnvPrefix = rawVapidKey.startsWith('VITE_');
+    const hadVitePrefix = rawVapidKey !== normalizedVapidKey;
+    const normalizedLen = normalizedVapidKey.length;
+
+    if (normalizedLen < 70) {
+      updateStep(0, {
+        status: 'error',
+        message: `Clé VAPID invalide (trop courte, len ${normalizedLen}). Collez uniquement la clé (souvent elle commence par "B...")`,
+      });
+      setIsRunning(false);
+      return;
+    }
 
     updateStep(0, {
-      status: hasEnvPrefix ? 'warning' : 'ok',
-      message: `Clé: ${normalizedVapidKey.substring(0, 12)}... (valeur brute: ${rawVapidKey.substring(0, 5)}..., len ${rawVapidKey.length})${hasEnvPrefix ? ' → retirez le préfixe VITE_ dans la valeur' : ''}`,
+      status: 'ok',
+      message: `Clé: ${normalizedVapidKey.substring(0, 12)}... (len ${normalizedLen})${hadVitePrefix ? ' — préfixe VITE_ détecté dans la valeur, corrigé automatiquement' : ''}`,
     });
 
     // Step 1: Browser support
