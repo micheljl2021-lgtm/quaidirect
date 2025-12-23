@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { MapPin, Clock, Fish, User, ExternalLink, Anchor, Calendar, Heart } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -71,6 +72,9 @@ const MapSelectionPanel = ({
           id,
           eta_at,
           sale_start_time,
+          drop_species (
+            species (name)
+          ),
           offers (
             unit_price,
             available_units,
@@ -164,19 +168,19 @@ const MapSelectionPanel = ({
         {selectedType === 'salePoint' && selectedSalePoint && (
           <div className="space-y-4">
             {/* Photo du point de vente ou pêcheur */}
-            <div className="relative h-40 rounded-lg overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5">
+            <AspectRatio ratio={16 / 9} className="rounded-lg overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5">
               {(selectedSalePoint.photo_url || selectedSalePoint.fisherman?.photo_url) ? (
                 <img
                   src={selectedSalePoint.photo_url || selectedSalePoint.fisherman?.photo_url || ''}
                   alt={selectedSalePoint.label}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover object-center"
                 />
               ) : (
                 <div className="flex items-center justify-center h-full">
                   <MapPin className="h-16 w-16 text-muted-foreground/30" />
                 </div>
               )}
-            </div>
+            </AspectRatio>
 
             {/* Nom et adresse */}
             <div>
@@ -199,7 +203,11 @@ const MapSelectionPanel = ({
                   <div className="space-y-3 max-h-[180px] overflow-y-auto">
                     {salePointArrivals.map((arrival) => {
                       const firstPhoto = arrival.drop_photos?.sort((a: any, b: any) => a.display_order - b.display_order)?.[0]?.photo_url;
-                      const species = arrival.offers?.[0]?.species?.name || 'Poisson';
+                      // Get species from drop_species AND offers
+                      const speciesFromDropSpecies = (arrival as any).drop_species?.map((ds: any) => ds.species?.name).filter(Boolean) || [];
+                      const speciesFromOffers = arrival.offers?.map((o: any) => o.species?.name).filter(Boolean) || [];
+                      const allSpecies = [...new Set([...speciesFromDropSpecies, ...speciesFromOffers])];
+                      const species = allSpecies.length > 0 ? allSpecies.join(', ') : 'Produits de la mer';
                       const price = arrival.offers?.[0]?.unit_price || 0;
                       const units = arrival.offers?.[0]?.available_units || 0;
                       const saleTime = arrival.sale_start_time 

@@ -6,6 +6,7 @@ import ArrivageCard from "@/components/ArrivageCard";
 import { ArrivageCardSkeletonGrid } from "@/components/ArrivageCardSkeleton";
 import GoogleMapComponent from "@/components/GoogleMapComponent";
 import MapSelectionPanel from "@/components/MapSelectionPanel";
+import SalePointFullScreen from "@/components/SalePointFullScreen";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -47,6 +48,7 @@ const Carte = () => {
   
   // Map selection state for panel
   const [selectionOpen, setSelectionOpen] = useState(false);
+  const [fullScreenSalePoint, setFullScreenSalePoint] = useState(false);
   const [selectedType, setSelectedType] = useState<'drop' | 'salePoint' | null>(null);
   const [selectedDropId, setSelectedDropId] = useState<string | null>(null);
   const [selectedSalePointId, setSelectedSalePointId] = useState<string | null>(null);
@@ -312,8 +314,25 @@ const Carte = () => {
       setSelectedSalePointId(salePointId);
       setSelectedDropId(null);
       setSelectedType('salePoint');
-      setSelectionOpen(true);
+      // Open full screen view directly
+      setFullScreenSalePoint(true);
+      setSelectionOpen(false);
     }
+  };
+
+  const handleOpenFullScreenSalePoint = () => {
+    setFullScreenSalePoint(true);
+    setSelectionOpen(false);
+  };
+
+  const handleCloseFullScreen = () => {
+    setFullScreenSalePoint(false);
+    setSelectedSalePointId(null);
+    setSelectedType(null);
+  };
+
+  const handleNavigateToNextSalePoint = (salePointId: string) => {
+    setSelectedSalePointId(salePointId);
   };
 
   const handleClosePanel = () => {
@@ -570,7 +589,7 @@ const Carte = () => {
       </div>
       
       {/* Selection Panel - only for authenticated users */}
-      {user && (
+      {user && !fullScreenSalePoint && (
         <MapSelectionPanel
           isOpen={selectionOpen}
           onClose={handleClosePanel}
@@ -578,6 +597,16 @@ const Carte = () => {
           selectedDrop={selectedDrop}
           selectedSalePoint={selectedSalePoint}
           relatedDrop={relatedDrop}
+        />
+      )}
+
+      {/* Full Screen Sale Point View */}
+      {user && fullScreenSalePoint && selectedSalePoint && (
+        <SalePointFullScreen
+          salePoint={selectedSalePoint}
+          allSalePointIds={validSalePoints.map(sp => sp.id)}
+          onClose={handleCloseFullScreen}
+          onNavigateToNext={handleNavigateToNextSalePoint}
         />
       )}
 
