@@ -105,31 +105,33 @@ const Carte = () => {
   // Sale points: Publics pour tous les utilisateurs (anonymes et connectés)
   // Les anonymes voient les points de vente sur la carte mais pas les détails
   const { data: salePointsData } = useSalePoints({ enabled: true });
+
+  // IMPORTANT: on garde une liste complète pour les libellés (même si lat/lng manquent)
+  // et une liste filtrée uniquement pour l'affichage carte (markers)
+  const salePointsForLookup = salePointsData ?? [];
   
   // Filter and transform sale points for map (fishermen -> fisherman)
-  const validSalePoints = salePointsData
-    ? salePointsData
-        .filter(sp => sp.latitude != null && sp.longitude != null)
-        .map(sp => ({
-          id: sp.id,
-          label: sp.label,
-          address: sp.address,
-          latitude: sp.latitude as number,
-          longitude: sp.longitude as number,
-          fisherman_id: sp.fisherman_id,
-          photo_url: sp.photo_url,
-          description: sp.description,
-          is_primary: sp.is_primary,
-          fisherman: sp.fishermen ? {
-            id: sp.fishermen.id,
-            boat_name: sp.fishermen.boat_name,
-            photo_url: sp.fishermen.photo_url,
-            slug: sp.fishermen.slug,
-            bio: sp.fishermen.bio,
-            fishing_methods: sp.fishermen.fishing_methods,
-          } : undefined,
-        }))
-    : [];
+  const validSalePoints = salePointsForLookup
+    .filter(sp => sp.latitude != null && sp.longitude != null)
+    .map(sp => ({
+      id: sp.id,
+      label: sp.label,
+      address: sp.address,
+      latitude: sp.latitude as number,
+      longitude: sp.longitude as number,
+      fisherman_id: sp.fisherman_id,
+      photo_url: sp.photo_url,
+      description: sp.description,
+      is_primary: sp.is_primary,
+      fisherman: sp.fishermen ? {
+        id: sp.fishermen.id,
+        boat_name: sp.fishermen.boat_name,
+        photo_url: sp.fishermen.photo_url,
+        slug: sp.fishermen.slug,
+        bio: sp.fishermen.bio,
+        fishing_methods: sp.fishermen.fishing_methods,
+      } : undefined,
+    }));
 
   // Fetch real ports from database
   const { data: ports } = useQuery({
@@ -218,11 +220,11 @@ const Carte = () => {
     const locationLabel = getDropLocationLabel({
       isAuthenticated: !!user,
       salePointId: arrivage.sale_point_id,
-      salePoints: validSalePoints,
+      salePoints: salePointsForLookup,
       port: arrivage.ports,
     });
-    // Récupérer le label du point de vente
-    const salePoint = validSalePoints.find(sp => sp.id === arrivage.sale_point_id);
+    // Récupérer le label du point de vente (même si pas de coordonnées)
+    const salePoint = salePointsForLookup.find(sp => sp.id === arrivage.sale_point_id);
     const salePointLabel = salePoint?.label || null;
 
     // Récupérer les espèces depuis drop_species ET offers
