@@ -1,272 +1,239 @@
 // =============================================
-// Firebase Cloud Messaging - MUST be at the top
+// QuaiDirect Service Worker - Version 2025-12-23-v2
+// Firebase Cloud Messaging + Caching
 // =============================================
-importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
+
+// Cache version - update this to force cache refresh
+const CACHE_VERSION = '2025-12-23-v2';
+const CACHE_NAME = `quaidirect-${CACHE_VERSION}`;
+const RUNTIME_CACHE = `quaidirect-runtime-${CACHE_VERSION}`;
+const STATIC_CACHE = `quaidirect-static-${CACHE_VERSION}`;
+
+// Firebase SDK - using compat version for service worker (10.12.0)
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
 
 // Initialize Firebase for FCM
-firebase.initializeApp({
-  apiKey: "AIzaSyCk_r6Pv2-PdvLoJRkn-GHRK1NOu58JMkg",
-  authDomain: "arcane-argon-426216-b7.firebaseapp.com",
-  projectId: "arcane-argon-426216-b7",
-  storageBucket: "arcane-argon-426216-b7.firebasestorage.app",
-  messagingSenderId: "425193275047",
-  appId: "1:425193275047:web:e3b3f08dcb366d919da582",
-});
-
-const fcmMessaging = firebase.messaging();
+let fcmMessaging = null;
+try {
+  firebase.initializeApp({
+    apiKey: "AIzaSyCk_r6Pv2-PdvLoJRkn-GHRK1NOu58JMkg",
+    authDomain: "arcane-argon-426216-b7.firebaseapp.com",
+    projectId: "arcane-argon-426216-b7",
+    storageBucket: "arcane-argon-426216-b7.firebasestorage.app",
+    messagingSenderId: "425193275047",
+    appId: "1:425193275047:web:e3b3f08dcb366d919da582",
+  });
+  fcmMessaging = firebase.messaging();
+  console.log('[SW] Firebase Messaging initialized successfully');
+} catch (err) {
+  console.error('[SW] Firebase init error:', err);
+}
 
 // Handle FCM background messages
-fcmMessaging.onBackgroundMessage((payload) => {
-  console.log('[FCM SW] Background message received:', payload);
+if (fcmMessaging) {
+  fcmMessaging.onBackgroundMessage((payload) => {
+    console.log('[SW] FCM Background message received:', payload);
 
-  const notificationTitle = payload.notification?.title || payload.data?.title || 'QuaiDirect';
-  const notificationOptions = {
-    body: payload.notification?.body || payload.data?.body || 'Nouvelle notification',
-    icon: payload.notification?.icon || '/icon-192.png',
-    badge: '/icon-192.png',
-    data: payload.data || {},
-    vibrate: [200, 100, 200],
-    tag: 'quaidirect-fcm',
-    requireInteraction: false,
-  };
+    const notificationTitle = payload.notification?.title || payload.data?.title || 'QuaiDirect';
+    const notificationOptions = {
+      body: payload.notification?.body || payload.data?.body || 'Nouvelle notification',
+      icon: payload.notification?.icon || payload.data?.icon || '/icon-192.png',
+      badge: '/icon-192.png',
+      data: {
+        url: payload.data?.url || payload.fcmOptions?.link || '/',
+        ...payload.data
+      },
+      vibrate: [200, 100, 200],
+      tag: 'quaidirect-fcm',
+      requireInteraction: true,
+    };
 
-  return self.registration.showNotification(notificationTitle, notificationOptions);
-});
-
-console.log('[SW] Firebase Messaging initialized');
+    return self.registration.showNotification(notificationTitle, notificationOptions);
+  });
+}
 
 // =============================================
 // Cache Management
 // =============================================
 
-// Cache version - simple timestamp-based versioning
-const CACHE_VERSION = '2025-06-22';
-const CACHE_NAME = `quaidirect-${CACHE_VERSION}`;
-const RUNTIME_CACHE = `quaidirect-runtime-${CACHE_VERSION}`;
-const STATIC_CACHE = `quaidirect-static-${CACHE_VERSION}`;
-const API_CACHE = `quaidirect-api-${CACHE_VERSION}`;
-
-// Assets à mettre en cache lors de l'installation
+// Assets to precache
 const PRECACHE_ASSETS = [
   '/',
-  '/index.html',
   '/manifest.json',
-  '/arrivages',
-  '/carte',
-  '/premium',
+  '/icon-192.png',
+  '/icon-512.png',
 ];
 
-// Patterns pour les stratégies de cache
-const CACHE_STRATEGIES = {
-  // Cache First - pour les assets statiques (images, fonts, CSS)
-  cacheFirst: [
-    /\.(png|jpg|jpeg|gif|webp|svg|ico)$/,
-    /\.(woff|woff2|ttf|eot)$/,
-    /\.css$/,
-  ],
-  // Network First - pour les données API dynamiques
-  networkFirst: [
-    /\/functions\/v1\//,
-    /\/rest\/v1\//,
-    /supabase\.co/,
-  ],
-  // Stale While Revalidate - pour les données semi-statiques
-  staleWhileRevalidate: [
-    /\/assets\//,
-    /\.js$/,
-  ],
-};
-
-// Installation du service worker
+// Install event
 self.addEventListener('install', (event) => {
+  console.log('[SW] Installing version:', CACHE_VERSION);
+  
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(PRECACHE_ASSETS))
-      .then(() => self.skipWaiting())
+      .then((cache) => {
+        console.log('[SW] Caching precache assets');
+        return cache.addAll(PRECACHE_ASSETS);
+      })
+      .then(() => {
+        console.log('[SW] Install complete, skipping waiting');
+        return self.skipWaiting();
+      })
+      .catch((err) => {
+        console.error('[SW] Install failed:', err);
+      })
   );
 });
 
-// Activation et nettoyage des anciens caches
+// Activate event - clean old caches
 self.addEventListener('activate', (event) => {
-  const currentCaches = [CACHE_NAME, RUNTIME_CACHE, STATIC_CACHE, API_CACHE];
+  console.log('[SW] Activating version:', CACHE_VERSION);
+  
+  const currentCaches = [CACHE_NAME, RUNTIME_CACHE, STATIC_CACHE];
   
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((cacheName) => {
-            // Keep only current version caches
-            // Delete all old caches including those with old versions or without versions
-            return !currentCaches.includes(cacheName);
-          })
-          .map((cacheName) => {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          })
-      );
-    }).then(() => {
-      console.log('Service Worker activated with version:', CACHE_VERSION);
-      // Take control of all pages immediately
-      return self.clients.claim();
-    })
+    caches.keys()
+      .then((cacheNames) => {
+        return Promise.all(
+          cacheNames
+            .filter((cacheName) => {
+              // Delete old caches that don't match current version
+              return cacheName.startsWith('quaidirect-') && 
+                     !currentCaches.includes(cacheName);
+            })
+            .map((cacheName) => {
+              console.log('[SW] Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
+            })
+        );
+      })
+      .then(() => {
+        console.log('[SW] Activation complete');
+        return self.clients.claim();
+      })
   );
 });
 
-// Déterminer la stratégie de cache pour une URL
-function getCacheStrategy(url) {
-  for (const pattern of CACHE_STRATEGIES.cacheFirst) {
-    if (pattern.test(url)) return 'cacheFirst';
-  }
-  for (const pattern of CACHE_STRATEGIES.networkFirst) {
-    if (pattern.test(url)) return 'networkFirst';
-  }
-  for (const pattern of CACHE_STRATEGIES.staleWhileRevalidate) {
-    if (pattern.test(url)) return 'staleWhileRevalidate';
-  }
-  return 'networkFirst'; // Default
-}
-
-// Cache First Strategy - pour les assets statiques
-async function cacheFirstStrategy(request) {
-  const cache = await caches.open(STATIC_CACHE);
-  const cachedResponse = await cache.match(request);
-  
-  if (cachedResponse) {
-    return cachedResponse;
-  }
-  
-  try {
-    const networkResponse = await fetch(request);
-    if (networkResponse.status === 200) {
-      cache.put(request, networkResponse.clone());
-    }
-    return networkResponse;
-  } catch (error) {
-    // Return offline fallback for images
-    if (request.destination === 'image') {
-      return new Response(
-        '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="#f0f0f0" width="100" height="100"/><text x="50%" y="50%" text-anchor="middle" fill="#999" font-size="12">Hors ligne</text></svg>',
-        { headers: { 'Content-Type': 'image/svg+xml' } }
-      );
-    }
-    throw error;
-  }
-}
-
-// Network First Strategy - pour les données API
-async function networkFirstStrategy(request) {
-  const cache = await caches.open(API_CACHE);
-  
-  try {
-    const networkResponse = await fetch(request);
-    if (networkResponse.status === 200) {
-      // Clone et mettre en cache avec un TTL de 5 minutes
-      cache.put(request, networkResponse.clone());
-    }
-    return networkResponse;
-  } catch (error) {
-    const cachedResponse = await cache.match(request);
-    if (cachedResponse) {
-      return cachedResponse;
-    }
-    return new Response(
-      JSON.stringify({ error: 'Offline', message: 'Données non disponibles hors ligne' }),
-      { status: 503, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
-}
-
-// Stale While Revalidate Strategy
-async function staleWhileRevalidateStrategy(request) {
-  const cache = await caches.open(RUNTIME_CACHE);
-  const cachedResponse = await cache.match(request);
-  
-  const fetchPromise = fetch(request).then((networkResponse) => {
-    if (networkResponse.status === 200) {
-      cache.put(request, networkResponse.clone());
-    }
-    return networkResponse;
-  }).catch(() => cachedResponse);
-  
-  return cachedResponse || fetchPromise;
-}
-
-// Gestion des requêtes fetch
+// Fetch event - network first with cache fallback
 self.addEventListener('fetch', (event) => {
-  // Ignorer les requêtes non-GET et les requêtes vers des domaines tiers non-API
-  if (event.request.method !== 'GET') {
-    return;
-  }
+  // Skip non-GET requests
+  if (event.request.method !== 'GET') return;
   
   const url = event.request.url;
   
-  // Ignorer les requêtes chrome-extension et autres protocoles non-http
-  if (!url.startsWith('http')) {
+  // Skip non-http requests
+  if (!url.startsWith('http')) return;
+  
+  // Skip API and Supabase requests (don't cache these)
+  if (url.includes('/rest/v1/') || 
+      url.includes('/functions/v1/') ||
+      url.includes('supabase.co') ||
+      url.includes('/auth/')) {
     return;
   }
-  
-  const strategy = getCacheStrategy(url);
-  
+
   event.respondWith(
-    (async () => {
-      try {
-        switch (strategy) {
-          case 'cacheFirst':
-            return await cacheFirstStrategy(event.request);
-          case 'networkFirst':
-            return await networkFirstStrategy(event.request);
-          case 'staleWhileRevalidate':
-            return await staleWhileRevalidateStrategy(event.request);
-          default:
-            return await networkFirstStrategy(event.request);
+    fetch(event.request)
+      .then((response) => {
+        // Cache successful responses
+        if (response.status === 200) {
+          const responseClone = response.clone();
+          caches.open(RUNTIME_CACHE).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
         }
-      } catch (error) {
-        // Fallback pour les pages HTML
-        if (event.request.headers.get('accept')?.includes('text/html')) {
-          const cache = await caches.open(CACHE_NAME);
-          return cache.match('/index.html') || new Response('Hors ligne', { status: 503 });
-        }
-        return new Response('Offline', { status: 503 });
-      }
-    })()
+        return response;
+      })
+      .catch(() => {
+        // Fallback to cache
+        return caches.match(event.request).then((cached) => {
+          if (cached) return cached;
+          // Fallback to index for navigation requests
+          if (event.request.headers.get('accept')?.includes('text/html')) {
+            return caches.match('/');
+          }
+          return new Response('Offline', { status: 503 });
+        });
+      })
   );
 });
 
-// Gestion du background sync pour les drops créés hors ligne
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-drops') {
-    event.waitUntil(syncOfflineDrops());
+// Handle push events (fallback if FCM doesn't work)
+self.addEventListener('push', (event) => {
+  console.log('[SW] Push event received');
+  
+  let data = {
+    title: 'QuaiDirect',
+    body: 'Nouvelle notification',
+    icon: '/icon-192.png',
+  };
+
+  if (event.data) {
+    try {
+      const payload = event.data.json();
+      data = {
+        title: payload.notification?.title || payload.title || data.title,
+        body: payload.notification?.body || payload.body || data.body,
+        icon: payload.notification?.icon || payload.icon || data.icon,
+        data: payload.data || {},
+      };
+    } catch (e) {
+      console.error('[SW] Error parsing push data:', e);
+    }
   }
+
+  const options = {
+    body: data.body,
+    icon: data.icon,
+    badge: '/icon-192.png',
+    data: data.data || {},
+    vibrate: [200, 100, 200],
+    tag: 'quaidirect-push',
+    requireInteraction: true,
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
 });
 
-async function syncOfflineDrops() {
-  // Cette fonction sera implémentée côté client avec IndexedDB
-  // pour rejouer les requêtes POST en attente
-  console.log('Syncing offline drops...');
-}
+// Handle notification clicks
+self.addEventListener('notificationclick', (event) => {
+  console.log('[SW] Notification clicked:', event.notification.tag);
+  event.notification.close();
 
-// Message handler pour les communications client-SW
+  const urlToOpen = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientList) => {
+        // Try to focus an existing window
+        for (const client of clientList) {
+          if (client.url.includes(self.location.origin) && 'focus' in client) {
+            return client.focus().then(() => client.navigate(urlToOpen));
+          }
+        }
+        // Open new window if none exists
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
+  );
+});
+
+// Message handler for client-SW communication
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
+  if (event.data?.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
   
-  // Clear specific cache
-  if (event.data && event.data.type === 'CLEAR_CACHE') {
-    const cacheName = event.data.cacheName || RUNTIME_CACHE;
-    caches.delete(cacheName);
-  }
-  
-  // Check cache version
-  if (event.data && event.data.type === 'GET_VERSION') {
+  if (event.data?.type === 'GET_VERSION') {
     if (event.ports && event.ports[0]) {
       event.ports[0].postMessage({ version: CACHE_VERSION });
     }
   }
   
-  // Force update - clear all caches and skip waiting
-  if (event.data && event.data.type === 'FORCE_UPDATE') {
+  if (event.data?.type === 'FORCE_UPDATE') {
     event.waitUntil(
       caches.keys().then((cacheNames) => {
         return Promise.all(
@@ -279,61 +246,4 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Handle push notifications
-self.addEventListener('push', (event) => {
-  console.log('Push notification received:', event);
-  
-  let data = {
-    title: 'QuaiDirect',
-    body: 'Nouvelle notification',
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
-  };
-
-  if (event.data) {
-    try {
-      data = event.data.json();
-    } catch (e) {
-      console.error('Error parsing push data:', e);
-    }
-  }
-
-  const options = {
-    body: data.body,
-    icon: data.icon || '/icon-192.png',
-    badge: data.badge || '/icon-192.png',
-    data: data.data || {},
-    vibrate: [200, 100, 200],
-    tag: 'quaidirect-notification',
-    requireInteraction: false,
-  };
-
-  event.waitUntil(
-    self.registration.showNotification(data.title, options)
-  );
-});
-
-// Handle notification clicks
-self.addEventListener('notificationclick', (event) => {
-  console.log('Notification clicked:', event);
-  
-  event.notification.close();
-
-  const urlToOpen = event.notification.data?.url || '/';
-
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then((clientList) => {
-        // Check if there's already a window open with the app
-        for (let client of clientList) {
-          if (client.url.includes(self.location.origin) && 'focus' in client) {
-            return client.focus().then(() => client.navigate(urlToOpen));
-          }
-        }
-        // If no window is open, open a new one
-        if (clients.openWindow) {
-          return clients.openWindow(urlToOpen);
-        }
-      })
-  );
-});
+console.log('[SW] Service worker script loaded - Version:', CACHE_VERSION);

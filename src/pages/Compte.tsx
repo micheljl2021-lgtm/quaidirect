@@ -5,6 +5,7 @@ import { useClientSubscriptionLevel } from "@/hooks/useClientSubscriptionLevel";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import PushNotificationToggle from "@/components/PushNotificationToggle";
+import NotificationDebugPanel from "@/components/notifications/NotificationDebugPanel";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -315,33 +316,23 @@ const Compte = () => {
             </CardContent>
           </Card>
 
-          {/* Bloc Notifications Push - Activation */}
+          {/* Bloc Notifications Push - Diagnostic complet */}
+          <NotificationDebugPanel />
+
+          {/* Bloc Notifications Email */}
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Bell className="h-5 w-5 text-primary" />
-                <CardTitle>Notifications Push</CardTitle>
+                <CardTitle>Notifications Email</CardTitle>
               </div>
-              <CardDescription>
-                Recevez des alertes sur votre appareil pour les arrivages
-              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Toggle d'activation Push - le vrai composant */}
-              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <div>
-                  <p className="text-sm font-medium text-foreground">Activer les notifications push</p>
-                  <p className="text-xs text-muted-foreground">Alertes en temps réel sur votre navigateur/téléphone</p>
-                </div>
-                <PushNotificationToggle />
-              </div>
-              
-              {/* Préférence email (sauvegardée en base) */}
+            <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-foreground">Notifications Email</p>
+                  <p className="text-sm font-medium text-foreground">Alertes par email</p>
                   <p className="text-xs text-muted-foreground">
-                    {isPremium ? 'Alertes par email (points de vente, espèces)' : 'Réservé aux abonnés Premium'}
+                    {isPremium ? 'Alertes pour points de vente et espèces favoris' : 'Réservé aux abonnés Premium'}
                   </p>
                 </div>
                 <Switch
