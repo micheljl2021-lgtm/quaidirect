@@ -2,7 +2,7 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage, type Messaging } from 'firebase/messaging';
 
-// Firebase configuration
+// Firebase configuration - must match sw.js
 const firebaseConfig = {
   apiKey: "AIzaSyCk_r6Pv2-PdvLoJRkn-GHRK1NOu58JMkg",
   authDomain: "arcane-argon-426216-b7.firebaseapp.com",
@@ -10,114 +10,160 @@ const firebaseConfig = {
   storageBucket: "arcane-argon-426216-b7.firebasestorage.app",
   messagingSenderId: "425193275047",
   appId: "1:425193275047:web:e3b3f08dcb366d919da582",
+  measurementId: "G-ERMEXSWNZS"
 };
 
-// VAPID key for web push - from environment variable
-const RAW_VAPID_KEY = (import.meta.env.VITE_VAPID_PUBLIC_KEY || "").trim();
+// Get VAPID key from environment - this is the SINGLE source of truth
+const getVapidKey = (): string | null => {
+  const rawKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+  
+  if (!rawKey) {
+    console.error('[Firebase] VITE_VAPID_PUBLIC_KEY is not configured');
+    return null;
+  }
+  
+  // Clean the key (remove whitespace, quotes, and any VITE_ prefix if mistakenly included)
+  let cleanKey = rawKey.trim().replace(/^["']|["']$/g, '');
+  if (cleanKey.startsWith('VITE_')) {
+    cleanKey = cleanKey.replace(/^VITE_/, '');
+  }
+  
+  console.log('[Firebase] VAPID key loaded - length:', cleanKey.length, '- prefix:', cleanKey.substring(0, 12) + '...');
+  return cleanKey;
+};
 
-// Guardrail: sometimes the value is mistakenly saved with a "VITE_" prefix (that's the env var prefix, not part of the key)
-const VAPID_KEY = RAW_VAPID_KEY.replace(/^VITE_/, "");
-
-// Log VAPID key status for debugging
-if (!RAW_VAPID_KEY) {
-  console.error('[Firebase] VITE_VAPID_PUBLIC_KEY is not configured in environment');
-} else if (RAW_VAPID_KEY !== VAPID_KEY) {
-  console.warn('[Firebase] VAPID key value starts with "VITE_" prefix; auto-correcting.');
-  console.log('[Firebase] VAPID key configured, prefix:', VAPID_KEY.substring(0, 12) + '...');
-} else {
-  console.log('[Firebase] VAPID key configured, prefix:', VAPID_KEY.substring(0, 12) + '...');
-}
-
-// Initialize Firebase (only once)
+// Initialize Firebase (singleton)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
 // Get messaging instance (only in browser)
-let messaging: Messaging | null = null;
+let messagingInstance: Messaging | null = null;
 
 export const getFirebaseMessaging = (): Messaging | null => {
-  if (typeof window === 'undefined') return null;
-  if (!('Notification' in window)) return null;
-  if (!('serviceWorker' in navigator)) return null;
+  if (typeof window === 'undefined') {
+    console.log('[Firebase] Not in browser environment');
+    return null;
+  }
   
-  if (!messaging) {
+  if (!('Notification' in window)) {
+    console.log('[Firebase] Notifications API not supported');
+    return null;
+  }
+  
+  if (!('serviceWorker' in navigator)) {
+    console.log('[Firebase] Service Worker not supported');
+    return null;
+  }
+  
+  if (!messagingInstance) {
     try {
-      messaging = getMessaging(app);
+      messagingInstance = getMessaging(app);
+      console.log('[Firebase] Messaging instance created');
     } catch (error) {
       console.error('[Firebase] Error initializing messaging:', error);
       return null;
     }
   }
-  return messaging;
+  
+  return messagingInstance;
 };
 
-// Request FCM token with detailed error logging
+// Request FCM token with comprehensive error handling
 export const requestFCMToken = async (): Promise<string | null> => {
-  const msg = getFirebaseMessaging();
-  if (!msg) {
-    console.error('[Firebase] Messaging not available - check browser support for notifications and service workers');
+  console.log('[Firebase] Requesting FCM token...');
+
+  // Check browser support
+  if (typeof window === 'undefined') {
+    console.error('[Firebase] Not in browser environment');
     return null;
   }
 
-  try {
-    // Check notification permission first
-    const permission = Notification.permission;
-    console.log('[Firebase] Current notification permission:', permission);
+  if (!('Notification' in window)) {
+    console.error('[Firebase] Notifications API not supported');
+    return null;
+  }
+
+  if (!('serviceWorker' in navigator)) {
+    console.error('[Firebase] Service Worker not supported');
+    return null;
+  }
+
+  // Check permission
+  const permission = Notification.permission;
+  console.log('[Firebase] Current permission:', permission);
+
+  if (permission === 'denied') {
+    console.error('[Firebase] Notifications blocked by user');
+    const err: any = new Error('Notifications bloquées par l\'utilisateur');
+    err.code = 'messaging/permission-blocked';
+    throw err;
+  }
+
+  // Request permission if needed
+  if (permission === 'default') {
+    console.log('[Firebase] Requesting permission...');
+    const newPermission = await Notification.requestPermission();
+    console.log('[Firebase] Permission result:', newPermission);
     
-    if (permission === 'denied') {
-      console.error('[Firebase] Notifications are blocked by user');
-      return null;
+    if (newPermission !== 'granted') {
+      const err: any = new Error('Permission non accordée');
+      err.code = 'messaging/permission-denied';
+      throw err;
     }
+  }
 
-    // Always (re)register the main service worker which includes FCM support.
-    // This also upgrades older registrations that previously used another SW script.
-    console.log('[Firebase] Registering/refreshing /sw.js...');
-    const registration = await navigator.serviceWorker.register('/sw.js');
-    console.log('[Firebase] Service worker registration:', registration.scope);
+  // Get VAPID key
+  const vapidKey = getVapidKey();
+  if (!vapidKey) {
+    const err: any = new Error('Clé VAPID manquante (VITE_VAPID_PUBLIC_KEY)');
+    err.code = 'missing-vapid-key';
+    throw err;
+  }
 
-    // Try to update to the latest version (non-blocking)
-    registration.update().catch(() => {});
+  try {
+    // Register/update service worker
+    console.log('[Firebase] Registering service worker...');
+    const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    console.log('[Firebase] Service worker registered, scope:', registration.scope);
 
-    // Wait for the service worker to be ready
+    // Try to update (non-blocking)
+    registration.update().catch((e) => console.log('[Firebase] SW update check:', e));
+
+    // Wait for service worker to be ready
     await navigator.serviceWorker.ready;
     console.log('[Firebase] Service worker is ready');
 
-    if (!VAPID_KEY) {
-      const err: any = new Error('Clé VAPID manquante (VITE_VAPID_PUBLIC_KEY)');
-      err.code = 'missing-vapid-key';
+    // Get messaging instance
+    const messaging = getFirebaseMessaging();
+    if (!messaging) {
+      const err: any = new Error('Firebase Messaging indisponible');
+      err.code = 'messaging-unavailable';
       throw err;
     }
 
-    console.log('[Firebase] Requesting FCM token with VAPID key...');
-    const token = await getToken(msg, {
-      vapidKey: VAPID_KEY,
+    // Get FCM token
+    console.log('[Firebase] Getting FCM token with VAPID key...');
+    const token = await getToken(messaging, {
+      vapidKey: vapidKey,
       serviceWorkerRegistration: registration,
     });
 
     if (token) {
-      console.log('[Firebase] FCM Token obtained successfully:', token.substring(0, 20) + '...');
+      console.log('[Firebase] FCM token obtained - length:', token.length);
+      console.log('[Firebase] Token prefix:', token.substring(0, 20) + '...');
       return token;
     }
 
-    const err: any = new Error('Aucun token FCM retourné');
+    const err: any = new Error('Aucun token retourné par Firebase');
     err.code = 'no-token';
     throw err;
+
   } catch (error: any) {
-    // Detailed error logging
     console.error('[Firebase] Error getting FCM token:', error);
     console.error('[Firebase] Error code:', error?.code);
     console.error('[Firebase] Error message:', error?.message);
 
-    // Common error hints
-    if (error?.code === 'messaging/permission-blocked') {
-      console.error('[Firebase] Hint: User has blocked notifications');
-    } else if (error?.code === 'messaging/failed-service-worker-registration') {
-      console.error('[Firebase] Hint: Service worker registration failed - check firebase-messaging-sw.js');
-    } else if (error?.message?.includes('VAPID')) {
-      console.error('[Firebase] Hint: VAPID key may be incorrect');
-    }
-
-    // Re-throw a normalized error so UI can show the code/message
-    const normalized: any = new Error(error?.message || 'Erreur inconnue lors de l\'initialisation des notifications');
+    // Re-throw with normalized error
+    const normalized: any = new Error(error?.message || 'Erreur inconnue');
     normalized.code = error?.code || 'unknown';
     throw normalized;
   }
@@ -125,10 +171,13 @@ export const requestFCMToken = async (): Promise<string | null> => {
 
 // Listen for foreground messages
 export const onForegroundMessage = (callback: (payload: any) => void) => {
-  const msg = getFirebaseMessaging();
-  if (!msg) return () => {};
+  const messaging = getFirebaseMessaging();
+  if (!messaging) {
+    console.warn('[Firebase] Cannot listen for messages - messaging not available');
+    return () => {};
+  }
   
-  return onMessage(msg, (payload) => {
+  return onMessage(messaging, (payload) => {
     console.log('[Firebase] Foreground message received:', payload);
     callback(payload);
   });
