@@ -9,7 +9,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { getBasinFromDepartement, getDepartmentsForBasin, type FishingBasin } from "@/lib/ports";
+import { getBasinFromDepartement, type FishingBasin } from "@/lib/ports";
+import { getPortsByBasin } from "@/data/portsData";
 
 interface Step3ZonesMethodesProps {
   formData: {
@@ -106,6 +107,12 @@ export function Step3ZonesMethodes({ formData, onChange }: Step3ZonesMethodesPro
     return getBasinFromDepartement(dep);
   }, [formData.postalCode]);
 
+  // Récupérer les ports depuis le fichier statique (pas de requête Supabase)
+  const ports = useMemo(() => {
+    if (!basin) return [];
+    return getPortsByBasin(basin);
+  }, [basin]);
+
   // Charger les zones depuis la base de données - filtrées par région si bassin connu
   const { data: zones = [], isLoading: zonesLoading } = useQuery({
     queryKey: ['zones_peche_onboarding', basin],
@@ -125,30 +132,6 @@ export function Step3ZonesMethodes({ formData, onChange }: Step3ZonesMethodesPro
       if (error) throw error;
       return data || [];
     },
-  });
-
-  // Charger les ports depuis la base de données - filtrés par département si bassin connu
-  const { data: ports = [], isLoading: portsLoading } = useQuery({
-    queryKey: ['ports_onboarding', basin],
-    queryFn: async () => {
-      // Si pas de bassin, retourner liste vide
-      if (!basin) return [];
-      
-      const departments = getDepartmentsForBasin(basin);
-      
-      // Construire les filtres OR pour chaque département (postal_code commence par le code département)
-      const filters = departments.map(dep => `postal_code.like.${dep}%`).join(',');
-      
-      const { data, error } = await supabase
-        .from('ports')
-        .select('id, name, city, postal_code')
-        .or(filters)
-        .order('name');
-      
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!basin, // Ne charger que si le bassin est connu
   });
 
   // Grouper les zones par région
@@ -174,15 +157,15 @@ export function Step3ZonesMethodes({ formData, onChange }: Step3ZonesMethodesPro
     onChange('fishingMethods', newMethods);
   };
 
-  const handlePortToggle = (portId: string, checked: boolean) => {
+  const handlePortToggle = (portName: string, checked: boolean) => {
     const currentPorts = formData.selectedPorts || [];
     if (checked) {
       if (currentPorts.length >= 3) {
         return; // Maximum 3 ports
       }
-      onChange('selectedPorts', [...currentPorts, portId]);
+      onChange('selectedPorts', [...currentPorts, portName]);
     } else {
-      onChange('selectedPorts', currentPorts.filter(p => p !== portId));
+      onChange('selectedPorts', currentPorts.filter(p => p !== portName));
     }
   };
 
@@ -258,40 +241,36 @@ export function Step3ZonesMethodes({ formData, onChange }: Step3ZonesMethodesPro
               Ports de la zone : <span className="font-medium text-foreground">{BASIN_LABELS[basin]}</span>
             </p>
 
-            {portsLoading ? (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Chargement des ports...
-              </div>
-            ) : ports.length === 0 ? (
+            {ports.length === 0 ? (
               <p className="text-sm text-muted-foreground italic">
                 Aucun port trouvé pour cette région.
               </p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto p-1">
-                {ports.map((port) => {
-                  const isSelected = formData.selectedPorts?.includes(port.id);
+                {ports.map((portName) => {
+                  const isSelected = formData.selectedPorts?.includes(portName);
                   const isDisabled = !isSelected && selectedPortsCount >= 3;
+                  // Générer un ID unique à partir du nom du port
+                  const portId = portName.toLowerCase().replace(/[^a-z0-9]/g, '-');
                   
                   return (
                     <div 
-                      key={port.id} 
+                      key={portId} 
                       className={`flex items-center space-x-2 p-2 border rounded-lg transition-colors ${
                         isSelected ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'
                       } ${isDisabled ? 'opacity-50' : ''}`}
                     >
                       <Checkbox
-                        id={`port-${port.id}`}
+                        id={`port-${portId}`}
                         checked={isSelected}
                         disabled={isDisabled}
-                        onCheckedChange={(checked) => handlePortToggle(port.id, checked as boolean)}
+                        onCheckedChange={(checked) => handlePortToggle(portName, checked as boolean)}
                       />
                       <label
-                        htmlFor={`port-${port.id}`}
+                        htmlFor={`port-${portId}`}
                         className={`text-sm font-medium leading-none cursor-pointer flex-1 ${isDisabled ? 'cursor-not-allowed' : ''}`}
                       >
-                        {port.name}
-                        {port.city && <span className="text-xs text-muted-foreground ml-1">({port.city})</span>}
+                        {portName}
                       </label>
                     </div>
                   );
