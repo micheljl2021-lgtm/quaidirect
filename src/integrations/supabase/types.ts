@@ -291,6 +291,57 @@ export type Database = {
           },
         ]
       }
+      drop_notifications_sent: {
+        Row: {
+          channel: string
+          contact_id: string | null
+          created_at: string
+          drop_id: string
+          email: string | null
+          id: string
+          notification_source: string
+          sent_at: string
+          user_id: string | null
+        }
+        Insert: {
+          channel: string
+          contact_id?: string | null
+          created_at?: string
+          drop_id: string
+          email?: string | null
+          id?: string
+          notification_source: string
+          sent_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          channel?: string
+          contact_id?: string | null
+          created_at?: string
+          drop_id?: string
+          email?: string | null
+          id?: string
+          notification_source?: string
+          sent_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drop_notifications_sent_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "fishermen_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drop_notifications_sent_drop_id_fkey"
+            columns: ["drop_id"]
+            isOneToOne: false
+            referencedRelation: "drops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drop_photos: {
         Row: {
           created_at: string
