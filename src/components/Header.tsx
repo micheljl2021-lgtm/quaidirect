@@ -5,7 +5,7 @@ import { useClientSubscriptionLevel } from "@/hooks/useClientSubscriptionLevel";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Crown, User, Menu, X, Shield, Download, Smartphone, Plus } from "lucide-react";
+import { Crown, User, Menu, X, Shield, Download, Smartphone, Plus, MapPin, Users, Settings } from "lucide-react";
 import { AdminRoleSwitcher } from "@/components/admin/AdminRoleSwitcher";
 import logoQuaidirect from "@/assets/logo-quaidirect-full.png";
 import {
@@ -181,6 +181,24 @@ const Header = () => {
                 <DropdownMenuItem onClick={() => navigate('/compte')}>
                   Mon compte
                 </DropdownMenuItem>
+                {userRole === 'fisherman' && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="text-xs text-muted-foreground">Espace pêcheur</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => navigate('/pecheur/preferences')}>
+                      <Settings className="h-4 w-4 mr-2" />
+                      Préférences
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/pecheur/points-de-vente')}>
+                      <MapPin className="h-4 w-4 mr-2" />
+                      Points de vente
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/pecheur/contacts')}>
+                      <Users className="h-4 w-4 mr-2" />
+                      Contacts clients
+                    </DropdownMenuItem>
+                  </>
+                )}
                 {userRole !== 'fisherman' && userRole !== 'admin' && (
                   <DropdownMenuItem onClick={() => navigate('/pecheur/onboarding')}>
                     Devenir pêcheur
@@ -289,6 +307,30 @@ const Header = () => {
                   >
                     <Plus className="h-4 w-4" />
                     Arrivage Express
+                  </NavLink>
+                  <NavLink 
+                    to="/pecheur/preferences" 
+                    className={({ isActive }) => `${mobileNavLinkClass({ isActive })} flex items-center gap-2 text-sm`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Settings className="h-4 w-4" />
+                    Préférences
+                  </NavLink>
+                  <NavLink 
+                    to="/pecheur/points-de-vente" 
+                    className={({ isActive }) => `${mobileNavLinkClass({ isActive })} flex items-center gap-2 text-sm`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <MapPin className="h-4 w-4" />
+                    Points de vente
+                  </NavLink>
+                  <NavLink 
+                    to="/pecheur/contacts" 
+                    className={({ isActive }) => `${mobileNavLinkClass({ isActive })} flex items-center gap-2 text-sm`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Users className="h-4 w-4" />
+                    Contacts clients
                   </NavLink>
                 </>
               )}

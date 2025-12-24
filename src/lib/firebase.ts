@@ -80,13 +80,20 @@ const getFirebaseAuthDomain = (): string => {
   return cleanConfigValue(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN, 'authDomain') || FIREBASE_DEFAULTS.authDomain;
 };
 
+// Get storage bucket (accept both VITE_FIREBASE_STORAGE_BUCKET and VITE_FIREBASE_BUCKET)
+const getFirebaseStorageBucket = (): string => {
+  return cleanConfigValue(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET, 'storageBucket') 
+    || cleanConfigValue(import.meta.env.VITE_FIREBASE_BUCKET, 'bucket') 
+    || FIREBASE_DEFAULTS.storageBucket;
+};
+
 // Build Firebase configuration
 const apiKeyResult = getFirebaseApiKey();
 const firebaseConfig = {
   apiKey: apiKeyResult.value,
   authDomain: getFirebaseAuthDomain(),
   projectId: getFirebaseProjectId(),
-  storageBucket: cleanConfigValue(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET, 'storageBucket') || FIREBASE_DEFAULTS.storageBucket,
+  storageBucket: getFirebaseStorageBucket(),
   messagingSenderId: getFirebaseMessagingSenderId(),
   appId: getFirebaseAppId(),
   measurementId: cleanConfigValue(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID, 'measurementId') || FIREBASE_DEFAULTS.measurementId
@@ -101,24 +108,42 @@ console.log('[Firebase] Config loaded:', {
 });
 
 // Export config for diagnostic purposes (without exposing full key)
-export const getFirebaseConfigInfo = () => ({
-  apiKeyPrefix: firebaseConfig.apiKey.substring(0, 10) + '...',
-  apiKeyLength: firebaseConfig.apiKey.length,
-  apiKeySource: apiKeyResult.source,
-  apiKeyIssues: apiKeyResult.issues,
-  projectId: firebaseConfig.projectId,
-  projectIdSource: import.meta.env.VITE_FIREBASE_PROJECT_ID ? 'env' : 'fallback',
-  messagingSenderId: firebaseConfig.messagingSenderId,
-  senderIdSource: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ? 'env' : 'fallback',
-  appId: firebaseConfig.appId,
-  appIdSource: import.meta.env.VITE_FIREBASE_APP_ID ? 'env' : 'fallback',
-  authDomain: firebaseConfig.authDomain,
-  // Cohérence check: all from same source?
-  isCoherent: (
-    (apiKeyResult.source === 'env' && import.meta.env.VITE_FIREBASE_PROJECT_ID && import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID) ||
-    (apiKeyResult.source === 'fallback' && !import.meta.env.VITE_FIREBASE_PROJECT_ID && !import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID)
-  ),
-});
+export const getFirebaseConfigInfo = () => {
+  const projectIdSource = import.meta.env.VITE_FIREBASE_PROJECT_ID ? 'env' : 'fallback';
+  const senderIdSource = import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ? 'env' : 'fallback';
+  const appIdSource = import.meta.env.VITE_FIREBASE_APP_ID ? 'env' : 'fallback';
+  const authDomainSource = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ? 'env' : 'fallback';
+  const storageBucketSource = (import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || import.meta.env.VITE_FIREBASE_BUCKET) ? 'env' : 'fallback';
+  
+  // Count how many are from env vs fallback
+  const sources = [apiKeyResult.source, projectIdSource, senderIdSource, appIdSource, authDomainSource];
+  const envCount = sources.filter(s => s === 'env').length;
+  const fallbackCount = sources.filter(s => s === 'fallback').length;
+  
+  // Coherence: all from same source (all env or all fallback)
+  const isCoherent = envCount === sources.length || fallbackCount === sources.length;
+  
+  return {
+    apiKeyPrefix: firebaseConfig.apiKey.substring(0, 10) + '...',
+    apiKeyLength: firebaseConfig.apiKey.length,
+    apiKeySource: apiKeyResult.source,
+    apiKeyIssues: apiKeyResult.issues,
+    projectId: firebaseConfig.projectId,
+    projectIdSource,
+    messagingSenderId: firebaseConfig.messagingSenderId,
+    senderIdSource,
+    appId: firebaseConfig.appId,
+    appIdSource,
+    authDomain: firebaseConfig.authDomain,
+    authDomainSource,
+    storageBucket: firebaseConfig.storageBucket,
+    storageBucketSource,
+    isCoherent,
+    envCount,
+    fallbackCount,
+    currentDomain: typeof window !== 'undefined' ? window.location.hostname : 'unknown',
+  };
+};
 
 // VAPID public key fallback - this is a PUBLIC key, safe to include in code
 // Used only if VITE_VAPID_PUBLIC_KEY is not configured
