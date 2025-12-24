@@ -147,7 +147,7 @@ export const getFirebaseConfigInfo = () => {
 
 // VAPID public key fallback - this is a PUBLIC key, safe to include in code
 // Used only if VITE_VAPID_PUBLIC_KEY is not configured
-const VAPID_PUBLIC_KEY_FALLBACK = "BFIt5LESGxT4TBsI7-m4E6n6EbEJTX2B1g6rQ4Tb6J2vGE0m5vJm2nRq6A3cG8dN7wK9xP0sF1hL2mY3uZ4oT5k";
+const VAPID_PUBLIC_KEY_FALLBACK = "BFlT5LESzAzzvYJTqqfN3XSZLsvIdPmS0cDn7yK0kK55Py2e3EjSp93WnRFKRaTyDlyhiSfl0OzAo0H3V6ishn4";
 
 // Get VAPID key from environment with robust fallback
 export const getVapidKey = (): string | null => {
