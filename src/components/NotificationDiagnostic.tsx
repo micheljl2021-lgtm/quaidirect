@@ -15,7 +15,8 @@ import {
   RefreshCw,
   Trash2,
   Send,
-  Info
+  Info,
+  Copy
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -163,13 +164,19 @@ const NotificationDiagnostic = () => {
       if (errorCode === 'messaging/token-subscribe-failed') {
         const configInfo = getFirebaseConfigInfo();
         actionableMsg = `⚠️ Échec inscription FCM\n\n` +
-          `Cause probable: Config Firebase incohérente ou API key invalide/restreinte.\n\n` +
-          `Config actuelle:\n` +
+          `CAUSE PROBABLE:\n` +
+          `1) API Key Firebase restreinte (referrers)\n` +
+          `2) Configuration Firebase incohérente\n\n` +
+          `Domaine actuel: ${configInfo.currentDomain}\n` +
+          `→ Ajouter ce domaine dans les restrictions API key de Firebase Console\n\n` +
+          `Config détectée:\n` +
           `• Project: ${configInfo.projectId} (${configInfo.projectIdSource})\n` +
           `• Sender: ${configInfo.messagingSenderId} (${configInfo.senderIdSource})\n` +
           `• API Key: ${configInfo.apiKeyPrefix} (${configInfo.apiKeySource})\n` +
-          (configInfo.apiKeyIssues.length > 0 ? `• Issues: ${configInfo.apiKeyIssues.join(', ')}\n` : '') +
-          `\nVérifiez que toutes les valeurs viennent du même projet Firebase.`;
+          `• AuthDomain: ${configInfo.authDomain} (${configInfo.authDomainSource})\n` +
+          `• AppId: ${configInfo.appId?.substring(0,20)}... (${configInfo.appIdSource})\n` +
+          (configInfo.apiKeyIssues.length > 0 ? `• ⚠️ Issues: ${configInfo.apiKeyIssues.join(', ')}\n` : '') +
+          (!configInfo.isCoherent ? `\n⚠️ CONFIG MIXTE: ${configInfo.envCount} champs env, ${configInfo.fallbackCount} fallback. Vérifiez que TOUTES les variables Firebase sont configurées.` : '');
       } else if (errorCode === 'messaging/permission-blocked') {
         actionableMsg = 'Notifications bloquées dans le navigateur. Réinitialisez dans les paramètres du site.';
       }
@@ -263,6 +270,25 @@ const NotificationDiagnostic = () => {
     } catch (error: any) {
       toast.error(`Erreur envoi: ${error.message}`);
     }
+  };
+
+  const copyConfigToClipboard = () => {
+    const configInfo = getFirebaseConfigInfo();
+    const vapidInfo = getVapidKeyInfo();
+    const configText = `Firebase Config Debug:
+Domain: ${configInfo.currentDomain}
+Project: ${configInfo.projectId} (${configInfo.projectIdSource})
+Sender: ${configInfo.messagingSenderId} (${configInfo.senderIdSource})
+API Key: ${configInfo.apiKeyPrefix} (${configInfo.apiKeySource})
+AuthDomain: ${configInfo.authDomain} (${configInfo.authDomainSource})
+AppId: ${configInfo.appId} (${configInfo.appIdSource})
+Bucket: ${configInfo.storageBucket} (${configInfo.storageBucketSource})
+VAPID: ${vapidInfo.cleanFingerprint} (${vapidInfo.source})
+Coherent: ${configInfo.isCoherent ? 'Yes' : 'No'} (${configInfo.envCount} env / ${configInfo.fallbackCount} fallback)
+Permission: ${Notification.permission}`;
+    
+    navigator.clipboard.writeText(configText);
+    toast.success('Configuration copiée !');
   };
 
   const getStatusIcon = (status: DiagnosticStep['status']) => {
@@ -379,6 +405,16 @@ const NotificationDiagnostic = () => {
           >
             <Send className="h-4 w-4 mr-2" />
             Envoyer un test
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={copyConfigToClipboard}
+            title="Copier la configuration pour le support"
+          >
+            <Copy className="h-4 w-4 mr-2" />
+            Copier config
           </Button>
         </div>
       </CardContent>

@@ -364,8 +364,8 @@ const Compte = () => {
             </CardContent>
           </Card>
 
-          {/* Bloc Mon activité pêcheur (uniquement pour pêcheurs) */}
-          {userRole === 'fisherman' && isVerifiedFisherman && (
+          {/* Bloc Mon activité pêcheur (pour tous les pêcheurs) */}
+          {userRole === 'fisherman' && (
             <Card className="border-primary/30">
               <CardHeader>
                 <div className="flex items-center gap-2">
@@ -377,6 +377,13 @@ const Compte = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
+                {!isVerifiedFisherman && (
+                  <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-sm">
+                    <p className="font-medium text-yellow-700">⏳ Compte en attente de validation</p>
+                    <p className="text-muted-foreground">Votre profil est en cours de vérification. Vous pouvez accéder à vos réglages.</p>
+                  </div>
+                )}
+                
                 {fishermanData && (
                   <div className="p-3 bg-primary/5 rounded-lg space-y-1">
                     <p className="font-medium">{fishermanData.boat_name}</p>
@@ -400,6 +407,15 @@ const Compte = () => {
                     variant="outline"
                     className="w-full justify-start gap-2"
                     onClick={() => navigate('/pecheur/preferences')}
+                  >
+                    <Settings className="h-4 w-4" />
+                    Préférences pêcheur
+                  </Button>
+                  
+                  <Button 
+                    variant="outline"
+                    className="w-full justify-start gap-2"
+                    onClick={() => navigate('/pecheur/points-de-vente')}
                   >
                     <Settings className="h-4 w-4" />
                     Gérer mes points de vente
