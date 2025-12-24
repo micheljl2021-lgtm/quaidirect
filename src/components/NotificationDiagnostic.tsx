@@ -146,7 +146,7 @@ const NotificationDiagnostic = () => {
         if (token) {
           updateStep(4, { status: 'ok', message: `Token obtenu: ${token.substring(0, 20)}...` });
         } else {
-          updateStep(4, { status: 'error', message: 'Impossible d\'obtenir le token - voir console pour détails (code erreur Firebase)' });
+          updateStep(4, { status: 'error', message: 'Impossible d\'obtenir le token - voir console pour détails' });
           setIsRunning(false);
           return;
         }
@@ -156,7 +156,25 @@ const NotificationDiagnostic = () => {
     } catch (tokenError: any) {
       const errorCode = tokenError?.code || 'unknown';
       const errorMsg = tokenError?.message || 'Erreur inconnue';
-      updateStep(4, { status: 'error', message: `Erreur FCM [${errorCode}]: ${errorMsg}` });
+      
+      // Provide actionable message for common errors
+      let actionableMsg = `Erreur FCM [${errorCode}]: ${errorMsg}`;
+      
+      if (errorCode === 'messaging/token-subscribe-failed') {
+        const configInfo = getFirebaseConfigInfo();
+        actionableMsg = `⚠️ Échec inscription FCM\n\n` +
+          `Cause probable: Config Firebase incohérente ou API key invalide/restreinte.\n\n` +
+          `Config actuelle:\n` +
+          `• Project: ${configInfo.projectId} (${configInfo.projectIdSource})\n` +
+          `• Sender: ${configInfo.messagingSenderId} (${configInfo.senderIdSource})\n` +
+          `• API Key: ${configInfo.apiKeyPrefix} (${configInfo.apiKeySource})\n` +
+          (configInfo.apiKeyIssues.length > 0 ? `• Issues: ${configInfo.apiKeyIssues.join(', ')}\n` : '') +
+          `\nVérifiez que toutes les valeurs viennent du même projet Firebase.`;
+      } else if (errorCode === 'messaging/permission-blocked') {
+        actionableMsg = 'Notifications bloquées dans le navigateur. Réinitialisez dans les paramètres du site.';
+      }
+      
+      updateStep(4, { status: 'error', message: actionableMsg });
       setIsRunning(false);
       return;
     }
@@ -293,6 +311,24 @@ const NotificationDiagnostic = () => {
                 return `${info.cleanFingerprint} (${info.source})`;
               })()}
             </span>
+          </div>
+          
+          {/* Firebase config summary */}
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <Info className="h-3 w-3" />
+            <span>
+              Firebase: {(() => {
+                const info = getFirebaseConfigInfo();
+                return `${info.projectId} / ${info.messagingSenderId} (${info.apiKeySource})`;
+              })()}
+            </span>
+            {(() => {
+              const info = getFirebaseConfigInfo();
+              if (!info.isCoherent) {
+                return <Badge variant="destructive" className="text-[10px] h-4">Config mixte!</Badge>;
+              }
+              return null;
+            })()}
           </div>
         </div>
 

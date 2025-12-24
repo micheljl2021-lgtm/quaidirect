@@ -2,19 +2,9 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage, type Messaging } from 'firebase/messaging';
 
-// Get Firebase API key from environment variable
-const getFirebaseApiKey = (): string => {
-  const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
-  if (!apiKey) {
-    console.warn('[Firebase] VITE_FIREBASE_API_KEY not set, using fallback');
-    return "AIzaSyCk_r6Pv2-PdvLoJRkn-GHRK1NOu58JMkg";
-  }
-  return apiKey.trim();
-};
-
-// Firebase configuration - uses environment variable for API key
-const firebaseConfig = {
-  apiKey: getFirebaseApiKey(),
+// Defaults for Firebase config (fallback values)
+const FIREBASE_DEFAULTS = {
+  apiKey: "AIzaSyCk_r6Pv2-PdvLoJRkn-GHRK1NOu58JMkg",
   authDomain: "arcane-argon-426216-b7.firebaseapp.com",
   projectId: "arcane-argon-426216-b7",
   storageBucket: "arcane-argon-426216-b7.firebasestorage.app",
@@ -23,13 +13,111 @@ const firebaseConfig = {
   measurementId: "G-ERMEXSWNZS"
 };
 
+// Clean a config value (remove quotes, whitespace, VITE_ prefix)
+const cleanConfigValue = (value: string | undefined, fieldName: string): string | null => {
+  if (!value) return null;
+  
+  let clean = value.trim().replace(/^["']|["']$/g, '');
+  
+  // Remove accidental VITE_ prefix in the value itself
+  if (clean.startsWith('VITE_')) {
+    console.warn(`[Firebase] ${fieldName} had VITE_ prefix in value, removing it`);
+    clean = clean.replace(/^VITE_/, '');
+  }
+  
+  // Remove newlines
+  clean = clean.replace(/[\r\n]/g, '');
+  
+  return clean.length > 0 ? clean : null;
+};
+
+// Get Firebase API key from environment variable
+const getFirebaseApiKey = (): { value: string; source: 'env' | 'fallback'; issues: string[] } => {
+  const rawKey = import.meta.env.VITE_FIREBASE_API_KEY;
+  const issues: string[] = [];
+  
+  if (!rawKey) {
+    console.warn('[Firebase] VITE_FIREBASE_API_KEY not set, using fallback');
+    return { value: FIREBASE_DEFAULTS.apiKey, source: 'fallback', issues: ['Variable non configurée'] };
+  }
+  
+  // Check for common issues
+  if (rawKey.startsWith('"') || rawKey.startsWith("'")) {
+    issues.push('Quotes détectées');
+  }
+  if (rawKey.startsWith('VITE_')) {
+    issues.push('Préfixe VITE_ dans la valeur');
+  }
+  if (rawKey.includes('\n') || rawKey.includes('\r')) {
+    issues.push('Retours ligne détectés');
+  }
+  
+  const cleaned = cleanConfigValue(rawKey, 'API Key');
+  
+  if (!cleaned || cleaned.length < 30) {
+    console.error('[Firebase] API key too short after cleaning, using fallback');
+    issues.push('Clé trop courte');
+    return { value: FIREBASE_DEFAULTS.apiKey, source: 'fallback', issues };
+  }
+  
+  return { value: cleaned, source: 'env', issues };
+};
+
+// Get other Firebase config values from env or fallback
+const getFirebaseProjectId = (): string => {
+  return cleanConfigValue(import.meta.env.VITE_FIREBASE_PROJECT_ID, 'projectId') || FIREBASE_DEFAULTS.projectId;
+};
+
+const getFirebaseMessagingSenderId = (): string => {
+  return cleanConfigValue(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID, 'senderId') || FIREBASE_DEFAULTS.messagingSenderId;
+};
+
+const getFirebaseAppId = (): string => {
+  return cleanConfigValue(import.meta.env.VITE_FIREBASE_APP_ID, 'appId') || FIREBASE_DEFAULTS.appId;
+};
+
+const getFirebaseAuthDomain = (): string => {
+  return cleanConfigValue(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN, 'authDomain') || FIREBASE_DEFAULTS.authDomain;
+};
+
+// Build Firebase configuration
+const apiKeyResult = getFirebaseApiKey();
+const firebaseConfig = {
+  apiKey: apiKeyResult.value,
+  authDomain: getFirebaseAuthDomain(),
+  projectId: getFirebaseProjectId(),
+  storageBucket: cleanConfigValue(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET, 'storageBucket') || FIREBASE_DEFAULTS.storageBucket,
+  messagingSenderId: getFirebaseMessagingSenderId(),
+  appId: getFirebaseAppId(),
+  measurementId: cleanConfigValue(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID, 'measurementId') || FIREBASE_DEFAULTS.measurementId
+};
+
+// Log configuration status on init
+console.log('[Firebase] Config loaded:', {
+  projectId: firebaseConfig.projectId,
+  senderId: firebaseConfig.messagingSenderId,
+  apiKeySource: apiKeyResult.source,
+  apiKeyPrefix: firebaseConfig.apiKey.substring(0, 10) + '...',
+});
+
 // Export config for diagnostic purposes (without exposing full key)
 export const getFirebaseConfigInfo = () => ({
   apiKeyPrefix: firebaseConfig.apiKey.substring(0, 10) + '...',
   apiKeyLength: firebaseConfig.apiKey.length,
+  apiKeySource: apiKeyResult.source,
+  apiKeyIssues: apiKeyResult.issues,
   projectId: firebaseConfig.projectId,
+  projectIdSource: import.meta.env.VITE_FIREBASE_PROJECT_ID ? 'env' : 'fallback',
   messagingSenderId: firebaseConfig.messagingSenderId,
+  senderIdSource: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ? 'env' : 'fallback',
   appId: firebaseConfig.appId,
+  appIdSource: import.meta.env.VITE_FIREBASE_APP_ID ? 'env' : 'fallback',
+  authDomain: firebaseConfig.authDomain,
+  // Cohérence check: all from same source?
+  isCoherent: (
+    (apiKeyResult.source === 'env' && import.meta.env.VITE_FIREBASE_PROJECT_ID && import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID) ||
+    (apiKeyResult.source === 'fallback' && !import.meta.env.VITE_FIREBASE_PROJECT_ID && !import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID)
+  ),
 });
 
 // VAPID public key fallback - this is a PUBLIC key, safe to include in code
