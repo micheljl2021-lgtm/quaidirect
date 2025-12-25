@@ -160,12 +160,35 @@ const NotificationDiagnostic = () => {
       
       // Provide actionable message for common errors
       let actionableMsg = `Erreur FCM [${errorCode}]: ${errorMsg}`;
+      const configInfo = getFirebaseConfigInfo();
+      const currentDomain = configInfo.currentDomain;
+      const domainPattern = currentDomain.includes('lovable.app') ? '*.lovable.app/*' : currentDomain + '/*';
       
-      if (errorCode === 'messaging/token-subscribe-failed') {
-        const configInfo = getFirebaseConfigInfo();
-        const currentDomain = configInfo.currentDomain;
-        const domainPattern = currentDomain.includes('lovable.app') ? '*.lovable.app/*' : currentDomain + '/*';
-        
+      // Handle Firebase Installations API blocked error
+      if (errorMsg.includes('firebaseinstallations.googleapis.com') || 
+          errorMsg.includes('PERMISSION_DENIED') ||
+          errorCode === 'installations/request-failed') {
+        actionableMsg = `⚠️ API Firebase Installations bloquée\n\n` +
+          `PROBLÈME : L'API Firebase Installations n'est pas activée ou est bloquée pour ce projet.\n\n` +
+          `SOLUTION EN 2 ÉTAPES :\n\n` +
+          `ÉTAPE 1 - Activer l'API Firebase Installations:\n` +
+          `1. Ouvrir ce lien:\n` +
+          `   https://console.cloud.google.com/apis/library/firebaseinstallations.googleapis.com?project=${configInfo.projectId}\n` +
+          `2. Cliquer "ACTIVER"\n\n` +
+          `ÉTAPE 2 - Vérifier les restrictions de l'API Key:\n` +
+          `1. Ouvrir: https://console.cloud.google.com/apis/credentials?project=${configInfo.projectId}\n` +
+          `2. Cliquer sur "Browser key" ou votre API key\n` +
+          `3. Section "API restrictions" → ajouter:\n` +
+          `   • Firebase Installations API\n` +
+          `   • Firebase Cloud Messaging API\n` +
+          `   • Cloud Messaging API\n` +
+          `4. Section "Application restrictions" → HTTP referrers → ajouter:\n` +
+          `   • ${domainPattern}\n` +
+          `   • quaidirect.fr/*\n` +
+          `5. Sauvegarder et patienter 5 min\n\n` +
+          `📍 Domaine actuel: ${currentDomain}\n` +
+          `📍 Projet: ${configInfo.projectId}`;
+      } else if (errorCode === 'messaging/token-subscribe-failed') {
         actionableMsg = `⚠️ Échec inscription FCM\n\n` +
           `SOLUTION : Ajouter le domaine aux referrers autorisés\n\n` +
           `📍 Domaine actuel: ${currentDomain}\n` +
