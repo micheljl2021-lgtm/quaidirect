@@ -19,38 +19,14 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// Recipient interface for deduplication
-interface Recipient {
-  userId: string;
-  email?: string;
-  firstName?: string;
-  sources: Set<string>; // 'follower' | 'species' | 'port' | 'sale_point'
-}
-
-// Generate improved email HTML template with personalization
+// Generate email HTML template
 function generateEmailHtml(
   fishermanName: string,
   speciesNames: string,
   saleTime: string,
   locationName: string,
-  dropUrl: string,
-  recipientFirstName?: string,
-  notificationSources?: string[]
+  dropUrl: string
 ): string {
-  const greeting = recipientFirstName 
-    ? `Bonjour ${recipientFirstName},`
-    : 'Bonjour,';
-
-  // Build the reason based on sources
-  let reason = '';
-  if (notificationSources?.includes('follower')) {
-    reason = `Vous suivez ${fishermanName} sur QuaiDirect`;
-  } else if (notificationSources?.includes('species')) {
-    reason = `Vous avez choisi de suivre ces espèces favorites`;
-  } else if (notificationSources?.includes('port') || notificationSources?.includes('sale_point')) {
-    reason = `Arrivage près de votre port favori`;
-  }
-
   return `
 <!DOCTYPE html>
 <html lang="fr">
@@ -69,17 +45,12 @@ function generateEmailHtml(
               <h1 style="margin: 0; font-size: 28px; color: #ffffff; font-weight: 700;">
                 🐟 Nouvel arrivage !
               </h1>
-              ${reason ? `<p style="margin: 12px 0 0; font-size: 14px; color: rgba(255,255,255,0.9);">${reason}</p>` : ''}
             </td>
           </tr>
           
           <!-- Content -->
           <tr>
             <td style="padding: 32px;">
-              <p style="margin: 0 0 20px; font-size: 16px; color: #3f3f46;">
-                ${greeting}
-              </p>
-              
               <h2 style="margin: 0 0 16px; font-size: 22px; color: #18181b; font-weight: 600;">
                 ${fishermanName}
               </h2>
@@ -109,7 +80,7 @@ function generateEmailHtml(
                 Pêche artisanale en circuit court
               </p>
               <p style="margin: 0; font-size: 12px; color: #a1a1aa;">
-                <a href="https://quaidirect.fr/compte" style="color: #0ea5e9; text-decoration: none;">Gérer mes préférences de notifications</a>
+                <a href="https://quaidirect.fr/compte" style="color: #0ea5e9; text-decoration: none;">Gérer mes notifications</a>
               </p>
             </td>
           </tr>
@@ -121,33 +92,13 @@ function generateEmailHtml(
 </html>`;
 }
 
-// Send email via Resend with improved headers
-async function sendEmail(
-  to: string, 
-  subject: string, 
-  htmlContent: string, 
-  resendApiKey: string,
-  fishermanName: string
-): Promise<boolean> {
+// Send email via Resend
+async function sendEmail(to: string, subject: string, htmlContent: string, resendApiKey: string): Promise<boolean> {
   try {
-    const fromName = fishermanName ? `${fishermanName} via QuaiDirect` : 'QuaiDirect';
-    
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
-      headers: { 
-        'Authorization': `Bearer ${resendApiKey}`, 
-        'Content-Type': 'application/json' 
-      },
-      body: JSON.stringify({ 
-        from: `${fromName} <notification@quaidirect.fr>`, 
-        to: [to], 
-        subject, 
-        html: htmlContent,
-        headers: {
-          'List-Unsubscribe': '<https://quaidirect.fr/compte>',
-          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-        }
-      }),
+      headers: { 'Authorization': `Bearer ${resendApiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: 'QuaiDirect <notification@quaidirect.fr>', to: [to], subject, html: htmlContent }),
     });
     if (!response.ok) {
       const errorText = await response.text();
@@ -197,33 +148,6 @@ async function sendFCMNotification(
   }
 }
 
-// Record sent notifications to avoid duplicates
-async function recordSentNotifications(
-  supabase: any,
-  dropId: string,
-  notifications: Array<{ userId?: string; email?: string; channel: string; source: string }>
-): Promise<void> {
-  if (notifications.length === 0) return;
-  
-  const records = notifications.map(n => ({
-    drop_id: dropId,
-    user_id: n.userId || null,
-    email: n.email || null,
-    channel: n.channel,
-    notification_source: n.source,
-  }));
-
-  // Insert with ignore duplicates - the unique indexes handle conflicts
-  const { error } = await supabase
-    .from('drop_notifications_sent')
-    .insert(records)
-    .select();
-
-  if (error) {
-    console.error('Error recording sent notifications:', error);
-  }
-}
-
 serve(async (req) => {
   const origin = req.headers.get('Origin');
   const corsHeaders = getCorsHeaders(origin);
@@ -263,22 +187,6 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check if notifications were already sent for this drop
-    const { data: existingNotifications } = await supabase
-      .from('drop_notifications_sent')
-      .select('user_id, email, channel')
-      .eq('drop_id', dropId);
-    
-    const alreadyNotifiedUsers = new Set<string>();
-    const alreadyNotifiedEmails = new Set<string>();
-    
-    existingNotifications?.forEach(n => {
-      if (n.user_id) alreadyNotifiedUsers.add(`${n.user_id}-${n.channel}`);
-      if (n.email) alreadyNotifiedEmails.add(`${n.email}-${n.channel}`);
-    });
-    
-    console.log(`Already notified: ${alreadyNotifiedUsers.size} users, ${alreadyNotifiedEmails.size} emails`);
-
     const { data: drop, error: dropError } = await supabase
       .from('drops')
       .select(`id, sale_start_time, fisherman_id, sale_point_id, latitude, longitude,
@@ -295,20 +203,10 @@ serve(async (req) => {
     const fishermanName = fisherman.display_name_preference === 'company_name'
       ? (fisherman.company_name || fisherman.boat_name) : fisherman.boat_name;
 
-    // Get ALL species for this drop (not just first 3)
-    const allSpeciesNames = (drop.offers as any[])?.map((o: any) => o.species?.name).filter(Boolean) || [];
-    const speciesNamesDisplay = allSpeciesNames.length > 3 
-      ? allSpeciesNames.slice(0, 3).join(', ') + ` +${allSpeciesNames.length - 3}`
-      : allSpeciesNames.join(', ') || 'Produits frais';
+    const speciesNames = (drop.offers as any[])?.map((o: any) => o.species?.name).filter(Boolean).slice(0, 3).join(', ') || 'Produits frais';
     const speciesIds = (drop.offers as any[])?.map((o: any) => o.species?.id).filter(Boolean) || [];
 
-    const saleTime = new Date(drop.sale_start_time).toLocaleString('fr-FR', { 
-      weekday: 'long',
-      day: 'numeric', 
-      month: 'long', 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
+    const saleTime = new Date(drop.sale_start_time).toLocaleString('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
 
     let locationName = 'Point de vente';
     let dropLat: number | null = null, dropLon: number | null = null;
@@ -323,144 +221,38 @@ serve(async (req) => {
       dropLat = port.latitude; dropLon = port.longitude;
     }
 
-    const dropUrl = `${siteUrl}/drop/${dropId}`;
+    // Get followers
+    const { data: fishermenFollowers } = await supabase.from('fishermen_followers').select('user_id').eq('fisherman_id', drop.fisherman_id);
+    const fishermenFollowerIds = fishermenFollowers?.map(f => f.user_id) || [];
 
-    // ========== COLLECT ALL RECIPIENTS WITH DEDUPLICATION ==========
-    const recipientMap = new Map<string, Recipient>();
-
-    // 1. Fisherman followers
-    const { data: fishermenFollowers } = await supabase
-      .from('fishermen_followers')
-      .select('user_id')
-      .eq('fisherman_id', drop.fisherman_id);
-    
-    for (const f of fishermenFollowers || []) {
-      if (!recipientMap.has(f.user_id)) {
-        recipientMap.set(f.user_id, { userId: f.user_id, sources: new Set(['follower']) });
-      } else {
-        recipientMap.get(f.user_id)!.sources.add('follower');
-      }
-    }
-    console.log(`Fisherman followers: ${fishermenFollowers?.length || 0}`);
-
-    // 2. Port proximity followers (within 10km)
+    let portProximityUserIds: string[] = [];
     if (dropLat && dropLon) {
-      const { data: allPortFollows } = await supabase
-        .from('follow_ports')
-        .select(`user_id, ports(latitude, longitude)`);
-      
+      const { data: allPortFollows } = await supabase.from('follow_ports').select(`user_id, ports(latitude, longitude)`);
       if (allPortFollows) {
-        for (const fp of allPortFollows) {
+        portProximityUserIds = allPortFollows.filter(fp => {
           const port = fp.ports as any;
-          if (!port?.latitude || !port?.longitude) continue;
-          if (haversineDistance(dropLat, dropLon, port.latitude, port.longitude) <= 10) {
-            if (!recipientMap.has(fp.user_id)) {
-              recipientMap.set(fp.user_id, { userId: fp.user_id, sources: new Set(['port']) });
-            } else {
-              recipientMap.get(fp.user_id)!.sources.add('port');
-            }
-          }
-        }
+          if (!port?.latitude || !port?.longitude) return false;
+          return haversineDistance(dropLat!, dropLon!, port.latitude, port.longitude) <= 10;
+        }).map(fp => fp.user_id);
       }
     }
 
-    // 3. Sale point followers
-    if (drop.sale_point_id) {
-      const { data: salePointFollowers } = await supabase
-        .from('client_follow_sale_points')
-        .select('user_id')
-        .eq('sale_point_id', drop.sale_point_id);
-      
-      for (const sp of salePointFollowers || []) {
-        if (!recipientMap.has(sp.user_id)) {
-          recipientMap.set(sp.user_id, { userId: sp.user_id, sources: new Set(['sale_point']) });
-        } else {
-          recipientMap.get(sp.user_id)!.sources.add('sale_point');
-        }
-      }
-    }
+    const pushUserIds = Array.from(new Set([...fishermenFollowerIds, ...portProximityUserIds]));
+    console.log('Total PUSH users:', pushUserIds.length);
 
-    // 4. Species followers (Premium Plus only)
-    if (speciesIds.length > 0) {
-      const { data: speciesFollowers } = await supabase
-        .from('follow_species')
-        .select('user_id')
-        .in('species_id', speciesIds);
-      
-      if (speciesFollowers?.length) {
-        // Check if they have premium_plus
-        const { data: premiumPlusUsers } = await supabase
-          .from('payments')
-          .select('user_id')
-          .in('user_id', speciesFollowers.map(f => f.user_id))
-          .in('status', ['active', 'trialing'])
-          .eq('subscription_level', 'premium_plus');
-        
-        const premiumPlusUserIds = new Set(premiumPlusUsers?.map(p => p.user_id) || []);
-        
-        for (const sf of speciesFollowers) {
-          if (premiumPlusUserIds.has(sf.user_id)) {
-            if (!recipientMap.has(sf.user_id)) {
-              recipientMap.set(sf.user_id, { userId: sf.user_id, sources: new Set(['species']) });
-            } else {
-              recipientMap.get(sf.user_id)!.sources.add('species');
-            }
-          }
-        }
-      }
-    }
-
-    console.log(`Total unique recipients after deduplication: ${recipientMap.size}`);
-
-    // Get user profiles with emails and names
-    const userIds = Array.from(recipientMap.keys());
-    
-    if (userIds.length === 0) {
-      console.log('No recipients to notify');
-      return jsonResponse({ 
-        message: 'No recipients', 
-        push: { targeted: 0, sent: 0, failed: 0 }, 
-        email: { sent: 0 } 
-      }, 200, origin);
-    }
-
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, email, full_name')
-      .in('id', userIds);
-
-    // Enrich recipients with profile data
-    for (const profile of profiles || []) {
-      if (recipientMap.has(profile.id)) {
-        const recipient = recipientMap.get(profile.id)!;
-        recipient.email = profile.email;
-        recipient.firstName = profile.full_name?.split(' ')[0];
-      }
-    }
-
-    // Filter out already notified users
-    const newRecipients = Array.from(recipientMap.values()).filter(r => {
-      const pushKey = `${r.userId}-push`;
-      const emailKey = `${r.userId}-email`;
-      return !alreadyNotifiedUsers.has(pushKey) && !alreadyNotifiedUsers.has(emailKey);
-    });
-
-    console.log(`New recipients (not already notified): ${newRecipients.length}`);
-
-    // ========== SEND PUSH NOTIFICATIONS ==========
+    // Send FCM notifications
     let pushSentCount = 0;
     let pushFailedCount = 0;
-    const usersNeedingEmailFallback: string[] = [];
-
-    if (newRecipients.length > 0 && functionSecret) {
-      const pushUserIds = newRecipients.map(r => r.userId);
-      
+    let usersNeedingEmailFallback: string[] = [];
+    
+    if (pushUserIds.length > 0 && functionSecret) {
+      const dropUrl = `${siteUrl}/drop/${dropId}`;
       const fcmResult = await sendFCMNotification(
         supabaseUrl,
         pushUserIds,
         {
           title: `🐟 ${fishermanName}`,
-          body: `${speciesNamesDisplay} - ${saleTime} à ${locationName}`,
+          body: `${speciesNames} - ${saleTime} à ${locationName}`,
           data: {
             url: dropUrl,
             dropId: dropId,
@@ -469,110 +261,108 @@ serve(async (req) => {
         },
         functionSecret
       );
-      
       pushSentCount = fcmResult.sent;
       pushFailedCount = fcmResult.failed;
       
-      // Track push notifications sent
-      const pushNotificationRecords = pushUserIds
-        .filter(id => !fcmResult.failedUserIds.includes(id) && !fcmResult.usersWithoutTokens.includes(id))
-        .map(userId => {
-          const recipient = recipientMap.get(userId)!;
-          const primarySource = Array.from(recipient.sources)[0];
-          return { userId, channel: 'push', source: primarySource };
-        });
+      // Collect users who need email fallback (failed push or no token)
+      usersNeedingEmailFallback = [
+        ...fcmResult.failedUserIds,
+        ...fcmResult.usersWithoutTokens
+      ];
       
-      await recordSentNotifications(supabase, dropId, pushNotificationRecords);
-
-      // Collect users who need email fallback
-      usersNeedingEmailFallback.push(...fcmResult.failedUserIds, ...fcmResult.usersWithoutTokens);
-      
-      console.log(`FCM: ${pushSentCount} sent, ${pushFailedCount} failed, ${usersNeedingEmailFallback.length} need email fallback`);
+      console.log(`FCM notifications: ${pushSentCount} sent, ${pushFailedCount} failed`);
+      console.log(`Users needing email fallback: ${usersNeedingEmailFallback.length}`);
     } else {
-      // No FCM available, all users need email
-      usersNeedingEmailFallback.push(...newRecipients.map(r => r.userId));
+      // No FCM available, all users need email fallback
+      usersNeedingEmailFallback = pushUserIds;
     }
 
-    // ========== SEND EMAIL NOTIFICATIONS ==========
+    // Email notifications - Fallback for failed push + Premium Plus species followers
     let emailSentCount = 0;
+    let emailFallbackCount = 0;
     
-    if (resendApiKey && usersNeedingEmailFallback.length > 0) {
-      // Get notification preferences for email-enabled users
-      const { data: emailPrefs } = await supabase
-        .from('notification_preferences')
-        .select('user_id')
-        .in('user_id', usersNeedingEmailFallback)
-        .eq('email_enabled', true);
+    if (resendApiKey) {
+      const dropUrl = `${siteUrl}/drop/${dropId}`;
+      const emailHtml = generateEmailHtml(fishermanName, speciesNames, saleTime, locationName, dropUrl);
+      const emailSubject = `🐟 ${fishermanName} - ${speciesNames}`;
       
-      const usersWithEmailEnabled = new Set(emailPrefs?.map(p => p.user_id) || []);
+      // 1. Email fallback for users who didn't get push notification
+      if (usersNeedingEmailFallback.length > 0) {
+        // Get users with email_enabled preference
+        const { data: emailPrefs } = await supabase
+          .from('notification_preferences')
+          .select('user_id')
+          .in('user_id', usersNeedingEmailFallback)
+          .eq('email_enabled', true);
+        
+        const usersWithEmailEnabled = new Set(emailPrefs?.map(p => p.user_id) || []);
+        
+        // Get email addresses for these users
+        if (usersWithEmailEnabled.size > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, email')
+            .in('id', Array.from(usersWithEmailEnabled))
+            .not('email', 'is', null);
+          
+          for (const p of profiles || []) {
+            if (await sendEmail(p.email!, emailSubject, emailHtml, resendApiKey)) {
+              emailFallbackCount++;
+            }
+          }
+        }
+        
+        console.log(`Email fallback sent to ${emailFallbackCount} users`);
+      }
       
-      // Also include users who don't have preferences set (default to email enabled)
-      const usersWithoutPrefs = usersNeedingEmailFallback.filter(id => !usersWithEmailEnabled.has(id));
-      const { data: usersWithPrefsSet } = await supabase
-        .from('notification_preferences')
-        .select('user_id')
-        .in('user_id', usersWithoutPrefs);
-      
-      const usersWithPrefsSetIds = new Set(usersWithPrefsSet?.map(p => p.user_id) || []);
-      
-      // Users who need email: either email_enabled=true OR no preferences set
-      const usersToEmail = usersNeedingEmailFallback.filter(id => 
-        usersWithEmailEnabled.has(id) || !usersWithPrefsSetIds.has(id)
-      );
-
-      console.log(`Users to email: ${usersToEmail.length}`);
-
-      const emailNotificationRecords: Array<{ userId: string; email?: string; channel: string; source: string }> = [];
-      const emailSubject = `🐟 ${fishermanName} - ${speciesNamesDisplay}`;
-
-      for (const userId of usersToEmail) {
-        const recipient = recipientMap.get(userId);
-        if (!recipient?.email) continue;
-
-        // Skip if already emailed for this drop
-        if (alreadyNotifiedEmails.has(`${recipient.email}-email`)) continue;
-
-        const sources = Array.from(recipient.sources);
-        const emailHtml = generateEmailHtml(
-          fishermanName,
-          allSpeciesNames.join(', ') || 'Produits frais',
-          saleTime,
-          locationName,
-          dropUrl,
-          recipient.firstName,
-          sources
-        );
-
-        const success = await sendEmail(
-          recipient.email, 
-          emailSubject, 
-          emailHtml, 
-          resendApiKey,
-          fishermanName
-        );
-
-        if (success) {
-          emailSentCount++;
-          emailNotificationRecords.push({ 
-            userId, 
-            email: recipient.email, 
-            channel: 'email', 
-            source: sources[0] 
-          });
+      // 2. Premium Plus species followers (existing logic)
+      if (speciesIds.length > 0) {
+        const { data: speciesFollowers } = await supabase.from('follow_species').select('user_id').in('species_id', speciesIds);
+        if (speciesFollowers?.length) {
+          const { data: premiumPlusUsers } = await supabase
+            .from('payments')
+            .select('user_id')
+            .in('user_id', speciesFollowers.map(f => f.user_id))
+            .in('status', ['active', 'trialing'])
+            .eq('subscription_level', 'premium_plus');
+          
+          if (premiumPlusUsers?.length) {
+            // Exclude users who already received fallback email
+            const alreadyEmailed = new Set(
+              usersNeedingEmailFallback.filter(id => {
+                // We only know if they were supposed to get email, not if successful
+                // For simplicity, we'll check if email was enabled
+                return true;
+              })
+            );
+            
+            const premiumToEmail = premiumPlusUsers.filter(p => !alreadyEmailed.has(p.user_id));
+            
+            if (premiumToEmail.length > 0) {
+              const { data: profiles } = await supabase
+                .from('profiles')
+                .select('id, email')
+                .in('id', premiumToEmail.map(p => p.user_id))
+                .not('email', 'is', null);
+              
+              for (const p of profiles || []) {
+                if (await sendEmail(p.email!, emailSubject, emailHtml, resendApiKey)) {
+                  emailSentCount++;
+                }
+              }
+            }
+          }
         }
       }
-
-      // Record email notifications sent
-      await recordSentNotifications(supabase, dropId, emailNotificationRecords);
     }
 
-    console.log(`Total: ${pushSentCount} push, ${emailSentCount} emails sent`);
+    const totalEmailSent = emailSentCount + emailFallbackCount;
+    console.log(`Total emails sent: ${totalEmailSent} (${emailFallbackCount} fallback, ${emailSentCount} premium)`);
 
     return jsonResponse({ 
       message: 'Notifications sent', 
-      push: { targeted: newRecipients.length, sent: pushSentCount, failed: pushFailedCount }, 
-      email: { sent: emailSentCount },
-      duplicates_prevented: alreadyNotifiedUsers.size + alreadyNotifiedEmails.size
+      push: { targeted: pushUserIds.length, sent: pushSentCount, failed: pushFailedCount }, 
+      email: { sent: totalEmailSent, fallback: emailFallbackCount, premium: emailSentCount } 
     }, 200, origin);
   } catch (error) {
     console.error('Error:', error);

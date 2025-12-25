@@ -9,8 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Mail, Send, MessageSquare, AlertTriangle, Ship, UserCheck } from 'lucide-react';
+import { Mail, Send, MessageSquare, AlertTriangle, Ship } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
@@ -32,7 +31,6 @@ const MessagingSection = ({ fishermanId, preSelectedDropId }: MessagingSectionPr
   const [selectedContacts, setSelectedContacts] = useState<any[]>([]);
   const [channel, setChannel] = useState<Channel>('email');
   const [selectedDropId, setSelectedDropId] = useState<string>(preSelectedDropId || '');
-  const [excludeAutoNotified, setExcludeAutoNotified] = useState(true);
 
   // Fetch all active drops for this fisherman
   const { data: availableDrops, refetch: refetchDrops } = useQuery({
@@ -127,7 +125,6 @@ const MessagingSection = ({ fishermanId, preSelectedDropId }: MessagingSectionPr
       setCustomMessage('');
       queryClient.invalidateQueries({ queryKey: ['fishermen-contacts'] });
       queryClient.invalidateQueries({ queryKey: ['sms-quota'] });
-      queryClient.invalidateQueries({ queryKey: ['drop-notifications-sent'] });
     },
     onError: (error: any) => {
       toast({
@@ -325,61 +322,41 @@ const MessagingSection = ({ fishermanId, preSelectedDropId }: MessagingSectionPr
 
         {/* Drop selector for new_drop type */}
         {messageType === 'new_drop' && (
-          <div className="space-y-3">
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Ship className="h-4 w-4" />
-                Sélectionner l'arrivage à annoncer
-              </Label>
-              <Select value={selectedDropId} onValueChange={setSelectedDropId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choisir un arrivage..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableDrops?.map((drop) => {
-                    const location = drop.fisherman_sale_points?.label || drop.ports?.name || 'Point de vente';
-                    const dateStr = drop.sale_start_time 
-                      ? format(new Date(drop.sale_start_time), "EEE d MMM 'à' HH:mm", { locale: fr })
-                      : format(new Date(drop.created_at), "EEE d MMM", { locale: fr });
-                    return (
-                      <SelectItem key={drop.id} value={drop.id}>
-                        {location} - {dateStr}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-              {!selectedDropId && availableDrops && availableDrops.length > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Sélectionnez l'arrivage que vous souhaitez annoncer à vos clients
-                </p>
-              )}
-              {availableDrops && availableDrops.length === 0 && (
-                <Alert>
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    Aucun arrivage actif. Créez d'abord un arrivage avant de l'annoncer.
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
-
-            {/* Exclude auto-notified checkbox */}
-            {selectedDropId && (
-              <div className="flex items-center space-x-2 p-3 rounded-lg bg-muted/50">
-                <Checkbox
-                  id="exclude-auto-notified"
-                  checked={excludeAutoNotified}
-                  onCheckedChange={(checked) => setExcludeAutoNotified(checked === true)}
-                />
-                <Label 
-                  htmlFor="exclude-auto-notified" 
-                  className="font-normal cursor-pointer flex items-center gap-2 text-sm"
-                >
-                  <UserCheck className="h-4 w-4 text-emerald-600" />
-                  Exclure les contacts déjà notifiés automatiquement
-                </Label>
-              </div>
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Ship className="h-4 w-4" />
+              Sélectionner l'arrivage à annoncer
+            </Label>
+            <Select value={selectedDropId} onValueChange={setSelectedDropId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choisir un arrivage..." />
+              </SelectTrigger>
+              <SelectContent>
+                {availableDrops?.map((drop) => {
+                  const location = drop.fisherman_sale_points?.label || drop.ports?.name || 'Point de vente';
+                  const dateStr = drop.sale_start_time 
+                    ? format(new Date(drop.sale_start_time), "EEE d MMM 'à' HH:mm", { locale: fr })
+                    : format(new Date(drop.created_at), "EEE d MMM", { locale: fr });
+                  return (
+                    <SelectItem key={drop.id} value={drop.id}>
+                      {location} - {dateStr}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            {!selectedDropId && availableDrops && availableDrops.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Sélectionnez l'arrivage que vous souhaitez annoncer à vos clients
+              </p>
+            )}
+            {availableDrops && availableDrops.length === 0 && (
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  Aucun arrivage actif. Créez d'abord un arrivage avant de l'annoncer.
+                </AlertDescription>
+              </Alert>
             )}
           </div>
         )}
@@ -419,8 +396,6 @@ const MessagingSection = ({ fishermanId, preSelectedDropId }: MessagingSectionPr
           fishermanId={fishermanId}
           selectedGroup={selectedGroup}
           onSelectedContactsChange={setSelectedContacts}
-          selectedDropId={messageType === 'new_drop' ? selectedDropId : undefined}
-          excludeAutoNotified={excludeAutoNotified}
         />
 
         <Button 
