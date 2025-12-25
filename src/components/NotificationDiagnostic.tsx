@@ -163,20 +163,28 @@ const NotificationDiagnostic = () => {
       
       if (errorCode === 'messaging/token-subscribe-failed') {
         const configInfo = getFirebaseConfigInfo();
+        const currentDomain = configInfo.currentDomain;
+        const domainPattern = currentDomain.includes('lovable.app') ? '*.lovable.app/*' : currentDomain + '/*';
+        
         actionableMsg = `⚠️ Échec inscription FCM\n\n` +
-          `CAUSE PROBABLE:\n` +
-          `1) API Key Firebase restreinte (referrers)\n` +
-          `2) Configuration Firebase incohérente\n\n` +
-          `Domaine actuel: ${configInfo.currentDomain}\n` +
-          `→ Ajouter ce domaine dans les restrictions API key de Firebase Console\n\n` +
-          `Config détectée:\n` +
-          `• Project: ${configInfo.projectId} (${configInfo.projectIdSource})\n` +
-          `• Sender: ${configInfo.messagingSenderId} (${configInfo.senderIdSource})\n` +
-          `• API Key: ${configInfo.apiKeyPrefix} (${configInfo.apiKeySource})\n` +
-          `• AuthDomain: ${configInfo.authDomain} (${configInfo.authDomainSource})\n` +
-          `• AppId: ${configInfo.appId?.substring(0,20)}... (${configInfo.appIdSource})\n` +
-          (configInfo.apiKeyIssues.length > 0 ? `• ⚠️ Issues: ${configInfo.apiKeyIssues.join(', ')}\n` : '') +
-          (!configInfo.isCoherent ? `\n⚠️ CONFIG MIXTE: ${configInfo.envCount} champs env, ${configInfo.fallbackCount} fallback. Vérifiez que TOUTES les variables Firebase sont configurées.` : '');
+          `SOLUTION : Ajouter le domaine aux referrers autorisés\n\n` +
+          `📍 Domaine actuel: ${currentDomain}\n` +
+          `📍 Pattern à ajouter: ${domainPattern}\n\n` +
+          `ÉTAPES POUR CORRIGER :\n` +
+          `1. Ouvrir console.cloud.google.com\n` +
+          `2. Sélectionner le projet: ${configInfo.projectId}\n` +
+          `3. Menu → APIs & Services → Credentials\n` +
+          `4. Cliquer sur votre "Browser key" ou "API key"\n` +
+          `5. Section "Application restrictions" → HTTP referrers\n` +
+          `6. Ajouter: ${domainPattern}\n` +
+          `7. Ajouter aussi: quaidirect.fr/* (pour production)\n` +
+          `8. Sauvegarder et patienter ~5 min\n\n` +
+          `🔗 Lien direct:\n` +
+          `https://console.cloud.google.com/apis/credentials?project=${configInfo.projectId}\n\n` +
+          `Config actuelle:\n` +
+          `• Project: ${configInfo.projectId}\n` +
+          `• API Key: ${configInfo.apiKeyPrefix}\n` +
+          (configInfo.apiKeyIssues.length > 0 ? `• ⚠️ Issues: ${configInfo.apiKeyIssues.join(', ')}\n` : '');
       } else if (errorCode === 'messaging/permission-blocked') {
         actionableMsg = 'Notifications bloquées dans le navigateur. Réinitialisez dans les paramètres du site.';
       }

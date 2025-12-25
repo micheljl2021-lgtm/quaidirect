@@ -83,6 +83,7 @@ export function Step2EspecesQuantites({
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [enrichingSpeciesIds, setEnrichingSpeciesIds] = useState<Set<string>>(new Set());
+  const [isLoadingSpecies, setIsLoadingSpecies] = useState(true);
   
   // Mode simple: photos et notes
   const [photos, setPhotos] = useState<string[]>(initialPhotos);
@@ -133,107 +134,118 @@ export function Step2EspecesQuantites({
   useEffect(() => {
     const fetchSpecies = async () => {
       if (!user) return;
+      setIsLoadingSpecies(true);
 
-      const { data: fishermanData } = await supabase
-        .from("fishermen")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
-
-      if (!fishermanData) return;
-
-      // Fetch all species with cooking info
-      const { data: speciesData } = await supabase
-        .from("species")
-        .select(`
-          id, name, indicative_price,
-          cooking_plancha, cooking_friture, cooking_grill, cooking_sushi_tartare,
-          cooking_vapeur, cooking_four, cooking_poele, cooking_soupe, cooking_bouillabaisse,
-          flavor, bones_level, budget, cooking_tips
-        `)
-        .order("name");
-
-      if (speciesData) {
-        setAllSpecies(speciesData as Species[]);
-        setFilteredSpecies(speciesData as Species[]);
-      }
-
-      // Only use history-based suggestions from previous arrivals
-      const { data: dropsData } = await supabase
-        .from("drops")
-        .select("id")
-        .eq("fisherman_id", fishermanData.id)
-        .order("created_at", { ascending: false })
-        .limit(20);
-
-      if (dropsData && dropsData.length > 0) {
-        const dropIds = dropsData.map(d => d.id);
-        
-        // Check drop_species table first (for simple drops)
-        const { data: dropSpeciesData } = await supabase
-          .from("drop_species")
-          .select(`
-            species_id, 
-            species:species_id(
+      try {
+        // Parallelize: fetch fisherman + all species at the same time
+        const [fishermanResult, speciesResult] = await Promise.all([
+          supabase
+            .from("fishermen")
+            .select("id")
+            .eq("user_id", user.id)
+            .single(),
+          supabase
+            .from("species")
+            .select(`
               id, name, indicative_price,
               cooking_plancha, cooking_friture, cooking_grill, cooking_sushi_tartare,
               cooking_vapeur, cooking_four, cooking_poele, cooking_soupe, cooking_bouillabaisse,
               flavor, bones_level, budget, cooking_tips
-            )
-          `)
-          .in("drop_id", dropIds);
-        
-        // Also check offers table (for detailed drops)
-        const { data: historyData } = await supabase
-          .from("offers")
-          .select(`
-            species_id, 
-            species:species_id(
-              id, name, indicative_price,
-              cooking_plancha, cooking_friture, cooking_grill, cooking_sushi_tartare,
-              cooking_vapeur, cooking_four, cooking_poele, cooking_soupe, cooking_bouillabaisse,
-              flavor, bones_level, budget, cooking_tips
-            )
-          `)
-          .in("drop_id", dropIds);
+            `)
+            .order("name")
+        ]);
 
-        const speciesCount: Record<string, { species: any; count: number }> = {};
-        
-        // Count from drop_species
-        if (dropSpeciesData) {
-          dropSpeciesData.forEach((ds: any) => {
-            if (ds.species) {
-              const id = ds.species.id;
-              if (!speciesCount[id]) {
-                speciesCount[id] = { species: ds.species, count: 0 };
-              }
-              speciesCount[id].count++;
-            }
-          });
+        if (speciesResult.data) {
+          setAllSpecies(speciesResult.data as Species[]);
+          setFilteredSpecies(speciesResult.data as Species[]);
         }
 
-        // Count from offers
-        if (historyData) {
-          historyData.forEach((offer: any) => {
-            if (offer.species) {
-              const id = offer.species.id;
-              if (!speciesCount[id]) {
-                speciesCount[id] = { species: offer.species, count: 0 };
-              }
-              speciesCount[id].count++;
-            }
-          });
+        if (!fishermanResult.data) {
+          setIsLoadingSpecies(false);
+          return;
         }
 
-        const suggested = Object.values(speciesCount)
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 8)
-          .map(item => item.species);
+        const fishermanId = fishermanResult.data.id;
 
-        setSuggestedSpecies(suggested);
-      } else {
-        // No previous arrivals - empty suggestions
-        setSuggestedSpecies([]);
+        // Fetch drops for history
+        const { data: dropsData } = await supabase
+          .from("drops")
+          .select("id")
+          .eq("fisherman_id", fishermanId)
+          .order("created_at", { ascending: false })
+          .limit(20);
+
+        if (dropsData && dropsData.length > 0) {
+          const dropIds = dropsData.map(d => d.id);
+          
+          // Parallelize: fetch drop_species + offers at the same time
+          const [dropSpeciesResult, offersResult] = await Promise.all([
+            supabase
+              .from("drop_species")
+              .select(`
+                species_id, 
+                species:species_id(
+                  id, name, indicative_price,
+                  cooking_plancha, cooking_friture, cooking_grill, cooking_sushi_tartare,
+                  cooking_vapeur, cooking_four, cooking_poele, cooking_soupe, cooking_bouillabaisse,
+                  flavor, bones_level, budget, cooking_tips
+                )
+              `)
+              .in("drop_id", dropIds),
+            supabase
+              .from("offers")
+              .select(`
+                species_id, 
+                species:species_id(
+                  id, name, indicative_price,
+                  cooking_plancha, cooking_friture, cooking_grill, cooking_sushi_tartare,
+                  cooking_vapeur, cooking_four, cooking_poele, cooking_soupe, cooking_bouillabaisse,
+                  flavor, bones_level, budget, cooking_tips
+                )
+              `)
+              .in("drop_id", dropIds)
+          ]);
+
+          const speciesCount: Record<string, { species: any; count: number }> = {};
+          
+          // Count from drop_species
+          if (dropSpeciesResult.data) {
+            dropSpeciesResult.data.forEach((ds: any) => {
+              if (ds.species) {
+                const id = ds.species.id;
+                if (!speciesCount[id]) {
+                  speciesCount[id] = { species: ds.species, count: 0 };
+                }
+                speciesCount[id].count++;
+              }
+            });
+          }
+
+          // Count from offers
+          if (offersResult.data) {
+            offersResult.data.forEach((offer: any) => {
+              if (offer.species) {
+                const id = offer.species.id;
+                if (!speciesCount[id]) {
+                  speciesCount[id] = { species: offer.species, count: 0 };
+                }
+                speciesCount[id].count++;
+              }
+            });
+          }
+
+          const suggested = Object.values(speciesCount)
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 8)
+            .map(item => item.species);
+
+          setSuggestedSpecies(suggested);
+        } else {
+          // No previous arrivals - empty suggestions
+          setSuggestedSpecies([]);
+        }
+      } finally {
+        setIsLoadingSpecies(false);
       }
     };
 
@@ -405,6 +417,13 @@ export function Step2EspecesQuantites({
           <CardTitle className="text-2xl">Qu'est-ce que tu débarques ?</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          {isLoadingSpecies ? (
+            <div className="flex items-center justify-center py-8 gap-3">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <span className="text-muted-foreground">Chargement des espèces...</span>
+            </div>
+          ) : (
+            <>
           <TemplatesRapides onTemplateSelect={handleTemplateSelect} />
 
           {/* Only show favorites if there are species from previous arrivals */}
@@ -615,6 +634,8 @@ export function Step2EspecesQuantites({
                   Ces notes seront visibles par les clients sur l'arrivage
                 </p>
               </div>
+            </>
+          )}
             </>
           )}
         </CardContent>
