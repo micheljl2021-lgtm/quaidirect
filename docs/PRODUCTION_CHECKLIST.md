@@ -80,18 +80,28 @@ Vérifier le bon fonctionnement de la carte :
 - [ ] Arrivages visibles sur la carte
 - [ ] Pas d'erreurs console liées à Google Maps
 
+#### 7. Test Validation Variables d'Environnement
+Vérifier que la validation automatique fonctionne :
+
+- [ ] Console affiche `[ENV VALIDATION] ✅ All required environment variables are configured`
+- [ ] Pas d'erreur "supabaseUrl is required" en console
+- [ ] Pas de page blanche au chargement
+- [ ] ErrorBoundary affiche un message clair si variables manquantes
+
+Pour plus d'informations : [Guide de dépannage ENV](./ENV_VALIDATION_TROUBLESHOOTING.md)
+
 ---
 
 ### 🟢 Optionnel - Optimisations recommandées
 
-#### 7. Configuration Sentry
+#### 8. Configuration Sentry
 Pour le monitoring des erreurs en production :
 
 1. Créer un projet sur [Sentry.io](https://sentry.io)
 2. Récupérer le DSN
 3. Ajouter `VITE_SENTRY_DSN` dans les variables d'environnement Lovable
 
-#### 8. Configuration Analytics
+#### 9. Configuration Analytics
 Si vous souhaitez suivre l'usage :
 
 1. Créer une propriété Google Analytics 4
@@ -101,8 +111,12 @@ Si vous souhaitez suivre l'usage :
 
 ## Secrets Requis (Lovable Cloud)
 
+**⚠️ Important**: Tous les secrets marqués comme obligatoires sont validés automatiquement au démarrage de l'application. Si un secret manque, l'application affichera une erreur claire au lieu d'une page blanche.
+
 | Secret | Description | Obligatoire |
 |--------|-------------|-------------|
+| `VITE_SUPABASE_URL` | URL projet Supabase | ✅ |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Clé publique Supabase | ✅ |
 | `STRIPE_SECRET_KEY` | Clé secrète Stripe | ✅ |
 | `STRIPE_WEBHOOK_SECRET` | Secret webhook Stripe | ✅ |
 | `RESEND_API_KEY` | Clé API Resend pour emails | ✅ |
@@ -120,4 +134,4 @@ Si vous souhaitez suivre l'usage :
 
 ---
 
-*Document mis à jour le 2025-12-03*
+*Document mis à jour le 2025-12-27*

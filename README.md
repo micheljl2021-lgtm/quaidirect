@@ -41,6 +41,8 @@ Voir `docs/CONFIGURATION_CHECKLIST.md` pour la liste complète des variables à 
 
 ## 🔐 Variables d'environnement
 
+⚠️ **Important**: L'application valide automatiquement les variables d'environnement requises au démarrage. Si une variable manque, vous verrez une erreur claire au lieu d'une page blanche. Voir [Guide de dépannage ENV](docs/ENV_VALIDATION_TROUBLESHOOTING.md).
+
 Créer un fichier `.env` à la racine avec :
 
 ```env
