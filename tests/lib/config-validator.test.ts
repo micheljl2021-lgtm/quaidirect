@@ -11,8 +11,8 @@ describe('Config Validator', () => {
     vi.stubEnv('MODE', 'test');
     
     // Should not throw an error even without required env vars
-    expect(() => {
-      require('../src/lib/config-validator');
+    expect(async () => {
+      await import('../src/lib/config-validator');
     }).not.toThrow();
   });
 
@@ -21,8 +21,8 @@ describe('Config Validator', () => {
     vi.stubEnv('VITEST', 'true');
     
     // Should not throw an error even without required env vars
-    expect(() => {
-      require('../src/lib/config-validator');
+    expect(async () => {
+      await import('../src/lib/config-validator');
     }).not.toThrow();
   });
 });

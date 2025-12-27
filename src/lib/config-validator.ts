@@ -52,9 +52,21 @@ const validateConfig = (): void => {
     },
   ];
 
-  const missing = configs.filter(
-    (c) => c.required && (!c.value || c.value === `your_${c.key.toLowerCase()}_here`)
-  );
+  const missing = configs.filter((c) => {
+    if (!c.required) return false;
+    if (!c.value) return true;
+    
+    // Check for common placeholder patterns
+    const placeholderPatterns = [
+      'your_google_maps_api_key_here',
+      'your_supabase_url_here',
+      'your_supabase_publishable_anon_key_here',
+      'your_firebase_api_key_here',
+      'your_vapid_public_key_here'
+    ];
+    
+    return placeholderPatterns.some(pattern => c.value === pattern);
+  });
 
   if (missing.length > 0) {
     const missingList = missing.map((c) => `  • ${c.key} (${c.service})`).join('\n');
@@ -69,9 +81,18 @@ const validateConfig = (): void => {
   }
 
   // Log optional missing configs (not blocking)
-  const optionalMissing = configs.filter(
-    (c) => !c.required && (!c.value || c.value === `your_${c.key.toLowerCase()}_here`)
-  );
+  const optionalMissing = configs.filter((c) => {
+    if (c.required) return false;
+    if (!c.value) return true;
+    
+    // Check for common placeholder patterns
+    const placeholderPatterns = [
+      'your_firebase_api_key_here',
+      'your_vapid_public_key_here'
+    ];
+    
+    return placeholderPatterns.some(pattern => c.value === pattern);
+  });
 
   if (optionalMissing.length > 0) {
     console.warn(

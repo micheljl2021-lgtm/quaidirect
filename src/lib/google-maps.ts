@@ -15,17 +15,14 @@ export function getGoogleMapsApiKey(): string {
   }
   
   if (!apiKey || apiKey === 'your_google_maps_api_key_here') {
-    if (!apiKeyWarningShown) {
-      apiKeyWarningShown = true;
-      throw new Error(
-        '[Google Maps] CRITICAL: VITE_GOOGLE_MAPS_API_KEY not configured.\n' +
-        'Please configure it in:\n' +
-        '- Lovable Dashboard → Project → Secrets (for production)\n' +
-        '- Local .env file (for development)\n' +
-        '\n' +
-        'See docs/GOOGLE_MAPS_CONFIG.md for setup instructions.'
-      );
-    }
+    throw new Error(
+      '[Google Maps] CRITICAL: VITE_GOOGLE_MAPS_API_KEY not configured.\n' +
+      'Please configure it in:\n' +
+      '- Lovable Dashboard → Project → Secrets (for production)\n' +
+      '- Local .env file (for development)\n' +
+      '\n' +
+      'See docs/GOOGLE_MAPS_CONFIG.md for setup instructions.'
+    );
   }
   
   return apiKey;
