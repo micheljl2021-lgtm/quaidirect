@@ -3,7 +3,7 @@ import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-map
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import { MapPin, AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { googleMapsLoaderConfig, defaultMapConfig, quaiDirectMapStyles, isGoogleMapsConfigured } from '@/lib/google-maps';
+import { googleMapsLoaderConfig, defaultMapConfig, quaiDirectMapStyles } from '@/lib/google-maps';
 import { Button } from '@/components/ui/button';
 
 interface Port {
@@ -79,8 +79,13 @@ const GoogleMapComponent = ({
   const [hasTimedOut, setHasTimedOut] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Use centralized loader config - do NOT override the id to prevent multiple loads
-  const { isLoaded, loadError } = useJsApiLoader(googleMapsLoaderConfig);
+  const apiKey = googleMapsLoaderConfig.googleMapsApiKey;
+
+  // Use centralized loader config
+  const { isLoaded, loadError } = useJsApiLoader({
+    ...googleMapsLoaderConfig,
+    googleMapsApiKey: apiKey,
+  });
 
   const mapOptions = useMemo(() => ({
     styles: quaiDirectMapStyles,
@@ -482,7 +487,7 @@ const GoogleMapComponent = ({
   }, [map, salePoints, drops, selectedSalePointId, selectedDropId, onSalePointClick, onDropClick, isLoaded]);
 
   // Check if API key is configured
-  if (!isGoogleMapsConfigured()) {
+  if (!apiKey) {
     return (
       <div className="flex flex-col items-center justify-center h-full bg-muted rounded-lg p-6 text-center">
         <AlertTriangle className="h-12 w-12 text-warning mb-4" />
@@ -490,8 +495,7 @@ const GoogleMapComponent = ({
           Carte non disponible
         </h3>
         <p className="text-muted-foreground text-sm max-w-sm mb-4">
-          La clé API Google Maps n'est pas configurée. 
-          Veuillez contacter l'administrateur.
+          La clé API Google Maps n'est pas configurée.
         </p>
         <p className="text-xs text-muted-foreground/70">
           Code erreur: API_KEY_MISSING
