@@ -3,8 +3,9 @@ import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-map
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import { MapPin, AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { googleMapsLoaderConfig, defaultMapConfig, quaiDirectMapStyles } from '@/lib/google-maps';
+import { googleMapsLoaderConfig, defaultMapConfig, quaiDirectMapStyles, getGoogleMapsApiKey, initGoogleMapsApiKey } from '@/lib/google-maps';
 import { Button } from '@/components/ui/button';
+
 
 interface Port {
   id: string;
@@ -79,7 +80,29 @@ const GoogleMapComponent = ({
   const [hasTimedOut, setHasTimedOut] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const apiKey = googleMapsLoaderConfig.googleMapsApiKey;
+  const [apiKey, setApiKey] = useState<string>(() => getGoogleMapsApiKey());
+  const [apiKeyLoading, setApiKeyLoading] = useState<boolean>(() => !getGoogleMapsApiKey());
+
+  useEffect(() => {
+    let mounted = true;
+
+    if (!apiKey) {
+      setApiKeyLoading(true);
+      initGoogleMapsApiKey()
+        .then((key) => {
+          if (!mounted) return;
+          setApiKey(key);
+        })
+        .finally(() => {
+          if (!mounted) return;
+          setApiKeyLoading(false);
+        });
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [apiKey]);
 
   // Use centralized loader config
   const { isLoaded, loadError } = useJsApiLoader({
@@ -487,6 +510,18 @@ const GoogleMapComponent = ({
   }, [map, salePoints, drops, selectedSalePointId, selectedDropId, onSalePointClick, onDropClick, isLoaded]);
 
   // Check if API key is configured
+  if (apiKeyLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full bg-muted rounded-lg p-6 text-center">
+        <Loader2 className="h-10 w-10 animate-spin text-muted-foreground mb-4" />
+        <h3 className="text-lg font-semibold text-foreground mb-2">Chargement de la carte…</h3>
+        <p className="text-sm text-muted-foreground max-w-sm">
+          On récupère la configuration Google Maps.
+        </p>
+      </div>
+    );
+  }
+
   if (!apiKey) {
     return (
       <div className="flex flex-col items-center justify-center h-full bg-muted rounded-lg p-6 text-center">
@@ -495,7 +530,7 @@ const GoogleMapComponent = ({
           Carte non disponible
         </h3>
         <p className="text-muted-foreground text-sm max-w-sm mb-4">
-          La clé API Google Maps n'est pas configurée.
+          La clé Google Maps n'est pas accessible côté navigateur.
         </p>
         <p className="text-xs text-muted-foreground/70">
           Code erreur: API_KEY_MISSING

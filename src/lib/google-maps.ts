@@ -4,27 +4,17 @@
  */
 
 let configLogShown = false;
+let cachedApiKey: string | null = null;
+let initPromise: Promise<string> | null = null;
+
+function readEnvKey(): string {
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  if (!apiKey || apiKey === 'your_google_maps_api_key_here') return '';
+  return apiKey;
+}
 
 export function getGoogleMapsApiKey(): string {
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  
-  // Skip validation in test environment
-  if (import.meta.env.MODE === 'test' || import.meta.env.VITEST) {
-    return apiKey || '';
-  }
-  
-  if (!apiKey || apiKey === 'your_google_maps_api_key_here') {
-    throw new Error(
-      '[Google Maps] CRITICAL: VITE_GOOGLE_MAPS_API_KEY not configured.\n' +
-      'Please configure it in:\n' +
-      '- Lovable Dashboard → Project → Secrets (for production)\n' +
-      '- Local .env file (for development)\n' +
-      '\n' +
-      'See docs/GOOGLE_MAPS_CONFIG.md for setup instructions.'
-    );
-  }
-  
-  return apiKey;
+  return cachedApiKey ?? readEnvKey();
 }
 
 export function isGoogleMapsConfigured(): boolean {
@@ -33,28 +23,70 @@ export function isGoogleMapsConfigured(): boolean {
     const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
     return Boolean(key && key.length > 0);
   }
-  
-  try {
-    const key = getGoogleMapsApiKey();
-    const configured = Boolean(key && key.length > 0);
-    
-    if (!configLogShown) {
-      configLogShown = true;
-      console.info(configured ? "[Google Maps] API key configurée ✓" : "[Google Maps] API key non configurée");
-    }
-    
-    return configured;
-  } catch {
-    if (!configLogShown) {
-      configLogShown = true;
-      console.info("[Google Maps] API key non configurée");
-    }
-    return false;
+
+  const key = getGoogleMapsApiKey();
+  const configured = Boolean(key && key.length > 0);
+
+  if (!configLogShown) {
+    configLogShown = true;
+    console.info(configured ? "[Google Maps] API key configurée ✓" : "[Google Maps] API key non configurée");
   }
+
+  return configured;
 }
 
+/**
+ * Initialise la clé Google Maps.
+ * - 1) tente `import.meta.env.VITE_GOOGLE_MAPS_API_KEY`
+ * - 2) sinon récupère depuis la fonction backend `get-maps-config`
+ */
 export function initGoogleMapsApiKey(): Promise<string> {
-  return Promise.resolve(getGoogleMapsApiKey());
+  if (import.meta.env.MODE === 'test' || import.meta.env.VITEST) {
+    cachedApiKey = readEnvKey();
+    return Promise.resolve(cachedApiKey || '');
+  }
+
+  if (cachedApiKey) return Promise.resolve(cachedApiKey);
+  if (initPromise) return initPromise;
+
+  const envKey = readEnvKey();
+  if (envKey) {
+    cachedApiKey = envKey;
+    return Promise.resolve(envKey);
+  }
+
+  initPromise = (async () => {
+    try {
+      // Import dynamique pour éviter les imports circulaires
+      const { resolveBackendUrl, resolveBackendPublishableKey } = await import('@/lib/public-config');
+
+      const backendUrl = resolveBackendUrl();
+      const anonKey = resolveBackendPublishableKey();
+
+      const res = await fetch(`${backendUrl}/functions/v1/get-maps-config`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: anonKey,
+          Authorization: `Bearer ${anonKey}`,
+        },
+      });
+
+      if (!res.ok) throw new Error(`get-maps-config failed: ${res.status}`);
+      const json = (await res.json()) as { googleMapsApiKey?: string; configured?: boolean };
+
+      cachedApiKey = (json.googleMapsApiKey || '').trim();
+      return cachedApiKey;
+    } catch (e) {
+      console.error('[Google Maps] Failed to load API key from backend function:', e);
+      cachedApiKey = '';
+      return '';
+    } finally {
+      initPromise = null;
+    }
+  })();
+
+  return initPromise;
 }
 
 export const googleMapsLoaderConfig = {
