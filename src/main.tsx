@@ -1,8 +1,19 @@
 import { createRoot } from "react-dom/client";
 import * as Sentry from "@sentry/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { validateEnvironment } from "@/lib/validate-env";
 import App from "./App.tsx";
 import "./index.css";
+
+// Validate environment variables before initializing the app
+// This prevents silent failures and provides clear error messages
+try {
+  validateEnvironment();
+} catch (error) {
+  console.error('[BOOTSTRAP] Environment validation failed:', error);
+  // Re-throw to trigger ErrorBoundary with clear message
+  throw error;
+}
 
 // Configure QueryClient with optimized defaults
 const queryClient = new QueryClient({
@@ -54,16 +65,37 @@ createRoot(document.getElementById("root")!).render(
         <div className="min-h-screen flex items-center justify-center bg-background p-4">
           <div className="text-center max-w-md">
             <h1 className="text-2xl font-bold text-destructive mb-4">
-              Une erreur est survenue
+              {error?.message?.includes('environment') || error?.message?.includes('Supabase credentials')
+                ? 'Erreur de Configuration'
+                : 'Une erreur est survenue'}
             </h1>
-            <p className="text-muted-foreground mb-6">
-              Nous avons été notifiés et travaillons à résoudre le problème.
-            </p>
+            <div className="text-muted-foreground mb-6">
+              {error?.message?.includes('environment') || error?.message?.includes('Supabase credentials') ? (
+                <>
+                  <p className="font-mono text-sm mb-4 text-left bg-muted p-3 rounded">
+                    {error?.message || 'Variables d\'environnement manquantes'}
+                  </p>
+                  <p className="text-xs">
+                    Vérifiez les secrets dans Lovable Cloud Settings
+                  </p>
+                </>
+              ) : (
+                <p>Nous avons été notifiés et travaillons à résoudre le problème.</p>
+              )}
+            </div>
             <button
-              onClick={resetError}
+              onClick={() => {
+                if (error?.message?.includes('environment') || error?.message?.includes('Supabase credentials')) {
+                  window.location.reload();
+                } else {
+                  resetError();
+                }
+              }}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
             >
-              Réessayer
+              {error?.message?.includes('environment') || error?.message?.includes('Supabase credentials')
+                ? 'Recharger la page'
+                : 'Réessayer'}
             </button>
           </div>
         </div>
