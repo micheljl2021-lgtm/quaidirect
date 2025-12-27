@@ -30,12 +30,8 @@ export default defineConfig(({ mode }) => {
       host: "::",
       port: 8080,
     },
-    // Inject environment variables at build time for frontend access
-    define: {
-      'import.meta.env.VITE_GOOGLE_MAPS_API_KEY': JSON.stringify(
-        process.env.VITE_GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAPS_API_KEY || ''
-      ),
-    },
+    // Environment variables are automatically loaded by Vite from Lovable Cloud Secrets
+    // No need for manual injection - Vite handles VITE_* variables automatically
     plugins: [
       react(),
       mode === "development" && componentTagger(),
