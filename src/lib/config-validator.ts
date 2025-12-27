@@ -70,14 +70,22 @@ const validateConfig = (): void => {
 
   if (missing.length > 0) {
     const missingList = missing.map((c) => `  • ${c.key} (${c.service})`).join('\n');
-    
-    throw new Error(
+
+    const message =
       `[Config] Missing required environment variables:\n\n${missingList}\n\n` +
       `Please configure these in:\n` +
       `  • Lovable Dashboard → Your Project → Secrets (production)\n` +
       `  • Local .env file (development)\n\n` +
-      `See .env.example for template.`
-    );
+      `See .env.example for template.`;
+
+    // En production, on évite de faire un écran blanc : certaines couches d'hébergement peuvent
+    // temporairement ne pas injecter les VITE_* au runtime. On loggue clairement et on laisse l'app tourner.
+    if (import.meta.env.DEV) {
+      throw new Error(message);
+    }
+
+    console.error(message);
+    return;
   }
 
   // Log optional missing configs (not blocking)
