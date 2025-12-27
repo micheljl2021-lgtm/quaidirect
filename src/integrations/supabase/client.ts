@@ -5,18 +5,6 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-// Validate Supabase credentials before creating client
-if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-  console.error('[SUPABASE] ERROR: Missing credentials');
-  console.error('  VITE_SUPABASE_URL:', SUPABASE_URL ? '✅ Set' : '❌ NOT SET');
-  console.error('  VITE_SUPABASE_PUBLISHABLE_KEY:', SUPABASE_PUBLISHABLE_KEY ? '✅ Set' : '❌ NOT SET');
-  
-  throw new Error(
-    'Supabase credentials are not configured. ' +
-    'Check Lovable Cloud Secrets or .env file.'
-  );
-}
-
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
