@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { getConfigs } from '../../src/lib/config-validator';
 
 describe('Config Validator', () => {
   beforeEach(() => {
@@ -27,16 +28,33 @@ describe('Config Validator', () => {
   });
 
   it('should treat Google Maps as optional', () => {
-    // Google Maps should be marked as required: false in the config
-    // This test verifies that the app can start without Google Maps configured
-    // The actual validation logic is tested by running the app without the key
-    expect(true).toBe(true);
+    const configs = getConfigs();
+    const googleMapsConfig = configs.find(c => c.key === 'VITE_GOOGLE_MAPS_API_KEY');
+    
+    expect(googleMapsConfig).toBeDefined();
+    expect(googleMapsConfig?.required).toBe(false);
   });
 
   it('should only require Supabase credentials', () => {
-    // Only VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY should be required: true
-    // Firebase, VAPID, and Google Maps should all be optional
-    // This test verifies the configuration structure
-    expect(true).toBe(true);
+    const configs = getConfigs();
+    const requiredConfigs = configs.filter(c => c.required);
+    
+    // Only Supabase URL and Publishable Key should be required
+    expect(requiredConfigs).toHaveLength(2);
+    expect(requiredConfigs.map(c => c.key)).toEqual([
+      'VITE_SUPABASE_URL',
+      'VITE_SUPABASE_PUBLISHABLE_KEY'
+    ]);
+  });
+
+  it('should have all optional configs marked as not required', () => {
+    const configs = getConfigs();
+    const optionalConfigs = configs.filter(c => !c.required);
+    
+    // Google Maps, Firebase, and VAPID should all be optional
+    const optionalKeys = optionalConfigs.map(c => c.key);
+    expect(optionalKeys).toContain('VITE_GOOGLE_MAPS_API_KEY');
+    expect(optionalKeys).toContain('VITE_FIREBASE_API_KEY');
+    expect(optionalKeys).toContain('VITE_VAPID_PUBLIC_KEY');
   });
 });

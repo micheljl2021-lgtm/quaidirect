@@ -13,47 +13,52 @@ interface ConfigValidation {
   service: string;
 }
 
+// Export for testing
+export type { ConfigValidation };
+
+export const getConfigs = (): ConfigValidation[] => [
+  // Required
+  {
+    key: 'VITE_SUPABASE_URL',
+    value: resolveBackendUrl(),
+    required: true,
+    service: 'Supabase',
+  },
+  {
+    key: 'VITE_SUPABASE_PUBLISHABLE_KEY',
+    value: resolveBackendPublishableKey(),
+    required: true,
+    service: 'Supabase',
+  },
+  
+  // Optional but recommended
+  {
+    key: 'VITE_GOOGLE_MAPS_API_KEY',
+    value: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    required: false,
+    service: 'Google Maps',
+  },
+  {
+    key: 'VITE_FIREBASE_API_KEY',
+    value: import.meta.env.VITE_FIREBASE_API_KEY,
+    required: false,
+    service: 'Firebase (Push Notifications)',
+  },
+  {
+    key: 'VITE_VAPID_PUBLIC_KEY',
+    value: import.meta.env.VITE_VAPID_PUBLIC_KEY,
+    required: false,
+    service: 'VAPID (Push Notifications)',
+  },
+];
+
 const validateConfig = (): void => {
   // Skip validation in test environment
   if (import.meta.env.MODE === 'test' || import.meta.env.VITEST) {
     return;
   }
 
-  const configs: ConfigValidation[] = [
-    // Required
-    {
-      key: 'VITE_SUPABASE_URL',
-      value: resolveBackendUrl(),
-      required: true,
-      service: 'Supabase',
-    },
-    {
-      key: 'VITE_SUPABASE_PUBLISHABLE_KEY',
-      value: resolveBackendPublishableKey(),
-      required: true,
-      service: 'Supabase',
-    },
-    {
-      key: 'VITE_GOOGLE_MAPS_API_KEY',
-      value: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-      required: false,
-      service: 'Google Maps',
-    },
-    
-    // Optional but recommended
-    {
-      key: 'VITE_FIREBASE_API_KEY',
-      value: import.meta.env.VITE_FIREBASE_API_KEY,
-      required: false,
-      service: 'Firebase (Push Notifications)',
-    },
-    {
-      key: 'VITE_VAPID_PUBLIC_KEY',
-      value: import.meta.env.VITE_VAPID_PUBLIC_KEY,
-      required: false,
-      service: 'VAPID (Push Notifications)',
-    },
-  ];
+  const configs = getConfigs();
 
   const missing = configs.filter((c) => {
     if (!c.required) return false;
