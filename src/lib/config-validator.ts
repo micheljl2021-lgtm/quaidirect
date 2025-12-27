@@ -3,6 +3,9 @@
  * Throws clear errors if configuration is missing
  */
 
+import { resolveBackendPublishableKey, resolveBackendUrl } from "@/lib/public-config";
+
+
 interface ConfigValidation {
   key: string;
   value: string | undefined;
@@ -20,13 +23,13 @@ const validateConfig = (): void => {
     // Required
     {
       key: 'VITE_SUPABASE_URL',
-      value: import.meta.env.VITE_SUPABASE_URL,
+      value: resolveBackendUrl(),
       required: true,
       service: 'Supabase',
     },
     {
       key: 'VITE_SUPABASE_PUBLISHABLE_KEY',
-      value: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      value: resolveBackendPublishableKey(),
       required: true,
       service: 'Supabase',
     },
@@ -80,7 +83,11 @@ const validateConfig = (): void => {
 
     // En production, on évite de faire un écran blanc : certaines couches d'hébergement peuvent
     // temporairement ne pas injecter les VITE_* au runtime. On loggue clairement et on laisse l'app tourner.
-    if (import.meta.env.DEV) {
+    const isLocalhost =
+      typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+    if (import.meta.env.DEV && isLocalhost) {
       throw new Error(message);
     }
 
