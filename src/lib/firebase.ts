@@ -2,17 +2,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage, type Messaging } from 'firebase/messaging';
 
-// Defaults for Firebase config (fallback values)
-const FIREBASE_DEFAULTS = {
-  apiKey: "AIzaSyCk_r6Pv2-PdvLoJRkn-GHRK1NOu58JMkg",
-  authDomain: "arcane-argon-426216-b7.firebaseapp.com",
-  projectId: "arcane-argon-426216-b7",
-  storageBucket: "arcane-argon-426216-b7.firebasestorage.app",
-  messagingSenderId: "425193275047",
-  appId: "1:425193275047:web:e3b3f08dcb366d919da582",
-  measurementId: "G-ERMEXSWNZS"
-};
-
 // Clean a config value (remove quotes, whitespace, VITE_ prefix)
 const cleanConfigValue = (value: string | undefined, fieldName: string): string | null => {
   if (!value) return null;
@@ -31,14 +20,46 @@ const cleanConfigValue = (value: string | undefined, fieldName: string): string 
   return clean.length > 0 ? clean : null;
 };
 
+// Validate required environment variables and throw clear errors if missing
+const validateFirebaseConfig = () => {
+  const missingVars: string[] = [];
+  
+  if (!import.meta.env.VITE_FIREBASE_API_KEY) {
+    missingVars.push('VITE_FIREBASE_API_KEY');
+  }
+  if (!import.meta.env.VITE_FIREBASE_PROJECT_ID) {
+    missingVars.push('VITE_FIREBASE_PROJECT_ID');
+  }
+  if (!import.meta.env.VITE_FIREBASE_AUTH_DOMAIN) {
+    missingVars.push('VITE_FIREBASE_AUTH_DOMAIN');
+  }
+  if (!import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID) {
+    missingVars.push('VITE_FIREBASE_MESSAGING_SENDER_ID');
+  }
+  if (!import.meta.env.VITE_FIREBASE_APP_ID) {
+    missingVars.push('VITE_FIREBASE_APP_ID');
+  }
+  if (!import.meta.env.VITE_FIREBASE_STORAGE_BUCKET) {
+    missingVars.push('VITE_FIREBASE_STORAGE_BUCKET');
+  }
+  
+  if (missingVars.length > 0) {
+    const errorMessage = `[Firebase] CRITICAL: Missing required environment variables: ${missingVars.join(', ')}.\n` +
+      `Push notifications will NOT work.\n` +
+      `Please configure these in Lovable Cloud Secrets or your local .env file.\n` +
+      `See .env.example and docs/LOVABLE_CLOUD_SECRETS.md for instructions.`;
+    console.error(errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
 // Get Firebase API key from environment variable
-const getFirebaseApiKey = (): { value: string; source: 'env' | 'fallback'; issues: string[] } => {
+const getFirebaseApiKey = (): { value: string; issues: string[] } => {
   const rawKey = import.meta.env.VITE_FIREBASE_API_KEY;
   const issues: string[] = [];
   
   if (!rawKey) {
-    console.warn('[Firebase] VITE_FIREBASE_API_KEY not set, using fallback');
-    return { value: FIREBASE_DEFAULTS.apiKey, source: 'fallback', issues: ['Variable non configurée'] };
+    throw new Error('[Firebase] VITE_FIREBASE_API_KEY not configured');
   }
   
   // Check for common issues
@@ -55,37 +76,57 @@ const getFirebaseApiKey = (): { value: string; source: 'env' | 'fallback'; issue
   const cleaned = cleanConfigValue(rawKey, 'API Key');
   
   if (!cleaned || cleaned.length < 30) {
-    console.error('[Firebase] API key too short after cleaning, using fallback');
-    issues.push('Clé trop courte');
-    return { value: FIREBASE_DEFAULTS.apiKey, source: 'fallback', issues };
+    throw new Error('[Firebase] API key too short or invalid after cleaning');
   }
   
-  return { value: cleaned, source: 'env', issues };
+  return { value: cleaned, issues };
 };
 
-// Get other Firebase config values from env or fallback
+// Get other Firebase config values from env (no fallbacks)
 const getFirebaseProjectId = (): string => {
-  return cleanConfigValue(import.meta.env.VITE_FIREBASE_PROJECT_ID, 'projectId') || FIREBASE_DEFAULTS.projectId;
+  const value = cleanConfigValue(import.meta.env.VITE_FIREBASE_PROJECT_ID, 'projectId');
+  if (!value) {
+    throw new Error('[Firebase] VITE_FIREBASE_PROJECT_ID not configured');
+  }
+  return value;
 };
 
 const getFirebaseMessagingSenderId = (): string => {
-  return cleanConfigValue(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID, 'senderId') || FIREBASE_DEFAULTS.messagingSenderId;
+  const value = cleanConfigValue(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID, 'senderId');
+  if (!value) {
+    throw new Error('[Firebase] VITE_FIREBASE_MESSAGING_SENDER_ID not configured');
+  }
+  return value;
 };
 
 const getFirebaseAppId = (): string => {
-  return cleanConfigValue(import.meta.env.VITE_FIREBASE_APP_ID, 'appId') || FIREBASE_DEFAULTS.appId;
+  const value = cleanConfigValue(import.meta.env.VITE_FIREBASE_APP_ID, 'appId');
+  if (!value) {
+    throw new Error('[Firebase] VITE_FIREBASE_APP_ID not configured');
+  }
+  return value;
 };
 
 const getFirebaseAuthDomain = (): string => {
-  return cleanConfigValue(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN, 'authDomain') || FIREBASE_DEFAULTS.authDomain;
+  const value = cleanConfigValue(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN, 'authDomain');
+  if (!value) {
+    throw new Error('[Firebase] VITE_FIREBASE_AUTH_DOMAIN not configured');
+  }
+  return value;
 };
 
 // Get storage bucket (accept both VITE_FIREBASE_STORAGE_BUCKET and VITE_FIREBASE_BUCKET)
 const getFirebaseStorageBucket = (): string => {
-  return cleanConfigValue(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET, 'storageBucket') 
-    || cleanConfigValue(import.meta.env.VITE_FIREBASE_BUCKET, 'bucket') 
-    || FIREBASE_DEFAULTS.storageBucket;
+  const value = cleanConfigValue(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET, 'storageBucket') 
+    || cleanConfigValue(import.meta.env.VITE_FIREBASE_BUCKET, 'bucket');
+  if (!value) {
+    throw new Error('[Firebase] VITE_FIREBASE_STORAGE_BUCKET not configured');
+  }
+  return value;
 };
+
+// Validate configuration before building config object
+validateFirebaseConfig();
 
 // Build Firebase configuration
 const apiKeyResult = getFirebaseApiKey();
@@ -96,67 +137,44 @@ const firebaseConfig = {
   storageBucket: getFirebaseStorageBucket(),
   messagingSenderId: getFirebaseMessagingSenderId(),
   appId: getFirebaseAppId(),
-  measurementId: cleanConfigValue(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID, 'measurementId') || FIREBASE_DEFAULTS.measurementId
+  measurementId: cleanConfigValue(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID, 'measurementId') || undefined
 };
 
 // Log configuration status on init
-console.log('[Firebase] Config loaded:', {
+console.log('[Firebase] Config loaded successfully:', {
   projectId: firebaseConfig.projectId,
   senderId: firebaseConfig.messagingSenderId,
-  apiKeySource: apiKeyResult.source,
   apiKeyPrefix: firebaseConfig.apiKey.substring(0, 10) + '...',
 });
 
 // Export config for diagnostic purposes (without exposing full key)
 export const getFirebaseConfigInfo = () => {
-  const projectIdSource = import.meta.env.VITE_FIREBASE_PROJECT_ID ? 'env' : 'fallback';
-  const senderIdSource = import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ? 'env' : 'fallback';
-  const appIdSource = import.meta.env.VITE_FIREBASE_APP_ID ? 'env' : 'fallback';
-  const authDomainSource = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ? 'env' : 'fallback';
-  const storageBucketSource = (import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || import.meta.env.VITE_FIREBASE_BUCKET) ? 'env' : 'fallback';
-  
-  // Count how many are from env vs fallback
-  const sources = [apiKeyResult.source, projectIdSource, senderIdSource, appIdSource, authDomainSource];
-  const envCount = sources.filter(s => s === 'env').length;
-  const fallbackCount = sources.filter(s => s === 'fallback').length;
-  
-  // Coherence: all from same source (all env or all fallback)
-  const isCoherent = envCount === sources.length || fallbackCount === sources.length;
-  
   return {
     apiKeyPrefix: firebaseConfig.apiKey.substring(0, 10) + '...',
     apiKeyLength: firebaseConfig.apiKey.length,
-    apiKeySource: apiKeyResult.source,
     apiKeyIssues: apiKeyResult.issues,
     projectId: firebaseConfig.projectId,
-    projectIdSource,
     messagingSenderId: firebaseConfig.messagingSenderId,
-    senderIdSource,
     appId: firebaseConfig.appId,
-    appIdSource,
     authDomain: firebaseConfig.authDomain,
-    authDomainSource,
     storageBucket: firebaseConfig.storageBucket,
-    storageBucketSource,
-    isCoherent,
-    envCount,
-    fallbackCount,
     currentDomain: typeof window !== 'undefined' ? window.location.hostname : 'unknown',
   };
 };
 
-// VAPID public key fallback - this is a PUBLIC key, safe to include in code
-// Used only if VITE_VAPID_PUBLIC_KEY is not configured
-const VAPID_PUBLIC_KEY_FALLBACK = "BFlT5LESzAzzvYJTqqfN3XSZLsvIdPmS0cDn7yK0kK55Py2e3EjSp93WnRFKRaTyDlyhiSfl0OzAo0H3V6ishn4";
-
-// Get VAPID key from environment with robust fallback
+// Get VAPID key from environment (no fallback)
 export const getVapidKey = (): string | null => {
   const rawKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
   
-  // Use fallback if not configured
+  // Return null if not configured (push notifications won't work but app continues)
   if (!rawKey) {
-    console.warn('[Firebase] VITE_VAPID_PUBLIC_KEY not configured, using fallback');
-    return VAPID_PUBLIC_KEY_FALLBACK;
+    console.error(
+      '[Firebase] CRITICAL: VITE_VAPID_PUBLIC_KEY not configured.\n' +
+      'Push notifications will NOT work.\n' +
+      'Configure this in Lovable Cloud Secrets or your local .env file.\n' +
+      'Generate keys with: npx web-push generate-vapid-keys'
+    );
+    return null;
   }
   
   // Clean the key (remove whitespace, quotes, and any VITE_ prefix if mistakenly included)
@@ -168,8 +186,12 @@ export const getVapidKey = (): string | null => {
   
   // Validate key length (VAPID keys are typically 87 characters)
   if (cleanKey.length < 70) {
-    console.error('[Firebase] VAPID key too short, using fallback. Length:', cleanKey.length);
-    return VAPID_PUBLIC_KEY_FALLBACK;
+    console.error(
+      '[Firebase] VAPID key too short (length: ' + cleanKey.length + ').\n' +
+      'Expected at least 70 characters.\n' +
+      'Generate a new key with: npx web-push generate-vapid-keys'
+    );
+    return null;
   }
   
   console.log('[Firebase] VAPID key loaded - length:', cleanKey.length, '- prefix:', cleanKey.substring(0, 12) + '...');
@@ -180,7 +202,7 @@ export const getVapidKey = (): string | null => {
 export const getVapidKeyInfo = () => {
   const rawKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
   const cleanKey = getVapidKey();
-  const usingFallback = !rawKey || rawKey.length < 70;
+  const isConfigured = rawKey.length > 0;
   
   return {
     // Raw value info (from env)
@@ -196,11 +218,11 @@ export const getVapidKeyInfo = () => {
     // Diagnostic flags
     hasVitePrefix: rawKey.startsWith('VITE_'),
     hasQuotes: rawKey.startsWith('"') || rawKey.startsWith("'"),
-    usingFallback,
+    isConfigured,
     isValid: (cleanKey?.length || 0) >= 70,
     
     // Source info
-    source: usingFallback ? 'fallback (hardcoded)' : 'environment variable',
+    source: isConfigured ? 'environment variable' : 'not configured',
   };
 };
 
