@@ -36,7 +36,7 @@ const validateConfig = (): void => {
     {
       key: 'VITE_GOOGLE_MAPS_API_KEY',
       value: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-      required: true,
+      required: false,
       service: 'Google Maps',
     },
     
@@ -102,6 +102,7 @@ const validateConfig = (): void => {
     
     // Check for common placeholder patterns
     const placeholderPatterns = [
+      'your_google_maps_api_key_here',
       'your_firebase_api_key_here',
       'your_vapid_public_key_here'
     ];
