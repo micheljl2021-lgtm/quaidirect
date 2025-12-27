@@ -149,23 +149,53 @@ console.log('[Firebase] Config loaded successfully:', {
 
 // Export config for diagnostic purposes (without exposing full key)
 export const getFirebaseConfigInfo = () => {
+  const sources = {
+    projectIdSource: 'VITE_FIREBASE_PROJECT_ID',
+    senderIdSource: 'VITE_FIREBASE_MESSAGING_SENDER_ID',
+    apiKeySource: 'VITE_FIREBASE_API_KEY',
+    authDomainSource: 'VITE_FIREBASE_AUTH_DOMAIN',
+    appIdSource: 'VITE_FIREBASE_APP_ID',
+    storageBucketSource: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET
+      ? 'VITE_FIREBASE_STORAGE_BUCKET'
+      : import.meta.env.VITE_FIREBASE_BUCKET
+        ? 'VITE_FIREBASE_BUCKET'
+        : 'missing',
+  } as const;
+
+  const envCount = Object.values(sources).filter((v) => v !== 'missing').length;
+  const fallbackCount = 0;
+
   return {
     apiKeyPrefix: firebaseConfig.apiKey.substring(0, 10) + '...',
     apiKeyLength: firebaseConfig.apiKey.length,
     apiKeyIssues: apiKeyResult.issues,
+
     projectId: firebaseConfig.projectId,
     messagingSenderId: firebaseConfig.messagingSenderId,
     appId: firebaseConfig.appId,
     authDomain: firebaseConfig.authDomain,
     storageBucket: firebaseConfig.storageBucket,
+
     currentDomain: typeof window !== 'undefined' ? window.location.hostname : 'unknown',
+
+    // Extra diagnostic fields expected by NotificationDiagnostic
+    projectIdSource: sources.projectIdSource,
+    senderIdSource: sources.senderIdSource,
+    apiKeySource: sources.apiKeySource,
+    authDomainSource: sources.authDomainSource,
+    appIdSource: sources.appIdSource,
+    storageBucketSource: sources.storageBucketSource,
+
+    isCoherent: fallbackCount === 0,
+    envCount,
+    fallbackCount,
   };
 };
 
 // Get VAPID key from environment (no fallback)
 export const getVapidKey = (): string | null => {
   const rawKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-  
+
   // Return null if not configured (push notifications won't work but app continues)
   if (!rawKey) {
     console.error(
@@ -176,14 +206,14 @@ export const getVapidKey = (): string | null => {
     );
     return null;
   }
-  
+
   // Clean the key (remove whitespace, quotes, and any VITE_ prefix if mistakenly included)
   let cleanKey = rawKey.trim().replace(/^["']|["']$/g, '');
   if (cleanKey.startsWith('VITE_')) {
     console.warn('[Firebase] VAPID key had VITE_ prefix in value, removing it');
     cleanKey = cleanKey.replace(/^VITE_/, '');
   }
-  
+
   // Validate key length (VAPID keys are typically 87 characters)
   if (cleanKey.length < 70) {
     console.error(
@@ -193,7 +223,7 @@ export const getVapidKey = (): string | null => {
     );
     return null;
   }
-  
+
   console.log('[Firebase] VAPID key loaded - length:', cleanKey.length, '- prefix:', cleanKey.substring(0, 12) + '...');
   return cleanKey;
 };
@@ -203,26 +233,29 @@ export const getVapidKeyInfo = () => {
   const rawKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
   const cleanKey = getVapidKey();
   const isConfigured = rawKey.length > 0;
-  
+
   return {
     // Raw value info (from env)
     rawPrefix: rawKey ? rawKey.substring(0, 15) + '...' : '(empty)',
     rawLength: rawKey.length,
     rawValue: rawKey.length > 0 ? `${rawKey.substring(0, 8)}...${rawKey.substring(rawKey.length - 8)}` : '(empty)',
-    
+
     // Clean value info (after processing)
     cleanPrefix: cleanKey ? cleanKey.substring(0, 15) + '...' : 'null',
     cleanLength: cleanKey?.length || 0,
     cleanFingerprint: cleanKey ? `${cleanKey.substring(0, 8)}...${cleanKey.substring(cleanKey.length - 8)}` : 'null',
-    
+
     // Diagnostic flags
     hasVitePrefix: rawKey.startsWith('VITE_'),
     hasQuotes: rawKey.startsWith('"') || rawKey.startsWith("'"),
     isConfigured,
     isValid: (cleanKey?.length || 0) >= 70,
-    
+
+    // Compatibility for UI components that expect this flag
+    usingFallback: false,
+
     // Source info
-    source: isConfigured ? 'environment variable' : 'not configured',
+    source: isConfigured ? 'VITE_VAPID_PUBLIC_KEY' : 'not configured',
   };
 };
 
