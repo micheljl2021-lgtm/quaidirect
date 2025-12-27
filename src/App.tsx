@@ -4,8 +4,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { ProtectedPremiumRoute } from "@/components/ProtectedPremiumRoute";
 import { ProtectedFisherRoute } from "@/components/ProtectedFisherRoute";
 import { MaintenanceGuard } from "@/components/MaintenanceGuard";
 import PageLoader from "@/components/PageLoader";
@@ -143,38 +141,11 @@ const App = () => (
             <Route path="/poisson-frais-la-rochelle" element={<LazyRoute><PoissonFraisLaRochelle /></LazyRoute>} />
 
             {/* User dashboard routes */}
-            <Route 
-              path="/dashboard/user" 
-              element={
-                <ProtectedRoute>
-                  <Suspense fallback={<PageLoader />}>
-                    <UserDashboard />
-                  </Suspense>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/dashboard/premium" 
-              element={
-                <ProtectedPremiumRoute>
-                  <Suspense fallback={<PageLoader />}>
-                    <PremiumDashboard />
-                  </Suspense>
-                </ProtectedPremiumRoute>
-              } 
-            />
+            <Route path="/dashboard/user" element={<LazyRoute><UserDashboard /></LazyRoute>} />
+            <Route path="/dashboard/premium" element={<LazyRoute><PremiumDashboard /></LazyRoute>} />
             <Route path="/dashboard/admin" element={<LazyRoute><AdminDashboard /></LazyRoute>} />
             <Route path="/admin/push-test" element={<LazyRoute><AdminPushTest /></LazyRoute>} />
-            <Route 
-              path="/dashboard/pecheur" 
-              element={
-                <ProtectedFisherRoute>
-                  <Suspense fallback={<PageLoader />}>
-                    <PecheurDashboard />
-                  </Suspense>
-                </ProtectedFisherRoute>
-              } 
-            />
+            <Route path="/dashboard/pecheur" element={<LazyRoute><PecheurDashboard /></LazyRoute>} />
             <Route path="/compte" element={<LazyRoute><Compte /></LazyRoute>} />
 
             {/* Pecheur payment routes */}

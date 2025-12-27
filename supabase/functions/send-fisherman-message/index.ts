@@ -25,9 +25,9 @@ const RequestSchema = z.object({
   channel: z.enum(['email', 'sms', 'both']).default('email'),
 });
 
-// Rate limiting configuration - 10 messages per 5 minutes
-const RATE_LIMIT = 10;
-const RATE_WINDOW_MINUTES = 5;
+// Rate limiting configuration
+const RATE_LIMIT = 3;
+const RATE_WINDOW_MINUTES = 1;
 
 const checkRateLimit = async (
   supabase: any,
@@ -317,13 +317,13 @@ serve(async (req) => {
     if (!allowed) {
       logStep('Rate limit exceeded', { userId: user.id });
       return new Response(
-        JSON.stringify({ error: 'Limite de messages atteinte (10 envois / 5 min). Veuillez patienter quelques minutes.' }),
+        JSON.stringify({ error: 'Limite de messages atteinte. Veuillez patienter 1 minute.' }),
         {
           headers: { 
             ...getCorsHeaders(origin), 
             'Content-Type': 'application/json',
             'X-RateLimit-Remaining': '0',
-            'Retry-After': '300'
+            'Retry-After': '60'
           },
           status: 429,
         }

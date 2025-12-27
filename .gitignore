@@ -13,8 +13,7 @@ dist-ssr
 *.local
 
 # Environment files
-# NEVER commit .env files - use Lovable Cloud secrets instead
-.env
+# .env is committed for Lovable Cloud compatibility (contains only public frontend keys)
 .env.local
 .env*.local
 

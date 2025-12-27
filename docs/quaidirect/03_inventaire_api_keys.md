@@ -1,15 +1,13 @@
 # Inventaire API Keys & Secrets - QuaiDirect
 
-**Date** : 23 Décembre 2024  
-**Version** : 2.0
+**Date** : 1er Décembre 2024  
+**Version** : 1.0
 
 ---
 
 ## 🔑 Vue d'Ensemble
 
-QuaiDirect gère **20 secrets** stockés de manière sécurisée dans **Supabase Secrets Manager**. Aucune clé API n'est exposée en clair dans le code source ou le bundle frontend.
-
-> **Mise à jour Décembre 2024** : Ajout de Firebase (FCM) pour les notifications push, suppression des secrets inutilisés (API_ENTREPRISE_TOKEN, PIXABAY_API_KEY), mise en place d'un fallback email automatique.
+QuaiDirect gère **16 secrets** stockés de manière sécurisée dans **Supabase Secrets Manager**. Aucune clé API n'est exposée en clair dans le code source ou le bundle frontend.
 
 ---
 
@@ -19,24 +17,20 @@ QuaiDirect gère **20 secrets** stockés de manière sécurisée dans **Supabase
 |---|---------------|---------|------------|----------|-------------|-------------|
 | 1 | `STRIPE_SECRET_KEY` | Stripe | ❌ Backend | Supabase Secrets | 🔴 CRITIQUE | 6 Edge Functions Stripe |
 | 2 | `STRIPE_WEBHOOK_SECRET` | Stripe | ❌ Backend | Supabase Secrets | 🔴 CRITIQUE | stripe-webhook |
-| 3 | `RESEND_API_KEY` | Resend | ❌ Backend | Supabase Secrets | 🔴 CRITIQUE | 7 Edge Functions Email |
+| 3 | `RESEND_API_KEY` | Resend | ❌ Backend | Supabase Secrets | 🔴 CRITIQUE | 6 Edge Functions Email |
 | 4 | `OPENAI_API_KEY` | OpenAI | ❌ Backend | Supabase Secrets | 🔴 CRITIQUE | marine-ai-assistant (legacy) |
 | 5 | `LOVABLE_API_KEY` | Lovable AI | ❌ Backend | Supabase Secrets | 🔴 CRITIQUE | marine-ai-assistant, generate-* |
 | 6 | `VITE_GOOGLE_MAPS_API_KEY` | Google Maps | ⚠️ Frontend | Supabase Secrets | 🟡 HAUTE | GoogleMapComponent.tsx |
 | 7 | `serveur_google_map_clee_api` | Google Maps | ❌ Backend | Supabase Secrets | 🟡 HAUTE | geocode-address, google-geocode-port |
 | 8 | `PAPPERS_API_TOKEN` | Pappers | ❌ Backend | Supabase Secrets | 🟢 MOYENNE | get-company-info |
-| 9 | `INTERNAL_FUNCTION_SECRET` | QuaiDirect | ❌ Backend | Supabase Secrets | 🟡 HAUTE | Protection webhooks internes |
-| 10 | `VAPID_PUBLIC_KEY` | Web Push | ⚠️ Frontend | Supabase Secrets | 🟢 BASSE | Push notifications |
-| 11 | `VAPID_PRIVATE_KEY` | Web Push | ❌ Backend | Supabase Secrets | 🟡 HAUTE | send-drop-notification, send-reservation-notification |
-| 12 | `FIREBASE_SERVICE_ACCOUNT` | Firebase | ❌ Backend | Supabase Secrets | 🔴 CRITIQUE | send-fcm-notification |
-| 13 | `VITE_FIREBASE_API_KEY` | Firebase | ⚠️ Frontend | Supabase Secrets | 🟡 HAUTE | Initialisation Firebase JS SDK |
-| 14 | `VITE_VAPID_PUBLIC_KEY` | Web Push | ⚠️ Frontend | Supabase Secrets | 🟢 BASSE | Obtention token FCM navigateur |
-| 15 | `SUPABASE_URL` | Supabase | ⚠️ Frontend+Backend | Auto-généré | 🟢 BASSE | Toutes Edge Functions |
-| 16 | `SUPABASE_ANON_KEY` | Supabase | ⚠️ Frontend+Backend | Auto-généré | 🟢 BASSE | Client Supabase |
-| 17 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase | ❌ Backend | Auto-généré | 🔴 CRITIQUE | 14 Edge Functions (bypass RLS) |
-| 18 | `TWILIO_ACCOUNT_SID` | Twilio | ❌ Backend | Supabase Secrets | 🟡 HAUTE | send-sms |
-| 19 | `TWILIO_AUTH_TOKEN` | Twilio | ❌ Backend | Supabase Secrets | 🔴 CRITIQUE | send-sms |
-| 20 | `TWILIO_PHONE_NUMBER` | Twilio | ❌ Backend | Supabase Secrets | 🟢 BASSE | send-sms |
+| 9 | `API_ENTREPRISE_TOKEN` | API Entreprise | ❌ Backend | Supabase Secrets | 🟢 MOYENNE | get-company-info (fallback) |
+| 10 | `INTERNAL_FUNCTION_SECRET` | QuaiDirect | ❌ Backend | Supabase Secrets | 🟡 HAUTE | Protection webhooks internes |
+| 11 | `VAPID_PUBLIC_KEY` | Web Push | ⚠️ Frontend | Supabase Secrets | 🟢 BASSE | Push notifications |
+| 12 | `VAPID_PRIVATE_KEY` | Web Push | ❌ Backend | Supabase Secrets | 🟡 HAUTE | send-drop-notification, send-reservation-notification |
+| 13 | `SUPABASE_URL` | Supabase | ⚠️ Frontend+Backend | Auto-généré | 🟢 BASSE | Toutes Edge Functions |
+| 14 | `SUPABASE_ANON_KEY` | Supabase | ⚠️ Frontend+Backend | Auto-généré | 🟢 BASSE | Client Supabase |
+| 15 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase | ❌ Backend | Auto-généré | 🔴 CRITIQUE | 14 Edge Functions (bypass RLS) |
+| 16 | `SUPABASE_DB_URL` | Supabase | ❌ Backend | Auto-généré | 🔴 CRITIQUE | Connexion directe DB (si nécessaire) |
 
 ---
 
@@ -94,7 +88,6 @@ QuaiDirect gère **20 secrets** stockés de manière sécurisée dans **Supabase
   - `send-basket-order-notification/index.ts` (notification commande panier)
   - `send-support-response/index.ts` (réponses support admin)
   - `send-billing-portal-link/index.ts` (lien portail facturation)
-  - `send-drop-notification/index.ts` (fallback email si FCM échoue)
 - **Sender Address** : `support@quaidirect.fr`
 - **Recommandations** :
   - ✅ Domaine `quaidirect.fr` vérifié dans Resend Dashboard
@@ -191,7 +184,22 @@ QuaiDirect gère **20 secrets** stockés de manière sécurisée dans **Supabase
 
 ---
 
-### 9. INTERNAL_FUNCTION_SECRET
+### 9. API_ENTREPRISE_TOKEN
+- **Service** : API Entreprise (Gouvernement français)
+- **Type** : JWT Token
+- **Format** : JWT
+- **Exposition** : ❌ Backend uniquement
+- **Stockage** : Supabase Secrets Manager
+- **Sensibilité** : 🟢 MOYENNE
+- **Usage** :
+  - `get-company-info/index.ts` (fallback si Pappers échoue)
+- **Recommandations** :
+  - ✅ Fallback utile pour résilience
+  - ⚠️ Token JWT peut expirer, renouveler si nécessaire
+
+---
+
+### 10. INTERNAL_FUNCTION_SECRET
 - **Service** : QuaiDirect (Protection Interne)
 - **Type** : Secret Custom
 - **Format** : String aléatoire (min 32 caractères recommandé)
@@ -212,7 +220,7 @@ QuaiDirect gère **20 secrets** stockés de manière sécurisée dans **Supabase
 
 ---
 
-### 10. VAPID_PUBLIC_KEY
+### 11. VAPID_PUBLIC_KEY
 - **Service** : Web Push Notifications (VAPID)
 - **Type** : Public Key
 - **Format** : Base64 URL-safe (87 caractères)
@@ -228,7 +236,7 @@ QuaiDirect gère **20 secrets** stockés de manière sécurisée dans **Supabase
 
 ---
 
-### 11. VAPID_PRIVATE_KEY
+### 12. VAPID_PRIVATE_KEY
 - **Service** : Web Push Notifications (VAPID)
 - **Type** : Private Key
 - **Format** : Base64 URL-safe (87 caractères)
@@ -244,121 +252,95 @@ QuaiDirect gère **20 secrets** stockés de manière sécurisée dans **Supabase
 
 ---
 
-### 12. FIREBASE_SERVICE_ACCOUNT
-- **Service** : Firebase Cloud Messaging (FCM)
-- **Type** : Service Account JSON
-- **Format** : JSON complet (inclut `private_key`, `client_email`, etc.)
-- **Exposition** : ❌ Backend uniquement
-- **Stockage** : Supabase Secrets Manager
-- **Sensibilité** : 🔴 CRITIQUE
-- **Usage** :
-  - `send-fcm-notification/index.ts` (envoi notifications push via FCM)
-  - `send-drop-notification/index.ts` (appelle send-fcm-notification)
-- **Recommandations** :
-  - 🔴 **JAMAIS exposer frontend** (permet envoi illimité de notifications)
-  - ✅ Générer depuis Firebase Console → Project Settings → Service Accounts
-  - ⚠️ Révoquer et regénérer si fuite suspectée
-
----
-
-### 13. VITE_FIREBASE_API_KEY
-- **Service** : Firebase JavaScript SDK
-- **Type** : API Key (Publishable)
-- **Format** : `AIza***` (39 caractères)
-- **Exposition** : ⚠️ Frontend (bundle JS)
-- **Stockage** : Supabase Secrets → injecté frontend via VITE_ prefix
-- **Sensibilité** : 🟡 HAUTE (publiable mais restreindre si possible)
-- **Usage** :
-  - `src/lib/firebase.ts` (initialisation Firebase App + Messaging)
-- **Note** : Un fallback hardcodé existe dans `firebase.ts` si non configuré
-- **Recommandations** :
-  - ⚠️ Restreindre dans Google Cloud Console si possible (HTTP referrers)
-  - ✅ Nécessaire pour initialiser Firebase côté client
-
----
-
-### 14. VITE_VAPID_PUBLIC_KEY
-- **Service** : Web Push / Firebase Messaging
-- **Type** : Public Key (VAPID)
-- **Format** : Base64 URL-safe (87+ caractères)
-- **Exposition** : ⚠️ Frontend (bundle JS)
-- **Stockage** : Supabase Secrets → injecté frontend via VITE_ prefix
+### 13. SUPABASE_URL
+- **Service** : Supabase
+- **Type** : URL Publique
+- **Format** : `https://topqlhxdflykejrlbuqx.supabase.co`
+- **Exposition** : ⚠️ Frontend + Backend (auto-injecté)
+- **Stockage** : Auto-généré par Lovable Cloud
 - **Sensibilité** : 🟢 BASSE (publique par design)
 - **Usage** :
-  - `src/lib/firebase.ts` → `getToken()` (obtention token FCM)
-- **Note** : Un fallback hardcodé existe dans `firebase.ts` si non configuré
+  - Toutes Edge Functions (connexion Supabase client)
+  - `src/integrations/supabase/client.ts` (frontend)
 - **Recommandations** :
-  - ✅ Doit correspondre à la paire VAPID configurée dans Firebase Console
-  - ⚠️ Vérifier que la valeur ne contient PAS de préfixe `VITE_` dans la valeur elle-même
+  - ✅ URL publique, pas de risque
+  - ✅ RLS protège accès données malgré URL publique
 
 ---
 
-### 15-17. Variables Supabase (Auto-générées)
-
-Ces variables sont automatiquement injectées par Lovable Cloud :
-
-| Variable | Sensibilité | Usage |
-|----------|-------------|-------|
-| `SUPABASE_URL` | 🟢 BASSE | URL publique projet |
-| `SUPABASE_ANON_KEY` | 🟢 BASSE | Clé publique client |
-| `SUPABASE_SERVICE_ROLE_KEY` | 🔴 CRITIQUE | Bypass RLS (backend only) |
+### 14. SUPABASE_ANON_KEY
+- **Service** : Supabase
+- **Type** : Public Key (JWT)
+- **Format** : JWT (eyJhbG... ~300 caractères)
+- **Exposition** : ⚠️ Frontend + Backend (auto-injecté)
+- **Stockage** : Auto-généré par Lovable Cloud
+- **Sensibilité** : 🟢 BASSE (publiable, RLS protège)
+- **Usage** :
+  - `src/integrations/supabase/client.ts` (client frontend)
+  - Edge Functions client non-service-role
+- **Recommandations** :
+  - ✅ Clé publique conçue pour être exposée
+  - ✅ RLS policies empêchent accès non autorisés
+  - ⚠️ Ne pas confondre avec `SERVICE_ROLE_KEY` (secret)
 
 ---
 
-### 18-20. Variables Twilio (SMS)
+### 15. SUPABASE_SERVICE_ROLE_KEY
+- **Service** : Supabase
+- **Type** : Secret Key (JWT)
+- **Format** : JWT (eyJhbG... ~300 caractères)
+- **Exposition** : ❌ Backend uniquement
+- **Stockage** : Auto-généré par Lovable Cloud
+- **Sensibilité** : 🔴 CRITIQUE (bypass RLS)
+- **Usage** :
+  - 14 Edge Functions nécessitant bypass RLS :
+    - `approve-fisherman-access/index.ts`
+    - `check-sms-quota/index.ts`
+    - `check-subscription/index.ts`
+    - `generate-secure-edit-link/index.ts`
+    - `marine-ai-assistant/index.ts`
+    - `process-caisse/index.ts`
+    - `send-billing-portal-link/index.ts`
+    - `send-drop-notification/index.ts`
+    - `send-fisherman-approved-email/index.ts`
+    - `send-fisherman-message/index.ts`
+    - `send-reservation-notification/index.ts`
+    - `send-support-response/index.ts`
+    - `stripe-webhook/index.ts`
+    - `validate-secure-token/index.ts`
+- **Recommandations** :
+  - 🔴 **JAMAIS EXPOSER FRONTEND** (accès complet base sans RLS)
+  - ✅ Utilisée uniquement Edge Functions système/admin
+  - ⚠️ Auditer régulièrement fonctions utilisant service role
 
-| Variable | Sensibilité | Format |
-|----------|-------------|--------|
-| `TWILIO_ACCOUNT_SID` | 🟡 HAUTE | `AC***` |
-| `TWILIO_AUTH_TOKEN` | 🔴 CRITIQUE | String aléatoire |
-| `TWILIO_PHONE_NUMBER` | 🟢 BASSE | `+33XXXXXXXXX` |
+---
 
-**Usage** : `send-sms/index.ts` pour l'envoi de SMS aux contacts pêcheurs.
+### 16. SUPABASE_DB_URL
+- **Service** : Supabase PostgreSQL
+- **Type** : Connection String
+- **Format** : `postgresql://postgres:[PASSWORD]@...`
+- **Exposition** : ❌ Backend uniquement
+- **Stockage** : Auto-généré par Lovable Cloud
+- **Sensibilité** : 🔴 CRITIQUE (accès direct DB)
+- **Usage** :
+  - Non utilisé actuellement dans Edge Functions (Supabase Client suffit)
+  - Peut être utilisé pour connexions directes PostgreSQL si nécessaire
+- **Recommandations** :
+  - ✅ Non exposé frontend
+  - ⚠️ Éviter accès direct DB si Supabase Client suffit
+  - ⚠️ Si utilisé : restreindre IP sources dans Supabase Dashboard
 
 ---
 
 ## 📊 Statistiques Secrets
 
-- **Total Secrets** : 20
-- **Secrets Backend-Only** : 14 (70%)
-- **Secrets Publishable** : 6 (30%)
+- **Total Secrets** : 16
+- **Secrets Backend-Only** : 12 (75%)
+- **Secrets Publishable** : 4 (25%)
 - **Sensibilité CRITIQUE** : 8 secrets
-- **Sensibilité HAUTE** : 6 secrets
-- **Sensibilité MOYENNE** : 1 secret
-- **Sensibilité BASSE** : 5 secrets
-
----
-
-## 🆕 Système de Fallback (Décembre 2024)
-
-### Fallback Email pour Notifications Push
-
-Quand les notifications push FCM échouent, le système envoie automatiquement un email de secours :
-
-1. **Edge Function** : `send-drop-notification/index.ts`
-2. **Comportement** :
-   - Tente d'abord l'envoi FCM via `send-fcm-notification`
-   - Si échec (pas de token FCM, erreur réseau), envoie un email via Resend
-   - Les deux canaux sont loggués pour diagnostic
-
-### Fallback VAPID Key
-
-Si `VITE_VAPID_PUBLIC_KEY` n'est pas configuré ou invalide :
-
-1. **Fichier** : `src/lib/firebase.ts`
-2. **Comportement** :
-   - Utilise une clé VAPID publique hardcodée (fallback sécurisé)
-   - Affiche un warning en console
-   - Le diagnostic `/compte` indique "fallback" comme source
-
----
-
-## 🗑️ Secrets Supprimés (Décembre 2024)
-
-| Secret | Raison |
-|--------|--------|
-| `API_ENTREPRISE_TOKEN` | Pappers utilisé exclusivement, fallback jamais utilisé |
-| `PIXABAY_API_KEY` | Intégration Pixabay supprimée du code |
+- **Sensibilité HAUTE** : 4 secrets
+- **Sensibilité MOYENNE** : 2 secrets
+- **Sensibilité BASSE** : 2 secrets
 
 ---
 

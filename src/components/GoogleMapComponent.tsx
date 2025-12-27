@@ -1,12 +1,10 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { GoogleMap, Marker, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-maps/api';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import { MapPin, AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { defaultMapConfig, quaiDirectMapStyles } from '@/lib/google-maps';
+import { googleMapsLoaderConfig, defaultMapConfig, quaiDirectMapStyles, isGoogleMapsConfigured } from '@/lib/google-maps';
 import { Button } from '@/components/ui/button';
-import { useGoogleMapsLoader } from '@/hooks/useGoogleMapsLoader';
-
 
 interface Port {
   id: string;
@@ -81,12 +79,8 @@ const GoogleMapComponent = ({
   const [hasTimedOut, setHasTimedOut] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const {
-    isLoaded,
-    loadError,
-    apiKey,
-    apiKeyLoading,
-  } = useGoogleMapsLoader();
+  // Use centralized loader config - do NOT override the id to prevent multiple loads
+  const { isLoaded, loadError } = useJsApiLoader(googleMapsLoaderConfig);
 
   const mapOptions = useMemo(() => ({
     styles: quaiDirectMapStyles,
@@ -107,8 +101,6 @@ const GoogleMapComponent = ({
 
   // Loading timeout handler
   useEffect(() => {
-    if (apiKeyLoading || !apiKey) return;
-
     if (!isLoaded && !loadError && !hasTimedOut) {
       timeoutRef.current = setTimeout(() => {
         if (import.meta.env.DEV) console.error('[Google Maps] Loading timeout exceeded after', LOADING_TIMEOUT_MS, 'ms');
@@ -129,12 +121,10 @@ const GoogleMapComponent = ({
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [apiKeyLoading, apiKey, isLoaded, loadError, hasTimedOut, loadAttempt]);
+  }, [isLoaded, loadError, hasTimedOut, loadAttempt]);
 
   // Log loading state for debugging (dev only)
   useEffect(() => {
-    if (apiKeyLoading) return;
-
     if (import.meta.env.DEV) {
       if (loadError) {
         console.error('[Google Maps] Load error:', loadError.message);
@@ -143,12 +133,7 @@ const GoogleMapComponent = ({
         console.info('[Google Maps] Successfully loaded');
       }
     }
-  }, [apiKeyLoading, isLoaded, loadError]);
-
-  // Reset timeout state when API key changes
-  useEffect(() => {
-    setHasTimedOut(false);
-  }, [apiKey]);
+  }, [isLoaded, loadError]);
 
   const handleRetry = useCallback(() => {
     if (import.meta.env.DEV) console.info('[Google Maps] Retrying by re-mounting map...');
@@ -497,19 +482,7 @@ const GoogleMapComponent = ({
   }, [map, salePoints, drops, selectedSalePointId, selectedDropId, onSalePointClick, onDropClick, isLoaded]);
 
   // Check if API key is configured
-  if (apiKeyLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full bg-muted rounded-lg p-6 text-center">
-        <Loader2 className="h-10 w-10 animate-spin text-muted-foreground mb-4" />
-        <h3 className="text-lg font-semibold text-foreground mb-2">Chargement de la carte…</h3>
-        <p className="text-sm text-muted-foreground max-w-sm">
-          On récupère la configuration Google Maps.
-        </p>
-      </div>
-    );
-  }
-
-  if (!apiKey) {
+  if (!isGoogleMapsConfigured()) {
     return (
       <div className="flex flex-col items-center justify-center h-full bg-muted rounded-lg p-6 text-center">
         <AlertTriangle className="h-12 w-12 text-warning mb-4" />
@@ -517,7 +490,8 @@ const GoogleMapComponent = ({
           Carte non disponible
         </h3>
         <p className="text-muted-foreground text-sm max-w-sm mb-4">
-          La clé Google Maps n'est pas accessible côté navigateur.
+          La clé API Google Maps n'est pas configurée. 
+          Veuillez contacter l'administrateur.
         </p>
         <p className="text-xs text-muted-foreground/70">
           Code erreur: API_KEY_MISSING

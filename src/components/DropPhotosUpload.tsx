@@ -111,44 +111,40 @@ export const DropPhotosUpload = ({
         </div>
       )}
 
-      {/* Upload Buttons */}
+      {/* Upload Button with Drag & Drop */}
       {photos.length < maxPhotos && (
-        <div className="space-y-3">
-          {/* Mobile Camera Button - prominent for fatigue-proof use */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button
-              type="button"
-              variant="default"
-              size="lg"
-              disabled={uploading}
-              className="flex-1 h-14 text-base"
-              asChild
-            >
-              <label className="cursor-pointer flex items-center justify-center gap-2">
-                <Camera className="h-5 w-5" />
-                {uploading ? "Upload..." : "📷 Prendre une photo"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  className="hidden"
-                  onChange={handlePhotoUpload}
-                  disabled={uploading}
-                />
-              </label>
-            </Button>
-            
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={`
+            flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg transition-all
+            ${isDragging 
+              ? "border-primary bg-primary/5 scale-105" 
+              : "border-border hover:border-primary"
+            }
+          `}
+        >
+          <Camera className={`h-12 w-12 mb-3 transition-colors ${isDragging ? "text-primary" : "text-muted-foreground"}`} />
+          <p className="text-sm font-medium mb-1 text-foreground">
+            {isDragging ? "Dépose tes photos ici" : "Photos de vos prises"}
+          </p>
+          <p className="text-xs text-muted-foreground mb-4 text-center max-w-sm">
+            {isDragging 
+              ? "Relâche pour uploader" 
+              : `Glisse-dépose ou clique pour ajouter • ${photos.length}/${maxPhotos} photos`
+            }
+          </p>
+          {!isDragging && (
             <Button
               type="button"
               variant="outline"
-              size="lg"
               disabled={uploading}
-              className="flex-1 h-14 text-base"
               asChild
             >
-              <label className="cursor-pointer flex items-center justify-center gap-2">
-                <Upload className="h-5 w-5" />
-                {uploading ? "Upload..." : "Galerie / Fichiers"}
+              <label className="cursor-pointer">
+                <Upload className="h-4 w-4 mr-2" />
+                {uploading ? "Upload en cours..." : "Ajouter des photos"}
                 <input
                   type="file"
                   accept="image/*"
@@ -159,28 +155,7 @@ export const DropPhotosUpload = ({
                 />
               </label>
             </Button>
-          </div>
-
-          {/* Drag & Drop Zone (desktop) */}
-          <div
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            className={`
-              hidden sm:flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg transition-all
-              ${isDragging 
-                ? "border-primary bg-primary/5 scale-[1.02]" 
-                : "border-border hover:border-primary/50"
-              }
-            `}
-          >
-            <p className="text-sm text-muted-foreground text-center">
-              {isDragging 
-                ? "Relâche pour uploader" 
-                : `Glisse-dépose tes photos ici • ${photos.length}/${maxPhotos}`
-              }
-            </p>
-          </div>
+          )}
         </div>
       )}
 

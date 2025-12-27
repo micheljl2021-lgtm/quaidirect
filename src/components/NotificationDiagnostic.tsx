@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { requestFCMToken, getVapidKeyInfo, getFirebaseConfigInfo } from '@/lib/firebase';
+import { requestFCMToken } from '@/lib/firebase';
 import { 
   Bell, 
   BellOff, 
@@ -14,9 +14,7 @@ import {
   Loader2, 
   RefreshCw,
   Trash2,
-  Send,
-  Info,
-  Copy
+  Send
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -46,38 +44,34 @@ const NotificationDiagnostic = () => {
       { label: 'Token en base', status: 'pending' },
     ]);
 
-    // Step 0: Check VAPID key with comprehensive info
+    // Step 0: Check VAPID key
     updateStep(0, { status: 'checking' });
     await new Promise(r => setTimeout(r, 200));
     
-    const vapidInfo = getVapidKeyInfo();
-    const firebaseInfo = getFirebaseConfigInfo();
-    
-    // Log full debug info to console
-    console.log('[Diagnostic] VAPID Info:', vapidInfo);
-    console.log('[Diagnostic] Firebase Info:', firebaseInfo);
+    const rawVapidKey = (import.meta.env.VITE_VAPID_PUBLIC_KEY || '').trim();
+    const normalizedVapidKey = rawVapidKey.replace(/^VITE_/, '');
 
-    if (!vapidInfo.isValid) {
+    if (!rawVapidKey) {
+      updateStep(0, { status: 'error', message: 'VITE_VAPID_PUBLIC_KEY non configurée' });
+      setIsRunning(false);
+      return;
+    }
+
+    const hadVitePrefix = rawVapidKey !== normalizedVapidKey;
+    const normalizedLen = normalizedVapidKey.length;
+
+    if (normalizedLen < 70) {
       updateStep(0, {
         status: 'error',
-        message: `Clé VAPID invalide (len ${vapidInfo.cleanLength}). Source: ${vapidInfo.source}`,
+        message: `Clé VAPID invalide (trop courte, len ${normalizedLen}). Collez uniquement la clé (souvent elle commence par "B...")`,
       });
       setIsRunning(false);
       return;
     }
 
-    // Build detailed message
-    const vapidMessage = [
-      `Fingerprint: ${vapidInfo.cleanFingerprint}`,
-      `Longueur: ${vapidInfo.cleanLength}`,
-      `Source: ${vapidInfo.source}`,
-      vapidInfo.hasVitePrefix ? '⚠️ Préfixe VITE_ dans la valeur (corrigé)' : '',
-      vapidInfo.hasQuotes ? '⚠️ Quotes détectées (nettoyées)' : '',
-    ].filter(Boolean).join('\n');
-
     updateStep(0, {
       status: 'ok',
-      message: vapidMessage,
+      message: `Clé: ${normalizedVapidKey.substring(0, 12)}... (len ${normalizedLen})${hadVitePrefix ? ' — préfixe VITE_ détecté dans la valeur, corrigé automatiquement' : ''}`,
     });
 
     // Step 1: Browser support
@@ -147,7 +141,7 @@ const NotificationDiagnostic = () => {
         if (token) {
           updateStep(4, { status: 'ok', message: `Token obtenu: ${token.substring(0, 20)}...` });
         } else {
-          updateStep(4, { status: 'error', message: 'Impossible d\'obtenir le token - voir console pour détails' });
+          updateStep(4, { status: 'error', message: 'Impossible d\'obtenir le token - voir console pour détails (code erreur Firebase)' });
           setIsRunning(false);
           return;
         }
@@ -157,62 +151,7 @@ const NotificationDiagnostic = () => {
     } catch (tokenError: any) {
       const errorCode = tokenError?.code || 'unknown';
       const errorMsg = tokenError?.message || 'Erreur inconnue';
-      
-      // Provide actionable message for common errors
-      let actionableMsg = `Erreur FCM [${errorCode}]: ${errorMsg}`;
-      const configInfo = getFirebaseConfigInfo();
-      const currentDomain = configInfo.currentDomain;
-      const domainPattern = currentDomain.includes('lovable.app') ? '*.lovable.app/*' : currentDomain + '/*';
-      
-      // Handle Firebase Installations API blocked error
-      if (errorMsg.includes('firebaseinstallations.googleapis.com') || 
-          errorMsg.includes('PERMISSION_DENIED') ||
-          errorCode === 'installations/request-failed') {
-        actionableMsg = `⚠️ API Firebase Installations bloquée\n\n` +
-          `PROBLÈME : L'API Firebase Installations n'est pas activée ou est bloquée pour ce projet.\n\n` +
-          `SOLUTION EN 2 ÉTAPES :\n\n` +
-          `ÉTAPE 1 - Activer l'API Firebase Installations:\n` +
-          `1. Ouvrir ce lien:\n` +
-          `   https://console.cloud.google.com/apis/library/firebaseinstallations.googleapis.com?project=${configInfo.projectId}\n` +
-          `2. Cliquer "ACTIVER"\n\n` +
-          `ÉTAPE 2 - Vérifier les restrictions de l'API Key:\n` +
-          `1. Ouvrir: https://console.cloud.google.com/apis/credentials?project=${configInfo.projectId}\n` +
-          `2. Cliquer sur "Browser key" ou votre API key\n` +
-          `3. Section "API restrictions" → ajouter:\n` +
-          `   • Firebase Installations API\n` +
-          `   • Firebase Cloud Messaging API\n` +
-          `   • Cloud Messaging API\n` +
-          `4. Section "Application restrictions" → HTTP referrers → ajouter:\n` +
-          `   • ${domainPattern}\n` +
-          `   • quaidirect.fr/*\n` +
-          `5. Sauvegarder et patienter 5 min\n\n` +
-          `📍 Domaine actuel: ${currentDomain}\n` +
-          `📍 Projet: ${configInfo.projectId}`;
-      } else if (errorCode === 'messaging/token-subscribe-failed') {
-        actionableMsg = `⚠️ Échec inscription FCM\n\n` +
-          `SOLUTION : Ajouter le domaine aux referrers autorisés\n\n` +
-          `📍 Domaine actuel: ${currentDomain}\n` +
-          `📍 Pattern à ajouter: ${domainPattern}\n\n` +
-          `ÉTAPES POUR CORRIGER :\n` +
-          `1. Ouvrir console.cloud.google.com\n` +
-          `2. Sélectionner le projet: ${configInfo.projectId}\n` +
-          `3. Menu → APIs & Services → Credentials\n` +
-          `4. Cliquer sur votre "Browser key" ou "API key"\n` +
-          `5. Section "Application restrictions" → HTTP referrers\n` +
-          `6. Ajouter: ${domainPattern}\n` +
-          `7. Ajouter aussi: quaidirect.fr/* (pour production)\n` +
-          `8. Sauvegarder et patienter ~5 min\n\n` +
-          `🔗 Lien direct:\n` +
-          `https://console.cloud.google.com/apis/credentials?project=${configInfo.projectId}\n\n` +
-          `Config actuelle:\n` +
-          `• Project: ${configInfo.projectId}\n` +
-          `• API Key: ${configInfo.apiKeyPrefix}\n` +
-          (configInfo.apiKeyIssues.length > 0 ? `• ⚠️ Issues: ${configInfo.apiKeyIssues.join(', ')}\n` : '');
-      } else if (errorCode === 'messaging/permission-blocked') {
-        actionableMsg = 'Notifications bloquées dans le navigateur. Réinitialisez dans les paramètres du site.';
-      }
-      
-      updateStep(4, { status: 'error', message: actionableMsg });
+      updateStep(4, { status: 'error', message: `Erreur FCM [${errorCode}]: ${errorMsg}` });
       setIsRunning(false);
       return;
     }
@@ -303,24 +242,6 @@ const NotificationDiagnostic = () => {
     }
   };
 
-  const copyConfigToClipboard = () => {
-    const configInfo = getFirebaseConfigInfo();
-    const vapidInfo = getVapidKeyInfo();
-    const configText = `Firebase Config Debug:
-Domain: ${configInfo.currentDomain}
-Project: ${configInfo.projectId}
-Sender: ${configInfo.messagingSenderId}
-API Key: ${configInfo.apiKeyPrefix}
-AuthDomain: ${configInfo.authDomain}
-AppId: ${configInfo.appId}
-Bucket: ${configInfo.storageBucket}
-VAPID: ${vapidInfo.cleanFingerprint} (${vapidInfo.source})
-Permission: ${Notification.permission}`;
-    
-    navigator.clipboard.writeText(configText);
-    toast.success('Configuration copiée !');
-  };
-
   const getStatusIcon = (status: DiagnosticStep['status']) => {
     switch (status) {
       case 'pending': return <div className="w-4 h-4 rounded-full border-2 border-muted" />;
@@ -346,39 +267,15 @@ Permission: ${Notification.permission}`;
         </p>
 
         {/* Current status */}
-        <div className="flex flex-col gap-2 text-sm">
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">Permission actuelle:</span>
-            <Badge variant={
-              Notification.permission === 'granted' ? 'default' :
-              Notification.permission === 'denied' ? 'destructive' : 'secondary'
-            }>
-              {Notification.permission === 'granted' ? 'Accordée' :
-               Notification.permission === 'denied' ? 'Bloquée' : 'Non demandée'}
-            </Badge>
-          </div>
-          
-          {/* Quick VAPID fingerprint display */}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Info className="h-3 w-3" />
-            <span>
-              VAPID: {(() => {
-                const info = getVapidKeyInfo();
-                return `${info.cleanFingerprint} (${info.source})`;
-              })()}
-            </span>
-          </div>
-          
-          {/* Firebase config summary */}
-          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <Info className="h-3 w-3" />
-            <span>
-              Firebase: {(() => {
-                const info = getFirebaseConfigInfo();
-                return `${info.projectId} / ${info.messagingSenderId} (${info.apiKeyPrefix})`;
-              })()}
-            </span>
-          </div>
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-muted-foreground">Permission actuelle:</span>
+          <Badge variant={
+            Notification.permission === 'granted' ? 'default' :
+            Notification.permission === 'denied' ? 'destructive' : 'secondary'
+          }>
+            {Notification.permission === 'granted' ? 'Accordée' :
+             Notification.permission === 'denied' ? 'Bloquée' : 'Non demandée'}
+          </Badge>
         </div>
 
         {/* Diagnostic steps */}
@@ -428,16 +325,6 @@ Permission: ${Notification.permission}`;
           >
             <Send className="h-4 w-4 mr-2" />
             Envoyer un test
-          </Button>
-          
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={copyConfigToClipboard}
-            title="Copier la configuration pour le support"
-          >
-            <Copy className="h-4 w-4 mr-2" />
-            Copier config
           </Button>
         </div>
       </CardContent>

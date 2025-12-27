@@ -5,10 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Autocomplete } from '@react-google-maps/api';
+import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
 import { MapPickerDialog } from './MapPickerDialog';
+import { googleMapsLoaderConfig } from '@/lib/google-maps';
 import { PhotoUpload } from '@/components/PhotoUpload';
-import { useGoogleMapsLoader } from '@/hooks/useGoogleMapsLoader';
 
 interface Step6PointsVenteProps {
   formData: {
@@ -35,7 +35,7 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
   const autocomplete2Ref = useRef<google.maps.places.Autocomplete | null>(null);
 
   // Use centralized loader config to avoid multiple loads
-  const { isLoaded, loadError, apiKey, apiKeyLoading } = useGoogleMapsLoader();
+  const { isLoaded, loadError } = useJsApiLoader(googleMapsLoaderConfig);
 
   const handlePlaceChanged1 = useCallback(() => {
     if (autocomplete1Ref.current) {
@@ -121,12 +121,7 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
             ou
           </span>
-          {apiKeyLoading ? (
-            <div className="flex items-center gap-2 text-muted-foreground h-10 pl-10">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Chargement...
-            </div>
-          ) : loadError || !apiKey ? (
+          {loadError ? (
             <Input
               id={id}
               placeholder="Tapez une adresse..."
@@ -174,11 +169,6 @@ export const Step6PointsVente = ({ formData, onChange }: Step6PointsVenteProps) 
         <p className="text-muted-foreground">
           Où vends-tu habituellement ton poisson ? (1 à 2 points maximum)
         </p>
-        {!apiKey && !apiKeyLoading && (
-          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-3 mt-3">
-            La carte Google Maps n'est pas disponible (clé API absente). Tu peux quand même saisir l'adresse manuellement.
-          </p>
-        )}
       </div>
 
       {/* Map Picker Dialog */}

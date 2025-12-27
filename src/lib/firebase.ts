@@ -2,227 +2,66 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage, type Messaging } from 'firebase/messaging';
 
-// Clean a config value (remove quotes, whitespace, VITE_ prefix)
-const cleanConfigValue = (value: string | undefined, fieldName: string): string | null => {
-  if (!value) return null;
-  
-  let clean = value.trim().replace(/^["']|["']$/g, '');
-  
-  // Remove accidental VITE_ prefix in the value itself
-  if (clean.startsWith('VITE_')) {
-    console.warn(`[Firebase] ${fieldName} had VITE_ prefix in value, removing it`);
-    clean = clean.replace(/^VITE_/, '');
-  }
-  
-  // Remove newlines
-  clean = clean.replace(/[\r\n]/g, '');
-  
-  return clean.length > 0 ? clean : null;
-};
-
-// Validate required environment variables and throw clear errors if missing
-const validateFirebaseConfig = () => {
-  const missingVars: string[] = [];
-  
-  if (!import.meta.env.VITE_FIREBASE_API_KEY) {
-    missingVars.push('VITE_FIREBASE_API_KEY');
-  }
-  if (!import.meta.env.VITE_FIREBASE_PROJECT_ID) {
-    missingVars.push('VITE_FIREBASE_PROJECT_ID');
-  }
-  if (!import.meta.env.VITE_FIREBASE_AUTH_DOMAIN) {
-    missingVars.push('VITE_FIREBASE_AUTH_DOMAIN');
-  }
-  if (!import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID) {
-    missingVars.push('VITE_FIREBASE_MESSAGING_SENDER_ID');
-  }
-  if (!import.meta.env.VITE_FIREBASE_APP_ID) {
-    missingVars.push('VITE_FIREBASE_APP_ID');
-  }
-  if (!import.meta.env.VITE_FIREBASE_STORAGE_BUCKET) {
-    missingVars.push('VITE_FIREBASE_STORAGE_BUCKET');
-  }
-  
-  if (missingVars.length > 0) {
-    const errorMessage = `[Firebase] CRITICAL: Missing required environment variables: ${missingVars.join(', ')}.\n` +
-      `Push notifications will NOT work.\n` +
-      `Please configure these in Lovable Cloud Secrets or your local .env file.\n` +
-      `See .env.example and docs/LOVABLE_CLOUD_SECRETS.md for instructions.`;
-    console.error(errorMessage);
-    throw new Error(errorMessage);
-  }
-};
-
 // Get Firebase API key from environment variable
-const getFirebaseApiKey = (): { value: string; issues: string[] } => {
-  const rawKey = import.meta.env.VITE_FIREBASE_API_KEY;
-  const issues: string[] = [];
-  
-  if (!rawKey) {
-    throw new Error('[Firebase] VITE_FIREBASE_API_KEY not configured');
+const getFirebaseApiKey = (): string => {
+  const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
+  if (!apiKey) {
+    console.warn('[Firebase] VITE_FIREBASE_API_KEY not set, using fallback');
+    return "AIzaSyCk_r6Pv2-PdvLoJRkn-GHRK1NOu58JMkg";
   }
-  
-  // Check for common issues
-  if (rawKey.startsWith('"') || rawKey.startsWith("'")) {
-    issues.push('Quotes détectées');
-  }
-  if (rawKey.startsWith('VITE_')) {
-    issues.push('Préfixe VITE_ dans la valeur');
-  }
-  if (rawKey.includes('\n') || rawKey.includes('\r')) {
-    issues.push('Retours ligne détectés');
-  }
-  
-  const cleaned = cleanConfigValue(rawKey, 'API Key');
-  
-  if (!cleaned || cleaned.length < 30) {
-    throw new Error('[Firebase] API key too short or invalid after cleaning');
-  }
-  
-  return { value: cleaned, issues };
+  return apiKey.trim();
 };
 
-// Get other Firebase config values from env (no fallbacks)
-const getFirebaseProjectId = (): string => {
-  const value = cleanConfigValue(import.meta.env.VITE_FIREBASE_PROJECT_ID, 'projectId');
-  if (!value) {
-    throw new Error('[Firebase] VITE_FIREBASE_PROJECT_ID not configured');
-  }
-  return value;
-};
-
-const getFirebaseMessagingSenderId = (): string => {
-  const value = cleanConfigValue(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID, 'senderId');
-  if (!value) {
-    throw new Error('[Firebase] VITE_FIREBASE_MESSAGING_SENDER_ID not configured');
-  }
-  return value;
-};
-
-const getFirebaseAppId = (): string => {
-  const value = cleanConfigValue(import.meta.env.VITE_FIREBASE_APP_ID, 'appId');
-  if (!value) {
-    throw new Error('[Firebase] VITE_FIREBASE_APP_ID not configured');
-  }
-  return value;
-};
-
-const getFirebaseAuthDomain = (): string => {
-  const value = cleanConfigValue(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN, 'authDomain');
-  if (!value) {
-    throw new Error('[Firebase] VITE_FIREBASE_AUTH_DOMAIN not configured');
-  }
-  return value;
-};
-
-// Get storage bucket (accept both VITE_FIREBASE_STORAGE_BUCKET and VITE_FIREBASE_BUCKET)
-const getFirebaseStorageBucket = (): string => {
-  const value = cleanConfigValue(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET, 'storageBucket') 
-    || cleanConfigValue(import.meta.env.VITE_FIREBASE_BUCKET, 'bucket');
-  if (!value) {
-    throw new Error('[Firebase] VITE_FIREBASE_STORAGE_BUCKET not configured');
-  }
-  return value;
-};
-
-// Validate configuration before building config object
-validateFirebaseConfig();
-
-// Build Firebase configuration
-const apiKeyResult = getFirebaseApiKey();
+// Firebase configuration - uses environment variable for API key
 const firebaseConfig = {
-  apiKey: apiKeyResult.value,
-  authDomain: getFirebaseAuthDomain(),
-  projectId: getFirebaseProjectId(),
-  storageBucket: getFirebaseStorageBucket(),
-  messagingSenderId: getFirebaseMessagingSenderId(),
-  appId: getFirebaseAppId(),
-  measurementId: cleanConfigValue(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID, 'measurementId') || undefined
+  apiKey: getFirebaseApiKey(),
+  authDomain: "arcane-argon-426216-b7.firebaseapp.com",
+  projectId: "arcane-argon-426216-b7",
+  storageBucket: "arcane-argon-426216-b7.firebasestorage.app",
+  messagingSenderId: "425193275047",
+  appId: "1:425193275047:web:e3b3f08dcb366d919da582",
+  measurementId: "G-ERMEXSWNZS"
 };
-
-// Log configuration status on init
-console.log('[Firebase] Config loaded successfully:', {
-  projectId: firebaseConfig.projectId,
-  senderId: firebaseConfig.messagingSenderId,
-  apiKeyPrefix: firebaseConfig.apiKey.substring(0, 10) + '...',
-});
 
 // Export config for diagnostic purposes (without exposing full key)
-export const getFirebaseConfigInfo = () => {
-  return {
-    apiKeyPrefix: firebaseConfig.apiKey.substring(0, 10) + '...',
-    apiKeyLength: firebaseConfig.apiKey.length,
-    apiKeyIssues: apiKeyResult.issues,
-    projectId: firebaseConfig.projectId,
-    messagingSenderId: firebaseConfig.messagingSenderId,
-    appId: firebaseConfig.appId,
-    authDomain: firebaseConfig.authDomain,
-    storageBucket: firebaseConfig.storageBucket,
-    currentDomain: typeof window !== 'undefined' ? window.location.hostname : 'unknown',
-  };
-};
+export const getFirebaseConfigInfo = () => ({
+  apiKeyPrefix: firebaseConfig.apiKey.substring(0, 10) + '...',
+  apiKeyLength: firebaseConfig.apiKey.length,
+  projectId: firebaseConfig.projectId,
+  messagingSenderId: firebaseConfig.messagingSenderId,
+  appId: firebaseConfig.appId,
+});
 
-// Get VAPID key from environment (no fallback)
+// Get VAPID key from environment - this is the SINGLE source of truth
 export const getVapidKey = (): string | null => {
   const rawKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
   
-  // Return null if not configured (push notifications won't work but app continues)
   if (!rawKey) {
-    console.error(
-      '[Firebase] CRITICAL: VITE_VAPID_PUBLIC_KEY not configured.\n' +
-      'Push notifications will NOT work.\n' +
-      'Configure this in Lovable Cloud Secrets or your local .env file.\n' +
-      'Generate keys with: npx web-push generate-vapid-keys'
-    );
+    console.error('[Firebase] VITE_VAPID_PUBLIC_KEY is not configured');
     return null;
   }
   
   // Clean the key (remove whitespace, quotes, and any VITE_ prefix if mistakenly included)
   let cleanKey = rawKey.trim().replace(/^["']|["']$/g, '');
   if (cleanKey.startsWith('VITE_')) {
-    console.warn('[Firebase] VAPID key had VITE_ prefix in value, removing it');
     cleanKey = cleanKey.replace(/^VITE_/, '');
-  }
-  
-  // Validate key length (VAPID keys are typically 87 characters)
-  if (cleanKey.length < 70) {
-    console.error(
-      '[Firebase] VAPID key too short (length: ' + cleanKey.length + ').\n' +
-      'Expected at least 70 characters.\n' +
-      'Generate a new key with: npx web-push generate-vapid-keys'
-    );
-    return null;
   }
   
   console.log('[Firebase] VAPID key loaded - length:', cleanKey.length, '- prefix:', cleanKey.substring(0, 12) + '...');
   return cleanKey;
 };
 
-// Export VAPID info for diagnostics - comprehensive debug info
+// Export VAPID info for diagnostics
 export const getVapidKeyInfo = () => {
   const rawKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
   const cleanKey = getVapidKey();
-  const isConfigured = rawKey.length > 0;
-  
   return {
-    // Raw value info (from env)
-    rawPrefix: rawKey ? rawKey.substring(0, 15) + '...' : '(empty)',
+    rawPrefix: rawKey.substring(0, 15) + '...',
     rawLength: rawKey.length,
-    rawValue: rawKey.length > 0 ? `${rawKey.substring(0, 8)}...${rawKey.substring(rawKey.length - 8)}` : '(empty)',
-    
-    // Clean value info (after processing)
     cleanPrefix: cleanKey ? cleanKey.substring(0, 15) + '...' : 'null',
     cleanLength: cleanKey?.length || 0,
-    cleanFingerprint: cleanKey ? `${cleanKey.substring(0, 8)}...${cleanKey.substring(cleanKey.length - 8)}` : 'null',
-    
-    // Diagnostic flags
     hasVitePrefix: rawKey.startsWith('VITE_'),
     hasQuotes: rawKey.startsWith('"') || rawKey.startsWith("'"),
-    isConfigured,
-    isValid: (cleanKey?.length || 0) >= 70,
-    
-    // Source info
-    source: isConfigured ? 'environment variable' : 'not configured',
   };
 };
 
