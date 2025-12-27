@@ -1,6 +1,10 @@
 import { createRoot } from "react-dom/client";
 import * as Sentry from "@sentry/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// Validate configuration before app starts
+import "./lib/config-validator";
+
 import App from "./App.tsx";
 import "./index.css";
 

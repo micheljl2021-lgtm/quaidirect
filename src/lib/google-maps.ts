@@ -3,30 +3,54 @@
  * @see docs/GOOGLE_MAPS_CONFIG.md pour les instructions de configuration
  */
 
-let apiKeyWarningShown = false;
 let configLogShown = false;
 
 export function getGoogleMapsApiKey(): string {
-  const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   
-  if (!key && !apiKeyWarningShown) {
-    apiKeyWarningShown = true;
-    console.error("[Google Maps] VITE_GOOGLE_MAPS_API_KEY manquante. Configurez-la dans Lovable Cloud.");
+  // Skip validation in test environment
+  if (import.meta.env.MODE === 'test' || import.meta.env.VITEST) {
+    return apiKey || '';
   }
   
-  return key;
+  if (!apiKey || apiKey === 'your_google_maps_api_key_here') {
+    throw new Error(
+      '[Google Maps] CRITICAL: VITE_GOOGLE_MAPS_API_KEY not configured.\n' +
+      'Please configure it in:\n' +
+      '- Lovable Dashboard → Project → Secrets (for production)\n' +
+      '- Local .env file (for development)\n' +
+      '\n' +
+      'See docs/GOOGLE_MAPS_CONFIG.md for setup instructions.'
+    );
+  }
+  
+  return apiKey;
 }
 
 export function isGoogleMapsConfigured(): boolean {
-  const key = getGoogleMapsApiKey();
-  const configured = Boolean(key && key.length > 0);
-  
-  if (!configLogShown) {
-    configLogShown = true;
-    console.info(configured ? "[Google Maps] API key configurée ✓" : "[Google Maps] API key non configurée");
+  // In test environment, check directly without throwing
+  if (import.meta.env.MODE === 'test' || import.meta.env.VITEST) {
+    const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    return Boolean(key && key.length > 0);
   }
   
-  return configured;
+  try {
+    const key = getGoogleMapsApiKey();
+    const configured = Boolean(key && key.length > 0);
+    
+    if (!configLogShown) {
+      configLogShown = true;
+      console.info(configured ? "[Google Maps] API key configurée ✓" : "[Google Maps] API key non configurée");
+    }
+    
+    return configured;
+  } catch {
+    if (!configLogShown) {
+      configLogShown = true;
+      console.info("[Google Maps] API key non configurée");
+    }
+    return false;
+  }
 }
 
 export function initGoogleMapsApiKey(): Promise<string> {
