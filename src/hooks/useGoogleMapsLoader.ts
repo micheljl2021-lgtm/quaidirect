@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useJsApiLoader, type UseLoadScriptOptions } from '@react-google-maps/api';
+import { useJsApiLoader } from '@react-google-maps/api';
 import { getGoogleMapsApiKey, googleMapsLoaderConfig, initGoogleMapsApiKey } from '@/lib/google-maps';
+
+type JsApiLoaderOptions = Parameters<typeof useJsApiLoader>[0];
 
 const PLACEHOLDER_KEY = 'GOOGLE_MAPS_KEY_PENDING';
 
-export function useGoogleMapsLoader(overrides?: Partial<UseLoadScriptOptions>) {
+export function useGoogleMapsLoader(overrides?: Partial<JsApiLoaderOptions>) {
   const [apiKey, setApiKey] = useState<string>(() => getGoogleMapsApiKey());
   const [apiKeyLoading, setApiKeyLoading] = useState<boolean>(() => !getGoogleMapsApiKey());
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
@@ -36,12 +38,15 @@ export function useGoogleMapsLoader(overrides?: Partial<UseLoadScriptOptions>) {
     };
   }, [apiKey]);
 
-  const loaderOptions: UseLoadScriptOptions = useMemo(() => ({
-    ...googleMapsLoaderConfig,
-    ...overrides,
-    id: apiKey ? googleMapsLoaderConfig.id : `${googleMapsLoaderConfig.id}-placeholder`,
-    googleMapsApiKey: apiKey || PLACEHOLDER_KEY,
-  }), [apiKey, overrides]);
+  const loaderOptions: JsApiLoaderOptions = useMemo(
+    () => ({
+      ...googleMapsLoaderConfig,
+      ...overrides,
+      id: apiKey ? googleMapsLoaderConfig.id : `${googleMapsLoaderConfig.id}-placeholder`,
+      googleMapsApiKey: apiKey || PLACEHOLDER_KEY,
+    }),
+    [apiKey, overrides]
+  );
 
   const loaderState = useJsApiLoader(loaderOptions);
 
@@ -52,3 +57,4 @@ export function useGoogleMapsLoader(overrides?: Partial<UseLoadScriptOptions>) {
     apiKeyError,
   };
 }
+

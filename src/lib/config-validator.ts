@@ -25,74 +25,62 @@ const validateConfig = (): void => {
       key: 'VITE_SUPABASE_URL',
       value: resolveBackendUrl(),
       required: true,
-      service: 'Supabase',
+      service: 'Backend',
     },
     {
       key: 'VITE_SUPABASE_PUBLISHABLE_KEY',
       value: resolveBackendPublishableKey(),
       required: true,
-      service: 'Supabase',
+      service: 'Backend',
     },
-    // Optional but recommended (a fallback exists through the Supabase edge function)
+    // Optional (fallback via backend function)
     {
       key: 'VITE_GOOGLE_MAPS_API_KEY',
       value: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
       required: false,
-      service: 'Google Maps (Frontend)',
+      service: 'Google Maps',
     },
 
-    // Optional but recommended
+    // Optional
     {
       key: 'VITE_FIREBASE_API_KEY',
       value: import.meta.env.VITE_FIREBASE_API_KEY,
       required: false,
-      service: 'Firebase (Push Notifications)',
+      service: 'Firebase (notifications)',
     },
     {
       key: 'VITE_VAPID_PUBLIC_KEY',
       value: import.meta.env.VITE_VAPID_PUBLIC_KEY,
       required: false,
-      service: 'VAPID (Push Notifications)',
+      service: 'Web Push (VAPID)',
     },
   ];
 
   const missing = configs.filter((c) => {
     if (!c.required) return false;
     if (!c.value) return true;
-    
+
     // Check for common placeholder patterns
     const placeholderPatterns = [
       'your_google_maps_api_key_here',
       'your_supabase_url_here',
       'your_supabase_publishable_anon_key_here',
-      'your_google_maps_api_key_here',
       'your_firebase_api_key_here',
-      'your_vapid_public_key_here'
+      'your_vapid_public_key_here',
     ];
-    
-    return placeholderPatterns.some(pattern => c.value === pattern);
+
+    return placeholderPatterns.some((pattern) => c.value === pattern);
   });
 
   if (missing.length > 0) {
     const missingList = missing.map((c) => `  • ${c.key} (${c.service})`).join('\n');
 
     const message =
-      `[Config] Missing required environment variables:\n\n${missingList}\n\n` +
-      `Please configure these in:\n` +
-      `  • Lovable Dashboard → Your Project → Secrets (production)\n` +
-      `  • Local .env file (development)\n\n` +
-      `See .env.example for template.`;
+      `[Config] Configuration manquante :\n\n${missingList}\n\n` +
+      `→ Ajoute ces valeurs dans Lovable Cloud → Secrets.\n` +
+      `Note : il n’y a pas de fichier .env à “recréer” ici.`;
 
-    // En production, on évite de faire un écran blanc : certaines couches d'hébergement peuvent
-    // temporairement ne pas injecter les VITE_* au runtime. On loggue clairement et on laisse l'app tourner.
-    const isLocalhost =
-      typeof window !== 'undefined' &&
-      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-
-    if (import.meta.env.DEV && isLocalhost) {
-      throw new Error(message);
-    }
-
+    // Ne jamais bloquer l'app (sinon écran blanc). On loggue uniquement.
     console.error(message);
     return;
   }
