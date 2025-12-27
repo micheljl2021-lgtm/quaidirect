@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-maps/api';
+import { GoogleMap, Marker, InfoWindow } from '@react-google-maps/api';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import { MapPin, AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { googleMapsLoaderConfig, defaultMapConfig, quaiDirectMapStyles, getGoogleMapsApiKey, initGoogleMapsApiKey } from '@/lib/google-maps';
+import { defaultMapConfig, quaiDirectMapStyles } from '@/lib/google-maps';
 import { Button } from '@/components/ui/button';
+import { useGoogleMapsLoader } from '@/hooks/useGoogleMapsLoader';
 
 
 interface Port {
@@ -80,35 +81,12 @@ const GoogleMapComponent = ({
   const [hasTimedOut, setHasTimedOut] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const [apiKey, setApiKey] = useState<string>(() => getGoogleMapsApiKey());
-  const [apiKeyLoading, setApiKeyLoading] = useState<boolean>(() => !getGoogleMapsApiKey());
-
-  useEffect(() => {
-    let mounted = true;
-
-    if (!apiKey) {
-      setApiKeyLoading(true);
-      initGoogleMapsApiKey()
-        .then((key) => {
-          if (!mounted) return;
-          setApiKey(key);
-        })
-        .finally(() => {
-          if (!mounted) return;
-          setApiKeyLoading(false);
-        });
-    }
-
-    return () => {
-      mounted = false;
-    };
-  }, [apiKey]);
-
-  // Use centralized loader config
-  const { isLoaded, loadError } = useJsApiLoader({
-    ...googleMapsLoaderConfig,
-    googleMapsApiKey: apiKey,
-  });
+  const {
+    isLoaded,
+    loadError,
+    apiKey,
+    apiKeyLoading,
+  } = useGoogleMapsLoader();
 
   const mapOptions = useMemo(() => ({
     styles: quaiDirectMapStyles,
@@ -129,6 +107,8 @@ const GoogleMapComponent = ({
 
   // Loading timeout handler
   useEffect(() => {
+    if (apiKeyLoading || !apiKey) return;
+
     if (!isLoaded && !loadError && !hasTimedOut) {
       timeoutRef.current = setTimeout(() => {
         if (import.meta.env.DEV) console.error('[Google Maps] Loading timeout exceeded after', LOADING_TIMEOUT_MS, 'ms');
@@ -149,10 +129,12 @@ const GoogleMapComponent = ({
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [isLoaded, loadError, hasTimedOut, loadAttempt]);
+  }, [apiKeyLoading, apiKey, isLoaded, loadError, hasTimedOut, loadAttempt]);
 
   // Log loading state for debugging (dev only)
   useEffect(() => {
+    if (apiKeyLoading) return;
+
     if (import.meta.env.DEV) {
       if (loadError) {
         console.error('[Google Maps] Load error:', loadError.message);
@@ -161,7 +143,12 @@ const GoogleMapComponent = ({
         console.info('[Google Maps] Successfully loaded');
       }
     }
-  }, [isLoaded, loadError]);
+  }, [apiKeyLoading, isLoaded, loadError]);
+
+  // Reset timeout state when API key changes
+  useEffect(() => {
+    setHasTimedOut(false);
+  }, [apiKey]);
 
   const handleRetry = useCallback(() => {
     if (import.meta.env.DEV) console.info('[Google Maps] Retrying by re-mounting map...');
