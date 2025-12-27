@@ -1,9 +1,10 @@
 import { useState, useRef, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
-import { googleMapsLoaderConfig, defaultMapConfig } from '@/lib/google-maps';
+import { GoogleMap, Marker } from '@react-google-maps/api';
+import { defaultMapConfig } from '@/lib/google-maps';
 import { Loader2, MapPin } from 'lucide-react';
+import { useGoogleMapsLoader } from '@/hooks/useGoogleMapsLoader';
 
 interface MapPickerDialogProps {
   open: boolean;
@@ -32,7 +33,7 @@ export function MapPickerDialog({
   const [isGeocoding, setIsGeocoding] = useState(false);
   const geocoderRef = useRef<google.maps.Geocoder | null>(null);
 
-  const { isLoaded } = useJsApiLoader(googleMapsLoaderConfig);
+  const { isLoaded, apiKey, apiKeyLoading, loadError } = useGoogleMapsLoader();
 
   const handleMapLoad = useCallback(() => {
     if (!geocoderRef.current && window.google) {
@@ -94,7 +95,25 @@ export function MapPickerDialog({
             Cliquez sur la carte pour définir l'emplacement de votre point de vente
           </p>
 
-          {!isLoaded ? (
+          {apiKeyLoading ? (
+            <div className="h-[400px] bg-muted rounded-lg flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : !apiKey || loadError ? (
+            <div className="h-[400px] bg-muted/60 border border-dashed border-warning/60 rounded-lg flex items-center justify-center text-center p-6">
+              <div className="space-y-2">
+                <p className="font-semibold text-foreground">Carte indisponible</p>
+                <p className="text-sm text-muted-foreground">
+                  Impossible de charger Google Maps. Vérifiez la clé API (restriction de domaine, activation Maps JavaScript).
+                </p>
+                {loadError && (
+                  <p className="text-xs text-muted-foreground/80">
+                    {loadError.message}
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : !isLoaded ? (
             <div className="h-[400px] bg-muted rounded-lg flex items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>

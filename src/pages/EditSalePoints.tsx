@@ -11,10 +11,11 @@ import { toast } from 'sonner';
 import { Loader2, MapPin, Plus, Trash2, ArrowLeft, Camera, Map, X } from 'lucide-react';
 import Header from '@/components/Header';
 import { geocodeAddress } from '@/lib/google-geocode';
-import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
-import { googleMapsLoaderConfig, defaultMapConfig } from '@/lib/google-maps';
+import { GoogleMap, Marker } from '@react-google-maps/api';
+import { defaultMapConfig } from '@/lib/google-maps';
 import { getUserFriendlyError } from '@/lib/errorMessages';
 import { PhotoUpload } from '@/components/PhotoUpload';
+import { useGoogleMapsLoader } from '@/hooks/useGoogleMapsLoader';
 
 interface SalePoint {
   id?: string;
@@ -49,7 +50,7 @@ export default function EditSalePoints() {
   const [tempMarker, setTempMarker] = useState<{ lat: number; lng: number } | null>(null);
   const geocoderRef = useRef<google.maps.Geocoder | null>(null);
 
-  const { isLoaded } = useJsApiLoader(googleMapsLoaderConfig);
+  const { isLoaded, apiKey, apiKeyLoading, loadError } = useGoogleMapsLoader();
 
   useEffect(() => {
     if (user) {
@@ -59,10 +60,10 @@ export default function EditSalePoints() {
 
   // Initialiser le geocoder quand Google Maps est chargé
   useEffect(() => {
-    if (isLoaded && !geocoderRef.current) {
+    if (isLoaded && apiKey && !geocoderRef.current) {
       geocoderRef.current = new google.maps.Geocoder();
     }
-  }, [isLoaded]);
+  }, [isLoaded, apiKey]);
 
   const loadSalePoints = async () => {
     try {
@@ -356,7 +357,7 @@ export default function EditSalePoints() {
       <Header />
       
       {/* Overlay carte pour sélection */}
-      {selectingIndex !== null && isLoaded && (
+      {selectingIndex !== null && isLoaded && apiKey && (
         <div className="fixed inset-0 z-50 bg-background/95 flex flex-col">
           <div className="p-4 bg-card border-b flex items-center justify-between">
             <div>
@@ -386,6 +387,24 @@ export default function EditSalePoints() {
                 />
               )}
             </GoogleMap>
+          </div>
+        </div>
+      )}
+
+      {selectingIndex !== null && (!apiKey || loadError) && (
+        <div className="fixed inset-0 z-50 bg-background/95 flex flex-col items-center justify-center px-6 text-center">
+          <div className="max-w-lg space-y-3">
+            <h2 className="text-xl font-semibold text-foreground">Carte indisponible</h2>
+            <p className="text-muted-foreground">
+              Impossible de charger Google Maps. Vérifiez la clé API (VITE_GOOGLE_MAPS_API_KEY ou fonction Supabase get-maps-config) avant de sélectionner un point sur la carte.
+            </p>
+            {loadError && (
+              <p className="text-xs text-muted-foreground/80">{loadError.message}</p>
+            )}
+            <Button variant="outline" onClick={handleCancelSelection} className="mt-2">
+              <X className="h-4 w-4 mr-2" />
+              Fermer
+            </Button>
           </div>
         </div>
       )}
@@ -475,10 +494,16 @@ export default function EditSalePoints() {
                         size="sm"
                         onClick={() => handleSelectOnMap(index)}
                         className="w-full mt-2"
+                        disabled={!apiKey && !apiKeyLoading}
                       >
                         <Map className="h-4 w-4 mr-2" />
                         Sélectionner sur la carte
                       </Button>
+                      {!apiKey && !apiKeyLoading && (
+                        <p className="text-xs text-amber-600">
+                          La carte est indisponible (clé API manquante). Renseignez les coordonnées manuellement.
+                        </p>
+                      )}
 
                       {point.latitude && point.longitude ? (
                         <p className="text-xs text-muted-foreground">
@@ -491,7 +516,7 @@ export default function EditSalePoints() {
                       )}
                     </div>
 
-                    {isLoaded && point.latitude && point.longitude && (
+                    {isLoaded && apiKey && point.latitude && point.longitude && (
                       <div className="space-y-2">
                         <Label>Aperçu</Label>
                         <GoogleMap

@@ -33,13 +33,14 @@ const validateConfig = (): void => {
       required: true,
       service: 'Supabase',
     },
+    // Optional but recommended (a fallback exists through the Supabase edge function)
     {
       key: 'VITE_GOOGLE_MAPS_API_KEY',
       value: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-      required: true,
-      service: 'Google Maps',
+      required: false,
+      service: 'Google Maps (Frontend)',
     },
-    
+
     // Optional but recommended
     {
       key: 'VITE_FIREBASE_API_KEY',
@@ -64,6 +65,7 @@ const validateConfig = (): void => {
       'your_google_maps_api_key_here',
       'your_supabase_url_here',
       'your_supabase_publishable_anon_key_here',
+      'your_google_maps_api_key_here',
       'your_firebase_api_key_here',
       'your_vapid_public_key_here'
     ];
@@ -102,6 +104,7 @@ const validateConfig = (): void => {
     
     // Check for common placeholder patterns
     const placeholderPatterns = [
+      'your_google_maps_api_key_here',
       'your_firebase_api_key_here',
       'your_vapid_public_key_here'
     ];
@@ -114,6 +117,13 @@ const validateConfig = (): void => {
       '[Config] Optional features not configured:',
       optionalMissing.map((c) => c.service).join(', ')
     );
+
+    const googleMapsMissing = optionalMissing.some((c) => c.key === 'VITE_GOOGLE_MAPS_API_KEY');
+    if (googleMapsMissing) {
+      console.warn(
+        '[Config] Google Maps key not set in VITE_GOOGLE_MAPS_API_KEY. The frontend will attempt to load it via the Supabase function get-maps-config.'
+      );
+    }
   }
 };
 
