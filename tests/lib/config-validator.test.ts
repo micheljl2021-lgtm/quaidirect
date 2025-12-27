@@ -12,7 +12,7 @@ describe('Config Validator', () => {
     
     // Should not throw an error even without required env vars
     expect(async () => {
-      await import('../src/lib/config-validator');
+      await import('../../src/lib/config-validator');
     }).not.toThrow();
   });
 
@@ -22,7 +22,7 @@ describe('Config Validator', () => {
     
     // Should not throw an error even without required env vars
     expect(async () => {
-      await import('../src/lib/config-validator');
+      await import('../../src/lib/config-validator');
     }).not.toThrow();
   });
 });

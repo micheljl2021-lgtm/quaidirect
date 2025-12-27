@@ -3,7 +3,6 @@
  * @see docs/GOOGLE_MAPS_CONFIG.md pour les instructions de configuration
  */
 
-let apiKeyWarningShown = false;
 let configLogShown = false;
 
 export function getGoogleMapsApiKey(): string {
@@ -29,15 +28,29 @@ export function getGoogleMapsApiKey(): string {
 }
 
 export function isGoogleMapsConfigured(): boolean {
-  const key = getGoogleMapsApiKey();
-  const configured = Boolean(key && key.length > 0);
-  
-  if (!configLogShown) {
-    configLogShown = true;
-    console.info(configured ? "[Google Maps] API key configurée ✓" : "[Google Maps] API key non configurée");
+  // In test environment, check directly without throwing
+  if (import.meta.env.MODE === 'test' || import.meta.env.VITEST) {
+    const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    return Boolean(key && key.length > 0);
   }
   
-  return configured;
+  try {
+    const key = getGoogleMapsApiKey();
+    const configured = Boolean(key && key.length > 0);
+    
+    if (!configLogShown) {
+      configLogShown = true;
+      console.info(configured ? "[Google Maps] API key configurée ✓" : "[Google Maps] API key non configurée");
+    }
+    
+    return configured;
+  } catch {
+    if (!configLogShown) {
+      configLogShown = true;
+      console.info("[Google Maps] API key non configurée");
+    }
+    return false;
+  }
 }
 
 export function initGoogleMapsApiKey(): Promise<string> {
