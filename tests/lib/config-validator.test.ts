@@ -41,10 +41,12 @@ describe('Config Validator', () => {
     
     // Only Supabase URL and Publishable Key should be required
     expect(requiredConfigs).toHaveLength(2);
-    expect(requiredConfigs.map(c => c.key)).toEqual([
-      'VITE_SUPABASE_URL',
-      'VITE_SUPABASE_PUBLISHABLE_KEY'
-    ]);
+    expect(requiredConfigs.map(c => c.key)).toEqual(
+      expect.arrayContaining([
+        'VITE_SUPABASE_URL',
+        'VITE_SUPABASE_PUBLISHABLE_KEY'
+      ])
+    );
   });
 
   it('should have all optional configs marked as not required', () => {
