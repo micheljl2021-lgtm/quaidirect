@@ -165,7 +165,16 @@ const App = () => (
             />
             <Route path="/dashboard/admin" element={<LazyRoute><AdminDashboard /></LazyRoute>} />
             <Route path="/admin/push-test" element={<LazyRoute><AdminPushTest /></LazyRoute>} />
-            <Route path="/dashboard/pecheur" element={<LazyRoute><PecheurDashboard /></LazyRoute>} />
+            <Route 
+              path="/dashboard/pecheur" 
+              element={
+                <ProtectedFisherRoute>
+                  <Suspense fallback={<PageLoader />}>
+                    <PecheurDashboard />
+                  </Suspense>
+                </ProtectedFisherRoute>
+              } 
+            />
             <Route path="/compte" element={<LazyRoute><Compte /></LazyRoute>} />
 
             {/* Pecheur payment routes */}
