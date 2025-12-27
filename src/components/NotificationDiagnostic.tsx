@@ -76,7 +76,7 @@ const NotificationDiagnostic = () => {
     ].filter(Boolean).join('\n');
 
     updateStep(0, {
-      status: vapidInfo.usingFallback ? 'warning' : 'ok',
+      status: 'ok',
       message: vapidMessage,
     });
 
@@ -308,14 +308,13 @@ const NotificationDiagnostic = () => {
     const vapidInfo = getVapidKeyInfo();
     const configText = `Firebase Config Debug:
 Domain: ${configInfo.currentDomain}
-Project: ${configInfo.projectId} (${configInfo.projectIdSource})
-Sender: ${configInfo.messagingSenderId} (${configInfo.senderIdSource})
-API Key: ${configInfo.apiKeyPrefix} (${configInfo.apiKeySource})
-AuthDomain: ${configInfo.authDomain} (${configInfo.authDomainSource})
-AppId: ${configInfo.appId} (${configInfo.appIdSource})
-Bucket: ${configInfo.storageBucket} (${configInfo.storageBucketSource})
+Project: ${configInfo.projectId}
+Sender: ${configInfo.messagingSenderId}
+API Key: ${configInfo.apiKeyPrefix}
+AuthDomain: ${configInfo.authDomain}
+AppId: ${configInfo.appId}
+Bucket: ${configInfo.storageBucket}
 VAPID: ${vapidInfo.cleanFingerprint} (${vapidInfo.source})
-Coherent: ${configInfo.isCoherent ? 'Yes' : 'No'} (${configInfo.envCount} env / ${configInfo.fallbackCount} fallback)
 Permission: ${Notification.permission}`;
     
     navigator.clipboard.writeText(configText);
@@ -376,16 +375,9 @@ Permission: ${Notification.permission}`;
             <span>
               Firebase: {(() => {
                 const info = getFirebaseConfigInfo();
-                return `${info.projectId} / ${info.messagingSenderId} (${info.apiKeySource})`;
+                return `${info.projectId} / ${info.messagingSenderId} (${info.apiKeyPrefix})`;
               })()}
             </span>
-            {(() => {
-              const info = getFirebaseConfigInfo();
-              if (!info.isCoherent) {
-                return <Badge variant="destructive" className="text-[10px] h-4">Config mixte!</Badge>;
-              }
-              return null;
-            })()}
           </div>
         </div>
 
